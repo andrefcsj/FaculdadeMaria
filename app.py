@@ -2,11 +2,12 @@ from __future__ import annotations
 
 import csv
 import math
+import json
 from datetime import date, datetime
 from pathlib import Path
 from typing import Dict, List, Tuple
 
-from flask import Flask, redirect, request, url_for
+from flask import Flask, redirect, request, url_for, jsonify
 
 BASE = Path(__file__).resolve().parent
 DATA = BASE / "data"
@@ -32,7 +33,18 @@ def fnum(value: str | float | int | None, default: float = 0.0) -> float:
     try:
         if value is None or value == "":
             return default
-        return float(str(value).replace("R$", "").replace("%", "").replace(".", "").replace(",", ".").strip())
+        if isinstance(value, (int, float)):
+            return float(value)
+        txt = str(value).replace("R$", "").replace("%", "").strip().replace(" ", "")
+        if "," in txt and "." in txt:
+            txt = txt.replace(".", "").replace(",", ".")
+        elif "," in txt:
+            txt = txt.replace(",", ".")
+        elif "." in txt:
+            left, right = txt.rsplit(".", 1)
+            if len(right) > 2:
+                txt = txt.replace(".", "")
+        return float(txt)
     except Exception:
         return default
 
@@ -211,11 +223,35 @@ def metric_card(icon: str, label: str, value: str, sub: str, color: str) -> str:
     return f'<div class="metric {color}"><div class="mi">{icon}</div><div><div class="mlabel">{label}</div><div class="mvalue">{value}</div><div class="msub">{sub}</div></div></div>'
 
 
+def infer_acao_from_option(codigo: str) -> str:
+    codigo = (codigo or "").upper().strip()
+    letters = "".join(ch for ch in codigo if ch.isalpha())
+    base = letters[:4] if len(letters) >= 4 else letters
+    mapa = {"BBDC": "BBDC4", "ITSA": "ITSA4", "GOAU": "GOAU4", "CPLE": "CPLE6", "PETR": "PETR4", "VALE": "VALE3", "BBAS": "BBAS3", "ABEV": "ABEV3"}
+    return mapa.get(base, f"{base}4" if base else "")
+
+def cotacao_yahoo(acao: str) -> float | None:
+    try:
+        import urllib.request
+        url = f"https://query1.finance.yahoo.com/v8/finance/chart/{acao}.SA?range=1d&interval=1m"
+        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+        with urllib.request.urlopen(req, timeout=4) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+        result = data.get("chart", {}).get("result", [])
+        if not result:
+            return None
+        price = result[0].get("meta", {}).get("regularMarketPrice")
+        return float(price) if price else None
+    except Exception:
+        return None
+
+
 def rows_html(rows: List[Dict[str, object]], limit: int | None = None) -> str:
     body = []
     for o in rows[:limit]:
         alert_cls = "warn" if "dentro" in str(o.get("Alerta")) else "ok"
-        body.append(f'''<tr><td>{o.get("Ativo")}</td><td>{o.get("Tipo")}</td><td>{o.get("Status")}</td><td>{int(float(o.get("Contratos_n",0)))}</td><td>{brl(float(o.get("Strike_n",0)))}</td><td>{brl(float(o.get("Premio_liquido",0)))}</td><td>{brl(float(o.get("Capital",0)))}</td><td>{int(float(o.get("Dias",0)))}</td><td>{pct(float(o.get("ROI",0)))}</td><td>{o.get("Nota")}</td><td class="{alert_cls}">{o.get("Alerta")}</td></tr>''')
+        oid = o.get("ID", "")
+        body.append(f"""<tr><td>{o.get('Ativo')}</td><td>{o.get('Tipo')}</td><td>{o.get('Status')}</td><td>{int(float(o.get('Contratos_n',0)))}</td><td>{brl(float(o.get('Strike_n',0)))}</td><td>{brl(float(o.get('Premio_liquido',0)))}</td><td>{brl(float(o.get('Capital',0)))}</td><td>{int(float(o.get('Dias',0)))}</td><td>{pct(float(o.get('ROI',0)))}</td><td>{o.get('Nota')}</td><td class="{alert_cls}">{o.get('Alerta')}</td><td class="actions"><a title="Editar" href="/editar/{oid}">✏️</a><a title="Fechar" href="/fechar/{oid}" onclick="return confirm('Fechar esta operação?')">✅</a></td></tr>""")
     return "".join(body)
 
 
@@ -238,8 +274,35 @@ def index():
     <section class="grid two"><div class="panel"><h2>EVOLUÇÃO DO LUCRO (R$)</h2>{line_chart(hist,'lucro')}</div><div class="panel"><h2>PRÊMIOS RECEBIDOS POR MÊS (R$)</h2>{bar_chart(hist,'premios')}</div></section>
     <section class="grid three"><div class="panel wide"><h2>EVOLUÇÃO DO PATRIMÔNIO (R$)</h2>{line_chart(hist,'patrimonio','#a85cff')}</div><div class="panel"><h2>DISTRIBUIÇÃO DOS PRÊMIOS ATIVOS</h2>{donut_chart(abertas)}</div><div class="panel"><h2>VELOCÍMETRO DE ROI (MÊS)</h2>{gauge(float(ind['roi_mes']))}</div></section>
     <section class="grid four"><div class="panel"><h2>HISTÓRICO MENSAL</h2><table><thead><tr><th>Mês</th><th>Lucro</th><th>DARF</th><th>Prêmios</th><th>ROI</th></tr></thead><tbody>{historico_table}</tbody></table></div><div class="panel"><h2>TOP 5 OPERAÇÕES (PRÊMIO ATIVO)</h2><table><thead><tr><th>Ativo</th><th>Tipo</th><th>Strike</th><th>Prêmio</th><th>ROI</th></tr></thead><tbody>{top_table}</tbody></table><a href="#ops" class="button">VER TODAS AS OPERAÇÕES →</a></div><div class="panel"><h2>STATUS DAS OPERAÇÕES</h2><div class="status-donut">{donut_chart([{'Ativo':'Abertas','Premio_liquido':float(ind['abertas'])},{'Ativo':'Encerradas','Premio_liquido':float(ind['encerradas'])}])}</div></div><div class="panel summary"><h2>RESUMO GERAL</h2><p>▣ Total de Operações <b>{len(ops)}</b></p><p>▧ Operações Abertas <b>{ind['abertas']}</b></p><p>⊗ Operações Encerradas <b>{ind['encerradas']}</b></p><p>◴ Dias em Média (Abertas) <b>{(sum(float(o['Dias']) for o in abertas)/len(abertas)) if abertas else 0:.1f}</b></p><p>✪ Prêmio Médio por Operação <b>{brl((sum(float(o['Premio_liquido']) for o in abertas)/len(abertas)) if abertas else 0)}</b></p></div></section>
-    <section class="panel" id="ops"><h2>OPERAÇÕES ABERTAS</h2><table class="ops"><thead><tr><th>Ativo</th><th>Tipo</th><th>Status</th><th>Contratos</th><th>Strike</th><th>Prêmio líquido</th><th>Capital</th><th>Dias</th><th>ROI</th><th>Nota</th><th>Alerta</th></tr></thead><tbody>{rows_html(abertas)}</tbody></table></section>
-    <section class="panel"><h2>CADASTRAR NOVA OPERAÇÃO</h2><form method="post" action="/nova" class="form"><input name="Ativo" placeholder="Ativo/código" required><select name="Tipo"><option>PUT</option><option>CALL</option></select><select name="Estrategia"><option>Wheel</option><option>Pozinho</option></select><select name="Status"><option>Aberta</option><option>Encerrada</option></select><input type="date" name="Data_abertura" required><input type="date" name="Vencimento" required><input name="Contratos" type="number" min="1" value="1"><input name="Strike" type="number" step="0.01" placeholder="Strike"><input name="Premio_opcao" type="number" step="0.01" placeholder="Prêmio/opção"><input name="Custos" type="number" step="0.01" value="1.07"><input name="IRRF" type="number" step="0.01" value="0.04"><input name="Cotacao_atual" type="number" step="0.01" placeholder="Cotação atual"><button>Salvar operação</button></form></section>
+    <section class="panel" id="ops"><h2>OPERAÇÕES ABERTAS</h2><table class="ops"><thead><tr><th>Ativo</th><th>Tipo</th><th>Status</th><th>Contratos</th><th>Strike</th><th>Prêmio líquido</th><th>Capital</th><th>Dias</th><th>ROI</th><th>Nota</th><th>Alerta</th><th>Ações</th></tr></thead><tbody>{rows_html(abertas)}</tbody></table></section>
+    <section class="panel"><h2>CADASTRAR NOVA OPERAÇÃO</h2><form method="post" action="/nova" class="form labeled">
+      <div><span>Código da opção</span><input id="ativo" name="Ativo" placeholder="Ex: BBDCS167" required onblur="buscarCotacao()"></div>
+      <div><span>Tipo</span><select name="Tipo"><option>PUT</option><option>CALL</option></select></div>
+      <div><span>Estratégia</span><select name="Estrategia"><option>Wheel</option><option>Pozinho</option></select></div>
+      <div><span>Status</span><select name="Status"><option>Aberta</option><option>Encerrada</option></select></div>
+      <div><span>Vencimento da opção</span><input type="date" name="Vencimento" required></div>
+      <div><span>Contratos</span><input name="Contratos" type="number" min="1" value="1"></div>
+      <div><span>Strike real</span><input name="Strike" type="number" step="0.01" placeholder="Ex: 16,89"></div>
+      <div><span>Prêmio por opção</span><input name="Premio_opcao" type="number" step="0.01" placeholder="Ex: 0,33"></div>
+      <div><span>Custos</span><input name="Custos" type="number" step="0.01" value="1.07"></div>
+      <div><span>IRRF</span><input name="IRRF" type="number" step="0.01" value="0.04"></div>
+      <div><span>Cotação atual da ação</span><input id="cotacao" name="Cotacao_atual" type="number" step="0.01" placeholder="Busca automática"></div>
+      <button>Salvar operação</button>
+    </form><small class="hint">A cotação tenta buscar automaticamente pela ação originária. Se não encontrar, você pode preencher manualmente.</small></section>
+    <script>
+    async function buscarCotacao(){{
+      const ativo=document.getElementById('ativo').value.trim();
+      const campo=document.getElementById('cotacao');
+      if(!ativo) return;
+      campo.placeholder='Buscando...';
+      try{{
+        const r=await fetch('/cotacao?codigo='+encodeURIComponent(ativo));
+        const d=await r.json();
+        if(d.cotacao){{ campo.value=Number(d.cotacao).toFixed(2); campo.placeholder='Cotação atual'; }}
+        else {{ campo.placeholder='Não encontrada. Digite manualmente'; }}
+      }}catch(e){{ campo.placeholder='Digite manualmente'; }}
+    }}
+    </script>
     </main><footer>🛡️ Dashboard protegido contra edição. Os dados são atualizados automaticamente. &nbsp; CORTEX INVEST v1.0 • WHEEL STRATEGY • DISCIPLINA, GESTÃO E CONSISTÊNCIA</footer></body></html>'''
     return html
 
@@ -269,8 +332,62 @@ def nova():
     return redirect(url_for("index"))
 
 
+@app.route('/cotacao')
+def cotacao():
+    codigo = request.args.get('codigo', '')
+    acao = infer_acao_from_option(codigo)
+    valor = cotacao_yahoo(acao) if acao else None
+    return jsonify({'codigo_opcao': codigo.upper(), 'acao': acao, 'cotacao': valor})
+
+
+def find_row(rows: List[Dict[str, str]], oid: str) -> Dict[str, str] | None:
+    for r in rows:
+        if str(r.get('ID')) == str(oid):
+            return r
+    return None
+
+
+@app.route('/editar/<oid>', methods=['GET', 'POST'])
+def editar(oid: str):
+    rows = read_csv(OPERACOES)
+    r = find_row(rows, oid)
+    if not r:
+        return redirect(url_for('index'))
+    fields = ['ID', 'Data abertura', 'Ativo', 'Tipo', 'Estratégia', 'Status', 'Contratos', 'Strike', 'Premio_opcao', 'Custos', 'IRRF', 'Vencimento', 'Cotacao_atual', 'Resultado_realizado']
+    if request.method == 'POST':
+        for campo in ['Ativo', 'Tipo', 'Status', 'Contratos', 'Strike', 'Premio_opcao', 'Custos', 'IRRF', 'Vencimento', 'Cotacao_atual']:
+            r[campo] = request.form.get(campo, r.get(campo, ''))
+        r['Estratégia'] = request.form.get('Estrategia', r.get('Estratégia', 'Wheel'))
+        write_csv(OPERACOES, rows, fields)
+        return redirect(url_for('index'))
+    html = f'''<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Editar operação</title><style>{CSS}</style></head><body><main class="edit-page"><section class="panel"><h2>EDITAR OPERAÇÃO</h2><form method="post" class="form labeled">
+    <div><span>Código da opção</span><input name="Ativo" value="{r.get('Ativo','')}"></div>
+    <div><span>Tipo</span><select name="Tipo"><option {'selected' if r.get('Tipo')=='PUT' else ''}>PUT</option><option {'selected' if r.get('Tipo')=='CALL' else ''}>CALL</option></select></div>
+    <div><span>Status</span><select name="Status"><option {'selected' if r.get('Status')=='Aberta' else ''}>Aberta</option><option {'selected' if r.get('Status')=='Encerrada' else ''}>Encerrada</option></select></div>
+    <div><span>Estratégia</span><input name="Estrategia" value="{r.get('Estratégia','Wheel')}"></div>
+    <div><span>Vencimento da opção</span><input type="date" name="Vencimento" value="{r.get('Vencimento','')}"></div>
+    <div><span>Contratos</span><input type="number" name="Contratos" value="{r.get('Contratos','1')}"></div>
+    <div><span>Strike real</span><input type="number" step="0.01" name="Strike" value="{r.get('Strike','')}"></div>
+    <div><span>Prêmio por opção</span><input type="number" step="0.01" name="Premio_opcao" value="{r.get('Premio_opcao','')}"></div>
+    <div><span>Custos</span><input type="number" step="0.01" name="Custos" value="{r.get('Custos','')}"></div>
+    <div><span>IRRF</span><input type="number" step="0.01" name="IRRF" value="{r.get('IRRF','')}"></div>
+    <div><span>Cotação atual da ação</span><input type="number" step="0.01" name="Cotacao_atual" value="{r.get('Cotacao_atual','')}"></div>
+    <button>Salvar alterações</button><a class="button" href="/">Voltar</a></form></section></main></body></html>'''
+    return html
+
+
+@app.route('/fechar/<oid>')
+def fechar(oid: str):
+    rows = read_csv(OPERACOES)
+    r = find_row(rows, oid)
+    if r:
+        r['Status'] = 'Encerrada'
+        write_csv(OPERACOES, rows, ['ID', 'Data abertura', 'Ativo', 'Tipo', 'Estratégia', 'Status', 'Contratos', 'Strike', 'Premio_opcao', 'Custos', 'IRRF', 'Vencimento', 'Cotacao_atual', 'Resultado_realizado'])
+    return redirect(url_for('index'))
+
+
 CSS = r'''
-:root{--bg:#050b13;--panel:#101a27;--panel2:#0b1420;--line:#24364c;--txt:#f4f7ff;--muted:#91a4bb;--blue:#1478ff;--green:#21c35b;--purple:#8d45ff;--orange:#ffae22;--red:#ff6381;--cyan:#25d7de}*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 45% 0%,#132035 0%,#07111e 45%,#03070d 100%);color:var(--txt);font-family:Inter,Segoe UI,Arial,sans-serif}aside{position:fixed;left:0;top:0;bottom:0;width:236px;background:linear-gradient(180deg,#081323,#03070d);border-right:1px solid #273a52;padding:22px 10px}main{margin-left:236px;padding:18px 18px 44px}.logo{display:flex;align-items:center;gap:12px}.brain{width:54px;height:54px;border:2px solid #4d8cff;border-radius:16px;display:grid;place-items:center;font-size:35px;color:#4d8cff;box-shadow:0 0 18px #1749b1}.brand{font-size:28px;font-weight:900;line-height:.95;letter-spacing:1px}.brand span,h1 span{color:#4d8cff}.strategy,label{display:block;margin:19px 0 9px;color:#4d8cff;font-size:12px;font-weight:900;letter-spacing:1.2px}.side-block{display:flex;gap:11px;align-items:center;color:#dfeaff;line-height:1.45}.side-block b{color:#4d8cff;font-size:11px}select,input{width:100%;background:#07111d;color:#fff;border:1px solid #24364c;border-radius:7px;padding:11px 12px}nav{margin-top:20px}nav a{display:block;padding:13px 15px;margin:6px 0;border-radius:9px;font-weight:800;color:#dce8fb;text-decoration:none}nav a.active{background:linear-gradient(180deg,#0871df,#06499c);box-shadow:inset 0 0 18px rgba(65,151,255,.35),0 0 16px rgba(29,128,255,.22)}.quote{border:1px solid #263d5a;border-radius:10px;padding:20px 15px;margin-top:25px;color:#4199ff;background:#091521;font-size:18px;line-height:1.35}.quote small{color:#899ab0}.version{color:#8955ff;font-weight:900;text-align:center;margin-top:26px}h1{font-size:33px;line-height:1;margin:0;font-weight:950}header p{color:#c7d5e8;margin:4px 0 14px}.metrics{display:grid;grid-template-columns:repeat(8,1fr);gap:8px}.metric{min-height:92px;background:linear-gradient(180deg,rgba(17,29,43,.96),rgba(8,17,29,.96));border:1px solid var(--line);border-radius:10px;padding:14px 10px;display:flex;align-items:center;gap:9px;box-shadow:0 0 18px rgba(0,0,0,.22)}.mi{font-size:28px}.mlabel{font-size:11px;font-weight:900;text-transform:uppercase}.mvalue{font-size:21px;font-weight:950;margin-top:8px}.msub{font-size:12px;color:#b6c3d4}.blue{border-color:#125da4;box-shadow:0 0 16px rgba(20,120,255,.18)}.green{border-color:#126d39;box-shadow:0 0 16px rgba(33,195,91,.14)}.cyan{border-color:#177a83;box-shadow:0 0 16px rgba(37,215,222,.14)}.purple{border-color:#6330aa;box-shadow:0 0 16px rgba(141,69,255,.16)}.orange{border-color:#8f6512;box-shadow:0 0 16px rgba(255,174,34,.15)}.red{border-color:#874052;box-shadow:0 0 16px rgba(255,99,129,.14)}.grid{display:grid;gap:8px;margin-top:8px}.two{grid-template-columns:1fr 1fr}.three{grid-template-columns:1.35fr .8fr .7fr}.four{grid-template-columns:1.1fr 1.1fr .8fr .9fr}.panel{background:linear-gradient(180deg,rgba(17,29,43,.96),rgba(8,17,29,.96));border:1px solid #26384f;border-radius:10px;padding:14px;box-shadow:0 0 18px rgba(0,0,0,.22);overflow:hidden}h2{font-size:16px;margin:0 0 10px;text-transform:uppercase}.chart{width:100%;height:220px}.donut-wrap{display:flex;align-items:center;gap:8px}.donut{width:46%;min-width:165px}.legend{flex:1}.legend div{margin:8px 0;font-size:12px}.legend span{display:inline-block;width:11px;height:11px;margin-right:6px;border-radius:2px}.legend em{float:right;font-style:normal;color:#fff}.legend small{display:block;color:#9fb0c5;margin-left:21px}.gauge{text-align:center}.gauge svg{width:100%;max-height:150px}.gauge-num{font-size:30px;font-weight:900;margin-top:-22px}.badge{display:inline-block;background:#169c3a;border-radius:5px;padding:5px 22px;font-weight:800;margin:4px}table{width:100%;border-collapse:collapse;font-size:13px}th{background:#192434;color:#dce8fb;text-align:left;padding:8px}td{border-bottom:1px solid #1c2b3f;padding:7px;color:#edf4ff}.ops th,.ops td{white-space:nowrap}.warn{color:#ff6d6d;font-weight:800}.ok{color:#7df097}.button{display:block;margin:10px auto 0;text-align:center;max-width:245px;padding:8px 12px;background:#0b4c98;border:1px solid #2589ff;border-radius:7px;color:#fff;text-decoration:none;font-weight:800}.summary p{border-bottom:1px solid #1f2d40;padding:9px 0;margin:0}.summary b{float:right}.form{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}.form button{background:linear-gradient(180deg,#0871df,#06499c);border:1px solid #278fff;color:white;font-weight:900;border-radius:8px;padding:11px}footer{position:fixed;left:0;right:0;bottom:0;background:#07111d;border-top:1px solid #26384f;color:#6d7d91;text-align:center;padding:8px;font-size:12px}@media(max-width:1100px){aside{position:relative;width:100%;height:auto}main{margin-left:0}.metrics,.two,.three,.four,.form{grid-template-columns:1fr}.donut-wrap{display:block}.donut{width:100%}footer{position:static}}'''
+:root{--bg:#050b13;--panel:#101a27;--panel2:#0b1420;--line:#24364c;--txt:#f4f7ff;--muted:#91a4bb;--blue:#1478ff;--green:#21c35b;--purple:#8d45ff;--orange:#ffae22;--red:#ff6381;--cyan:#25d7de}*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 45% 0%,#132035 0%,#07111e 45%,#03070d 100%);color:var(--txt);font-family:Inter,Segoe UI,Arial,sans-serif}aside{position:fixed;left:0;top:0;bottom:0;width:236px;background:linear-gradient(180deg,#081323,#03070d);border-right:1px solid #273a52;padding:22px 10px}main{margin-left:236px;padding:18px 18px 44px}.logo{display:flex;align-items:center;gap:12px}.brain{width:54px;height:54px;border:2px solid #4d8cff;border-radius:16px;display:grid;place-items:center;font-size:35px;color:#4d8cff;box-shadow:0 0 18px #1749b1}.brand{font-size:28px;font-weight:900;line-height:.95;letter-spacing:1px}.brand span,h1 span{color:#4d8cff}.strategy,label{display:block;margin:19px 0 9px;color:#4d8cff;font-size:12px;font-weight:900;letter-spacing:1.2px}.side-block{display:flex;gap:11px;align-items:center;color:#dfeaff;line-height:1.45}.side-block b{color:#4d8cff;font-size:11px}select,input{width:100%;background:#07111d;color:#fff;border:1px solid #24364c;border-radius:7px;padding:11px 12px}nav{margin-top:20px}nav a{display:block;padding:13px 15px;margin:6px 0;border-radius:9px;font-weight:800;color:#dce8fb;text-decoration:none}nav a.active{background:linear-gradient(180deg,#0871df,#06499c);box-shadow:inset 0 0 18px rgba(65,151,255,.35),0 0 16px rgba(29,128,255,.22)}.quote{border:1px solid #263d5a;border-radius:10px;padding:20px 15px;margin-top:25px;color:#4199ff;background:#091521;font-size:18px;line-height:1.35}.quote small{color:#899ab0}.version{color:#8955ff;font-weight:900;text-align:center;margin-top:26px}h1{font-size:33px;line-height:1;margin:0;font-weight:950}header p{color:#c7d5e8;margin:4px 0 14px}.metrics{display:grid;grid-template-columns:repeat(8,1fr);gap:8px}.metric{min-height:92px;background:linear-gradient(180deg,rgba(17,29,43,.96),rgba(8,17,29,.96));border:1px solid var(--line);border-radius:10px;padding:14px 10px;display:flex;align-items:center;gap:9px;box-shadow:0 0 18px rgba(0,0,0,.22)}.mi{font-size:28px}.mlabel{font-size:11px;font-weight:900;text-transform:uppercase}.mvalue{font-size:21px;font-weight:950;margin-top:8px}.msub{font-size:12px;color:#b6c3d4}.blue{border-color:#125da4;box-shadow:0 0 16px rgba(20,120,255,.18)}.green{border-color:#126d39;box-shadow:0 0 16px rgba(33,195,91,.14)}.cyan{border-color:#177a83;box-shadow:0 0 16px rgba(37,215,222,.14)}.purple{border-color:#6330aa;box-shadow:0 0 16px rgba(141,69,255,.16)}.orange{border-color:#8f6512;box-shadow:0 0 16px rgba(255,174,34,.15)}.red{border-color:#874052;box-shadow:0 0 16px rgba(255,99,129,.14)}.grid{display:grid;gap:8px;margin-top:8px}.two{grid-template-columns:1fr 1fr}.three{grid-template-columns:1.35fr .8fr .7fr}.four{grid-template-columns:1.1fr 1.1fr .8fr .9fr}.panel{background:linear-gradient(180deg,rgba(17,29,43,.96),rgba(8,17,29,.96));border:1px solid #26384f;border-radius:10px;padding:14px;box-shadow:0 0 18px rgba(0,0,0,.22);overflow:hidden}h2{font-size:16px;margin:0 0 10px;text-transform:uppercase}.chart{width:100%;height:220px}.donut-wrap{display:flex;align-items:center;gap:8px}.donut{width:46%;min-width:165px}.legend{flex:1}.legend div{margin:8px 0;font-size:12px}.legend span{display:inline-block;width:11px;height:11px;margin-right:6px;border-radius:2px}.legend em{float:right;font-style:normal;color:#fff}.legend small{display:block;color:#9fb0c5;margin-left:21px}.gauge{text-align:center}.gauge svg{width:100%;max-height:150px}.gauge-num{font-size:30px;font-weight:900;margin-top:-22px}.badge{display:inline-block;background:#169c3a;border-radius:5px;padding:5px 22px;font-weight:800;margin:4px}table{width:100%;border-collapse:collapse;font-size:13px}th{background:#192434;color:#dce8fb;text-align:left;padding:8px}td{border-bottom:1px solid #1c2b3f;padding:7px;color:#edf4ff}.ops th,.ops td{white-space:nowrap}.warn{color:#ff6d6d;font-weight:800}.ok{color:#7df097}.button{display:block;margin:10px auto 0;text-align:center;max-width:245px;padding:8px 12px;background:#0b4c98;border:1px solid #2589ff;border-radius:7px;color:#fff;text-decoration:none;font-weight:800}.summary p{border-bottom:1px solid #1f2d40;padding:9px 0;margin:0}.summary b{float:right}.form{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}.labeled div span{display:block;color:#9fb8d8;font-size:11px;font-weight:900;text-transform:uppercase;margin:0 0 5px}.hint{display:block;color:#9fb0c5;margin-top:10px}.actions a{display:inline-block;text-decoration:none;margin-right:8px;font-size:16px}.edit-page{margin-left:0;max-width:1180px;margin-right:auto}.form button{background:linear-gradient(180deg,#0871df,#06499c);border:1px solid #278fff;color:white;font-weight:900;border-radius:8px;padding:11px}footer{position:fixed;left:0;right:0;bottom:0;background:#07111d;border-top:1px solid #26384f;color:#6d7d91;text-align:center;padding:8px;font-size:12px}@media(max-width:1100px){aside{position:relative;width:100%;height:auto}main{margin-left:0}.metrics,.two,.three,.four,.form{grid-template-columns:1fr}.donut-wrap{display:block}.donut{width:100%}footer{position:static}}'''
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
