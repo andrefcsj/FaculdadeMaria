@@ -1,25 +1,21 @@
-# FaculdadeMaria / Cortex Invest PRO v1.6
+# FaculdadeMaria / Cortex Invest PRO — v1.7 Noite
 
-Alterações desta versão:
+Versão incremental para testes durante o plantão.
 
-- Adicionado card de **Caixa Livre**.
-- Explicação visual de KPI: indicadores principais do topo do dashboard.
-- Escala do velocímetro ajustada: os textos **1,5%** e **3%** foram elevados.
-- Valor grande do ROI voltou para a posição anterior.
-- Quadro **Top 5 Operações (Prêmio Ativo)** renomeado para **Top 5 Operações Abertas**.
-- Evolução do Patrimônio passa a considerar **capital investido + prêmios recebidos**.
-- Evolução do Lucro passa a considerar prêmios de operações **abertas e fechadas**.
+## Entrou nesta versão
 
-Deploy Render:
+- Topo reorganizado em formato de KPIs.
+- Novo card: Prêmios Acumulados.
+- Novo card: Caixa Disponível.
+- Novo card: Próximo Vencimento.
+- Novo card: Nota Cortex inicial.
+- Mantidos os ajustes anteriores: ROI abertas, velocímetros, Top 5 Operações Abertas, patrimônio e lucro.
+- Melhor responsividade dos KPIs no celular.
+
+## Render
 
 Build Command:
-
-```bash
-pip install -r requirements.txt
-```
+`pip install -r requirements.txt`
 
 Start Command:
-
-```bash
-gunicorn app:app --bind 0.0.0.0:$PORT
-```
+`gunicorn app:app --bind 0.0.0.0:$PORT`
