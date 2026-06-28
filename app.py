@@ -125,7 +125,18 @@ def enrich_ops(rows: List[Dict[str, str]], cfg: Dict[str, float]) -> List[Dict[s
             alerta = "PUT dentro do dinheiro"
         if tipo == "CALL" and cotacao and cotacao > strike:
             alerta = "CALL dentro do dinheiro"
-        nota = "★★★★★" if roi >= 2 else "★★★★☆" if roi >= 1.5 else "★★★☆☆" if roi >= 1 else "★★☆☆☆"
+        # Nota provisória baseada no ROI líquido da operação.
+        # 0 a 1,50% = baixo; 1,51% a 2,99% = regular; 3%+ = excelente.
+        if roi >= 3:
+            nota = "★★★★★"
+        elif roi >= 2.5:
+            nota = "★★★★☆"
+        elif roi >= 1.51:
+            nota = "★★★☆☆"
+        elif roi > 0:
+            nota = "★★☆☆☆"
+        else:
+            nota = "★☆☆☆☆"
         item = dict(r)
         item.update({
             "Contratos_n": contratos, "Strike_n": strike, "Premio_opcao_n": premio_opcao,
@@ -262,6 +273,7 @@ def gauge(value: float, titulo: str = "ROI") -> str:
     else:
         badge, cls = "EXCELENTE", "high"
     return f"""<div class="gauge">
+    <div class="gauge-num">{pct(value)}</div>
     <svg viewBox="0 0 260 170">
       <path d="M35 130 A95 95 0 0 1 225 130" fill="none" stroke="#1d2a3b" stroke-width="24"/>
       <path d="M35 130 A95 95 0 0 1 74.1 53.1" fill="none" stroke="#f04b3d" stroke-width="18"/>
@@ -274,7 +286,6 @@ def gauge(value: float, titulo: str = "ROI") -> str:
       <text x="160" y="34" fill="#e7f0ff" text-anchor="middle" font-size="13">3%</text>
       <text x="222" y="149" fill="#e7f0ff" text-anchor="middle" font-size="13">5%</text>
     </svg>
-    <div class="gauge-num">{pct(value)}</div>
     <div class="badge {cls}">{badge}</div>
     <div class="gauge-legend"><span><i class="lg-low"></i>0% - 1,5%<br><b>BAIXO</b></span><span><i class="lg-mid"></i>1,51% - 2,99%<br><b>REGULAR</b></span><span><i class="lg-high"></i>3% - 5%<br><b>EXCELENTE</b></span></div>
     <small>{titulo} - Meta: 5,00%</small>
@@ -331,7 +342,7 @@ def index():
     historico_table = "".join([f'<tr><td>{r["mes"]}</td><td>{brl(float(r["lucro"]))}</td><td>{brl(float(r["darf"]))}</td><td>{brl(float(r["premios"]))}</td><td>{pct(float(r["roi"]))} ↑</td></tr>' for r in reversed(hist_nonzero[-5:])])
     top_table = "".join([f'<tr><td>{o.get("Ativo")}</td><td>{o.get("Tipo")}</td><td>{brl(float(o["Strike_n"]))}</td><td>{brl(float(o["Premio_liquido"]))}</td><td>{pct(float(o["ROI"]))}</td></tr>' for o in top])
     html = f'''<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Cortex Invest PRO</title><style>{CSS}</style></head><body>
-    <aside><div class="logo"><div class="brain">✺</div><div class="brand">CORTEX<br><span>INVEST</span></div></div><div class="strategy">WHEEL STRATEGY</div><div class="side-block">📅<div><b>DATA ATUALIZAÇÃO</b><br>{datetime.now().strftime("%d/%m/%Y<br>%H:%M:%S")}</div></div><label>MÊS SELECIONADO</label><select><option>{ind["mes_atual"]}</option></select><nav><a class="active">▦ VISÃO GERAL</a><a>▧ OPERAÇÕES ABERTAS</a><a>▣ HISTÓRICO MENSAL</a><a>⌁ DESEMPENHO</a><a>⚙ ATIVOS</a><a>▤ RELATÓRIOS</a><a>⚙ CONFIGURAÇÕES</a></nav><div class="quote">“A consistência é o que transforma estratégia em patrimônio.”<br><small>– CORTEX INVEST</small></div><div class="version">VERSÃO 1.4</div></aside>
+    <aside><div class="logo"><div class="brain">✺</div><div class="brand">CORTEX<br><span>INVEST</span></div></div><div class="strategy">WHEEL STRATEGY</div><div class="side-block">📅<div><b>DATA ATUALIZAÇÃO</b><br>{datetime.now().strftime("%d/%m/%Y<br>%H:%M:%S")}</div></div><label>MÊS SELECIONADO</label><select><option>{ind["mes_atual"]}</option></select><nav><a class="active">▦ VISÃO GERAL</a><a>▧ OPERAÇÕES ABERTAS</a><a>▣ HISTÓRICO MENSAL</a><a>⌁ DESEMPENHO</a><a>⚙ ATIVOS</a><a>▤ RELATÓRIOS</a><a>⚙ CONFIGURAÇÕES</a></nav><div class="quote">“A consistência é o que transforma estratégia em patrimônio.”<br><small>– CORTEX INVEST</small></div><div class="version">VERSÃO 1.5</div></aside>
     <main><header><h1>DASHBOARD <span>WHEEL</span></h1><p>Painel automático com prêmios mensais, ROI abertas e histórico por mês</p></header>
     <section class="metrics">
     {metric_card('🔒','CAPITAL COMPROMETIDO',brl(float(ind['capital_comp'])),'Em operações abertas','green')}{metric_card('🎁','PRÊMIOS ATIVOS',brl(float(ind['premios_ativos'])),'Total em aberto','purple')}{metric_card('📈','LUCRO DO MÊS',brl(float(ind['lucro_mes'])),str(ind['mes_atual']),'orange')}{metric_card('🏛️','DARF DO MÊS',brl(float(ind['darf'])),str(ind['mes_atual']),'red')}{metric_card('%','ROI MÊS',pct(float(ind['roi_mes'])),str(ind['mes_atual']),'cyan')}{metric_card('🎯','ROI ABERTAS',pct(float(ind['roi_medio_abertas'])),'Média das abertas','green')}
@@ -351,24 +362,23 @@ def index():
       <div><span>Prêmio por opção</span><input name="Premio_opcao" type="number" step="0.01" placeholder="Ex: 0,33"></div>
       <div><span>Custos</span><input name="Custos" type="number" step="0.01" value="1.07"></div>
       <div><span>IRRF</span><input name="IRRF" type="number" step="0.01" value="0.04"></div>
-      <div><span>Cotação atual da ação</span><input id="cotacao" name="Cotacao_atual" type="number" step="0.01" placeholder="Busca automática"></div>
+      <input id="cotacao" name="Cotacao_atual" type="hidden" value="0">
       <button>Salvar operação</button>
-    </form><small class="hint">A cotação tenta buscar automaticamente pela ação originária. Se não encontrar, você pode preencher manualmente.</small></section>
+    </form><small class="hint">A cotação da ação originária é buscada automaticamente pelo código da opção.</small></section>
     <script>
     async function buscarCotacao(){{
       const ativo=document.getElementById('ativo').value.trim();
       const campo=document.getElementById('cotacao');
       if(!ativo) return;
-      campo.placeholder='Buscando...';
+      // cotação buscada em segundo plano
       try{{
         const r=await fetch('/cotacao?codigo='+encodeURIComponent(ativo));
         const d=await r.json();
-        if(d.cotacao){{ campo.value=Number(d.cotacao).toFixed(2); campo.placeholder='Cotação atual'; }}
-        else {{ campo.placeholder='Não encontrada. Digite manualmente'; }}
-      }}catch(e){{ campo.placeholder='Digite manualmente'; }}
+        if(d.cotacao){{ campo.value=Number(d.cotacao).toFixed(2); }}
+      }}catch(e){{ /* mantém zero se não encontrar */ }}
     }}
     </script>
-    </main><footer>🛡️ Dashboard protegido contra edição. Os dados são atualizados automaticamente. &nbsp; CORTEX INVEST v1.4 • WHEEL STRATEGY • DISCIPLINA, GESTÃO E CONSISTÊNCIA</footer></body></html>'''
+    </main><footer>🛡️ Dashboard protegido contra edição. Os dados são atualizados automaticamente. &nbsp; CORTEX INVEST v1.5 • WHEEL STRATEGY • DISCIPLINA, GESTÃO E CONSISTÊNCIA</footer></body></html>'''
     return html
 
 
@@ -392,6 +402,11 @@ def nova():
         "Cotacao_atual": request.form.get("Cotacao_atual", "0"),
         "Resultado_realizado": "0",
     }
+    if not fnum(row.get("Cotacao_atual")):
+        acao = infer_acao_from_option(row.get("Ativo", ""))
+        valor = cotacao_yahoo(acao) if acao else None
+        if valor:
+            row["Cotacao_atual"] = f"{valor:.2f}"
     rows.append(row)
     write_csv(OPERACOES, rows, ["ID", "Data abertura", "Ativo", "Tipo", "Estratégia", "Status", "Contratos", "Strike", "Premio_opcao", "Custos", "IRRF", "Vencimento", "Cotacao_atual", "Resultado_realizado"])
     return redirect(url_for("index"))
@@ -436,7 +451,7 @@ def editar(oid: str):
     <div><span>Prêmio por opção</span><input type="number" step="0.01" name="Premio_opcao" value="{r.get('Premio_opcao','')}"></div>
     <div><span>Custos</span><input type="number" step="0.01" name="Custos" value="{r.get('Custos','')}"></div>
     <div><span>IRRF</span><input type="number" step="0.01" name="IRRF" value="{r.get('IRRF','')}"></div>
-    <div><span>Cotação atual da ação</span><input type="number" step="0.01" name="Cotacao_atual" value="{r.get('Cotacao_atual','')}"></div>
+    <input type="hidden" name="Cotacao_atual" value="{r.get('Cotacao_atual','')}">
     <button>Salvar alterações</button><a class="button danger" href="/excluir/{oid}" onclick="return confirm('Excluir esta operação definitivamente?')">Excluir operação</a><a class="button" href="/">Voltar</a></form></section></main></body></html>'''
     return html
 
@@ -460,7 +475,7 @@ def excluir(oid: str):
 
 
 CSS = r'''
-:root{--bg:#050b13;--panel:#101a27;--panel2:#0b1420;--line:#24364c;--txt:#f4f7ff;--muted:#91a4bb;--blue:#1478ff;--green:#21c35b;--purple:#8d45ff;--orange:#ffae22;--red:#ff6381;--cyan:#25d7de}*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 45% 0%,#132035 0%,#07111e 45%,#03070d 100%);color:var(--txt);font-family:Inter,Segoe UI,Arial,sans-serif}aside{position:fixed;left:0;top:0;bottom:0;width:236px;background:linear-gradient(180deg,#081323,#03070d);border-right:1px solid #273a52;padding:22px 10px}main{margin-left:236px;padding:18px 18px 44px}.logo{display:flex;align-items:center;gap:12px}.brain{width:54px;height:54px;border:2px solid #4d8cff;border-radius:16px;display:grid;place-items:center;font-size:35px;color:#4d8cff;box-shadow:0 0 18px #1749b1}.brand{font-size:28px;font-weight:900;line-height:.95;letter-spacing:1px}.brand span,h1 span{color:#4d8cff}.strategy,label{display:block;margin:19px 0 9px;color:#4d8cff;font-size:12px;font-weight:900;letter-spacing:1.2px}.side-block{display:flex;gap:11px;align-items:center;color:#dfeaff;line-height:1.45}.side-block b{color:#4d8cff;font-size:11px}select,input{width:100%;background:#07111d;color:#fff;border:1px solid #24364c;border-radius:7px;padding:11px 12px}nav{margin-top:20px}nav a{display:block;padding:13px 15px;margin:6px 0;border-radius:9px;font-weight:800;color:#dce8fb;text-decoration:none}nav a.active{background:linear-gradient(180deg,#0871df,#06499c);box-shadow:inset 0 0 18px rgba(65,151,255,.35),0 0 16px rgba(29,128,255,.22)}.quote{border:1px solid #263d5a;border-radius:10px;padding:20px 15px;margin-top:25px;color:#4199ff;background:#091521;font-size:18px;line-height:1.35}.quote small{color:#899ab0}.version{color:#8955ff;font-weight:900;text-align:center;margin-top:26px}h1{font-size:33px;line-height:1;margin:0;font-weight:950}header p{color:#c7d5e8;margin:4px 0 14px}.metrics{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}.metric{min-height:92px;background:linear-gradient(180deg,rgba(17,29,43,.96),rgba(8,17,29,.96));border:1px solid var(--line);border-radius:10px;padding:14px 10px;display:flex;align-items:center;gap:9px;box-shadow:0 0 18px rgba(0,0,0,.22)}.mi{font-size:28px}.mlabel{font-size:11px;font-weight:900;text-transform:uppercase}.mvalue{font-size:21px;font-weight:950;margin-top:8px}.msub{font-size:12px;color:#b6c3d4}.blue{border-color:#125da4;box-shadow:0 0 16px rgba(20,120,255,.18)}.green{border-color:#126d39;box-shadow:0 0 16px rgba(33,195,91,.14)}.cyan{border-color:#177a83;box-shadow:0 0 16px rgba(37,215,222,.14)}.purple{border-color:#6330aa;box-shadow:0 0 16px rgba(141,69,255,.16)}.orange{border-color:#8f6512;box-shadow:0 0 16px rgba(255,174,34,.15)}.red{border-color:#874052;box-shadow:0 0 16px rgba(255,99,129,.14)}.grid{display:grid;gap:8px;margin-top:8px}.two{grid-template-columns:1fr 1fr}.three{grid-template-columns:1.35fr .8fr .7fr}.four{grid-template-columns:1.1fr 1.1fr .8fr .9fr}.panel{background:linear-gradient(180deg,rgba(17,29,43,.96),rgba(8,17,29,.96));border:1px solid #26384f;border-radius:10px;padding:14px;box-shadow:0 0 18px rgba(0,0,0,.22);overflow:hidden}h2{font-size:16px;margin:0 0 10px;text-transform:uppercase}.chart{width:100%;height:220px}.donut-wrap{display:flex;align-items:center;gap:8px}.donut{width:46%;min-width:165px}.legend{flex:1}.legend div{margin:8px 0;font-size:12px}.legend span{display:inline-block;width:11px;height:11px;margin-right:6px;border-radius:2px}.legend em{float:right;font-style:normal;color:#fff}.legend small{display:block;color:#9fb0c5;margin-left:21px}.gauge{text-align:center}.gauge svg{width:100%;max-height:165px}.gauge-num{font-size:30px;font-weight:900;margin-top:-22px}.badge{display:inline-block;background:#169c3a;border-radius:5px;padding:5px 22px;font-weight:800;margin:4px}.gauge-legend{display:flex;justify-content:center;gap:8px;margin:8px auto 5px;max-width:360px}.gauge-legend span{flex:1;border:1px solid #26384f;border-radius:6px;padding:5px 4px;font-size:11px;color:#dce8fb;text-align:center}.gauge-legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px}.lg-low{background:#f04b3d}.lg-mid{background:#ffcc21}.lg-high{background:#23b64a}table{width:100%;border-collapse:collapse;font-size:13px}th{background:#192434;color:#dce8fb;text-align:left;padding:8px}td{border-bottom:1px solid #1c2b3f;padding:7px;color:#edf4ff}.ops th,.ops td{white-space:nowrap}.warn{color:#ff6d6d;font-weight:800}.ok{color:#7df097}.button{display:block;margin:10px auto 0;text-align:center;max-width:245px;padding:8px 12px;background:#0b4c98;border:1px solid #2589ff;border-radius:7px;color:#fff;text-decoration:none;font-weight:800}.summary p{border-bottom:1px solid #1f2d40;padding:9px 0;margin:0}.summary b{float:right}.form{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}.labeled div span{display:block;color:#9fb8d8;font-size:11px;font-weight:900;text-transform:uppercase;margin:0 0 5px}.hint{display:block;color:#9fb0c5;margin-top:10px}.actions a{display:inline-grid;place-items:center;text-decoration:none;margin-right:8px;font-size:17px;color:#fff;border:1px solid #34506f;border-radius:6px;width:28px;height:28px;background:#111f31;font-weight:900}.actions a:hover{background:#1d3554}.badge.low{background:#b63131}.badge.mid{background:#b99a18;color:#101010}.badge.high{background:#169c3a}.danger{background:#7a1522!important;border-color:#ff6381!important}.edit-page{margin-left:0;max-width:1180px;margin-right:auto}.form button{background:linear-gradient(180deg,#0871df,#06499c);border:1px solid #278fff;color:white;font-weight:900;border-radius:8px;padding:11px}footer{position:fixed;left:0;right:0;bottom:0;background:#07111d;border-top:1px solid #26384f;color:#6d7d91;text-align:center;padding:8px;font-size:12px}@media(max-width:1100px){aside{position:relative;width:100%;height:auto}main{margin-left:0}.metrics,.two,.three,.four,.form{grid-template-columns:1fr}.donut-wrap{display:block}.donut{width:100%}footer{position:static}}'''
+:root{--bg:#050b13;--panel:#101a27;--panel2:#0b1420;--line:#24364c;--txt:#f4f7ff;--muted:#91a4bb;--blue:#1478ff;--green:#21c35b;--purple:#8d45ff;--orange:#ffae22;--red:#ff6381;--cyan:#25d7de}*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 45% 0%,#132035 0%,#07111e 45%,#03070d 100%);color:var(--txt);font-family:Inter,Segoe UI,Arial,sans-serif}aside{position:fixed;left:0;top:0;bottom:0;width:236px;background:linear-gradient(180deg,#081323,#03070d);border-right:1px solid #273a52;padding:22px 10px}main{margin-left:236px;padding:18px 18px 44px}.logo{display:flex;align-items:center;gap:12px}.brain{width:54px;height:54px;border:2px solid #4d8cff;border-radius:16px;display:grid;place-items:center;font-size:35px;color:#4d8cff;box-shadow:0 0 18px #1749b1}.brand{font-size:28px;font-weight:900;line-height:.95;letter-spacing:1px}.brand span,h1 span{color:#4d8cff}.strategy,label{display:block;margin:19px 0 9px;color:#4d8cff;font-size:12px;font-weight:900;letter-spacing:1.2px}.side-block{display:flex;gap:11px;align-items:center;color:#dfeaff;line-height:1.45}.side-block b{color:#4d8cff;font-size:11px}select,input{width:100%;background:#07111d;color:#fff;border:1px solid #24364c;border-radius:7px;padding:11px 12px}nav{margin-top:20px}nav a{display:block;padding:13px 15px;margin:6px 0;border-radius:9px;font-weight:800;color:#dce8fb;text-decoration:none}nav a.active{background:linear-gradient(180deg,#0871df,#06499c);box-shadow:inset 0 0 18px rgba(65,151,255,.35),0 0 16px rgba(29,128,255,.22)}.quote{border:1px solid #263d5a;border-radius:10px;padding:20px 15px;margin-top:25px;color:#4199ff;background:#091521;font-size:18px;line-height:1.35}.quote small{color:#899ab0}.version{color:#8955ff;font-weight:900;text-align:center;margin-top:26px}h1{font-size:33px;line-height:1;margin:0;font-weight:950}header p{color:#c7d5e8;margin:4px 0 14px}.metrics{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}.metric{min-height:92px;background:linear-gradient(180deg,rgba(17,29,43,.96),rgba(8,17,29,.96));border:1px solid var(--line);border-radius:10px;padding:14px 10px;display:flex;align-items:center;gap:9px;box-shadow:0 0 18px rgba(0,0,0,.22)}.mi{font-size:28px}.mlabel{font-size:11px;font-weight:900;text-transform:uppercase}.mvalue{font-size:21px;font-weight:950;margin-top:8px}.msub{font-size:12px;color:#b6c3d4}.blue{border-color:#125da4;box-shadow:0 0 16px rgba(20,120,255,.18)}.green{border-color:#126d39;box-shadow:0 0 16px rgba(33,195,91,.14)}.cyan{border-color:#177a83;box-shadow:0 0 16px rgba(37,215,222,.14)}.purple{border-color:#6330aa;box-shadow:0 0 16px rgba(141,69,255,.16)}.orange{border-color:#8f6512;box-shadow:0 0 16px rgba(255,174,34,.15)}.red{border-color:#874052;box-shadow:0 0 16px rgba(255,99,129,.14)}.grid{display:grid;gap:8px;margin-top:8px}.two{grid-template-columns:1fr 1fr}.three{grid-template-columns:1.35fr .8fr .7fr}.four{grid-template-columns:1.1fr 1.1fr .8fr .9fr}.panel{background:linear-gradient(180deg,rgba(17,29,43,.96),rgba(8,17,29,.96));border:1px solid #26384f;border-radius:10px;padding:14px;box-shadow:0 0 18px rgba(0,0,0,.22);overflow:auto}h2{font-size:16px;margin:0 0 10px;text-transform:uppercase}.chart{width:100%;height:220px}.donut-wrap{display:flex;align-items:center;gap:8px}.donut{width:46%;min-width:165px}.legend{flex:1}.legend div{margin:8px 0;font-size:12px}.legend span{display:inline-block;width:11px;height:11px;margin-right:6px;border-radius:2px}.legend em{float:right;font-style:normal;color:#fff}.legend small{display:block;color:#9fb0c5;margin-left:21px}.gauge{text-align:center}.gauge svg{width:100%;max-height:165px}.gauge-num{font-size:30px;font-weight:900;margin:0 0 -8px;position:relative;z-index:2}.badge{display:inline-block;background:#169c3a;border-radius:5px;padding:5px 22px;font-weight:800;margin:4px}.gauge-legend{display:flex;justify-content:center;gap:8px;margin:8px auto 5px;max-width:360px}.gauge-legend span{flex:1;border:1px solid #26384f;border-radius:6px;padding:5px 4px;font-size:11px;color:#dce8fb;text-align:center}.gauge-legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px}.lg-low{background:#f04b3d}.lg-mid{background:#ffcc21}.lg-high{background:#23b64a}table{width:100%;border-collapse:collapse;font-size:13px}th{background:#192434;color:#dce8fb;text-align:left;padding:8px}td{border-bottom:1px solid #1c2b3f;padding:7px;color:#edf4ff}.ops{min-width:1120px}.ops th,.ops td{white-space:nowrap}.ops th:last-child,.ops td.actions{position:sticky;right:0;background:#101a27;z-index:3;box-shadow:-8px 0 10px rgba(0,0,0,.25)}.warn{color:#ff6d6d;font-weight:800}.ok{color:#7df097}.button{display:block;margin:10px auto 0;text-align:center;max-width:245px;padding:8px 12px;background:#0b4c98;border:1px solid #2589ff;border-radius:7px;color:#fff;text-decoration:none;font-weight:800}.summary p{border-bottom:1px solid #1f2d40;padding:9px 0;margin:0}.summary b{float:right}.form{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}.labeled div span{display:block;color:#9fb8d8;font-size:11px;font-weight:900;text-transform:uppercase;margin:0 0 5px}.hint{display:block;color:#9fb0c5;margin-top:10px}.actions a{display:inline-grid;place-items:center;text-decoration:none;margin-right:8px;font-size:17px;color:#fff;border:1px solid #34506f;border-radius:6px;width:28px;height:28px;background:#111f31;font-weight:900}.actions a:hover{background:#1d3554}.badge.low{background:#b63131}.badge.mid{background:#b99a18;color:#101010}.badge.high{background:#169c3a}.danger{background:#7a1522!important;border-color:#ff6381!important}.edit-page{margin-left:0;max-width:1180px;margin-right:auto}.form button{background:linear-gradient(180deg,#0871df,#06499c);border:1px solid #278fff;color:white;font-weight:900;border-radius:8px;padding:11px}footer{position:fixed;left:0;right:0;bottom:0;background:#07111d;border-top:1px solid #26384f;color:#6d7d91;text-align:center;padding:8px;font-size:12px}@media(max-width:1100px){aside{position:relative;width:100%;height:auto}main{margin-left:0}.metrics,.two,.three,.four,.form{grid-template-columns:1fr}.donut-wrap{display:block}.donut{width:100%}footer{position:static}}'''
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
