@@ -277,12 +277,12 @@ def donut_chart(ops: List[Dict[str, object]]) -> str:
 
 def gauge(value: float, titulo: str = "ROI") -> str:
     v = min(max(value, 0), 5)
-    # Estética v1.8: arco segmentado em degradê vermelho → laranja → amarelo → verde.
+    # Velocímetro v1.9: mais compacto, sem deformação, com numeração correta acima do arco.
     def polar(cx: float, cy: float, r: float, deg: float) -> tuple[float, float]:
         rad = math.radians(deg)
         return cx + r * math.cos(rad), cy - r * math.sin(rad)
 
-    def arc_path(start_deg: float, end_deg: float, r: float = 96, cx: float = 130, cy: float = 132) -> str:
+    def arc_path(start_deg: float, end_deg: float, r: float = 88, cx: float = 130, cy: float = 126) -> str:
         x1, y1 = polar(cx, cy, r, start_deg)
         x2, y2 = polar(cx, cy, r, end_deg)
         large = 1 if abs(end_deg - start_deg) > 180 else 0
@@ -295,17 +295,17 @@ def gauge(value: float, titulo: str = "ROI") -> str:
     ]
     segs = []
     n = len(colors)
-    gap = 1.6
+    gap = 1.9
     for i, c in enumerate(colors):
         start = 180 - (i * 180 / n) - gap/2
         end = 180 - ((i + 1) * 180 / n) + gap/2
         segs.append(f'<path d="{arc_path(start, end)}" class="gauge-seg" stroke="{c}"/>')
 
     angle = 180 - (v / 5 * 180)
-    tip_x, tip_y = polar(130, 132, 79, angle)
-    base_lx, base_ly = polar(130, 132, 10, angle + 96)
-    base_rx, base_ry = polar(130, 132, 10, angle - 96)
-    needle = f'<polygon points="{tip_x:.1f},{tip_y:.1f} {base_lx:.1f},{base_ly:.1f} {base_rx:.1f},{base_ry:.1f}" fill="url(#needleGrad)" stroke="#f4f6fb" stroke-width="1.2"/>'
+    tip_x, tip_y = polar(130, 126, 74, angle)
+    base_lx, base_ly = polar(130, 126, 9, angle + 96)
+    base_rx, base_ry = polar(130, 126, 9, angle - 96)
+    needle = f'<polygon points="{tip_x:.1f},{tip_y:.1f} {base_lx:.1f},{base_ly:.1f} {base_rx:.1f},{base_ry:.1f}" fill="url(#needleGrad)" stroke="#f4f6fb" stroke-width="1.1"/>'
 
     if value <= 1.5:
         badge, cls = "BAIXO", "low"
@@ -313,29 +313,34 @@ def gauge(value: float, titulo: str = "ROI") -> str:
         badge, cls = "BOM", "mid"
     else:
         badge, cls = "EXCELENTE", "high"
-    return f"""<div class="gauge gauge-v18">
-    <svg viewBox="0 0 260 212" aria-label="{titulo}">
+
+    label_parts = []
+    for pct_label in range(0, 6):
+        deg = 180 - (pct_label / 5 * 180)
+        x, y = polar(130, 126, 112, deg)
+        # Pequeno ajuste nos extremos para manter o texto dentro do quadro.
+        if pct_label == 0:
+            x += 8
+        elif pct_label == 5:
+            x -= 8
+        label_parts.append(f'<text x="{x:.1f}" y="{y:.1f}" class="g-label">{pct_label}%</text>')
+
+    return f"""<div class="gauge gauge-v19">
+    <svg viewBox="0 0 260 192" aria-label="{titulo}">
       <defs>
         <linearGradient id="needleGrad" x1="0" x2="1" y1="0" y2="1">
           <stop stop-color="#ffffff"/><stop offset=".55" stop-color="#b8c0ca"/><stop offset="1" stop-color="#6d7580"/>
         </linearGradient>
       </defs>
-      <path d="{arc_path(180, 0, 100)}" class="gauge-back"/>
+      <path d="{arc_path(180, 0, 92)}" class="gauge-back"/>
       {''.join(segs)}
-      <path d="{arc_path(180, 0, 104)}" class="gauge-rim"/>
+      <path d="{arc_path(180, 0, 96)}" class="gauge-rim"/>
+      {''.join(label_parts)}
       {needle}
-      <circle cx="130" cy="132" r="7" fill="#091320" stroke="#9facbd" stroke-width="2"/>
-      <text x="34" y="151" class="g-label">0%</text>
-      <text x="60" y="88" class="g-label">1%</text>
-      <text x="91" y="43" class="g-label">1%</text>
-      <text x="130" y="32" class="g-label">2%</text>
-      <text x="171" y="43" class="g-label">3%</text>
-      <text x="202" y="88" class="g-label">4%</text>
-      <text x="226" y="151" class="g-label">5%</text>
-      <text x="130" y="169" class="g-value">{pct(value)}</text>
+      <circle cx="130" cy="126" r="6.5" fill="#091320" stroke="#9facbd" stroke-width="1.8"/>
+      <text x="130" y="164" class="g-value">{pct(value)}</text>
     </svg>
     <div class="badge {cls}">{badge}</div>
-    <small>Meta: &gt; 2,00%</small>
     </div>"""
 
 def metric_card(icon: str, label: str, value: str, sub: str, color: str) -> str:
@@ -398,23 +403,23 @@ def index():
     historico_table = "".join([f'<tr><td>{r["mes"]}</td><td>{brl(float(r["lucro"]))}</td><td>{brl(float(r["darf"]))}</td><td>{brl(float(r["premios"]))}</td><td>{pct(float(r["roi"]))} ↑</td></tr>' for r in reversed(hist_nonzero[-5:])])
     top_table = "".join([f'<tr><td>{o.get("Ativo")}</td><td>{o.get("Tipo")}</td><td>{brl(float(o["Strike_n"]))}</td><td>{brl(float(o["Premio_liquido"]))}</td><td>{pct(float(o["ROI"]))}</td></tr>' for o in top])
     html = f'''<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Cortex Invest PRO</title><style>{CSS}</style></head><body>
-    <aside><div class="logo"><div class="brain">✺</div><div class="brand">CORTEX<br><span>INVEST</span></div></div><div class="strategy">WHEEL STRATEGY</div><div class="side-block">📅<div><b>DATA ATUALIZAÇÃO</b><br>{datetime.now().strftime("%d/%m/%Y<br>%H:%M:%S")}</div></div><label>MÊS SELECIONADO</label><select><option>{ind["mes_atual"]}</option></select><nav><a class="active">▦ VISÃO GERAL</a><a>▧ OPERAÇÕES ABERTAS</a><a>▣ HISTÓRICO MENSAL</a><a>⌁ DESEMPENHO</a><a>⚙ ATIVOS</a><a>▤ RELATÓRIOS</a><a>⚙ CONFIGURAÇÕES</a></nav><div class="quote">“A consistência é o que transforma estratégia em patrimônio.”<br><small>– CORTEX INVEST</small></div><div class="version">VERSÃO 1.8</div></aside>
+    <aside><div class="logo"><div class="brain">✺</div><div class="brand">CORTEX<br><span>INVEST</span></div></div><div class="strategy">WHEEL STRATEGY</div><div class="side-block">📅<div><b>DATA ATUALIZAÇÃO</b><br>{datetime.now().strftime("%d/%m/%Y<br>%H:%M:%S")}</div></div><label>MÊS SELECIONADO</label><select><option>{ind["mes_atual"]}</option></select><nav><a class="active">▦ VISÃO GERAL</a><a>▧ OPERAÇÕES ABERTAS</a><a>▣ HISTÓRICO MENSAL</a><a>⌁ DESEMPENHO</a><a>⚙ ATIVOS</a><a>▤ RELATÓRIOS</a><a>⚙ CONFIGURAÇÕES</a></nav><div class="quote">“A consistência é o que transforma estratégia em patrimônio.”<br><small>– CORTEX INVEST</small></div><div class="version">VERSÃO 1.9</div></aside>
     <main><header><h1>DASHBOARD <span>WHEEL</span></h1><p>Painel automático com prêmios mensais, ROI abertas e histórico por mês</p></header>
     <section class="metrics">
     {metric_card('🎁','PRÊMIOS ACUMULADOS',brl(float(ind['premios_total'])),'Abertas + fechadas','purple')}{metric_card('🎯','ROI ABERTAS',pct(float(ind['roi_medio_abertas'])),'Média das abertas','green')}{metric_card('🔒','CAPITAL COMPROMETIDO',brl(float(ind['capital_comp'])),'Em operações abertas','green')}{metric_card('💼','CAIXA DISPONÍVEL',brl(float(ind['caixa_livre'])),'Para novas operações','blue')}{metric_card('📅','PRÓXIMO VENCIMENTO',prox_venc,prox_sub,'orange')}{metric_card('⭐','NOTA CORTEX',nota_cortex,'Média das abertas','cyan')}{metric_card('🏛️','DARF DO MÊS',brl(float(ind['darf'])),str(ind['mes_atual']),'red')}{metric_card('📈','LUCRO DO MÊS',brl(float(ind['lucro_mes'])),str(ind['mes_atual']),'orange')}
     </section>
     <section class="grid two"><div class="panel"><h2>EVOLUÇÃO DO LUCRO (R$)</h2>{line_chart(hist,'lucro')}</div><div class="panel"><h2>PRÊMIOS RECEBIDOS POR MÊS (R$)</h2>{bar_chart(hist,'premios')}</div></section>
     <section class="grid three"><div class="panel wide"><h2>EVOLUÇÃO DO PATRIMÔNIO (R$)</h2>{line_chart(hist,'patrimonio','#a85cff')}</div><div class="panel"><h2>VELOCÍMETRO ROI MÉDIO (FECHADAS)</h2>{gauge(float(ind['roi_medio_fechadas']), 'ROI fechadas')}</div><div class="panel"><h2>VELOCÍMETRO ROI MÉDIO (ABERTAS)</h2>{gauge(float(ind['roi_medio_abertas']), 'ROI abertas')}</div></section>
-    <section class="grid four"><div class="panel"><h2>HISTÓRICO MENSAL</h2><table><thead><tr><th>Mês</th><th>Lucro</th><th>DARF</th><th>Prêmios</th><th>ROI</th></tr></thead><tbody>{historico_table}</tbody></table></div><div class="panel"><h2>TOP 5 OPERAÇÕES ABERTAS</h2><table><thead><tr><th>Ativo</th><th>Tipo</th><th>Strike</th><th>Prêmio</th><th>ROI</th></tr></thead><tbody>{top_table}</tbody></table><a href="#ops" class="button">VER TODAS AS OPERAÇÕES →</a></div><div class="panel"><h2>DISTRIBUIÇÃO DOS PRÊMIOS ATIVOS</h2>{donut_chart(abertas)}</div><div class="panel summary"><h2>RESUMO GERAL</h2><p>▣ Total de Operações <b>{len(ops)}</b></p><p>▧ Operações Abertas <b>{ind['abertas']}</b></p><p>⊗ Operações Encerradas <b>{ind['encerradas']}</b></p><p>◴ Dias em Média (Abertas) <b>{(sum(float(o['Dias']) for o in abertas)/len(abertas)) if abertas else 0:.1f}</b></p><p>✪ Prêmio Médio por Operação <b>{brl((sum(float(o['Premio_liquido']) for o in abertas)/len(abertas)) if abertas else 0)}</b></p></div></section>
-    <section class="panel" id="ops"><h2>OPERAÇÕES ABERTAS</h2><table class="ops"><thead><tr><th>Ação</th><th>Opção</th><th>Tipo</th><th>Contratos</th><th>Strike</th><th>Prêmio líquido</th><th>Capital</th><th>Vencimento</th><th>Dias</th><th>ROI</th><th>Nota</th><th>Alerta</th><th>Ações</th></tr></thead><tbody>{rows_html(abertas)}</tbody></table></section>
+    <section class="grid four no-summary"><div class="panel"><h2>HISTÓRICO MENSAL</h2><table><thead><tr><th>Mês</th><th>Lucro</th><th>DARF</th><th>Prêmios</th><th>ROI</th></tr></thead><tbody>{historico_table}</tbody></table></div><div class="panel"><h2>TOP 5 OPERAÇÕES ABERTAS</h2><table><thead><tr><th>Ativo</th><th>Tipo</th><th>Strike</th><th>Prêmio</th><th>ROI</th></tr></thead><tbody>{top_table}</tbody></table><a href="#ops" class="button">VER TODAS AS OPERAÇÕES →</a></div><div class="panel"><h2>DISTRIBUIÇÃO DOS PRÊMIOS ATIVOS</h2>{donut_chart(abertas)}</div></section>
+    <section class="panel" id="ops"><h2>{ind['abertas']} OPERAÇÕES ABERTAS</h2><table class="ops"><thead><tr><th>Ação</th><th>Opção</th><th>Tipo</th><th>Contratos</th><th>Strike</th><th>Prêmio líquido</th><th>Capital</th><th>Vencimento</th><th>Dias</th><th>ROI</th><th>Nota</th><th>Alerta</th><th>Ações</th></tr></thead><tbody>{rows_html(abertas)}</tbody></table></section>
     <section class="panel"><h2>CADASTRAR NOVA OPERAÇÃO</h2><form method="post" action="/nova" class="form labeled">
       <div><span>Código da opção</span><input id="ativo" name="Ativo" placeholder="Ex: BBDCS167" required onblur="buscarCotacao()"></div>
+      <div><span>Strike real</span><input name="Strike" type="number" step="0.01" placeholder="Ex: 16,89"></div>
       <div><span>Tipo</span><select name="Tipo"><option>PUT</option><option>CALL</option></select></div>
       <div><span>Estratégia</span><select name="Estrategia"><option>Wheel</option><option>Pozinho</option></select></div>
       <div><span>Status</span><select name="Status"><option>Aberta</option><option>Encerrada</option></select></div>
       <div><span>Vencimento da opção</span><input type="date" name="Vencimento" required></div>
       <div><span>Contratos</span><input name="Contratos" type="number" min="1" value="1"></div>
-      <div><span>Strike real</span><input name="Strike" type="number" step="0.01" placeholder="Ex: 16,89"></div>
       <div><span>Prêmio por opção</span><input name="Premio_opcao" type="number" step="0.01" placeholder="Ex: 0,33"></div>
       <div><span>Custos</span><input name="Custos" type="number" step="0.01" value="1.07"></div>
       <div><span>IRRF</span><input name="IRRF" type="number" step="0.01" value="0.04"></div>
@@ -533,7 +538,7 @@ def excluir(oid: str):
 CSS = r'''
 :root{--bg:#050b13;--panel:#101a27;--panel2:#0b1420;--line:#24364c;--txt:#f4f7ff;--muted:#91a4bb;--blue:#1478ff;--green:#21c35b;--purple:#8d45ff;--orange:#ffae22;--red:#ff6381;--cyan:#25d7de}*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 45% 0%,#132035 0%,#07111e 45%,#03070d 100%);color:var(--txt);font-family:Inter,Segoe UI,Arial,sans-serif}aside{position:fixed;left:0;top:0;bottom:0;width:236px;background:linear-gradient(180deg,#081323,#03070d);border-right:1px solid #273a52;padding:22px 10px}main{margin-left:236px;padding:18px 18px 44px}.logo{display:flex;align-items:center;gap:12px}.brain{width:54px;height:54px;border:2px solid #4d8cff;border-radius:16px;display:grid;place-items:center;font-size:35px;color:#4d8cff;box-shadow:0 0 18px #1749b1}.brand{font-size:28px;font-weight:900;line-height:.95;letter-spacing:1px}.brand span,h1 span{color:#4d8cff}.strategy,label{display:block;margin:19px 0 9px;color:#4d8cff;font-size:12px;font-weight:900;letter-spacing:1.2px}.side-block{display:flex;gap:11px;align-items:center;color:#dfeaff;line-height:1.45}.side-block b{color:#4d8cff;font-size:11px}select,input{width:100%;background:#07111d;color:#fff;border:1px solid #24364c;border-radius:7px;padding:11px 12px}nav{margin-top:20px}nav a{display:block;padding:13px 15px;margin:6px 0;border-radius:9px;font-weight:800;color:#dce8fb;text-decoration:none}nav a.active{background:linear-gradient(180deg,#0871df,#06499c);box-shadow:inset 0 0 18px rgba(65,151,255,.35),0 0 16px rgba(29,128,255,.22)}.quote{border:1px solid #263d5a;border-radius:10px;padding:20px 15px;margin-top:25px;color:#4199ff;background:#091521;font-size:18px;line-height:1.35}.quote small{color:#899ab0}.version{color:#8955ff;font-weight:900;text-align:center;margin-top:26px}h1{font-size:33px;line-height:1;margin:0;font-weight:950}header p{color:#c7d5e8;margin:4px 0 14px}.metrics{display:grid;grid-template-columns:repeat(8,1fr);gap:8px}.metric{min-height:92px;background:linear-gradient(180deg,rgba(17,29,43,.96),rgba(8,17,29,.96));border:1px solid var(--line);border-radius:10px;padding:14px 10px;display:flex;align-items:center;gap:9px;box-shadow:0 0 18px rgba(0,0,0,.22)}.mi{font-size:28px}.mlabel{font-size:11px;font-weight:900;text-transform:uppercase}.mvalue{font-size:21px;font-weight:950;margin-top:8px}.msub{font-size:12px;color:#b6c3d4}.blue{border-color:#125da4;box-shadow:0 0 16px rgba(20,120,255,.18)}.green{border-color:#126d39;box-shadow:0 0 16px rgba(33,195,91,.14)}.cyan{border-color:#177a83;box-shadow:0 0 16px rgba(37,215,222,.14)}.purple{border-color:#6330aa;box-shadow:0 0 16px rgba(141,69,255,.16)}.orange{border-color:#8f6512;box-shadow:0 0 16px rgba(255,174,34,.15)}.red{border-color:#874052;box-shadow:0 0 16px rgba(255,99,129,.14)}.grid{display:grid;gap:8px;margin-top:8px}.two{grid-template-columns:1fr 1fr}.three{grid-template-columns:1.35fr .8fr .7fr}.four{grid-template-columns:1.1fr 1.1fr .8fr .9fr}.panel{background:linear-gradient(180deg,rgba(17,29,43,.96),rgba(8,17,29,.96));border:1px solid #26384f;border-radius:10px;padding:14px;box-shadow:0 0 18px rgba(0,0,0,.22);overflow:auto}h2{font-size:16px;margin:0 0 10px;text-transform:uppercase}.chart{width:100%;height:220px}.donut-wrap{display:flex;align-items:center;gap:8px}.donut{width:46%;min-width:165px}.legend{flex:1}.legend div{margin:8px 0;font-size:12px}.legend span{display:inline-block;width:11px;height:11px;margin-right:6px;border-radius:2px}.legend em{float:right;font-style:normal;color:#fff}.legend small{display:block;color:#9fb0c5;margin-left:21px}.gauge{text-align:center}.gauge svg{width:100%;max-height:165px}.gauge-num{font-size:30px;font-weight:900;margin:0 0 4px;position:relative;z-index:2}.badge{display:inline-block;background:#169c3a;border-radius:5px;padding:5px 22px;font-weight:800;margin:4px}.gauge-legend{display:flex;justify-content:center;gap:8px;margin:8px auto 5px;max-width:360px}.gauge-legend span{flex:1;border:1px solid #26384f;border-radius:6px;padding:5px 4px;font-size:11px;color:#dce8fb;text-align:center}.gauge-legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px}.lg-low{background:#f04b3d}.lg-mid{background:#ffcc21}.lg-high{background:#23b64a}table{width:100%;border-collapse:collapse;font-size:13px}th{background:#192434;color:#dce8fb;text-align:left;padding:8px}td{border-bottom:1px solid #1c2b3f;padding:7px;color:#edf4ff}.ops{min-width:1120px}.ops th,.ops td{white-space:nowrap}.ops th:last-child,.ops td.actions{position:sticky;right:0;background:#101a27;z-index:3;box-shadow:-8px 0 10px rgba(0,0,0,.25)}.warn{color:#ff6d6d;font-weight:800}.ok{color:#7df097}.button{display:block;margin:10px auto 0;text-align:center;max-width:245px;padding:8px 12px;background:#0b4c98;border:1px solid #2589ff;border-radius:7px;color:#fff;text-decoration:none;font-weight:800}.summary p{border-bottom:1px solid #1f2d40;padding:9px 0;margin:0}.summary b{float:right}.form{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}.labeled div span{display:block;color:#9fb8d8;font-size:11px;font-weight:900;text-transform:uppercase;margin:0 0 5px}.hint{display:block;color:#9fb0c5;margin-top:10px}.actions a{display:inline-grid;place-items:center;text-decoration:none;margin-right:8px;font-size:17px;color:#fff;border:1px solid #34506f;border-radius:6px;width:28px;height:28px;background:#111f31;font-weight:900}.actions a:hover{background:#1d3554}.badge.low{background:#b63131}.badge.mid{background:#b99a18;color:#101010}.badge.high{background:#169c3a}.danger{background:#7a1522!important;border-color:#ff6381!important}.edit-page{margin-left:0;max-width:1180px;margin-right:auto}.form button{background:linear-gradient(180deg,#0871df,#06499c);border:1px solid #278fff;color:white;font-weight:900;border-radius:8px;padding:11px}footer{position:fixed;left:0;right:0;bottom:0;background:#07111d;border-top:1px solid #26384f;color:#6d7d91;text-align:center;padding:8px;font-size:12px}@media(max-width:1350px){.metrics{grid-template-columns:repeat(4,1fr)}}@media(max-width:1100px){aside{position:relative;width:100%;height:auto}main{margin-left:0}.two,.three,.four,.form{grid-template-columns:1fr}.metrics{grid-template-columns:repeat(2,1fr)}.donut-wrap{display:block}.donut{width:100%}footer{position:static}}@media(max-width:640px){.metrics{grid-template-columns:1fr}.actions a{width:34px;height:34px;font-size:20px}.ops{min-width:1180px}}
 /* v1.8 - velocímetro premium */
-.gauge-v18{position:relative;padding-top:2px}.gauge-v18 svg{width:100%;max-height:245px;filter:drop-shadow(0 0 10px rgba(10,115,255,.15))}.gauge-v18 .gauge-back{fill:none;stroke:#07101b;stroke-width:34;stroke-linecap:butt}.gauge-v18 .gauge-rim{fill:none;stroke:#43566d;stroke-width:2.4;opacity:.9}.gauge-v18 .gauge-seg{fill:none;stroke-width:20;stroke-linecap:butt;filter:drop-shadow(0 0 5px rgba(255,220,30,.18))}.gauge-v18 .g-label{fill:#f4f7ff;font-size:14px;font-weight:900;text-anchor:middle;paint-order:stroke;stroke:#07101b;stroke-width:3px}.gauge-v18 .g-value{fill:#f8fbff;font-size:32px;font-weight:950;text-anchor:middle;letter-spacing:.5px;paint-order:stroke;stroke:#07101b;stroke-width:3px}.gauge-v18 .badge{min-width:118px;border:1px solid #69ff35;background:linear-gradient(180deg,rgba(9,35,28,.98),rgba(6,18,20,.98));color:#78ff25;border-radius:9px;padding:6px 26px;font-size:19px;box-shadow:inset 0 0 18px rgba(61,255,30,.08),0 0 14px rgba(79,255,30,.12)}.gauge-v18 .badge.low{border-color:#ff3b2f;color:#ff584d;background:rgba(35,12,13,.96)}.gauge-v18 .badge.mid{border-color:#82ff2e;color:#82ff2e;background:rgba(8,30,22,.96)}.gauge-v18 .badge.high{border-color:#38ff6c;color:#38ff6c;background:rgba(6,38,22,.96)}.gauge-v18 small{display:block;color:#dfe8f7;font-size:15px;font-weight:800;margin-top:6px}.panel:has(.gauge-v18){border-color:#245886;box-shadow:inset 0 0 38px rgba(18,94,170,.08),0 0 20px rgba(0,0,0,.28)}
+.no-summary{grid-template-columns:1.1fr 1.1fr .9fr}.gauge-v19{position:relative;padding-top:0}.gauge-v19 svg{width:100%;max-height:205px;filter:drop-shadow(0 0 10px rgba(10,115,255,.15))}.gauge-v19 .gauge-back{fill:none;stroke:#07101b;stroke-width:30;stroke-linecap:butt}.gauge-v19 .gauge-rim{fill:none;stroke:#43566d;stroke-width:2.2;opacity:.9}.gauge-v19 .gauge-seg{fill:none;stroke-width:17.5;stroke-linecap:butt;filter:drop-shadow(0 0 5px rgba(255,220,30,.18))}.gauge-v19 .g-label{fill:#f4f7ff;font-size:13px;font-weight:900;text-anchor:middle;paint-order:stroke;stroke:#07101b;stroke-width:3px}.gauge-v19 .g-value{fill:#f8fbff;font-size:31px;font-weight:950;text-anchor:middle;letter-spacing:.5px;paint-order:stroke;stroke:#07101b;stroke-width:3px}.gauge-v19 .badge{min-width:118px;border:1px solid #69ff35;background:linear-gradient(180deg,rgba(9,35,28,.98),rgba(6,18,20,.98));color:#78ff25;border-radius:9px;padding:5px 24px;font-size:18px;box-shadow:inset 0 0 18px rgba(61,255,30,.08),0 0 14px rgba(79,255,30,.12)}.gauge-v19 .badge.low{border-color:#ff3b2f;color:#ff584d;background:rgba(35,12,13,.96)}.gauge-v19 .badge.mid{border-color:#82ff2e;color:#82ff2e;background:rgba(8,30,22,.96)}.gauge-v19 .badge.high{border-color:#38ff6c;color:#38ff6c;background:rgba(6,38,22,.96)}.panel:has(.gauge-v19){border-color:#245886;box-shadow:inset 0 0 38px rgba(18,94,170,.08),0 0 20px rgba(0,0,0,.28)}
 '''
 
 if __name__ == "__main__":
