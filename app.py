@@ -437,8 +437,8 @@ def index():
     hist_nonzero = [r for r in hist if float(r["lucro"]) or float(r["premios"] or 0)]
     historico_table = "".join([f'<tr><td>{r["mes"]}</td><td>{brl(float(r["lucro"]))}</td><td>{brl(float(r["darf"]))}</td><td>{brl(float(r["premios"]))}</td><td>{pct(float(r["roi"]))} ↑</td></tr>' for r in reversed(hist_nonzero[-5:])])
     top_table = "".join([f'<tr><td>{o.get("Ativo")}</td><td>{o.get("Tipo")}</td><td>{brl(float(o["Strike_n"]))}</td><td>{brl(float(o["Premio_liquido"]))}</td><td>{pct(float(o["ROI"]))}</td></tr>' for o in top])
-    html = f'''<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Cortex Invest PRO v3.2.2</title><style>{CSS}</style></head><body>
-    <aside><div class="logo"><div class="brain">✺</div><div class="brand">CORTEX<br><span>INVEST</span></div></div><div class="strategy">WHEEL STRATEGY</div><div class="side-block">📅<div><b>DATA ATUALIZAÇÃO</b><br>{datetime.now().strftime("%d/%m/%Y<br>%H:%M:%S")}</div></div><label>MÊS SELECIONADO</label><select><option>{ind["mes_atual"]}</option></select><nav><a class="active">▦ Dashboard</a><a>▧ Operações Abertas</a><a href='/op-fechadas'>Operações Fechadas</a><a>◫ Op. Fechadas</a><a>▣ Histórico</a><a>⌁ Desempenho</a><a>⚙ Ativos</a><a>▤ Relatórios</a><a>⚙ Configurações</a></nav><div class="quote">“A consistência é o que transforma estratégia em patrimônio.”<br><small>– CORTEX INVEST</small></div><div class="version">VERSÃO 3.2.2</div></aside>
+    html = f'''<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Cortex Invest PRO v3.2.3</title><style>{CSS}</style></head><body>
+    <aside><div class="logo"><div class="brain">✺</div><div class="brand">CORTEX<br><span>INVEST</span></div></div><div class="strategy">WHEEL STRATEGY</div><div class="side-block">📅<div><b>DATA ATUALIZAÇÃO</b><br>{datetime.now().strftime("%d/%m/%Y<br>%H:%M:%S")}</div></div><label>MÊS SELECIONADO</label><select><option>{ind["mes_atual"]}</option></select><nav><a class="active">▦ Dashboard</a><a>▧ Operações Abertas</a><a href='/op-fechadas'>Operações Fechadas</a><a>◫ Op. Fechadas</a><a>▣ Histórico</a><a>⌁ Desempenho</a><a>⚙ Ativos</a><a>▤ Relatórios</a><a>⚙ Configurações</a></nav><div class="quote">“A consistência é o que transforma estratégia em patrimônio.”<br><small>– CORTEX INVEST</small></div><div class="version">VERSÃO 3.2.3</div></aside>
     <main><header><h1>DASHBOARD <span>WHEEL</span></h1><p>Painel automático com prêmios mensais, ROI abertas e histórico por mês</p></header>
     <section class="metrics">
     {metric_card('🎁','PRÊMIOS ACUMULADOS',brl(float(ind['premios_total'])),'Abertas + fechadas','purple')}{metric_card('🎯','ROI ABERTAS',pct(float(ind['roi_medio_abertas'])),'Média das abertas','green')}{metric_card('🔒','CAPITAL COMPROMETIDO',brl(float(ind['capital_comp'])),'Em operações abertas','green')}{metric_card('💼','CAIXA DISPONÍVEL',brl(float(ind['caixa_livre'])),'Para novas operações','blue')}{metric_card('📅','PRÓXIMO VENCIMENTO',prox_venc,prox_sub,'orange')}{metric_card('⭐','NOTA CORTEX',nota_cortex,'Média das abertas','cyan')}{metric_card('🏛️','DARF DO MÊS',brl(float(ind['darf'])),str(ind['mes_atual']),'red')}{metric_card('📈','LUCRO DO MÊS',brl(float(ind['lucro_mes'])),str(ind['mes_atual']),'orange')}
@@ -658,7 +658,7 @@ def op_fechadas():
 
     return f'''<!doctype html>
     <html lang="pt-BR"><head><meta charset="utf-8">
-    <title>Cortex Invest PRO v3.2.2 - Operações Fechadas</title>
+    <title>Cortex Invest PRO v3.2.3 - Operações Fechadas</title>
     <style>{CSS}</style></head>
     <body>
     <main style="margin-left:0;padding:25px">
@@ -719,6 +719,19 @@ def restaurar_db_info():
     '''
 # ===== fim Backup SQLite =====
 
+
+@app.route('/backup')
+def backup_center():
+    return '''
+    <html><head><title>Cortex Invest PRO v3.2.3 - Backup</title></head>
+    <body style="font-family:Arial;background:#07111d;color:white;padding:30px">
+    <h1>💾 Central de Backup</h1>
+    <p>Proteja suas operações reais baixando o banco regularmente.</p>
+    <p><a href="/backup-db">⬇️ Baixar Backup do Banco (cortex.db)</a></p>
+    <p><a href="/">← Voltar ao Dashboard</a></p>
+    </body></html>
+    '''
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
 
@@ -730,3 +743,10 @@ if __name__ == "__main__":
 
 # v2.9.1 OP_FECHADAS_TEMPLATE
 # return render_template('op_fechadas_v291.html') na rota /op-fechadas
+
+
+# MENU_V323
+# Novo item sugerido para a barra lateral:
+# 💾 Backup -> /backup
+# Estilo recomendado:
+# Dashboard | Op. Abertas | Op. Fechadas | Histórico | Backup | Configurações
