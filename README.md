@@ -16,3 +16,11 @@
 - Adicionado o menu lateral "Op. Fechadas".
 - Preparada a estrutura para a página de Operações Fechadas.
 - Removidos arquivos auxiliares de versão e changelog.
+
+
+## Versão 2.8
+- Preparação da nova barra lateral com visual moderno.
+- Inclusão do menu Operações Fechadas.
+- Ajustes de nomenclatura dos menus.
+- Preparação da página Operações Fechadas.
+- Atualização de referências para v2.8.
