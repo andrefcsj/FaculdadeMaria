@@ -10,3 +10,9 @@
 - Estrutura inicial da página Op. Fechadas.
 - Preparação de gráficos, ROI e velocímetro para operações fechadas.
 - Primeira etapa da modernização visual do dashboard.
+
+
+## Versão 2.7
+- Adicionado o menu lateral "Op. Fechadas".
+- Preparada a estrutura para a página de Operações Fechadas.
+- Removidos arquivos auxiliares de versão e changelog.
