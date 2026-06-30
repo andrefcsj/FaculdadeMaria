@@ -406,8 +406,8 @@ def index():
     hist_nonzero = [r for r in hist if float(r["lucro"]) or float(r["premios"] or 0)]
     historico_table = "".join([f'<tr><td>{r["mes"]}</td><td>{brl(float(r["lucro"]))}</td><td>{brl(float(r["darf"]))}</td><td>{brl(float(r["premios"]))}</td><td>{pct(float(r["roi"]))} ↑</td></tr>' for r in reversed(hist_nonzero[-5:])])
     top_table = "".join([f'<tr><td>{o.get("Ativo")}</td><td>{o.get("Tipo")}</td><td>{brl(float(o["Strike_n"]))}</td><td>{brl(float(o["Premio_liquido"]))}</td><td>{pct(float(o["ROI"]))}</td></tr>' for o in top])
-    html = f'''<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Cortex Invest PRO v2.9</title><style>{CSS}</style></head><body>
-    <aside><div class="logo"><div class="brain">✺</div><div class="brand">CORTEX<br><span>INVEST</span></div></div><div class="strategy">WHEEL STRATEGY</div><div class="side-block">📅<div><b>DATA ATUALIZAÇÃO</b><br>{datetime.now().strftime("%d/%m/%Y<br>%H:%M:%S")}</div></div><label>MÊS SELECIONADO</label><select><option>{ind["mes_atual"]}</option></select><nav><a class="active">▦ Dashboard</a><a>▧ Operações Abertas</a><a href='/op-fechadas'>Operações Fechadas</a><a>◫ Op. Fechadas</a><a>▣ Histórico</a><a>⌁ Desempenho</a><a>⚙ Ativos</a><a>▤ Relatórios</a><a>⚙ Configurações</a></nav><div class="quote">“A consistência é o que transforma estratégia em patrimônio.”<br><small>– CORTEX INVEST</small></div><div class="version">VERSÃO 2.9</div></aside>
+    html = f'''<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Cortex Invest PRO v2.9.2</title><style>{CSS}</style></head><body>
+    <aside><div class="logo"><div class="brain">✺</div><div class="brand">CORTEX<br><span>INVEST</span></div></div><div class="strategy">WHEEL STRATEGY</div><div class="side-block">📅<div><b>DATA ATUALIZAÇÃO</b><br>{datetime.now().strftime("%d/%m/%Y<br>%H:%M:%S")}</div></div><label>MÊS SELECIONADO</label><select><option>{ind["mes_atual"]}</option></select><nav><a class="active">▦ Dashboard</a><a>▧ Operações Abertas</a><a href='/op-fechadas'>Operações Fechadas</a><a>◫ Op. Fechadas</a><a>▣ Histórico</a><a>⌁ Desempenho</a><a>⚙ Ativos</a><a>▤ Relatórios</a><a>⚙ Configurações</a></nav><div class="quote">“A consistência é o que transforma estratégia em patrimônio.”<br><small>– CORTEX INVEST</small></div><div class="version">VERSÃO 2.9.2</div></aside>
     <main><header><h1>DASHBOARD <span>WHEEL</span></h1><p>Painel automático com prêmios mensais, ROI abertas e histórico por mês</p></header>
     <section class="metrics">
     {metric_card('🎁','PRÊMIOS ACUMULADOS',brl(float(ind['premios_total'])),'Abertas + fechadas','purple')}{metric_card('🎯','ROI ABERTAS',pct(float(ind['roi_medio_abertas'])),'Média das abertas','green')}{metric_card('🔒','CAPITAL COMPROMETIDO',brl(float(ind['capital_comp'])),'Em operações abertas','green')}{metric_card('💼','CAIXA DISPONÍVEL',brl(float(ind['caixa_livre'])),'Para novas operações','blue')}{metric_card('📅','PRÓXIMO VENCIMENTO',prox_venc,prox_sub,'orange')}{metric_card('⭐','NOTA CORTEX',nota_cortex,'Média das abertas','cyan')}{metric_card('🏛️','DARF DO MÊS',brl(float(ind['darf'])),str(ind['mes_atual']),'red')}{metric_card('📈','LUCRO DO MÊS',brl(float(ind['lucro_mes'])),str(ind['mes_atual']),'orange')}
@@ -583,47 +583,66 @@ button,.button{
 
 
 
+
 @app.route('/op-fechadas')
 def op_fechadas():
-    ops, fechadas, cfg = load_all()
-    total_lucro = 0.0
-    mensal = {}
-    linhas = []
-    for f in fechadas:
-        lucro = fnum(f.get('Premio_liquido'), fnum(f.get('Lucro_tributavel'), fnum(f.get('Resultado_final'),0)))
-        total_lucro += lucro
-        mes = f.get('Mes','Sem mês')
-        mensal[mes] = mensal.get(mes,0) + lucro
-        linhas.append(f"<tr><td>{f.get('Ativo','')}</td><td>{f.get('Tipo','')}</td><td>{brl(lucro)}</td><td>{mes}</td><td class='actions'><a title='Editar'>✎</a><a title='Excluir'>×</a><a title='Reabrir'>↩</a></td></tr>")
-    lucro_mes = mensal.get(current_month_label(),0)
-    tabela = ''.join(linhas) if linhas else "<tr><td colspan='5'>Nenhuma operação fechada.</td></tr>"
-    return f'''<!doctype html>
-    <html lang="pt-BR"><head><meta charset="utf-8"><title>Cortex Invest PRO v2.8 - Operações Fechadas</title><style>{CSS}</style></head>
+    html = f'''<!doctype html>
+    <html lang="pt-BR"><head><meta charset="utf-8">
+    <title>Cortex Invest PRO v2.9.2 - Operações Fechadas</title>
+    <style>{CSS}</style></head>
     <body>
     <main style="margin-left:0;padding:25px">
       <h1>Operações <span>Fechadas</span></h1>
+      <p style="color:#b8c6d8">Novo layout em Fase 1.</p>
+
+      <p><select style="max-width:260px"><option>Todos os meses</option></select></p>
+
       <section class="metrics">
-        {metric_card('💰','LUCRO DO MÊS',brl(lucro_mes),current_month_label(),'green')}
-        {metric_card('🏦','LUCRO ACUMULADO',brl(total_lucro),'Todas as operações','purple')}
-        {metric_card('📁','TOTAL FECHADAS',str(len(fechadas)),'Operações encerradas','blue')}
+        ''' + metric_card('🎯','ROI MÉDIO','--','Fase 2','green') + '''
+        ''' + metric_card('🎁','PRÊMIOS RECEBIDOS','--','Fase 2','purple') + '''
+        ''' + metric_card('🏛️','DARF A PAGAR','--','Fase 2','red') + '''
+        ''' + metric_card('✅','DARF PAGO','--','Fase 2','blue') + '''
+        ''' + metric_card('💰','LUCRO LÍQUIDO','--','Fase 2','orange') + '''
+        ''' + metric_card('📁','OP. FECHADAS','--','Fase 2','cyan') + '''
       </section>
-      <section class="grid two" style="margin-top:15px">
-        <div class="panel"><h2>Resumo</h2><p>As operações fechadas agora possuem área própria para análise e manutenção.</p></div>
-        <div class="panel"><h2>Conselho Cortex</h2><p>Adicionar filtros por mês, ativo e estratégia será muito útil quando o histórico crescer.</p></div>
+
+      <section class="grid four" style="margin-top:15px">
+        <div class="panel"><h2>Velocímetro ROI</h2><div style="padding:40px;text-align:center">Em construção</div></div>
+        <div class="panel"><h2>ROI Mensal</h2><div style="padding:40px;text-align:center">Gráfico</div></div>
+        <div class="panel"><h2>Distribuição dos Prêmios</h2><div style="padding:40px;text-align:center">Gráfico</div></div>
+        <div class="panel"><h2>DARF do Mês</h2><div style="padding:40px;text-align:center">Resumo</div></div>
       </section>
+
       <section class="panel" style="margin-top:15px">
         <h2>Operações Fechadas</h2>
         <table class="ops">
-        <thead><tr><th>Ativo</th><th>Tipo</th><th>Lucro</th><th>Mês</th><th>Ações</th></tr></thead>
-        <tbody>{tabela}</tbody>
+          <thead>
+            <tr>
+              <th>Ação</th><th>Opção</th><th>Strike</th><th>Tipo</th>
+              <th>Contratos</th><th>Prêmio</th><th>Capital</th>
+              <th>Data Fechamento</th><th>ROI</th><th>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td colspan="10">Os dados reais serão ligados na Fase 2.</td></tr>
+          </tbody>
         </table>
       </section>
+
+      <section class="grid four" style="margin-top:15px">
+        <div class="panel"><h2>🏆 Melhor Operação</h2></div>
+        <div class="panel"><h2>📉 Pior Operação</h2></div>
+        <div class="panel"><h2>💰 Ativo Mais Lucrativo</h2></div>
+        <div class="panel"><h2>📅 Melhor Mês</h2></div>
+      </section>
+
       <p style="margin-top:20px"><a class="button" href="/">Voltar ao Dashboard</a></p>
     </main>
     </body></html>'''
-
+    return html
 
 if __name__ == "__main__":
+
     app.run(host="0.0.0.0", port=10000)
 
 # TODO v2.7: página Op. Fechadas e velocímetro meta 5%
