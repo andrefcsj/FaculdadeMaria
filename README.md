@@ -26,3 +26,9 @@
 - Atualização de referências para v2.8.
 
 - Página de Operações Fechadas aprimorada com lucro mensal, acumulado e ações.
+
+
+## Versão 2.9
+- Melhorias visuais na barra lateral.
+- Página Operações Fechadas evoluída.
+- Filtros, exportação e Hall da Fama preparados.
