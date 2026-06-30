@@ -4,6 +4,8 @@ import csv
 import math
 import json
 import sqlite3
+import os
+import psycopg2
 from datetime import date, datetime
 from pathlib import Path
 from typing import Dict, List, Tuple
@@ -18,7 +20,13 @@ CONFIG = DATA / "config.csv"
 DB = DATA / "cortex.db"
 
 app = Flask(__name__)
+DATABASE_URL = os.getenv("DATABASE_URL")
+USE_POSTGRES = bool(DATABASE_URL)
 
+def get_pg_conn():
+    if not DATABASE_URL:
+        raise RuntimeError("DATABASE_URL não configurada.")
+    return psycopg2.connect(DATABASE_URL)
 
 
 def init_db():
