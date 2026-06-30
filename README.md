@@ -32,3 +32,7 @@
 - Arquitetura simplificada usando apenas operacoes.csv.
 - Operações abertas e fechadas separadas pelo campo Status.
 - Preparação para reabertura, filtros por mês e dashboard de fechadas.
+
+
+## Fase 1 Integrada
+- Novo layout de Operações Fechadas incluído no projeto para integração visual.
