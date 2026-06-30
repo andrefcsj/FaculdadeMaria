@@ -309,9 +309,11 @@ def gauge(value: float, titulo: str = "ROI") -> str:
 
     if value < 1:
         badge, cls = "RUIM", "low"
-    elif value < 2:
+    elif value < 2.5:
+        badge, cls = "REGULAR", "mid"
+    elif value < 4:
         badge, cls = "BOM", "mid"
-    elif value < 3:
+    elif value < 5:
         badge, cls = "ÓTIMO", "high"
     else:
         badge, cls = "EXCELENTE", "high"
@@ -405,7 +407,7 @@ def index():
     historico_table = "".join([f'<tr><td>{r["mes"]}</td><td>{brl(float(r["lucro"]))}</td><td>{brl(float(r["darf"]))}</td><td>{brl(float(r["premios"]))}</td><td>{pct(float(r["roi"]))} ↑</td></tr>' for r in reversed(hist_nonzero[-5:])])
     top_table = "".join([f'<tr><td>{o.get("Ativo")}</td><td>{o.get("Tipo")}</td><td>{brl(float(o["Strike_n"]))}</td><td>{brl(float(o["Premio_liquido"]))}</td><td>{pct(float(o["ROI"]))}</td></tr>' for o in top])
     html = f'''<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Cortex Invest PRO v2.7</title><style>{CSS}</style></head><body>
-    <aside><div class="logo"><div class="brain">✺</div><div class="brand">CORTEX<br><span>INVEST</span></div></div><div class="strategy">WHEEL STRATEGY</div><div class="side-block">📅<div><b>DATA ATUALIZAÇÃO</b><br>{datetime.now().strftime("%d/%m/%Y<br>%H:%M:%S")}</div></div><label>MÊS SELECIONADO</label><select><option>{ind["mes_atual"]}</option></select><nav><a class="active">▦ VISÃO GERAL</a><a>▧ Op. Abertas</a><a>▣ Histórico</a><a>⌁ DESEMPENHO</a><a>⚙ ATIVOS</a><a>▤ RELATÓRIOS</a><a>⚙ CONFIGURAÇÕES</a></nav><div class="quote">“A consistência é o que transforma estratégia em patrimônio.”<br><small>– CORTEX INVEST</small></div><div class="version">VERSÃO 2.7</div></aside>
+    <aside><div class="logo"><div class="brain">✺</div><div class="brand">CORTEX<br><span>INVEST</span></div></div><div class="strategy">WHEEL STRATEGY</div><div class="side-block">📅<div><b>DATA ATUALIZAÇÃO</b><br>{datetime.now().strftime("%d/%m/%Y<br>%H:%M:%S")}</div></div><label>MÊS SELECIONADO</label><select><option>{ind["mes_atual"]}</option></select><nav><a class="active">▦ VISÃO GERAL</a><a>▧ Op. Abertas</a><a>◫ Op. Fechadas</a><a>▣ Histórico</a><a>⌁ DESEMPENHO</a><a>⚙ ATIVOS</a><a>▤ RELATÓRIOS</a><a>⚙ CONFIGURAÇÕES</a></nav><div class="quote">“A consistência é o que transforma estratégia em patrimônio.”<br><small>– CORTEX INVEST</small></div><div class="version">VERSÃO 2.7</div></aside>
     <main><header><h1>DASHBOARD <span>WHEEL</span></h1><p>Painel automático com prêmios mensais, ROI abertas e histórico por mês</p></header>
     <section class="metrics">
     {metric_card('🎁','PRÊMIOS ACUMULADOS',brl(float(ind['premios_total'])),'Abertas + fechadas','purple')}{metric_card('🎯','ROI ABERTAS',pct(float(ind['roi_medio_abertas'])),'Média das abertas','green')}{metric_card('🔒','CAPITAL COMPROMETIDO',brl(float(ind['capital_comp'])),'Em operações abertas','green')}{metric_card('💼','CAIXA DISPONÍVEL',brl(float(ind['caixa_livre'])),'Para novas operações','blue')}{metric_card('📅','PRÓXIMO VENCIMENTO',prox_venc,prox_sub,'orange')}{metric_card('⭐','NOTA CORTEX',nota_cortex,'Média das abertas','cyan')}{metric_card('🏛️','DARF DO MÊS',brl(float(ind['darf'])),str(ind['mes_atual']),'red')}{metric_card('📈','LUCRO DO MÊS',brl(float(ind['lucro_mes'])),str(ind['mes_atual']),'orange')}
@@ -578,6 +580,23 @@ button,.button{
  background:#1e88ff;
 }
 '''
+
+
+@app.route('/op-fechadas')
+def op_fechadas():
+    return '''<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Op. Fechadas</title><style>%s</style></head><body><main style="margin:30px">
+    <section class="panel">
+    <h1>OPERAÇÕES FECHADAS</h1>
+    <p>Página inicial em construção.</p>
+    <div class="grid three">
+      <div class="panel"><h2>ROI MÉDIO</h2></div>
+      <div class="panel"><h2>VELOCÍMETRO</h2></div>
+      <div class="panel"><h2>GRÁFICOS</h2></div>
+    </div>
+    <a class="button" href="/">Voltar ao Dashboard</a>
+    </section>
+    </main></body></html>''' % CSS
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
