@@ -582,20 +582,45 @@ button,.button{
 '''
 
 
+
 @app.route('/op-fechadas')
 def op_fechadas():
-    return '''<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Op. Fechadas</title><style>%s</style></head><body><main style="margin:30px">
-    <section class="panel">
-    <h1>OPERAÇÕES FECHADAS</h1>
-    <p>Página inicial em construção.</p>
-    <div class="grid three">
-      <div class="panel"><h2>ROI MÉDIO</h2></div>
-      <div class="panel"><h2>VELOCÍMETRO</h2></div>
-      <div class="panel"><h2>GRÁFICOS</h2></div>
-    </div>
-    <a class="button" href="/">Voltar ao Dashboard</a>
-    </section>
-    </main></body></html>''' % CSS
+    ops, fechadas, cfg = load_all()
+    total_lucro = 0.0
+    mensal = {}
+    linhas = []
+    for f in fechadas:
+        lucro = fnum(f.get('Premio_liquido'), fnum(f.get('Lucro_tributavel'), fnum(f.get('Resultado_final'),0)))
+        total_lucro += lucro
+        mes = f.get('Mes','Sem mês')
+        mensal[mes] = mensal.get(mes,0) + lucro
+        linhas.append(f"<tr><td>{f.get('Ativo','')}</td><td>{f.get('Tipo','')}</td><td>{brl(lucro)}</td><td>{mes}</td><td class='actions'><a title='Editar'>✎</a><a title='Excluir'>×</a><a title='Reabrir'>↩</a></td></tr>")
+    lucro_mes = mensal.get(current_month_label(),0)
+    tabela = ''.join(linhas) if linhas else "<tr><td colspan='5'>Nenhuma operação fechada.</td></tr>"
+    return f'''<!doctype html>
+    <html lang="pt-BR"><head><meta charset="utf-8"><title>Cortex Invest PRO v2.8 - Operações Fechadas</title><style>{CSS}</style></head>
+    <body>
+    <main style="margin-left:0;padding:25px">
+      <h1>Operações <span>Fechadas</span></h1>
+      <section class="metrics">
+        {metric_card('💰','LUCRO DO MÊS',brl(lucro_mes),current_month_label(),'green')}
+        {metric_card('🏦','LUCRO ACUMULADO',brl(total_lucro),'Todas as operações','purple')}
+        {metric_card('📁','TOTAL FECHADAS',str(len(fechadas)),'Operações encerradas','blue')}
+      </section>
+      <section class="grid two" style="margin-top:15px">
+        <div class="panel"><h2>Resumo</h2><p>As operações fechadas agora possuem área própria para análise e manutenção.</p></div>
+        <div class="panel"><h2>Conselho Cortex</h2><p>Adicionar filtros por mês, ativo e estratégia será muito útil quando o histórico crescer.</p></div>
+      </section>
+      <section class="panel" style="margin-top:15px">
+        <h2>Operações Fechadas</h2>
+        <table class="ops">
+        <thead><tr><th>Ativo</th><th>Tipo</th><th>Lucro</th><th>Mês</th><th>Ações</th></tr></thead>
+        <tbody>{tabela}</tbody>
+        </table>
+      </section>
+      <p style="margin-top:20px"><a class="button" href="/">Voltar ao Dashboard</a></p>
+    </main>
+    </body></html>'''
 
 
 if __name__ == "__main__":

@@ -24,3 +24,5 @@
 - Ajustes de nomenclatura dos menus.
 - Preparação da página Operações Fechadas.
 - Atualização de referências para v2.8.
+
+- Página de Operações Fechadas aprimorada com lucro mensal, acumulado e ações.
