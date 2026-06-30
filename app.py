@@ -307,10 +307,12 @@ def gauge(value: float, titulo: str = "ROI") -> str:
     base_rx, base_ry = polar(130, 126, 9, angle - 96)
     needle = f'<polygon points="{tip_x:.1f},{tip_y:.1f} {base_lx:.1f},{base_ly:.1f} {base_rx:.1f},{base_ry:.1f}" fill="url(#needleGrad)" stroke="#f4f6fb" stroke-width="1.1"/>'
 
-    if value <= 1.5:
-        badge, cls = "BAIXO", "low"
-    elif value < 3:
+    if value < 1:
+        badge, cls = "RUIM", "low"
+    elif value < 2:
         badge, cls = "BOM", "mid"
+    elif value < 3:
+        badge, cls = "ÓTIMO", "high"
     else:
         badge, cls = "EXCELENTE", "high"
 

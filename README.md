@@ -1,22 +1,13 @@
-# FaculdadeMaria / Cortex Invest PRO - v1.9
+# FaculdadeMaria - Cortex Invest PRO v2.5
 
-Atualização incremental com ajustes solicitados:
-
-- velocímetros de ROI menores e menos deformados;
-- numeração do velocímetro corrigida e posicionada acima das barras coloridas;
-- ROI centralizado no velocímetro;
-- removida a linha de meta abaixo do velocímetro;
-- removido o quadro Resumo Geral;
-- título de Operações Abertas agora mostra a quantidade de operações abertas;
-- campo Strike movido para logo após Código da Opção no cadastro.
-
-## Render
-Build Command:
-```bash
-pip install -r requirements.txt
-```
-
-Start Command:
-```bash
-gunicorn app:app --bind 0.0.0.0:$PORT
-```
+## Alterações da versão 2.5
+- Correção das etiquetas do velocímetro de ROI.
+- O velocímetro agora exibe:
+  - RUIM (<1%)
+  - BOM (1% a 1,99%)
+  - ÓTIMO (2% a 2,99%)
+  - EXCELENTE (>=3%)
+- Atualização do README com o histórico da versão.
+- Nenhuma regra de negócio foi alterada.
+- Nenhum cálculo financeiro foi alterado.
+- Compatível com GitHub e Render.
