@@ -407,7 +407,7 @@ def index():
     historico_table = "".join([f'<tr><td>{r["mes"]}</td><td>{brl(float(r["lucro"]))}</td><td>{brl(float(r["darf"]))}</td><td>{brl(float(r["premios"]))}</td><td>{pct(float(r["roi"]))} ↑</td></tr>' for r in reversed(hist_nonzero[-5:])])
     top_table = "".join([f'<tr><td>{o.get("Ativo")}</td><td>{o.get("Tipo")}</td><td>{brl(float(o["Strike_n"]))}</td><td>{brl(float(o["Premio_liquido"]))}</td><td>{pct(float(o["ROI"]))}</td></tr>' for o in top])
     html = f'''<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Cortex Invest PRO v2.9</title><style>{CSS}</style></head><body>
-    <aside><div class="logo"><div class="brain">✺</div><div class="brand">CORTEX<br><span>INVEST</span></div></div><div class="strategy">WHEEL STRATEGY</div><div class="side-block">📅<div><b>DATA ATUALIZAÇÃO</b><br>{datetime.now().strftime("%d/%m/%Y<br>%H:%M:%S")}</div></div><label>MÊS SELECIONADO</label><select><option>{ind["mes_atual"]}</option></select><nav><a class="active">Dashboard</a><a>Operações Abertas</a><a href='/op-fechadas'>Operações Fechadas</a><a>Histórico</a><a>Desempenho</a><a>Ativos</a><a>Relatórios</a><a>Configurações</a></nav><div class="quote">“A consistência é o que transforma estratégia em patrimônio.”<br><small>– CORTEX INVEST</small></div><div class="version">VERSÃO 2.9</div></aside>
+    <aside><div class="logo"><div class="brain">✺</div><div class="brand">CORTEX<br><span>INVEST</span></div></div><div class="strategy">WHEEL STRATEGY</div><div class="side-block">📅<div><b>DATA ATUALIZAÇÃO</b><br>{datetime.now().strftime("%d/%m/%Y<br>%H:%M:%S")}</div></div><label>MÊS SELECIONADO</label><select><option>{ind["mes_atual"]}</option></select><nav><a class="active">▦ Dashboard</a><a>▧ Operações Abertas</a><a href='/op-fechadas'>Operações Fechadas</a><a>◫ Op. Fechadas</a><a>▣ Histórico</a><a>⌁ Desempenho</a><a>⚙ Ativos</a><a>▤ Relatórios</a><a>⚙ Configurações</a></nav><div class="quote">“A consistência é o que transforma estratégia em patrimônio.”<br><small>– CORTEX INVEST</small></div><div class="version">VERSÃO 2.9</div></aside>
     <main><header><h1>DASHBOARD <span>WHEEL</span></h1><p>Painel automático com prêmios mensais, ROI abertas e histórico por mês</p></header>
     <section class="metrics">
     {metric_card('🎁','PRÊMIOS ACUMULADOS',brl(float(ind['premios_total'])),'Abertas + fechadas','purple')}{metric_card('🎯','ROI ABERTAS',pct(float(ind['roi_medio_abertas'])),'Média das abertas','green')}{metric_card('🔒','CAPITAL COMPROMETIDO',brl(float(ind['capital_comp'])),'Em operações abertas','green')}{metric_card('💼','CAIXA DISPONÍVEL',brl(float(ind['caixa_livre'])),'Para novas operações','blue')}{metric_card('📅','PRÓXIMO VENCIMENTO',prox_venc,prox_sub,'orange')}{metric_card('⭐','NOTA CORTEX',nota_cortex,'Média das abertas','cyan')}{metric_card('🏛️','DARF DO MÊS',brl(float(ind['darf'])),str(ind['mes_atual']),'red')}{metric_card('📈','LUCRO DO MÊS',brl(float(ind['lucro_mes'])),str(ind['mes_atual']),'orange')}
@@ -598,7 +598,7 @@ def op_fechadas():
     lucro_mes = mensal.get(current_month_label(),0)
     tabela = ''.join(linhas) if linhas else "<tr><td colspan='5'>Nenhuma operação fechada.</td></tr>"
     return f'''<!doctype html>
-    <html lang="pt-BR"><head><meta charset="utf-8"><title>Cortex Invest PRO v2.9 - Operações Fechadas</title><style>{CSS}</style></head>
+    <html lang="pt-BR"><head><meta charset="utf-8"><title>Cortex Invest PRO v2.8 - Operações Fechadas</title><style>{CSS}</style></head>
     <body>
     <main style="margin-left:0;padding:25px">
       <h1>Operações <span>Fechadas</span></h1>
@@ -609,20 +609,9 @@ def op_fechadas():
       </section>
       <section class="grid two" style="margin-top:15px">
         <div class="panel"><h2>Resumo</h2><p>As operações fechadas agora possuem área própria para análise e manutenção.</p></div>
-        <div class="panel"><h2>Hall da Fama</h2>
-        <p>🏆 Melhor operação</p>
-        <p>📈 Maior ROI</p>
-        <p>💰 Ativo mais lucrativo</p>
-        <p>📅 Melhor mês</p></div>
+        <div class="panel"><h2>Conselho Cortex</h2><p>Adicionar filtros por mês, ativo e estratégia será muito útil quando o histórico crescer.</p></div>
       </section>
       <section class="panel" style="margin-top:15px">
-        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:15px">
-        <select><option>Mês</option></select>
-        <select><option>Ativo</option></select>
-        <select><option>Estratégia</option></select>
-        <a class="button" style="margin:0">Exportar CSV</a>
-        <a class="button" style="margin:0">Exportar Excel</a>
-        </div>
         <h2>Operações Fechadas</h2>
         <table class="ops">
         <thead><tr><th>Ativo</th><th>Tipo</th><th>Lucro</th><th>Mês</th><th>Ações</th></tr></thead>
@@ -638,3 +627,7 @@ if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
 
 # TODO v2.7: página Op. Fechadas e velocímetro meta 5%
+
+
+# v2.9 - arquitetura simplificada
+# Operações fechadas são obtidas de operacoes.csv usando Status='Encerrada'

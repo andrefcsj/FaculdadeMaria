@@ -29,6 +29,6 @@
 
 
 ## Versão 2.9
-- Melhorias visuais na barra lateral.
-- Página Operações Fechadas evoluída.
-- Filtros, exportação e Hall da Fama preparados.
+- Arquitetura simplificada usando apenas operacoes.csv.
+- Operações abertas e fechadas separadas pelo campo Status.
+- Preparação para reabertura, filtros por mês e dashboard de fechadas.
