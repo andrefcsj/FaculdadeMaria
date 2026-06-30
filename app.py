@@ -437,7 +437,7 @@ def index():
     hist_nonzero = [r for r in hist if float(r["lucro"]) or float(r["premios"] or 0)]
     historico_table = "".join([f'<tr><td>{r["mes"]}</td><td>{brl(float(r["lucro"]))}</td><td>{brl(float(r["darf"]))}</td><td>{brl(float(r["premios"]))}</td><td>{pct(float(r["roi"]))} ↑</td></tr>' for r in reversed(hist_nonzero[-5:])])
     top_table = "".join([f'<tr><td>{o.get("Ativo")}</td><td>{o.get("Tipo")}</td><td>{brl(float(o["Strike_n"]))}</td><td>{brl(float(o["Premio_liquido"]))}</td><td>{pct(float(o["ROI"]))}</td></tr>' for o in top])
-    html = f'''<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Cortex Invest PRO v3.0</title><style>{CSS}</style></head><body>
+    html = f'''<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Cortex Invest PRO v3.2.1</title><style>{CSS}</style></head><body>
     <aside><div class="logo"><div class="brain">✺</div><div class="brand">CORTEX<br><span>INVEST</span></div></div><div class="strategy">WHEEL STRATEGY</div><div class="side-block">📅<div><b>DATA ATUALIZAÇÃO</b><br>{datetime.now().strftime("%d/%m/%Y<br>%H:%M:%S")}</div></div><label>MÊS SELECIONADO</label><select><option>{ind["mes_atual"]}</option></select><nav><a class="active">▦ Dashboard</a><a>▧ Operações Abertas</a><a href='/op-fechadas'>Operações Fechadas</a><a>◫ Op. Fechadas</a><a>▣ Histórico</a><a>⌁ Desempenho</a><a>⚙ Ativos</a><a>▤ Relatórios</a><a>⚙ Configurações</a></nav><div class="quote">“A consistência é o que transforma estratégia em patrimônio.”<br><small>– CORTEX INVEST</small></div><div class="version">VERSÃO 3.0</div></aside>
     <main><header><h1>DASHBOARD <span>WHEEL</span></h1><p>Painel automático com prêmios mensais, ROI abertas e histórico por mês</p></header>
     <section class="metrics">
@@ -570,6 +570,17 @@ def excluir(oid: str):
     return redirect(url_for('index'))
 
 
+
+@app.route('/reabrir/<oid>')
+def reabrir(oid):
+    rows = read_csv(OPERACOES)
+    r = find_row(rows, oid)
+    if r:
+        r['Status'] = 'Aberta'
+        write_csv(OPERACOES, rows, ['ID', 'Data abertura', 'Ativo', 'Tipo', 'Estratégia', 'Status', 'Contratos', 'Strike', 'Premio_opcao', 'Custos', 'IRRF', 'Vencimento', 'Cotacao_atual', 'Resultado_realizado'])
+    return redirect(url_for('op_fechadas'))
+
+
 CSS = r'''
 :root{--bg:#050b13;--panel:#101a27;--panel2:#0b1420;--line:#24364c;--txt:#f4f7ff;--muted:#91a4bb;--blue:#1478ff;--green:#21c35b;--purple:#8d45ff;--orange:#ffae22;--red:#ff6381;--cyan:#25d7de}*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 45% 0%,#132035 0%,#07111e 45%,#03070d 100%);color:var(--txt);font-family:Inter,Segoe UI,Arial,sans-serif}aside{position:fixed;left:0;top:0;bottom:0;width:236px;background:linear-gradient(180deg,#081323,#03070d);border-right:1px solid #273a52;padding:22px 10px}main{margin-left:236px;padding:18px 18px 44px}.logo{display:flex;align-items:center;gap:12px}.brain{width:54px;height:54px;border:2px solid #4d8cff;border-radius:16px;display:grid;place-items:center;font-size:35px;color:#4d8cff;box-shadow:0 0 18px #1749b1}.brand{font-size:28px;font-weight:900;line-height:.95;letter-spacing:1px}.brand span,h1 span{color:#4d8cff}.strategy,label{display:block;margin:19px 0 9px;color:#4d8cff;font-size:12px;font-weight:900;letter-spacing:1.2px}.side-block{display:flex;gap:11px;align-items:center;color:#dfeaff;line-height:1.45}.side-block b{color:#4d8cff;font-size:11px}select,input{width:100%;background:#07111d;color:#fff;border:1px solid #24364c;border-radius:7px;padding:11px 12px}nav{margin-top:20px}nav a{display:block;padding:13px 15px;margin:6px 0;border-radius:9px;font-weight:800;color:#dce8fb;text-decoration:none}nav a.active{background:linear-gradient(180deg,#0871df,#06499c);box-shadow:inset 0 0 18px rgba(65,151,255,.35),0 0 16px rgba(29,128,255,.22)}.quote{border:1px solid #263d5a;border-radius:10px;padding:20px 15px;margin-top:25px;color:#4199ff;background:#091521;font-size:18px;line-height:1.35}.quote small{color:#899ab0}.version{color:#8955ff;font-weight:900;text-align:center;margin-top:26px}h1{font-size:33px;line-height:1;margin:0;font-weight:950}header p{color:#c7d5e8;margin:4px 0 14px}.metrics{display:grid;grid-template-columns:repeat(8,1fr);gap:8px}.metric{min-height:92px;background:linear-gradient(180deg,rgba(17,29,43,.96),rgba(8,17,29,.96));border:1px solid var(--line);border-radius:10px;padding:14px 10px;display:flex;align-items:center;gap:9px;box-shadow:0 0 18px rgba(0,0,0,.22)}.mi{font-size:28px}.mlabel{font-size:11px;font-weight:900;text-transform:uppercase}.mvalue{font-size:21px;font-weight:950;margin-top:8px}.msub{font-size:12px;color:#b6c3d4}.blue{border-color:#125da4;box-shadow:0 0 16px rgba(20,120,255,.18)}.green{border-color:#126d39;box-shadow:0 0 16px rgba(33,195,91,.14)}.cyan{border-color:#177a83;box-shadow:0 0 16px rgba(37,215,222,.14)}.purple{border-color:#6330aa;box-shadow:0 0 16px rgba(141,69,255,.16)}.orange{border-color:#8f6512;box-shadow:0 0 16px rgba(255,174,34,.15)}.red{border-color:#874052;box-shadow:0 0 16px rgba(255,99,129,.14)}.grid{display:grid;gap:8px;margin-top:8px}.two{grid-template-columns:1fr 1fr}.three{grid-template-columns:1.35fr .8fr .7fr}.four{grid-template-columns:1.1fr 1.1fr .8fr .9fr}.panel{background:linear-gradient(180deg,rgba(17,29,43,.96),rgba(8,17,29,.96));border:1px solid #26384f;border-radius:10px;padding:14px;box-shadow:0 0 18px rgba(0,0,0,.22);overflow:auto}h2{font-size:16px;margin:0 0 10px;text-transform:uppercase}.chart{width:100%;height:220px}.donut-wrap{display:flex;align-items:center;gap:8px}.donut{width:46%;min-width:165px}.legend{flex:1}.legend div{margin:8px 0;font-size:12px}.legend span{display:inline-block;width:11px;height:11px;margin-right:6px;border-radius:2px}.legend em{float:right;font-style:normal;color:#fff}.legend small{display:block;color:#9fb0c5;margin-left:21px}.gauge{text-align:center}.gauge svg{width:100%;max-height:165px}.gauge-num{font-size:30px;font-weight:900;margin:0 0 4px;position:relative;z-index:2}.badge{display:inline-block;background:#169c3a;border-radius:5px;padding:5px 22px;font-weight:800;margin:4px}.gauge-legend{display:flex;justify-content:center;gap:8px;margin:8px auto 5px;max-width:360px}.gauge-legend span{flex:1;border:1px solid #26384f;border-radius:6px;padding:5px 4px;font-size:11px;color:#dce8fb;text-align:center}.gauge-legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px}.lg-low{background:#f04b3d}.lg-mid{background:#ffcc21}.lg-high{background:#23b64a}table{width:100%;border-collapse:collapse;font-size:13px}th{background:#192434;color:#dce8fb;text-align:left;padding:8px}td{border-bottom:1px solid #1c2b3f;padding:7px;color:#edf4ff}.ops{min-width:1120px}.ops th,.ops td{white-space:nowrap}.ops th:last-child,.ops td.actions{position:sticky;right:0;background:#101a27;z-index:3;box-shadow:-8px 0 10px rgba(0,0,0,.25)}.warn{color:#ff6d6d;font-weight:800}.ok{color:#7df097}.button{display:block;margin:10px auto 0;text-align:center;max-width:245px;padding:8px 12px;background:#0b4c98;border:1px solid #2589ff;border-radius:7px;color:#fff;text-decoration:none;font-weight:800}.summary p{border-bottom:1px solid #1f2d40;padding:9px 0;margin:0}.summary b{float:right}.form{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}.labeled div span{display:block;color:#9fb8d8;font-size:11px;font-weight:900;text-transform:uppercase;margin:0 0 5px}.hint{display:block;color:#9fb0c5;margin-top:10px}.actions a{display:inline-grid;place-items:center;text-decoration:none;margin-right:8px;font-size:17px;color:#fff;border:1px solid #34506f;border-radius:6px;width:28px;height:28px;background:#111f31;font-weight:900}.actions a:hover{background:#1d3554}.badge.low{background:#b63131}.badge.mid{background:#b99a18;color:#101010}.badge.high{background:#169c3a}.danger{background:#7a1522!important;border-color:#ff6381!important}.edit-page{margin-left:0;max-width:1180px;margin-right:auto}.form button{background:linear-gradient(180deg,#0871df,#06499c);border:1px solid #278fff;color:white;font-weight:900;border-radius:8px;padding:11px}footer{position:fixed;left:0;right:0;bottom:0;background:#07111d;border-top:1px solid #26384f;color:#6d7d91;text-align:center;padding:8px;font-size:12px}@media(max-width:1350px){.metrics{grid-template-columns:repeat(4,1fr)}}@media(max-width:1100px){aside{position:relative;width:100%;height:auto}main{margin-left:0}.two,.three,.four,.form{grid-template-columns:1fr}.metrics{grid-template-columns:repeat(2,1fr)}.donut-wrap{display:block}.donut{width:100%}footer{position:static}}@media(max-width:640px){.metrics{grid-template-columns:1fr}.actions a{width:34px;height:34px;font-size:20px}.ops{min-width:1180px}}
 /* v1.8 - velocímetro premium */
@@ -614,22 +625,38 @@ button,.button{
 
 
 
+
 @app.route('/op-fechadas')
 def op_fechadas():
-    ops, fechadas, cfg = load_all()
-    total_lucro = 0.0
-    mensal = {}
+    ops, fechadas_csv, cfg = load_all()
+    fechadas = [o for o in ops if str(o.get('Status','')).lower() == 'encerrada']
+
+    total_lucro = sum(float(o.get('Premio_liquido',0)) for o in fechadas)
+    lucro_mes = sum(float(o.get('Premio_liquido',0))
+                    for o in fechadas
+                    if o.get('Mes_abertura') == current_month_label())
+
     linhas = []
-    for f in fechadas:
-        lucro = fnum(f.get('Premio_liquido'), fnum(f.get('Lucro_tributavel'), fnum(f.get('Resultado_final'),0)))
-        total_lucro += lucro
-        mes = f.get('Mes','Sem mês')
-        mensal[mes] = mensal.get(mes,0) + lucro
-        linhas.append(f"<tr><td>{f.get('Ativo','')}</td><td>{f.get('Tipo','')}</td><td>{brl(lucro)}</td><td>{mes}</td><td class='actions'><a title='Editar'>✎</a><a title='Excluir'>×</a><a title='Reabrir'>↩</a></td></tr>")
-    lucro_mes = mensal.get(current_month_label(),0)
+    for o in fechadas:
+        oid = o.get('ID','')
+        linhas.append(
+            f"<tr><td>{o.get('Ativo','')}</td>"
+            f"<td>{o.get('Tipo','')}</td>"
+            f"<td>{brl(float(o.get('Premio_liquido',0)))}</td>"
+            f"<td>{o.get('Mes_abertura','')}</td>"
+            f"<td class='actions'>"
+            f"<a href='/editar/{oid}' title='Editar'>✎</a>"
+            f"<a href='/excluir/{oid}' title='Excluir'>×</a>"
+            f"<a href='/reabrir/{oid}' title='Reabrir'>↩</a>"
+            f"</td></tr>"
+        )
+
     tabela = ''.join(linhas) if linhas else "<tr><td colspan='5'>Nenhuma operação fechada.</td></tr>"
+
     return f'''<!doctype html>
-    <html lang="pt-BR"><head><meta charset="utf-8"><title>Cortex Invest PRO v2.8 - Operações Fechadas</title><style>{CSS}</style></head>
+    <html lang="pt-BR"><head><meta charset="utf-8">
+    <title>Cortex Invest PRO v3.2.1 - Operações Fechadas</title>
+    <style>{CSS}</style></head>
     <body>
     <main style="margin-left:0;padding:25px">
       <h1>Operações <span>Fechadas</span></h1>
@@ -637,10 +664,6 @@ def op_fechadas():
         {metric_card('💰','LUCRO DO MÊS',brl(lucro_mes),current_month_label(),'green')}
         {metric_card('🏦','LUCRO ACUMULADO',brl(total_lucro),'Todas as operações','purple')}
         {metric_card('📁','TOTAL FECHADAS',str(len(fechadas)),'Operações encerradas','blue')}
-      </section>
-      <section class="grid two" style="margin-top:15px">
-        <div class="panel"><h2>Resumo</h2><p>As operações fechadas agora possuem área própria para análise e manutenção.</p></div>
-        <div class="panel"><h2>Conselho Cortex</h2><p>Adicionar filtros por mês, ativo e estratégia será muito útil quando o histórico crescer.</p></div>
       </section>
       <section class="panel" style="margin-top:15px">
         <h2>Operações Fechadas</h2>
@@ -652,8 +675,6 @@ def op_fechadas():
       <p style="margin-top:20px"><a class="button" href="/">Voltar ao Dashboard</a></p>
     </main>
     </body></html>'''
-
-
 
 
 # ===== Backup SQLite v3.2 =====
