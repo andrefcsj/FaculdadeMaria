@@ -36,3 +36,6 @@
 
 ## Fase 1 Integrada
 - Novo layout de Operações Fechadas incluído no projeto para integração visual.
+
+## Versão 2.9.1
+- Layout de Operações Fechadas preparado para integração.

@@ -631,3 +631,6 @@ if __name__ == "__main__":
 
 # v2.9 - arquitetura simplificada
 # Operações fechadas são obtidas de operacoes.csv usando Status='Encerrada'
+
+# v2.9.1 OP_FECHADAS_TEMPLATE
+# return render_template('op_fechadas_v291.html') na rota /op-fechadas
