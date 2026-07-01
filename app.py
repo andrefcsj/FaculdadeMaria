@@ -540,10 +540,7 @@ def index():
     top_table = "".join([f'<tr><td>{o.get("Ativo")}</td><td>{o.get("Tipo")}</td><td>{brl(float(o["Strike_n"]))}</td><td>{brl(float(o["Premio_liquido"]))}</td><td>{pct(float(o["ROI"]))}</td></tr>' for o in top])
     html = f'''<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Cortex Invest PRO v3.2.3</title><style>{CSS}</style></head><body>
     <aside><div class="logo"><div class="brain">✺</div><div class="brand">CORTEX<br><span>INVEST</span></div></div><div class="strategy">WHEEL STRATEGY</div><div class="side-block">📅<div><b>DATA ATUALIZAÇÃO</b><br>{datetime.now().strftime("%d/%m/%Y<br>%H:%M:%S")}</div></div><label>MÊS SELECIONADO</label><select><option>{ind["mes_atual"]}</option></select><nav><a class="active">▦ Dashboard</a><a>▧ Operações Abertas</a><a href='/op-fechadas'>Operações Fechadas</a><a>◫ Op. Fechadas</a><a>▣ Histórico</a><a>⌁ Desempenho</a><a>⚙ Ativos</a><a>▤ Relatórios</a><a>⚙ Configurações</a><a href='/backup'>💾 Backup</a></nav><div class="quote">“A consistência é o que transforma estratégia em patrimônio.”<br><small>– CORTEX INVEST</small></div><div class="version">VERSÃO 3.2.3</div></aside>
-    <main><header style="display:flex;justify-content:space-between;align-items:center;gap:20px">
-<div><h1>DASHBOARD <span>WHEEL</span></h1><p>Painel automático com prêmios mensais, ROI abertas e histórico por mês</p></div>
-<div class="theme-toggle"><span>☀️</span><div class="theme-switch" onclick="toggleTheme()"></div><span>🌙</span></div>
-</header>
+    <main><header style="display:flex;justify-content:space-between;align-items:center;gap:20px"><div><h1>DASHBOARD <span>WHEEL</span></h1><p>Painel automático com prêmios mensais, ROI abertas e histórico por mês</p></div><div class="theme-toggle"><span>☀️</span><div class="theme-switch" onclick="toggleTheme()"></div><span>🌙</span></div></header>
     <section class="metrics">
     {metric_card('🎁','PRÊMIOS ACUMULADOS',brl(float(ind['premios_total'])),'Abertas + fechadas','purple')}{metric_card('🎯','ROI ABERTAS',pct(float(ind['roi_medio_abertas'])),'Média das abertas','green')}{metric_card('🔒','CAPITAL COMPROMETIDO',brl(float(ind['capital_comp'])),'Em operações abertas','green')}{metric_card('💼','CAIXA DISPONÍVEL',brl(float(ind['caixa_livre'])),'Para novas operações','blue')}{metric_card('📅','PRÓXIMO VENCIMENTO',prox_venc,prox_sub,'orange')}{metric_card('⭐','NOTA CORTEX',nota_cortex,'Média das abertas','cyan')}{metric_card('🏛️','DARF DO MÊS',brl(float(ind['darf'])),str(ind['mes_atual']),'red')}{metric_card('📈','LUCRO DO MÊS',brl(float(ind['lucro_mes'])),str(ind['mes_atual']),'orange')}
     </section>
@@ -578,33 +575,19 @@ def index():
       }}catch(e){{ /* mantém zero se não encontrar */ }}
     }}
     </script>
-    </main><footer>🛡️ Dashboard protegido contra edição. Os dados são atualizados automaticamente. &nbsp; CORTEX INVEST v2.9 • WHEEL STRATEGY • DISCIPLINA, GESTÃO E CONSISTÊNCIA</footer>
-<script>
-function applyTheme(){
-  const t = localStorage.getItem('cortex_theme') || 'dark';
-  document.body.classList.toggle('light', t==='light');
-}
-function toggleTheme(){
-  const t = document.body.classList.contains('light') ? 'dark' : 'light';
-  localStorage.setItem('cortex_theme', t);
-  applyTheme();
-}
-applyTheme();
-</script>
-
-<script>
-function applyTheme(){
-  const t = localStorage.getItem('cortex_theme') || 'dark';
-  document.body.classList.toggle('light', t==='light');
-}
-function toggleTheme(){
-  const t = document.body.classList.contains('light') ? 'dark' : 'light';
-  localStorage.setItem('cortex_theme', t);
-  applyTheme();
-}
-applyTheme();
-</script>
-</body></html>'''
+    <script>
+    function applyTheme(){
+      const t = localStorage.getItem('cortex_theme') || 'dark';
+      document.body.classList.toggle('light', t === 'light');
+    }
+    function toggleTheme(){
+      const next = document.body.classList.contains('light') ? 'dark' : 'light';
+      localStorage.setItem('cortex_theme', next);
+      applyTheme();
+    }
+    applyTheme();
+    </script>
+    </main><footer>🛡️ Dashboard protegido contra edição. Os dados são atualizados automaticamente. &nbsp; CORTEX INVEST v2.9 • WHEEL STRATEGY • DISCIPLINA, GESTÃO E CONSISTÊNCIA</footer></body></html>'''
     return html
 
 def salvar_operacao_pg(row):
