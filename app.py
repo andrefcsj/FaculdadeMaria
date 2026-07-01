@@ -569,6 +569,7 @@ def salvar_operacao_pg(row):
 def nova():
     rows = read_csv(OPERACOES)
     next_id = max([int(fnum(r.get("ID"))) for r in rows] + [0]) + 1
+
     row = {
         "ID": str(next_id),
         "Data abertura": request.form.get("Data_abertura", str(date.today())),
@@ -585,20 +586,41 @@ def nova():
         "Cotacao_atual": request.form.get("Cotacao_atual", "0"),
         "Resultado_realizado": "0",
     }
-if not fnum(row.get("Cotacao_atual")):
+
+    if not fnum(row.get("Cotacao_atual")):
         acao = infer_acao_from_option(row.get("Ativo", ""))
         valor = cotacao_yahoo(acao) if acao else None
 
         if valor:
             row["Cotacao_atual"] = f"{valor:.2f}"
-    
-if USE_POSTGRES:
-    salvar_operacao_pg(row)
-    return redirect(url_for("index"))
 
-rows.append(row)
-write_csv(OPERACOES, rows, ["ID", "Data abertura", "Ativo", "Tipo", "Estratégia", "Status", "Contratos", "Strike", "Premio_opcao", "Custos", "IRRF", "Vencimento", "Cotacao_atual", "Resultado_realizado"])
-return redirect(url_for("index"))
+    if USE_POSTGRES:
+        salvar_operacao_pg(row)
+        return redirect(url_for("index"))
+
+    rows.append(row)
+    write_csv(
+        OPERACOES,
+        rows,
+        [
+            "ID",
+            "Data abertura",
+            "Ativo",
+            "Tipo",
+            "Estratégia",
+            "Status",
+            "Contratos",
+            "Strike",
+            "Premio_opcao",
+            "Custos",
+            "IRRF",
+            "Vencimento",
+            "Cotacao_atual",
+            "Resultado_realizado",
+        ],
+    )
+
+    return redirect(url_for("index"))
 
 
 @app.route('/cotacao')
