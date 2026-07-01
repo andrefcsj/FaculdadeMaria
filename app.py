@@ -496,7 +496,7 @@ def index():
     <section class="grid four no-summary"><div class="panel"><h2>Histórico</h2><table><thead><tr><th>Mês</th><th>Lucro</th><th>DARF</th><th>Prêmios</th><th>ROI</th></tr></thead><tbody>{historico_table}</tbody></table></div><div class="panel"><h2>TOP 5 Operações Abertas</h2><table><thead><tr><th>Ativo</th><th>Tipo</th><th>Strike</th><th>Prêmio</th><th>ROI</th></tr></thead><tbody>{top_table}</tbody></table><a href="#ops" class="button">VER TODAS AS OPERAÇÕES →</a></div><div class="panel"><h2>DISTRIBUIÇÃO DOS PRÊMIOS Ativos</h2>{donut_chart(abertas)}</div></section>
     <section class="panel" id="ops"><h2>{ind['abertas']} Operações Abertas</h2><table class="ops"><thead><tr><th>Ação</th><th>Opção</th><th>Tipo</th><th>Contratos</th><th>Strike</th><th>Prêmio líquido</th><th>Capital</th><th>Vencimento</th><th>Dias</th><th>ROI</th><th>Nota</th><th>Alerta</th><th>Ações</th></tr></thead><tbody>{rows_html(abertas)}</tbody></table></section>
     <section class="panel"><h2>CADASTRAR NOVA OPERAÇÃO</h2><form method="post" action="/nova" class="form labeled">
-      <div><span>Código da opção</span><input id="ativo" name="Ativo" placeholder="Ex: BBDCS167" required onblur="buscarCotacao()"></div>
+      <div><span>Código da opção</span><input id="ativo" name="Ativo" placeholder="Ex: BBDCS167" required oninput="this.value=this.value.toUpperCase()" onblur="buscarCotacao()"></div>
       <div><span>Strike real</span><input name="Strike" type="number" step="0.01" placeholder="Ex: 16,89"></div>
       <div><span>Tipo</span><select name="Tipo"><option>PUT</option><option>CALL</option></select></div>
       <div><span>Estratégia</span><select name="Estrategia"><option>Wheel</option><option>Pozinho</option></select></div>
