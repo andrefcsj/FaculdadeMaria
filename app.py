@@ -575,18 +575,19 @@ def index():
       }}catch(e){{ /* mantém zero se não encontrar */ }}
     }}
     </script>
-    <script>
-    function applyTheme(){
-      const t = localStorage.getItem('cortex_theme') || 'dark';
-      document.body.classList.toggle('light', t === 'light');
-    }
-    function toggleTheme(){
-      const next = document.body.classList.contains('light') ? 'dark' : 'light';
-      localStorage.setItem('cortex_theme', next);
-      applyTheme();
-    }
-    applyTheme();
-    </script>
+<script>
+function applyTheme(){
+  const t = localStorage.getItem('cortex_theme') || 'dark';
+  document.body.classList.toggle('light', t === 'light');
+}
+function toggleTheme(){
+  const next = document.body.classList.contains('light') ? 'dark' : 'light';
+  localStorage.setItem('cortex_theme', next);
+  applyTheme();
+}
+applyTheme();
+</script>
+
     </main><footer>🛡️ Dashboard protegido contra edição. Os dados são atualizados automaticamente. &nbsp; CORTEX INVEST v2.9 • WHEEL STRATEGY • DISCIPLINA, GESTÃO E CONSISTÊNCIA</footer></body></html>'''
     return html
 
