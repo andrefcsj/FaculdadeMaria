@@ -593,8 +593,8 @@ if not fnum(row.get("Cotacao_atual")):
             row["Cotacao_atual"] = f"{valor:.2f}"
     
 if USE_POSTGRES:
-        salvar_operacao_pg(row)
-        return redirect(url_for("index"))
+    salvar_operacao_pg(row)
+    return redirect(url_for("index"))
 
 rows.append(row)
 write_csv(OPERACOES, rows, ["ID", "Data abertura", "Ativo", "Tipo", "Estratégia", "Status", "Contratos", "Strike", "Premio_opcao", "Custos", "IRRF", "Vencimento", "Cotacao_atual", "Resultado_realizado"])
