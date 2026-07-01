@@ -30,9 +30,46 @@ def get_pg_conn():
 
 
 def init_db():
+    if USE_POSTGRES:
+        conn = get_pg_conn()
+        cur = conn.cursor()
+
+        cur.execute("""
+        CREATE TABLE IF NOT EXISTS operacoes (
+            id SERIAL PRIMARY KEY,
+            data_abertura TEXT,
+            ativo TEXT,
+            tipo TEXT,
+            estrategia TEXT,
+            status TEXT,
+            contratos TEXT,
+            strike TEXT,
+            premio_opcao TEXT,
+            custos TEXT,
+            irrf TEXT,
+            vencimento TEXT,
+            cotacao_atual TEXT,
+            resultado_realizado TEXT
+        )
+        """)
+
+        cur.execute("""
+        CREATE TABLE IF NOT EXISTS config (
+            parametro TEXT PRIMARY KEY,
+            valor TEXT
+        )
+        """)
+
+        conn.commit()
+        conn.close()
+        print("✅ Tabelas criadas no Neon.")
+        return
+
+    # fallback para SQLite
     DB.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(DB)
     cur = conn.cursor()
+
     cur.execute('''
         CREATE TABLE IF NOT EXISTS operacoes (
             id INTEGER PRIMARY KEY,
@@ -51,10 +88,13 @@ def init_db():
             resultado_realizado TEXT
         )
     ''')
+
     conn.commit()
     conn.close()
 
+
 init_db()
+
 
 MONTH_NAMES = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"]
 
