@@ -525,6 +525,45 @@ def index():
     </main><footer>🛡️ Dashboard protegido contra edição. Os dados são atualizados automaticamente. &nbsp; CORTEX INVEST v2.9 • WHEEL STRATEGY • DISCIPLINA, GESTÃO E CONSISTÊNCIA</footer></body></html>'''
     return html
 
+def salvar_operacao_pg(row):
+    conn = get_pg_conn()
+    cur = conn.cursor()
+
+    cur.execute("""
+        INSERT INTO operacoes (
+            data_abertura,
+            ativo,
+            tipo,
+            estrategia,
+            status,
+            contratos,
+            strike,
+            premio_opcao,
+            custos,
+            irrf,
+            vencimento,
+            cotacao_atual,
+            resultado_realizado
+        )
+        VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+    """, (
+        row["Data abertura"],
+        row["Ativo"],
+        row["Tipo"],
+        row["Estratégia"],
+        row["Status"],
+        row["Contratos"],
+        row["Strike"],
+        row["Premio_opcao"],
+        row["Custos"],
+        row["IRRF"],
+        row["Vencimento"],
+        row["Cotacao_atual"],
+        row["Resultado_realizado"]
+    ))
+
+    conn.commit()
+    conn.close()
 
 @app.route("/nova", methods=["POST"])
 def nova():
