@@ -682,6 +682,39 @@ def cotacao():
     return jsonify({'codigo_opcao': codigo.upper(), 'acao': acao, 'cotacao': valor})
 
 
+
+
+def get_operacao_pg(oid):
+    conn = get_pg_conn()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT id,data_abertura,ativo,tipo,estrategia,status,contratos,
+               strike,premio_opcao,custos,irrf,vencimento,
+               cotacao_atual,resultado_realizado
+        FROM operacoes WHERE id=%s
+    """, (oid,))
+    r = cur.fetchone()
+    conn.close()
+    if not r:
+        return None
+    return {
+        "ID": str(r[0]),
+        "Data abertura": r[1] or "",
+        "Ativo": r[2] or "",
+        "Tipo": r[3] or "",
+        "Estratégia": r[4] or "",
+        "Status": r[5] or "",
+        "Contratos": str(r[6] or ""),
+        "Strike": str(r[7] or ""),
+        "Premio_opcao": str(r[8] or ""),
+        "Custos": str(r[9] or ""),
+        "IRRF": str(r[10] or ""),
+        "Vencimento": r[11] or "",
+        "Cotacao_atual": str(r[12] or ""),
+        "Resultado_realizado": str(r[13] or ""),
+    }
+
+
 def find_row(rows: List[Dict[str, str]], oid: str) -> Dict[str, str] | None:
     for r in rows:
         if str(r.get('ID')) == str(oid):
@@ -692,7 +725,7 @@ def find_row(rows: List[Dict[str, str]], oid: str) -> Dict[str, str] | None:
 @app.route('/editar/<oid>', methods=['GET', 'POST'])
 def editar(oid: str):
     rows = read_csv(OPERACOES)
-    r = find_row(rows, oid)
+    r = get_operacao_pg(oid) if USE_POSTGRES else find_row(rows, oid)
     if not r:
         return redirect(url_for('index'))
     fields = ['ID', 'Data abertura', 'Ativo', 'Tipo', 'Estratégia', 'Status', 'Contratos', 'Strike', 'Premio_opcao', 'Custos', 'IRRF', 'Vencimento', 'Cotacao_atual', 'Resultado_realizado']
@@ -700,7 +733,25 @@ def editar(oid: str):
         for campo in ['Ativo', 'Tipo', 'Status', 'Contratos', 'Strike', 'Premio_opcao', 'Custos', 'IRRF', 'Vencimento', 'Cotacao_atual']:
             r[campo] = request.form.get(campo, r.get(campo, ''))
         r['Estratégia'] = request.form.get('Estrategia', r.get('Estratégia', 'Wheel'))
-        write_csv(OPERACOES, rows, fields)
+        if USE_POSTGRES:
+            conn = get_pg_conn()
+            cur = conn.cursor()
+            cur.execute("""
+                UPDATE operacoes
+                SET ativo=%s,tipo=%s,estrategia=%s,status=%s,
+                    contratos=%s,strike=%s,premio_opcao=%s,
+                    custos=%s,irrf=%s,vencimento=%s,cotacao_atual=%s
+                WHERE id=%s
+            """, (
+                r['Ativo'], r['Tipo'], r['Estratégia'], r['Status'],
+                r['Contratos'], r['Strike'], r['Premio_opcao'],
+                r['Custos'], r['IRRF'], r['Vencimento'],
+                r['Cotacao_atual'], oid
+            ))
+            conn.commit()
+            conn.close()
+        else:
+            write_csv(OPERACOES, rows, fields)
         return redirect(url_for('index'))
     html = f'''<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Editar operação</title><style>{CSS}</style></head><body><main class="edit-page"><section class="panel"><h2>EDITAR OPERAÇÃO</h2><form method="post" class="form labeled">
     <div><span>Código da opção</span><input name="Ativo" value="{r.get('Ativo','')}"></div>
@@ -722,7 +773,13 @@ def editar(oid: str):
 def fechar(oid: str):
     rows = read_csv(OPERACOES)
     r = find_row(rows, oid)
-    if r:
+    if USE_POSTGRES:
+        conn = get_pg_conn()
+        cur = conn.cursor()
+        cur.execute("UPDATE operacoes SET status='Encerrada' WHERE id=%s", (oid,))
+        conn.commit()
+        conn.close()
+    elif r:
         r['Status'] = 'Encerrada'
         write_csv(OPERACOES, rows, ['ID', 'Data abertura', 'Ativo', 'Tipo', 'Estratégia', 'Status', 'Contratos', 'Strike', 'Premio_opcao', 'Custos', 'IRRF', 'Vencimento', 'Cotacao_atual', 'Resultado_realizado'])
     return redirect(url_for('index'))
@@ -730,9 +787,16 @@ def fechar(oid: str):
 
 @app.route('/excluir/<oid>')
 def excluir(oid: str):
-    rows = read_csv(OPERACOES)
-    rows = [r for r in rows if str(r.get('ID')) != str(oid)]
-    write_csv(OPERACOES, rows, ['ID', 'Data abertura', 'Ativo', 'Tipo', 'Estratégia', 'Status', 'Contratos', 'Strike', 'Premio_opcao', 'Custos', 'IRRF', 'Vencimento', 'Cotacao_atual', 'Resultado_realizado'])
+    if USE_POSTGRES:
+        conn = get_pg_conn()
+        cur = conn.cursor()
+        cur.execute("DELETE FROM operacoes WHERE id=%s", (oid,))
+        conn.commit()
+        conn.close()
+    else:
+        rows = read_csv(OPERACOES)
+        rows = [r for r in rows if str(r.get('ID')) != str(oid)]
+        write_csv(OPERACOES, rows, ['ID', 'Data abertura', 'Ativo', 'Tipo', 'Estratégia', 'Status', 'Contratos', 'Strike', 'Premio_opcao', 'Custos', 'IRRF', 'Vencimento', 'Cotacao_atual', 'Resultado_realizado'])
     return redirect(url_for('index'))
 
 
@@ -741,7 +805,13 @@ def excluir(oid: str):
 def reabrir(oid):
     rows = read_csv(OPERACOES)
     r = find_row(rows, oid)
-    if r:
+    if USE_POSTGRES:
+        conn = get_pg_conn()
+        cur = conn.cursor()
+        cur.execute("UPDATE operacoes SET status='Aberta' WHERE id=%s", (oid,))
+        conn.commit()
+        conn.close()
+    elif r:
         r['Status'] = 'Aberta'
         write_csv(OPERACOES, rows, ['ID', 'Data abertura', 'Ativo', 'Tipo', 'Estratégia', 'Status', 'Contratos', 'Strike', 'Premio_opcao', 'Custos', 'IRRF', 'Vencimento', 'Cotacao_atual', 'Resultado_realizado'])
     return redirect(url_for('op_fechadas'))
