@@ -230,9 +230,60 @@ def enrich_ops(rows: List[Dict[str, str]], cfg: Dict[str, float]) -> List[Dict[s
     return out
 
 
+
+def read_operacoes():
+    if not USE_POSTGRES:
+        return read_csv(OPERACOES)
+
+    conn = get_pg_conn()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT
+            id,
+            data_abertura,
+            ativo,
+            tipo,
+            estrategia,
+            status,
+            contratos,
+            strike,
+            premio_opcao,
+            custos,
+            irrf,
+            vencimento,
+            cotacao_atual,
+            resultado_realizado
+        FROM operacoes
+        ORDER BY id
+    """)
+    dados = cur.fetchall()
+    conn.close()
+
+    rows = []
+    for r in dados:
+        rows.append({
+            "ID": str(r[0]),
+            "Data abertura": r[1] or "",
+            "Ativo": r[2] or "",
+            "Tipo": r[3] or "",
+            "Estratégia": r[4] or "",
+            "Status": r[5] or "",
+            "Contratos": str(r[6] or ""),
+            "Strike": str(r[7] or ""),
+            "Premio_opcao": str(r[8] or ""),
+            "Custos": str(r[9] or ""),
+            "IRRF": str(r[10] or ""),
+            "Vencimento": r[11] or "",
+            "Cotacao_atual": str(r[12] or ""),
+            "Resultado_realizado": str(r[13] or ""),
+        })
+    return rows
+
+
+
 def load_all() -> Tuple[List[Dict[str, object]], List[Dict[str, str]], Dict[str, float]]:
     cfg = load_config()
-    return enrich_ops(read_csv(OPERACOES), cfg), read_csv(FECHADAS), cfg
+    return enrich_ops(read_operacoes(), cfg), read_csv(FECHADAS), cfg
 
 
 def metrics(ops: List[Dict[str, object]], fechadas: List[Dict[str, str]], cfg: Dict[str, float]) -> Dict[str, float | str | int]:
