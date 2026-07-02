@@ -92,52 +92,56 @@ padding:22px;
 }
 
 
+
+/* ===== Cortex v4.2 ===== */
+body{overflow-x:hidden;}
+.content{width:100%;max-width:none;overflow-x:hidden;padding:28px;}
+.dashboard-grid{
+  display:grid;
+  grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);
+  gap:22px;
+}
 .panel{
-backdrop-filter:blur(18px);
-background:linear-gradient(180deg,rgba(7,17,31,.95),rgba(5,12,24,.98));
-border:1px solid rgba(65,105,225,.18);
-box-shadow:
-0 20px 60px rgba(0,0,0,.45),
-inset 0 1px 0 rgba(255,255,255,.03);
+  min-width:0;
+  background:linear-gradient(180deg,rgba(7,17,31,.92),rgba(5,12,24,.98));
+  border:1px solid rgba(71,118,255,.15);
+  box-shadow:0 20px 60px rgba(0,0,0,.45);
 }
-
-.panel h3{
-display:flex;
-align-items:center;
-gap:10px;
-font-size:28px;
-margin-bottom:25px;
+canvas{max-width:100%!important;}
+.premium-cards{grid-template-columns:repeat(auto-fit,minmax(240px,1fr));}
+.metric{position:relative;overflow:hidden;}
+.metric:before{
+  content:"";
+  position:absolute;
+  inset:-40%;
+  background:radial-gradient(circle,rgba(66,153,255,.10),transparent 60%);
+  pointer-events:none;
 }
-
-table{
-overflow:hidden;
-border-radius:18px;
+.hero h1{font-size:52px;letter-spacing:-1px;}
+.footer-stats{grid-template-columns:repeat(4,minmax(0,1fr));}
+.foot-card{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  min-height:70px;
 }
-
-th{
-background:rgba(255,255,255,.05);
-font-size:15px;
-letter-spacing:.5px;
-}
-
-tr:hover{
-background:rgba(255,255,255,.03);
-}
-
 #pizzaChart{
-max-width:420px;
-max-height:420px;
-margin:auto;
-display:block;
+  max-width:320px!important;
+  max-height:320px!important;
+  margin:auto;
 }
-
-.dashboard-grid .panel:nth-child(3){
-display:flex;
-flex-direction:column;
-align-items:center;
-justify-content:center;
+.pizza-wrapper{
+  display:flex;
+  justify-content:center;
+  align-items:center;
 }
-
-.footer-stats{
-margin-top:32px;
+table th{
+  background:rgba(255,255,255,.05);
+  border-radius:12px;
+}
+table tr:hover{
+  background:rgba(255,255,255,.03);
+}
+@media (max-width:1600px){
+  .dashboard-grid{grid-template-columns:1fr;}
 }
