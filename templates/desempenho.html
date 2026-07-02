@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block title %}Desempenho{% endblock %}
+{% block content %}
+<h1 style="font-size:52px;font-weight:800;">📈 DESEMPENHO</h1>
+<p>Análise de performance da estratégia Wheel.</p>
+
+<div class="cards-top">
+<div class="panel"><h3>🎯 ROI Médio Abertas</h3><h2>{{ ind.roi_medio_abertas if ind else '0,00' }}%</h2></div>
+<div class="panel"><h3>🏆 ROI Médio Fechadas</h3><h2>{{ ind.roi_medio_fechadas if ind else '0,00' }}%</h2></div>
+<div class="panel"><h3>📈 Lucro do Mês</h3><h2>{{ ind.lucro_mes if ind else 'R$ 0,00' }}</h2></div>
+</div>
+
+<div class="panel">
+<h3>📊 Indicadores de Desempenho</h3>
+<table style="width:100%">
+<thead>
+<tr>
+<th>Métrica</th>
+<th>Resultado</th>
+</tr>
+</thead>
+<tbody>
+<tr><td>Prêmios Totais</td><td>{{ ind.premios_total if ind else 'R$ 0,00' }}</td></tr>
+<tr><td>DARF</td><td>{{ ind.darf if ind else 'R$ 0,00' }}</td></tr>
+<tr><td>Patrimônio</td><td>{{ ind.patrimonio_atual if ind else 'R$ 0,00' }}</td></tr>
+<tr><td>Mês Atual</td><td>{{ ind.mes_atual if ind else '--' }}</td></tr>
+</tbody>
+</table>
+</div>
+{% endblock %}
