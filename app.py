@@ -539,7 +539,7 @@ def index():
     historico_table = "".join([f'<tr><td>{r["mes"]}</td><td>{brl(float(r["lucro"]))}</td><td>{brl(float(r["darf"]))}</td><td>{brl(float(r["premios"]))}</td><td>{pct(float(r["roi"]))} ↑</td></tr>' for r in reversed(hist_nonzero[-5:])])
     top_table = "".join([f'<tr><td>{o.get("Ativo")}</td><td>{o.get("Tipo")}</td><td>{brl(float(o["Strike_n"]))}</td><td>{brl(float(o["Premio_liquido"]))}</td><td>{pct(float(o["ROI"]))}</td></tr>' for o in top])
     html = f'''<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Cortex Invest PRO v3.3</title><style>{CSS}</style></head><body>
-    <aside><div class="logo"><div class="brain">✺</div><div class="brand">CORTEX<br><span>INVEST</span></div></div><div class="strategy">WHEEL STRATEGY</div><div class="side-block">📅<div><b>DATA ATUALIZAÇÃO</b><br>{datetime.now().strftime("%d/%m/%Y<br>%H:%M:%S")}</div></div><label>MÊS SELECIONADO</label><select><option>{ind["mes_atual"]}</option></select><nav><a class="active">🏠 Dashboard</a><a>📂 Operações Abertas</a><a href='/op-fechadas'>✅ Operações Fechadas</a><a>📊 Histórico</a><a>📈 Desempenho</a><a>💼 Ativos</a><a>📄 Relatórios</a><a>⚙️ Configurações</a><a href='/backup'>💾 Backup</a></nav><div class='theme-box'><button type='button' class='theme-btn' onclick='toggleTheme()'>🌙 / ☀️ Alterar Tema</button></div><div class="quote">“A consistência é o que transforma estratégia em patrimônio.”<br><small>– CORTEX INVEST</small></div><div class="version">VERSÃO 3.3</div></aside>
+    <aside><div class="logo"><div class="brain">✺</div><div class="brand">CORTEX<br><span>INVEST</span></div></div><div class="strategy">WHEEL STRATEGY</div><div class="side-block">📅<div><b>DATA ATUALIZAÇÃO</b><br>{datetime.now().strftime("%d/%m/%Y<br>%H:%M:%S")}</div></div><label>MÊS SELECIONADO</label><select><option>{ind["mes_atual"]}</option></select><nav><a class="active">🏠 Dashboard</a><a>📂 Operações Abertas</a><a href='/op-fechadas'>✅ Operações Fechadas</a><a>📊 Histórico</a><a>📈 Desempenho</a><a>💼 Ativos</a><a>📄 Relatórios</a><a>⚙️ Configurações</a><a href='/backup'>💾 Backup</a></nav><div class='theme-box'><div class='theme-label'>TEMA</div><div class='theme-toggle'><div class='theme-icon'>☀️</div><div class='theme-switch' onclick='toggleTheme()'></div></div></div><div class="quote">“A consistência é o que transforma estratégia em patrimônio.”<br><small>– CORTEX INVEST</small></div><div class="version">VERSÃO 3.3</div></aside>
     <main><header><h1>DASHBOARD <span>WHEEL</span></h1><p>Painel automático com prêmios mensais, ROI abertas e histórico por mês</p></header>
     <section class="metrics">
     {metric_card('🎁','PRÊMIOS ACUMULADOS',brl(float(ind['premios_total'])),'Abertas + fechadas','purple')}{metric_card('🎯','ROI ABERTAS',pct(float(ind['roi_medio_abertas'])),'Média das abertas','green')}{metric_card('🔒','CAPITAL COMPROMETIDO',brl(float(ind['capital_comp'])),'Em operações abertas','green')}{metric_card('💼','CAIXA DISPONÍVEL',brl(float(ind['caixa_livre'])),'Para novas operações','blue')}{metric_card('📅','PRÓXIMO VENCIMENTO',prox_venc,prox_sub,'orange')}{metric_card('⭐','NOTA CORTEX',nota_cortex,'Média das abertas','cyan')}{metric_card('🏛️','DARF DO MÊS',brl(float(ind['darf'])),str(ind['mes_atual']),'red')}{metric_card('📈','LUCRO DO MÊS',brl(float(ind['lucro_mes'])),str(ind['mes_atual']),'orange')}
@@ -872,6 +872,15 @@ button,.button{
  border-radius:14px;
  background:#1e88ff;
 }
+
+.theme-box{margin-top:20px}
+.theme-label{font-size:12px;font-weight:700;letter-spacing:2px;color:#cfcfcf;margin-bottom:12px}
+.theme-toggle{display:flex;align-items:center;gap:20px}
+.theme-icon{font-size:42px;color:#fff}
+.theme-switch{width:150px;height:60px;border-radius:50px;border:3px solid #2dd45d;background:#0f1720;position:relative;cursor:pointer;box-shadow:0 0 10px rgba(45,212,93,.35), inset 0 0 20px rgba(45,212,93,.10);transition:.4s}
+.theme-switch::before{content:"🌙";position:absolute;width:52px;height:52px;border-radius:50%;background:#15202b;top:1px;left:92px;display:flex;align-items:center;justify-content:center;font-size:28px;transition:.4s}
+body.light .theme-switch{border-color:#f5b942;box-shadow:0 0 10px rgba(245,185,66,.35), inset 0 0 20px rgba(245,185,66,.15)}
+body.light .theme-switch::before{content:"☀️";left:4px}
 '''
 
 
