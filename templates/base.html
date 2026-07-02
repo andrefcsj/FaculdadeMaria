@@ -3,24 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Faculdade Maria{% endblock %}</title>
+    <title>{% block title %}Cortex Invest{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='theme.css') }}">
 </head>
 <body>
 <div class="layout">
     <aside class="sidebar">
         <div class="logo">
-            <h2>FACULDADE MARIA</h2>
-            <small>Versão 3.3</small>
+            <h2>CORTEX INVEST</h2>
+            <small>Versão 3.4</small>
         </div>
 
         <nav>
-            <a href="/" class="active">🏠 Dashboard</a>
+            <a href="/">🏠 Dashboard</a>
             <a href="#">📂 Operações Abertas</a>
             <a href="/op-fechadas">✅ Operações Fechadas</a>
             <a href="#">📊 Histórico</a>
             <a href="#">📈 Desempenho</a>
-            <a href="#">💼 Ativos</a>
+            <a href="#">💼 Carteira</a>
             <a href="#">📄 Relatórios</a>
             <a href="#">⚙️ Configurações</a>
             <a href="/backup">💾 Backup</a>
@@ -28,7 +28,6 @@
 
         <div class="theme-area">
             <div class="theme-label">TEMA</div>
-
             <div class="theme-toggle">
                 <span class="theme-icon">☀️</span>
                 <div class="theme-switch" onclick="toggleTheme()"></div>
@@ -36,13 +35,12 @@
         </div>
 
         <div class="version">
-            CORTEX INVEST v3.3
+            CORTEX INVEST v3.4
         </div>
     </aside>
 
     <main class="content">
-        {% block content %}
-        {% endblock %}
+        {% block content %}{% endblock %}
     </main>
 </div>
 
