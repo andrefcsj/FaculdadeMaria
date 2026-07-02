@@ -589,7 +589,15 @@ applyTheme();
 </script>
 
     </main><footer>🛡️ Dashboard protegido contra edição. Os dados são atualizados automaticamente. &nbsp; CORTEX INVEST v3.3 • WHEEL STRATEGY • DISCIPLINA, GESTÃO E CONSISTÊNCIA</footer></body></html>'''
-    return html
+    return render_template(
+        "dashboard.html",
+        ops=ops,
+        abertas=abertas,
+        fechadas=fechadas,
+        cfg=cfg,
+        ind=ind,
+        hist=hist
+    )
 
 def salvar_operacao_pg(row):
     conn = get_pg_conn()
