@@ -230,3 +230,66 @@ body{overflow-x:hidden;}
    grid-template-columns:1fr;
  }
 }
+
+
+/* ===== Cortex 4.0 Layout Final ===== */
+.dashboard-layout{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 360px;
+  gap:24px;
+}
+.dashboard-main{min-width:0;}
+.operation-sidebar{
+  position:sticky;
+  top:24px;
+  height:fit-content;
+}
+.dashboard-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:24px;
+}
+.pizza-wrapper{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  min-height:300px;
+}
+#pizzaChart{
+  width:260px !important;
+  height:260px !important;
+  max-width:260px !important;
+  max-height:260px !important;
+}
+.op-form{display:grid;gap:14px}
+.op-row{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+}
+.op-form input,
+.op-form select,
+.op-form textarea{
+  background:#081425;
+  border:1px solid #1d355a;
+  color:#fff;
+  padding:14px;
+  border-radius:14px;
+}
+.op-form textarea{
+  min-height:90px;
+  resize:vertical;
+}
+.footer-stats{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:16px;
+}
+@media(max-width:1500px){
+  .dashboard-layout{
+    grid-template-columns:1fr;
+  }
+  .operation-sidebar{
+    position:static;
+  }
+}
