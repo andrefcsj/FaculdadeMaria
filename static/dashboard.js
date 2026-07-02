@@ -93,3 +93,41 @@ document.addEventListener('DOMContentLoaded',()=>{
    });
  }
 });
+
+
+document.addEventListener('DOMContentLoaded',()=>{
+
+  const codigo=document.getElementById('codigo_opcao');
+  if(codigo){
+    codigo.addEventListener('input',()=>{
+      codigo.value = codigo.value.toUpperCase();
+    });
+  }
+
+  const contratos=document.getElementById('contratos');
+  const info=document.getElementById('acoesInfo');
+
+  if(contratos && info){
+    contratos.addEventListener('input',()=>{
+      const v = parseInt(contratos.value || 0);
+      info.innerHTML = (v*100).toLocaleString('pt-BR') + ' ações';
+    });
+  }
+
+  function money(el){
+    if(!el) return;
+    el.addEventListener('input',()=>{
+      let v = el.value.replace(/\D/g,'');
+      v = (Number(v)/100).toLocaleString('pt-BR',{
+        style:'currency',
+        currency:'BRL'
+      });
+      el.value = v;
+    });
+  }
+
+  money(document.getElementById('premio'));
+  money(document.getElementById('custos'));
+  money(document.getElementById('irrf'));
+
+});
