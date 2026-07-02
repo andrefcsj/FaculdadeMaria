@@ -74,24 +74,53 @@
 
   </div>
 
-  <aside class="operation-sidebar panel">
-    <h3>➕ NOVA OPERAÇÃO</h3>
-    <div class="op-form">
-      <input placeholder="Ativo">
-      <select><option>Estratégia</option><option>Put Vendida</option><option>Call Coberta</option></select>
-      <div class="op-row">
-        <input placeholder="Prêmio">
-        <input placeholder="Quantidade">
-      </div>
-      <div class="op-row">
-        <input placeholder="Strike">
-        <input placeholder="ROI (%)">
-      </div>
-      <input placeholder="Vencimento">
-      <textarea placeholder="Observações"></textarea>
-      <button class="save-op">Salvar Operação</button>
-    </div>
-  </aside>
+  
+<aside class="operation-sidebar panel">
+<h3>➕ NOVA OPERAÇÃO</h3>
+<div class="op-form">
+<label>Tipo de Operação</label>
+<div class="toggle-op">
+<button class="active" type="button">PUT</button>
+<button type="button">CALL</button>
+</div>
+
+<div class="op-row">
+<input placeholder="Ativo">
+<input placeholder="Vencimento">
+</div>
+
+<div class="op-row">
+<input placeholder="Strike">
+<input placeholder="Prêmio Recebido (R$)">
+</div>
+
+<div class="op-row">
+<input placeholder="Quantidade">
+<input placeholder="Capital Necessário (R$)">
+</div>
+
+<div class="op-row">
+<input placeholder="ROI Estimado (%)">
+<select>
+<option>Estratégia</option>
+<option>Put Vendida</option>
+<option>Call Coberta</option>
+</select>
+</div>
+
+<select>
+<option>Corretora</option>
+<option>XP</option>
+<option>Rico</option>
+<option>Inter</option>
+</select>
+
+<textarea placeholder="Observações (opcional)"></textarea>
+
+<button class="save-op">💾 Salvar Operação</button>
+</div>
+</aside>
+
 
 </div>
 
