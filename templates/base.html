@@ -10,24 +10,39 @@
 <div class="layout">
     <aside class="sidebar">
         <div class="logo">
-            <h2>Faculdade Maria</h2>
+            <h2>FACULDADE MARIA</h2>
             <small>Versão 3.3</small>
         </div>
 
         <nav>
-            <a href="/">📊 Dashboard</a>
-            <a href="/op-fechadas">📈 Operações Fechadas</a>
+            <a href="/" class="active">🏠 Dashboard</a>
+            <a href="#">📂 Operações Abertas</a>
+            <a href="/op-fechadas">✅ Operações Fechadas</a>
+            <a href="#">📊 Histórico</a>
+            <a href="#">📈 Desempenho</a>
+            <a href="#">💼 Ativos</a>
+            <a href="#">📄 Relatórios</a>
+            <a href="#">⚙️ Configurações</a>
             <a href="/backup">💾 Backup</a>
         </nav>
 
         <div class="theme-area">
             <div class="theme-label">TEMA</div>
-            <button class="theme-switch" onclick="toggleTheme()">🌙 / ☀️</button>
+
+            <div class="theme-toggle">
+                <span class="theme-icon">☀️</span>
+                <div class="theme-switch" onclick="toggleTheme()"></div>
+            </div>
+        </div>
+
+        <div class="version">
+            CORTEX INVEST v3.3
         </div>
     </aside>
 
     <main class="content">
-        {% block content %}{% endblock %}
+        {% block content %}
+        {% endblock %}
     </main>
 </div>
 
