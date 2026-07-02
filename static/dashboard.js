@@ -67,4 +67,11 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
 
+  window.cortexIndicators = {
+    roiAbertas: 2.93,
+    roiFechadas: 1.75,
+    patrimonio: 5392
+  };
+
 });
+
