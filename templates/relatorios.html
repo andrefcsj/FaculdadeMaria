@@ -5,15 +5,11 @@
 <p>Exportação e consolidação de resultados.</p>
 
 <div class="cards-top">
-<div class="panel"><h3>💰 Lucro Total</h3><h2>{{ ind.premios_total if ind else 'R$ 0,00' }}</h2></div>
-<div class="panel"><h3>🏛 DARF</h3><h2>{{ ind.darf if ind else 'R$ 0,00' }}</h2></div>
-<div class="panel"><h3>🎯 ROI Médio</h3><h2>{{ ind.roi_medio_fechadas if ind else '0,00' }}%</h2></div>
-</div>
-
 <div class="panel">
-<h3>Exportações</h3>
-<p><a class="button" href="#">📄 Exportar PDF</a></p>
-<p><a class="button" href="#">📊 Exportar Excel</a></p>
-<p><a class="button" href="#">📦 Exportar Ambos</a></p>
+<h3>📦 Exportações</h3>
+<p><a class="button" href="/exportar/pdf">📄 Exportar PDF</a></p>
+<p><a class="button" href="/exportar/excel">📊 Exportar Excel</a></p>
+<p><a class="button" href="/exportar/tudo">🗂 Exportar Tudo</a></p>
+</div>
 </div>
 {% endblock %}
