@@ -1,10 +1,6 @@
 {% extends 'base.html' %}
-{% block title %}Dashboard
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="{{ url_for('static', filename='dashboard.js') }}"></script>
+{% block title %}Dashboard{% endblock %}
 
-
-{% endblock %}
 {% block content %}
 
 <h1 style="font-size:64px;font-weight:800;margin-bottom:10px;">DASHBOARD <span style="color:#4d8cff">WHEEL</span></h1>
@@ -60,9 +56,7 @@ padding:25px;
 }
 </style>
 
-
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="{{ url_for('static', filename='dashboard.js') }}"></script>
-
 
 {% endblock %}
