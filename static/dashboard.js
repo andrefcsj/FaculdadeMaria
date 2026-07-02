@@ -202,3 +202,63 @@ document.addEventListener('DOMContentLoaded',()=>{
 
  atualizarResumo();
 });
+
+
+function parseNumeroBR(v){
+  if(!v) return 0;
+  return parseFloat(String(v).replace('.', '').replace(',', '.')) || 0;
+}
+
+document.addEventListener('DOMContentLoaded',()=>{
+
+  const strike=document.getElementById('strike');
+  const contratos=document.getElementById('contratos');
+  const premio=document.getElementById('premio');
+  const vencimento=document.querySelector('[name="Vencimento"]');
+
+  const toggleBtns=document.querySelectorAll('.toggle-op button');
+  toggleBtns.forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      toggleBtns.forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+
+  if(vencimento){
+    vencimento.addEventListener('change',()=>vencimento.blur());
+  }
+
+  function atualizarResumo2(){
+    const s=parseNumeroBR(strike?.value);
+    const c=parseInt(contratos?.value||0);
+    const p=parseNumeroBR((premio?.value||'').replace(/[R$\s]/g,''));
+
+    const capital=s*c*100;
+    const premioBruto=p*c*100;
+    const roi=capital>0?(premioBruto/capital)*100:0;
+
+    const moeda=v=>v.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+
+    const a=document.getElementById('capitalCalc');
+    const b=document.getElementById('premioCalc');
+    const r=document.getElementById('roiCalc');
+
+    if(a) a.innerHTML=moeda(capital);
+    if(b) b.innerHTML=moeda(premioBruto);
+    if(r) r.innerHTML=roi.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})+'%';
+  }
+
+  [strike,contratos,premio].forEach(el=>{
+    if(el) el.addEventListener('input', atualizarResumo2);
+  });
+
+  const oldRemove=setTimeout;
+  if(sessionStorage.getItem('cortexToast')){
+    sessionStorage.removeItem('cortexToast');
+    const toast=document.createElement('div');
+    toast.innerHTML='✅ Operação salva com sucesso!';
+    toast.style.cssText='position:fixed;top:20px;right:20px;background:linear-gradient(90deg,#16a34a,#22c55e);color:#fff;padding:16px 22px;border-radius:16px;z-index:9999;font-weight:700;box-shadow:0 15px 40px rgba(34,197,94,.35)';
+    document.body.appendChild(toast);
+    oldRemove(()=>toast.remove(),6000);
+  }
+});

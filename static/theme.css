@@ -349,3 +349,27 @@ body{overflow-x:hidden;}
     grid-template-columns:1fr !important;
  }
 }
+
+
+/* ===== Resumo Premium ===== */
+.op-summary{
+  margin-top:16px;
+  background:linear-gradient(135deg,rgba(39,104,255,.22),rgba(16,24,40,.95));
+  border:1px solid rgba(111,215,255,.25);
+  border-radius:18px;
+  padding:16px;
+  display:grid;
+  gap:10px;
+  box-shadow:0 0 30px rgba(39,104,255,.15);
+}
+.op-summary div{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:4px 0;
+}
+.op-summary span{
+  font-size:18px;
+  font-weight:800;
+  color:#8fd3ff;
+}
