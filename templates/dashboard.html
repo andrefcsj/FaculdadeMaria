@@ -5,7 +5,7 @@
 <div class="hero">
   <div>
     <h1>Olá, Cortex Trader! 👋</h1>
-    <p>Aqui está o resumo geral das suas operações.</p>
+    <p>Aqui está o resumo geral das suas operações.</p><div class="topbar-info"><span>📅 Hoje</span><span>🕒 Última atualização</span><span>📊 Sistema Operacional</span></div>
   </div>
   <div class="hero-tools">
     <button class="button">🔄 Atualizar Dados</button>
@@ -48,19 +48,25 @@
 
 <div class="panel">
 <h3>🥧 DISTRIBUIÇÃO DOS PRÊMIOS ATIVOS</h3>
-<div class="pizza-wrapper">
 <canvas id="pizzaChart" height="180"></canvas>
-</div>
 </div>
 
 <div class="panel">
 <h3>🏆 TOP 5 OPERAÇÕES ABERTAS</h3>
+{% if top5 %}
 <table>
 <tr><th>Ativo</th><th>Prêmio</th><th>ROI</th></tr>
 {% for op in top5 %}
 <tr><td>{{ op.ativo }}</td><td>{{ op.premio }}</td><td>{{ op.roi }}</td></tr>
 {% endfor %}
 </table>
+{% else %}
+<div class="empty-state">
+<div style="font-size:42px;">🏆</div>
+<div>Nenhuma operação aberta no momento</div>
+<div>Adicione operações para visualizar o ranking.</div>
+</div>
+{% endif %}
 </div>
 </div>
 
