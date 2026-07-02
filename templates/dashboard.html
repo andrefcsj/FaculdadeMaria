@@ -20,6 +20,9 @@ box-shadow:0 8px 25px rgba(0,0,0,.35);
 .fake-line,.fake-bars{height:200px;display:flex;align-items:flex-end;gap:18px;padding:10px}
 .fake-line div{width:14%;border-top:4px solid #3b82f6;height:var(--h)}
 .fake-bars div{width:40px;background:#3ee34f;border-radius:8px 8px 0 0;height:var(--h)}
+.roi-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.roi{font-size:60px;text-align:center;padding:30px 0}
+.badge{display:inline-block;padding:10px 30px;border:1px solid #36ff73;border-radius:12px;color:#7dff72}
 </style>
 
 <h1 style="font-size:64px;margin-bottom:10px;">DASHBOARD <span style="color:#4d8cff">WHEEL</span></h1>
@@ -32,7 +35,7 @@ box-shadow:0 8px 25px rgba(0,0,0,.35);
 
 <div class="cards-grid">
 <div class="card"><div class="card-title">🎁 Prêmios Acumulados</div><div class="card-value">R$ {{ '%.2f'|format(ind.premios_total)|replace('.', ',') }}</div><div class="card-sub">Abertas + fechadas</div></div>
-<div class="card"><div class="card-title">🎯 ROI Abertas</div><div class="card-value">{{ ind.roi_abertas if ind.roi_abertas is defined else '0,00' }}%</div><div class="card-sub">Média das abertas</div></div>
+<div class="card"><div class="card-title">🎯 ROI Abertas</div><div class="card-value">{{ '%.2f'|format(ind.roi_abertas)|replace('.', ',') if ind.roi_abertas is defined else '0,00' }}%</div><div class="card-sub">Média das abertas</div></div>
 <div class="card"><div class="card-title">🔒 Capital Comprometido</div><div class="card-value">R$ 0,00</div><div class="card-sub">Em operações abertas</div></div>
 <div class="card"><div class="card-title">💼 Caixa Disponível</div><div class="card-value">R$ 0,00</div><div class="card-sub">Para novas operações</div></div>
 <div class="card"><div class="card-title">📅 Próximo Vencimento</div><div class="card-value">-- dias</div><div class="card-sub">Próxima operação</div></div>
@@ -45,24 +48,39 @@ box-shadow:0 8px 25px rgba(0,0,0,.35);
 <div class="panel">
 <h3>📈 EVOLUÇÃO DO LUCRO (R$)</h3>
 <div class="fake-line">
-<div style="--h:140px"></div>
-<div style="--h:60px"></div>
-<div style="--h:60px"></div>
-<div style="--h:60px"></div>
-<div style="--h:60px"></div>
-<div style="--h:60px"></div>
+<div style="--h:140px"></div><div style="--h:60px"></div><div style="--h:60px"></div>
+<div style="--h:60px"></div><div style="--h:60px"></div><div style="--h:60px"></div>
 </div>
 </div>
 
 <div class="panel">
 <h3>📊 PRÊMIOS RECEBIDOS POR MÊS (R$)</h3>
 <div class="fake-bars">
-<div style="--h:130px"></div>
-<div style="--h:20px"></div>
-<div style="--h:20px"></div>
-<div style="--h:20px"></div>
-<div style="--h:20px"></div>
-<div style="--h:20px"></div>
+<div style="--h:130px"></div><div style="--h:20px"></div><div style="--h:20px"></div>
+<div style="--h:20px"></div><div style="--h:20px"></div><div style="--h:20px"></div>
+</div>
+</div>
+</div>
+
+<div class="chart-grid">
+<div class="panel">
+<h3>📈 EVOLUÇÃO DO PATRIMÔNIO (R$)</h3>
+<div class="fake-line">
+<div style="--h:90px"></div><div style="--h:90px"></div><div style="--h:90px"></div>
+<div style="--h:90px"></div><div style="--h:90px"></div><div style="--h:90px"></div>
+</div>
+</div>
+
+<div class="roi-grid">
+<div class="panel">
+<h3>🎯 ROI MÉDIO (FECHADAS)</h3>
+<div class="roi">2,75%</div>
+<div style="text-align:center"><span class="badge">BOM</span></div>
+</div>
+<div class="panel">
+<h3>🎯 ROI MÉDIO (ABERTAS)</h3>
+<div class="roi">3,11%</div>
+<div style="text-align:center"><span class="badge">BOM</span></div>
 </div>
 </div>
 </div>
