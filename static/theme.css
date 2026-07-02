@@ -153,3 +153,80 @@ padding:22px;
     border-radius:12px;
     padding:6px 10px;
 }
+
+
+/* ===== Cortex v5.0 ===== */
+body{overflow-x:hidden;}
+.dashboard-grid{
+ grid-template-columns:1.2fr 1fr;
+}
+.pizza-wrapper{
+ display:flex;
+ justify-content:center;
+ align-items:center;
+ min-height:340px;
+}
+#pizzaChart{
+ width:280px !important;
+ height:280px !important;
+ max-width:280px !important;
+ max-height:280px !important;
+}
+.new-operation{
+ min-height:360px;
+}
+.op-form{
+ display:grid;
+ gap:14px;
+}
+.op-form input,
+.op-form select{
+ background:#081425;
+ border:1px solid #1d355a;
+ color:#fff;
+ padding:14px;
+ border-radius:14px;
+}
+.save-op{
+ background:linear-gradient(90deg,#2768ff,#1e39b8);
+ color:#fff;
+ border:none;
+ padding:14px;
+ border-radius:14px;
+ font-weight:700;
+ cursor:pointer;
+}
+.footer-stats{
+ display:flex;
+ justify-content:space-between;
+ align-items:center;
+ padding:16px 20px;
+ background:#07111f;
+ border-radius:18px;
+}
+.hero-tools .button{
+ background:linear-gradient(90deg,#2768ff,#1e39b8);
+ color:#fff;
+ border:none;
+ padding:12px 18px;
+ border-radius:14px;
+}
+.light{
+ background:#eef3fb;
+ color:#111;
+}
+.light .content{
+ background:#eef3fb;
+}
+.light .panel,
+.light .metric,
+.light .foot-card,
+.light .sidebar{
+ background:#fff !important;
+ color:#111;
+}
+@media(max-width:1500px){
+ .dashboard-grid{
+   grid-template-columns:1fr;
+ }
+}
