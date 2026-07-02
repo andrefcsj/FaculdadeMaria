@@ -49,4 +49,22 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+
+  const patrimonio = document.getElementById("patrimonioChart");
+  if (patrimonio) {
+    new Chart(patrimonio, {
+      type: "line",
+      data: {
+        labels: ["Jan","Fev","Mar","Abr","Mai","Jun"],
+        datasets: [{
+          data: [5392,5392,5392,5392,5392,5392],
+          borderColor: "#b06cff",
+          tension: 0.3
+        }]
+      },
+      options: {responsive:true, plugins:{legend:{display:false}}}
+    });
+  }
+
+
 });
