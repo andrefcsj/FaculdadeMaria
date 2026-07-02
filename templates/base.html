@@ -1,50 +1,15 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Cortex Invest{% endblock %}</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='theme.css') }}">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}Cortex Invest PRO v3.5{% endblock %}</title>
+<link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='theme.css') }}">
 </head>
 <body>
-<div class="layout">
-    <aside class="sidebar">
-        <div class="logo">
-            <div style="font-size:52px;margin-bottom:10px;">✺</div>
-            <h2>CORTEX INVEST</h2>
-            <small>Versão 3.4</small>
-        </div>
-
-        <nav>
-            <a href="/" class="{% if request.path == '/' %}active{% endif %}">🏠 Dashboard</a>
-            <a href="#">📂 Operações Abertas</a>
-            <a href="/op-fechadas" class="{% if request.path == '/op-fechadas' %}active{% endif %}">✅ Operações Fechadas</a>
-            <a href="#">📊 Histórico</a>
-            <a href="#">📈 Desempenho</a>
-            <a href="#">💼 Carteira</a>
-            <a href="#">📄 Relatórios</a>
-            <a href="#">⚙️ Configurações</a>
-            <a href="/backup" class="{% if request.path == '/backup' %}active{% endif %}">💾 Backup</a>
-        </nav>
-
-        <div class="theme-area">
-            <div class="theme-label">TEMA</div>
-            <div class="theme-toggle">
-                <span class="theme-icon">☀️</span>
-                <div class="theme-switch" onclick="toggleTheme()"></div>
-            </div>
-        </div>
-
-        <div class="version">
-            CORTEX INVEST v3.4
-        </div>
-    </aside>
-
-    <main class="content">
-        {% block content %}{% endblock %}
-    </main>
-</div>
-
+{% block content %}{% endblock %}
 <script src="{{ url_for('static', filename='theme.js') }}"></script>
+<script src="{{ url_for('static', filename='search_filters.js') }}"></script>
 </body>
 </html>
