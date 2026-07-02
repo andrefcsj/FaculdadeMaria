@@ -1149,6 +1149,22 @@ def exportar_tudo():
                      mimetype="application/zip")
 
 
+
+@app.route('/sobre')
+def sobre():
+    ops, fechadas, cfg = load_all()
+    ind = metrics(ops, fechadas, cfg)
+    return render_template(
+        'sobre.html',
+        ops=ops,
+        fechadas=fechadas,
+        cfg=cfg,
+        ind=ind,
+        versao='3.5',
+        agora=datetime.now()
+    )
+
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
 
