@@ -1,132 +1,41 @@
 {% extends 'base.html' %}
-{% block title %}Dashboard | Cortex Invest
-<div class="chart-grid">
-<div class="panel">
-<h3>📋 HISTÓRICO</h3>
-<table style="width:100%;margin-top:20px;border-collapse:collapse">
-<tr><th>Mês</th><th>Lucro</th><th>ROI</th></tr>
-<tr><td>jul/26</td><td>R$ 0,00</td><td>0%</td></tr>
-<tr><td>ago/26</td><td>R$ 0,00</td><td>0%</td></tr>
-<tr><td>set/26</td><td>R$ 0,00</td><td>0%</td></tr>
-</table>
-</div>
-
-<div class="panel">
-<h3>🏆 TOP 5 OPERAÇÕES ABERTAS</h3>
-<table style="width:100%;margin-top:20px;border-collapse:collapse">
-<tr><th>Ativo</th><th>Prêmio</th><th>ROI</th></tr>
-<tr><td>--</td><td>R$ 0,00</td><td>0%</td></tr>
-<tr><td>--</td><td>R$ 0,00</td><td>0%</td></tr>
-<tr><td>--</td><td>R$ 0,00</td><td>0%</td></tr>
-</table>
-</div>
-</div>
-
-<div class="panel" style="margin-top:20px;">
-<h3>🥧 DISTRIBUIÇÃO DOS PRÊMIOS ATIVOS</h3>
-<div style="height:220px;display:flex;align-items:center;justify-content:center;font-size:28px;opacity:.7">
-Gráfico de distribuição
-</div>
-</div>
-
-{% endblock %}
-
+{% block title %}Dashboard | Cortex Invest{% endblock %}
 {% block content %}
-<style>
-.cards-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px;margin-top:25px}
-.card,.panel{
-background:linear-gradient(180deg,#0d1c2f,#08111b);
-border:1px solid #1d3554;
-border-radius:22px;
-padding:24px;
-box-shadow:0 8px 25px rgba(0,0,0,.35);
-}
-.card-title{font-size:13px;color:#8eb4ff;margin-bottom:12px;text-transform:uppercase}
-.card-value{font-size:26px;font-weight:bold}
-.card-sub{margin-top:10px;color:#aab7ca;font-size:14px}
-.info-bar{display:flex;gap:20px;margin:20px 0;flex-wrap:wrap}
-.info-card{background:#0d1c2f;border:1px solid #1d3554;border-radius:18px;padding:15px 20px}
-.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:25px}
-.panel h3{margin-top:0}
-.fake-line,.fake-bars{height:200px;display:flex;align-items:flex-end;gap:18px;padding:10px}
-.fake-line div{width:14%;border-top:4px solid #3b82f6;height:var(--h)}
-.fake-bars div{width:40px;background:#3ee34f;border-radius:8px 8px 0 0;height:var(--h)}
-</style>
-
-<h1 style="font-size:64px;margin-bottom:10px;">DASHBOARD <span style="color:#4d8cff">WHEEL</span></h1>
-<p style="font-size:22px">Painel automático com prêmios mensais, ROI abertas e histórico por mês</p>
+<h1 style="font-size:48px;margin-bottom:10px;">DASHBOARD <span style="color:#4d8cff">WHEEL</span></h1>
 
 <div class="info-bar">
-<div class="info-card">📅 Data Atualização<br>--/--/----</div>
-<div class="info-card">🗓️ Mês Selecionado<br>Atual</div>
+  <div class="info-card">📅 Atualizado<br>{{ ind.mes_atual }}</div>
+  <div class="info-card">📂 Operações Abertas<br>{{ ind.abertas }}</div>
 </div>
 
 <div class="cards-grid">
-<div class="card"><div class="card-title">🎁 Prêmios Acumulados</div><div class="card-value">R$ {{ '%.2f'|format(ind.premios_total)|replace('.', ',') }}</div><div class="card-sub">Abertas + fechadas</div></div>
-<div class="card"><div class="card-title">🎯 ROI Abertas</div><div class="card-value">{{ ind.roi_abertas if ind.roi_abertas is defined else '0,00' }}%</div><div class="card-sub">Média das abertas</div></div>
-<div class="card"><div class="card-title">🔒 Capital Comprometido</div><div class="card-value">R$ 0,00</div><div class="card-sub">Em operações abertas</div></div>
-<div class="card"><div class="card-title">💼 Caixa Disponível</div><div class="card-value">R$ 0,00</div><div class="card-sub">Para novas operações</div></div>
-<div class="card"><div class="card-title">📅 Próximo Vencimento</div><div class="card-value">-- dias</div><div class="card-sub">Próxima operação</div></div>
-<div class="card"><div class="card-title">⭐ Nota Cortex</div><div class="card-value">4,0</div><div class="card-sub">Média das abertas</div></div>
-<div class="card"><div class="card-title">🏛 DARF do Mês</div><div class="card-value">R$ {{ '%.2f'|format(ind.darf)|replace('.', ',') }}</div><div class="card-sub">Mês atual</div></div>
-<div class="card"><div class="card-title">📈 Lucro do Mês</div><div class="card-value">R$ {{ '%.2f'|format(ind.lucro_mes)|replace('.', ',') }}</div><div class="card-sub">Mês atual</div></div>
+  <div class="card"><div class="card-title">🎁 Prêmios Acumulados</div><div class="card-value">R$ {{ '%.2f'|format(ind.premios_total)|replace('.', ',') }}</div></div>
+  <div class="card"><div class="card-title">🎯 ROI Abertas</div><div class="card-value">{{ '%.2f'|format(ind.roi_medio_abertas)|replace('.', ',') }}%</div></div>
+  <div class="card"><div class="card-title">🔒 Capital Comprometido</div><div class="card-value">R$ {{ '%.2f'|format(ind.capital_comp)|replace('.', ',') }}</div></div>
+  <div class="card"><div class="card-title">💼 Caixa Disponível</div><div class="card-value">R$ {{ '%.2f'|format(ind.caixa_livre)|replace('.', ',') }}</div></div>
+  <div class="card"><div class="card-title">🏛 DARF</div><div class="card-value">R$ {{ '%.2f'|format(ind.darf)|replace('.', ',') }}</div></div>
+  <div class="card"><div class="card-title">📈 Lucro do Mês</div><div class="card-value">R$ {{ '%.2f'|format(ind.lucro_mes)|replace('.', ',') }}</div></div>
 </div>
 
-<div class="chart-grid">
-<div class="panel">
-<h3>📈 EVOLUÇÃO DO LUCRO (R$)</h3>
-<div class="fake-line">
-<div style="--h:140px"></div>
-<div style="--h:60px"></div>
-<div style="--h:60px"></div>
-<div style="--h:60px"></div>
-<div style="--h:60px"></div>
-<div style="--h:60px"></div>
-</div>
-</div>
-
-<div class="panel">
-<h3>📊 PRÊMIOS RECEBIDOS POR MÊS (R$)</h3>
-<div class="fake-bars">
-<div style="--h:130px"></div>
-<div style="--h:20px"></div>
-<div style="--h:20px"></div>
-<div style="--h:20px"></div>
-<div style="--h:20px"></div>
-<div style="--h:20px"></div>
-</div>
-</div>
-</div>
-
-
-<div class="chart-grid">
-<div class="panel">
-<h3>📋 HISTÓRICO</h3>
-<table style="width:100%;margin-top:20px;border-collapse:collapse">
-<tr><th>Mês</th><th>Lucro</th><th>ROI</th></tr>
-<tr><td>jul/26</td><td>R$ 0,00</td><td>0%</td></tr>
-<tr><td>ago/26</td><td>R$ 0,00</td><td>0%</td></tr>
-<tr><td>set/26</td><td>R$ 0,00</td><td>0%</td></tr>
+<div class="panel" style="margin-top:20px">
+<h3>📋 Histórico</h3>
+<table style="width:100%">
+<tr><th>Mês</th><th>Lucro</th><th>Prêmios</th></tr>
+{% for r in hist[-5:] %}
+<tr>
+<td>{{ r.mes }}</td>
+<td>R$ {{ '%.2f'|format(r.lucro)|replace('.', ',') }}</td>
+<td>R$ {{ '%.2f'|format(r.premios)|replace('.', ',') }}</td>
+</tr>
+{% endfor %}
 </table>
 </div>
 
-<div class="panel">
-<h3>🏆 TOP 5 OPERAÇÕES ABERTAS</h3>
-<table style="width:100%;margin-top:20px;border-collapse:collapse">
-<tr><th>Ativo</th><th>Prêmio</th><th>ROI</th></tr>
-<tr><td>--</td><td>R$ 0,00</td><td>0%</td></tr>
-<tr><td>--</td><td>R$ 0,00</td><td>0%</td></tr>
-<tr><td>--</td><td>R$ 0,00</td><td>0%</td></tr>
-</table>
-</div>
-</div>
-
-<div class="panel" style="margin-top:20px;">
-<h3>🥧 DISTRIBUIÇÃO DOS PRÊMIOS ATIVOS</h3>
-<div style="height:220px;display:flex;align-items:center;justify-content:center;font-size:28px;opacity:.7">
-Gráfico de distribuição
-</div>
-</div>
-
+<style>
+.cards-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px}
+.card,.panel,.info-card{background:linear-gradient(180deg,#111b2f,#0c1525);border:1px solid #23314b;border-radius:22px;padding:22px}
+.info-bar{display:flex;gap:20px;margin:20px 0;flex-wrap:wrap}
+.card-title{color:#8eb4ff;font-size:13px;margin-bottom:10px}
+.card-value{font-size:28px;font-weight:700}
+</style>
 {% endblock %}
-
