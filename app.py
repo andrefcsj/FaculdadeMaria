@@ -1165,6 +1165,18 @@ def sobre():
     )
 
 
+@app.route('/configuracoes/salvar', methods=['POST'])
+def salvar_configuracoes():
+    rows = [
+        {"Parametro":"Capital total inicial","Valor":request.form.get("capital_inicial","4000")},
+        {"Parametro":"Meta ROI mensal","Valor":str(float(request.form.get("meta_roi","5"))/100)},
+        {"Parametro":"Aliquota IR opcoes","Valor":str(float(request.form.get("aliquota_ir","15"))/100)},
+        {"Parametro":"Tamanho contrato opcoes","Valor":request.form.get("tamanho_contrato","100")},
+    ]
+    write_csv(CONFIG, rows, ["Parametro","Valor"])
+    return redirect(url_for('configuracoes'))
+
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
 
