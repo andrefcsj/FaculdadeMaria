@@ -131,3 +131,74 @@ document.addEventListener('DOMContentLoaded',()=>{
   money(document.getElementById('irrf'));
 
 });
+
+
+document.addEventListener('DOMContentLoaded',()=>{
+
+ const form=document.querySelector('.op-form');
+ const strike=document.getElementById('strike');
+ const contratos=document.getElementById('contratos');
+ const premio=document.getElementById('premio');
+
+ function parseBRL(v){
+   if(!v) return 0;
+   return Number(String(v).replace(/[^0-9,]/g,'').replace(',','.')) || 0;
+ }
+
+ function moeda(v){
+   return v.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+ }
+
+ function atualizarResumo(){
+    const s = parseFloat(strike?.value || 0);
+    const c = parseInt(contratos?.value || 0);
+    const p = parseBRL(premio?.value);
+
+    const capital = s * c * 100;
+    const premioBruto = p * c * 100;
+    const roi = capital > 0 ? (premioBruto / capital) * 100 : 0;
+
+    const a=document.getElementById('capitalCalc');
+    const b=document.getElementById('premioCalc');
+    const r=document.getElementById('roiCalc');
+
+    if(a) a.innerHTML = moeda(capital);
+    if(b) b.innerHTML = moeda(premioBruto);
+    if(r) r.innerHTML = roi.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}) + '%';
+ }
+
+ [strike, contratos, premio].forEach(el=>{
+   if(el) el.addEventListener('input', atualizarResumo);
+ });
+
+ if(form){
+   form.addEventListener('submit',(e)=>{
+      const codigo=document.getElementById('codigo_opcao')?.value.trim();
+      const venc=form.querySelector('[name="Vencimento"]')?.value;
+
+      if(!codigo || !strike.value || !contratos.value || !premio.value || !venc){
+         e.preventDefault();
+         alert('Preencha todos os campos obrigatórios.');
+         return;
+      }
+
+      sessionStorage.setItem('cortexToast','1');
+
+      const status=form.querySelector('[name="Status"]').value;
+      if(status==='Encerrada'){
+         setTimeout(()=>window.location='/op-fechadas',500);
+      }
+   });
+ }
+
+ if(sessionStorage.getItem('cortexToast')){
+    sessionStorage.removeItem('cortexToast');
+    const toast=document.createElement('div');
+    toast.innerHTML='✅ Operação salva com sucesso!';
+    toast.style.cssText='position:fixed;top:20px;right:20px;background:#18a957;color:#fff;padding:14px 20px;border-radius:14px;z-index:9999;font-weight:700';
+    document.body.appendChild(toast);
+    setTimeout(()=>toast.remove(),3000);
+ }
+
+ atualizarResumo();
+});
