@@ -1,24 +1,41 @@
 {% extends 'base.html' %}
 {% block title %}Dashboard{% endblock %}
-
 {% block content %}
 
-<h1 style="font-size:64px;font-weight:800;margin-bottom:10px;">DASHBOARD <span style="color:#4d8cff">WHEEL</span></h1>
-<p style="font-size:18px;margin-bottom:25px;">Painel automático com prêmios mensais, ROI abertas e histórico por mês</p>
-
-<div class="cards-top">
-<div class="panel mini"><h3>🎁 Prêmios Acumulados</h3><h2>{{ ind.premios_total if ind else 'R$ 0,00' }}</h2></div>
-<div class="panel mini"><h3>🎯 ROI Abertas</h3><h2>{{ ind.roi_abertas if ind else '0%' }}</h2></div>
-<div class="panel mini"><h3>🔒 Capital</h3><h2>{{ ind.capital_comp if ind else 'R$ 0,00' }}</h2></div>
-<div class="panel mini"><h3>💼 Caixa</h3><h2>{{ ind.caixa_livre if ind else 'R$ 0,00' }}</h2></div>
-<div class="panel mini"><h3>⭐ Nota Cortex</h3><h2>4,0</h2></div>
-<div class="panel mini"><h3>🏛 DARF</h3><h2>{{ ind.darf if ind else 'R$ 0,00' }}</h2></div>
-<div class="panel mini"><h3>📈 Lucro do Mês</h3><h2>{{ ind.lucro_mes if ind else 'R$ 0,00' }}</h2></div>
+<div class="hero">
+  <div>
+    <h1>Olá, Cortex Trader! 👋</h1>
+    <p>Aqui está o resumo geral das suas operações.</p>
+  </div>
+  <div class="hero-tools">
+    <button class="button">🔄 Atualizar Dados</button>
+  </div>
 </div>
 
+<div class="premium-cards">
+  <div class="metric blue">
+      <div class="icon">💲</div>
+      <div><small>PRÊMIOS ACUMULADOS</small><h2>{{ ind.premios_total }}</h2></div>
+  </div>
+  <div class="metric green">
+      <div class="icon">📈</div>
+      <div><small>ROI ABERTO</small><h2>{{ ind.roi_abertas }}</h2></div>
+  </div>
+  <div class="metric purple">
+      <div class="icon">🕒</div>
+      <div><small>CAPITAL UTILIZADO</small><h2>{{ ind.capital_comp }}</h2></div>
+  </div>
+  <div class="metric gold">
+      <div class="icon">⭐</div>
+      <div><small>NOTA CORTEX</small><h2>4,0 / 10</h2></div>
+  </div>
+  <div class="metric emerald">
+      <div class="icon">💰</div>
+      <div><small>LUCRO DO MÊS</small><h2>{{ ind.lucro_mes }}</h2></div>
+  </div>
+</div>
 
 <div class="dashboard-grid">
-
 <div class="panel">
 <h3>📈 EVOLUÇÃO DO LUCRO (R$)</h3>
 <canvas id="lucroChart" height="120"></canvas>
@@ -36,47 +53,22 @@
 
 <div class="panel">
 <h3>🏆 TOP 5 OPERAÇÕES ABERTAS</h3>
-<table style="width:100%">
+<table>
 <tr><th>Ativo</th><th>Prêmio</th><th>ROI</th></tr>
 {% for op in top5 %}
-<tr>
-<td>{{ op.ativo }}</td>
-<td>{{ op.premio }}</td>
-<td>{{ op.roi }}</td>
-</tr>
+<tr><td>{{ op.ativo }}</td><td>{{ op.premio }}</td><td>{{ op.roi }}</td></tr>
 {% endfor %}
 </table>
 </div>
-
 </div>
 
-<style>
-.dashboard-grid{
-display:grid;
-grid-template-columns:1fr 1fr;
-gap:20px;
-}
-.panel{
-background:linear-gradient(180deg,#111b2f,#0c1525);
-border:1px solid #23314b;
-border-radius:24px;
-padding:25px;
-}
-@media(max-width:1000px){
-.dashboard-grid{grid-template-columns:1fr;}
-}
-
-.cards-top{
-display:grid;
-grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
-gap:18px;
-margin-bottom:24px;
-}
-.mini h2{margin-top:12px;}
-
-</style>
+<div class="footer-stats">
+<div class="foot-card">💼 Capital Total</div>
+<div class="foot-card">🔒 Capital Utilizado</div>
+<div class="foot-card">✅ Disponível</div>
+<div class="foot-card">🕒 Última atualização</div>
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="{{ url_for('static', filename='dashboard.js') }}"></script>
-
 {% endblock %}
