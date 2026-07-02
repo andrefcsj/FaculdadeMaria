@@ -538,9 +538,9 @@ def index():
     hist_nonzero = [r for r in hist if float(r["lucro"]) or float(r["premios"] or 0)]
     historico_table = "".join([f'<tr><td>{r["mes"]}</td><td>{brl(float(r["lucro"]))}</td><td>{brl(float(r["darf"]))}</td><td>{brl(float(r["premios"]))}</td><td>{pct(float(r["roi"]))} ↑</td></tr>' for r in reversed(hist_nonzero[-5:])])
     top_table = "".join([f'<tr><td>{o.get("Ativo")}</td><td>{o.get("Tipo")}</td><td>{brl(float(o["Strike_n"]))}</td><td>{brl(float(o["Premio_liquido"]))}</td><td>{pct(float(o["ROI"]))}</td></tr>' for o in top])
-    html = f'''<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Cortex Invest PRO v3.2.3</title><style>{CSS}</style></head><body>
-    <aside><div class="logo"><div class="brain">✺</div><div class="brand">CORTEX<br><span>INVEST</span></div></div><div class="strategy">WHEEL STRATEGY</div><div class="side-block">📅<div><b>DATA ATUALIZAÇÃO</b><br>{datetime.now().strftime("%d/%m/%Y<br>%H:%M:%S")}</div></div><label>MÊS SELECIONADO</label><select><option>{ind["mes_atual"]}</option></select><nav><a class="active">▦ Dashboard</a><a>▧ Operações Abertas</a><a href='/op-fechadas'>Operações Fechadas</a><a>◫ Op. Fechadas</a><a>▣ Histórico</a><a>⌁ Desempenho</a><a>⚙ Ativos</a><a>▤ Relatórios</a><a>⚙ Configurações</a><a href='/backup'>💾 Backup</a></nav><div class="quote">“A consistência é o que transforma estratégia em patrimônio.”<br><small>– CORTEX INVEST</small></div><div class="version">VERSÃO 3.2.3</div></aside>
-    <main><header style="display:flex;justify-content:space-between;align-items:center;gap:20px"><div><h1>DASHBOARD <span>WHEEL</span></h1><p>Painel automático com prêmios mensais, ROI abertas e histórico por mês</p></div><div class="theme-toggle"><span>☀️</span><div class="theme-switch" onclick="toggleTheme()"></div><span>🌙</span></div></header>
+    html = f'''<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Cortex Invest PRO v3.3</title><style>{CSS}</style></head><body>
+    <aside><div class="logo"><div class="brain">✺</div><div class="brand">CORTEX<br><span>INVEST</span></div></div><div class="strategy">WHEEL STRATEGY</div><div class="side-block">📅<div><b>DATA ATUALIZAÇÃO</b><br>{datetime.now().strftime("%d/%m/%Y<br>%H:%M:%S")}</div></div><label>MÊS SELECIONADO</label><select><option>{ind["mes_atual"]}</option></select><nav><a class="active">🏠 Dashboard</a><a>📂 Operações Abertas</a><a href='/op-fechadas'>✅ Operações Fechadas</a><a>📊 Histórico</a><a>📈 Desempenho</a><a>💼 Ativos</a><a>📄 Relatórios</a><a>⚙️ Configurações</a><a href='/backup'>💾 Backup</a></nav><div class='theme-box'><button type='button' class='theme-btn' onclick='toggleTheme()'>🌙 / ☀️ Alterar Tema</button></div><div class="quote">“A consistência é o que transforma estratégia em patrimônio.”<br><small>– CORTEX INVEST</small></div><div class="version">VERSÃO 3.3</div></aside>
+    <main><header><h1>DASHBOARD <span>WHEEL</span></h1><p>Painel automático com prêmios mensais, ROI abertas e histórico por mês</p></header>
     <section class="metrics">
     {metric_card('🎁','PRÊMIOS ACUMULADOS',brl(float(ind['premios_total'])),'Abertas + fechadas','purple')}{metric_card('🎯','ROI ABERTAS',pct(float(ind['roi_medio_abertas'])),'Média das abertas','green')}{metric_card('🔒','CAPITAL COMPROMETIDO',brl(float(ind['capital_comp'])),'Em operações abertas','green')}{metric_card('💼','CAIXA DISPONÍVEL',brl(float(ind['caixa_livre'])),'Para novas operações','blue')}{metric_card('📅','PRÓXIMO VENCIMENTO',prox_venc,prox_sub,'orange')}{metric_card('⭐','NOTA CORTEX',nota_cortex,'Média das abertas','cyan')}{metric_card('🏛️','DARF DO MÊS',brl(float(ind['darf'])),str(ind['mes_atual']),'red')}{metric_card('📈','LUCRO DO MÊS',brl(float(ind['lucro_mes'])),str(ind['mes_atual']),'orange')}
     </section>
@@ -588,7 +588,7 @@ function toggleTheme(){{
 applyTheme();
 </script>
 
-    </main><footer>🛡️ Dashboard protegido contra edição. Os dados são atualizados automaticamente. &nbsp; CORTEX INVEST v2.9 • WHEEL STRATEGY • DISCIPLINA, GESTÃO E CONSISTÊNCIA</footer></body></html>'''
+    </main><footer>🛡️ Dashboard protegido contra edição. Os dados são atualizados automaticamente. &nbsp; CORTEX INVEST v3.3 • WHEEL STRATEGY • DISCIPLINA, GESTÃO E CONSISTÊNCIA</footer></body></html>'''
     return html
 
 def salvar_operacao_pg(row):
@@ -838,7 +838,7 @@ CSS = r'''
 .no-summary{grid-template-columns:1.1fr 1.1fr .9fr}.gauge-v19{position:relative;padding-top:0}.gauge-v19 svg{width:100%;max-height:205px;filter:drop-shadow(0 0 10px rgba(10,115,255,.15))}.gauge-v19 .gauge-back{fill:none;stroke:#07101b;stroke-width:30;stroke-linecap:butt}.gauge-v19 .gauge-rim{fill:none;stroke:#43566d;stroke-width:2.2;opacity:.9}.gauge-v19 .gauge-seg{fill:none;stroke-width:17.5;stroke-linecap:butt;filter:drop-shadow(0 0 5px rgba(255,220,30,.18))}.gauge-v19 .g-label{fill:#f4f7ff;font-size:13px;font-weight:900;text-anchor:middle;paint-order:stroke;stroke:#07101b;stroke-width:3px}.gauge-v19 .g-value{fill:#f8fbff;font-size:31px;font-weight:950;text-anchor:middle;letter-spacing:.5px;paint-order:stroke;stroke:#07101b;stroke-width:3px}.gauge-v19 .badge{min-width:118px;border:1px solid #69ff35;background:linear-gradient(180deg,rgba(9,35,28,.98),rgba(6,18,20,.98));color:#78ff25;border-radius:9px;padding:5px 24px;font-size:18px;box-shadow:inset 0 0 18px rgba(61,255,30,.08),0 0 14px rgba(79,255,30,.12)}.gauge-v19 .badge.low{border-color:#ff3b2f;color:#ff584d;background:rgba(35,12,13,.96)}.gauge-v19 .badge.mid{border-color:#82ff2e;color:#82ff2e;background:rgba(8,30,22,.96)}.gauge-v19 .badge.high{border-color:#38ff6c;color:#38ff6c;background:rgba(6,38,22,.96)}.panel:has(.gauge-v19){border-color:#245886;box-shadow:inset 0 0 38px rgba(18,94,170,.08),0 0 20px rgba(0,0,0,.28)}
 
 
-/* ===== DASHBOARD WHEEL v2.7 ===== */
+/* ===== DASHBOARD WHEEL v3.3 ===== */
 body{
  background:#0b1220;
  background-image:radial-gradient(circle at top,#16243b 0%,#0b1220 45%,#050811 100%);
@@ -909,7 +909,7 @@ def op_fechadas():
 
     return f'''<!doctype html>
     <html lang="pt-BR"><head><meta charset="utf-8">
-    <title>Cortex Invest PRO v3.2.3 - Operações Fechadas</title>
+    <title>Cortex Invest PRO v3.3 - Operações Fechadas</title>
     <style>{CSS}</style></head>
     <body>
     <main style="margin-left:0;padding:25px">
