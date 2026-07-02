@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard | Faculdade Maria{% endblock %}
+
+{% block content %}
+<h1>DASHBOARD <span style="color:#4d8cff">WHEEL</span></h1>
+<p>Painel automático com prêmios mensais, ROI abertas e histórico por mês.</p>
+
+<div class="metrics">
+    <div class="metric blue">
+        <div>
+            <div class="mlabel">PRÊMIOS ACUMULADOS</div>
+            <div class="mvalue">R$ {{ '%.2f'|format(ind.premios_total)|replace('.', ',') }}</div>
+        </div>
+    </div>
+
+    <div class="metric green">
+        <div>
+            <div class="mlabel">OPERAÇÕES ABERTAS</div>
+            <div class="mvalue">{{ ind.abertas }}</div>
+        </div>
+    </div>
+
+    <div class="metric orange">
+        <div>
+            <div class="mlabel">LUCRO DO MÊS</div>
+            <div class="mvalue">R$ {{ '%.2f'|format(ind.lucro_mes)|replace('.', ',') }}</div>
+        </div>
+    </div>
+
+    <div class="metric purple">
+        <div>
+            <div class="mlabel">DARF DO MÊS</div>
+            <div class="mvalue">R$ {{ '%.2f'|format(ind.darf)|replace('.', ',') }}</div>
+        </div>
+    </div>
+</div>
+
+<section class="panel" style="margin-top:20px">
+    <h2>Dashboard em Migração</h2>
+    <p>✅ O sistema agora está usando templates.</p>
+    <p>🚀 Próxima etapa: migrar gráficos, tabelas e formulário de operações.</p>
+</section>
+{% endblock %}
