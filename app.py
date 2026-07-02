@@ -576,15 +576,15 @@ def index():
     }}
     </script>
 <script>
-function applyTheme(){
+function applyTheme(){{
   const t = localStorage.getItem('cortex_theme') || 'dark';
   document.body.classList.toggle('light', t === 'light');
-}
-function toggleTheme(){
+}}
+function toggleTheme(){{
   const next = document.body.classList.contains('light') ? 'dark' : 'light';
   localStorage.setItem('cortex_theme', next);
   applyTheme();
-}
+}}
 applyTheme();
 </script>
 
