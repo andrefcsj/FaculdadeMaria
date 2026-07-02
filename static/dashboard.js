@@ -79,3 +79,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
 });
 
+
+document.addEventListener('DOMContentLoaded',()=>{
+ const codigo=document.getElementById('codigo_opcao');
+ if(codigo){
+   codigo.addEventListener('input',()=>codigo.value=codigo.value.toUpperCase());
+ }
+ const contratos=document.querySelector('[name="contratos"]');
+ if(contratos){
+   contratos.addEventListener('change',()=>{
+      let v=parseInt(contratos.value||0);
+      contratos.value = Math.round(v/100)*100;
+   });
+ }
+});
