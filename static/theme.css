@@ -373,3 +373,29 @@ body{overflow-x:hidden;}
   font-weight:800;
   color:#8fd3ff;
 }
+
+
+.busca-op{
+padding:14px 18px;
+border-radius:14px;
+background:#081425;
+border:1px solid #1d355a;
+color:#fff;
+min-width:320px;
+}
+.premium-ops{width:100%;border-collapse:collapse;}
+.premium-ops th{background:#0d1b31;padding:14px;}
+.premium-ops td{padding:14px;border-bottom:1px solid rgba(255,255,255,.06);}
+.premium-ops tr:hover{background:rgba(59,107,255,.08);}
+.acao-icon{
+width:34px;height:34px;border-radius:50%;
+display:flex;align-items:center;justify-content:center;
+background:linear-gradient(135deg,#2f6bff,#13b8ff);
+font-weight:800;
+}
+.badge-mini{
+background:#1c3058;
+padding:6px 10px;
+border-radius:10px;
+font-weight:700;
+}
