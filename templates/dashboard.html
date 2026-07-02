@@ -6,6 +6,17 @@
 <h1 style="font-size:64px;font-weight:800;margin-bottom:10px;">DASHBOARD <span style="color:#4d8cff">WHEEL</span></h1>
 <p style="font-size:18px;margin-bottom:25px;">Painel automático com prêmios mensais, ROI abertas e histórico por mês</p>
 
+<div class="cards-top">
+<div class="panel mini"><h3>🎁 Prêmios Acumulados</h3><h2>{{ ind.premios_total if ind else 'R$ 0,00' }}</h2></div>
+<div class="panel mini"><h3>🎯 ROI Abertas</h3><h2>{{ ind.roi_abertas if ind else '0%' }}</h2></div>
+<div class="panel mini"><h3>🔒 Capital</h3><h2>{{ ind.capital_comp if ind else 'R$ 0,00' }}</h2></div>
+<div class="panel mini"><h3>💼 Caixa</h3><h2>{{ ind.caixa_livre if ind else 'R$ 0,00' }}</h2></div>
+<div class="panel mini"><h3>⭐ Nota Cortex</h3><h2>4,0</h2></div>
+<div class="panel mini"><h3>🏛 DARF</h3><h2>{{ ind.darf if ind else 'R$ 0,00' }}</h2></div>
+<div class="panel mini"><h3>📈 Lucro do Mês</h3><h2>{{ ind.lucro_mes if ind else 'R$ 0,00' }}</h2></div>
+</div>
+
+
 <div class="dashboard-grid">
 
 <div class="panel">
@@ -54,6 +65,15 @@ padding:25px;
 @media(max-width:1000px){
 .dashboard-grid{grid-template-columns:1fr;}
 }
+
+.cards-top{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+gap:18px;
+margin-bottom:24px;
+}
+.mini h2{margin-top:12px;}
+
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
