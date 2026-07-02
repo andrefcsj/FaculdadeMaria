@@ -12,7 +12,7 @@ from datetime import date, datetime
 from pathlib import Path
 from typing import Dict, List, Tuple
 
-from flask import Flask, redirect, request, url_for, jsonify
+from flask import Flask, redirect, request, url_for, jsonify, render_template
 
 BASE = Path(__file__).resolve().parent
 DATA = BASE / "data"
@@ -1023,15 +1023,7 @@ def backup_completo():
 
 @app.route('/backup')
 def backup_center():
-    return '''
-    <html><head><title>Backup Cortex</title></head>
-    <body style="font-family:Arial;background:#07111d;color:white;padding:30px">
-    <h1>💾 Central de Backup</h1>
-    <p>Faça uma cópia completa dos seus dados do Neon.</p>
-    <p><a href="/backup-completo">⬇️ Baixar Backup Completo (.zip)</a></p>
-    <p><a href="/">← Voltar ao Dashboard</a></p>
-    </body></html>
-    '''
+    return render_template('backup.html')
 
 
 if __name__ == "__main__":
