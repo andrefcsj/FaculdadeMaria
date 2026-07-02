@@ -140,3 +140,48 @@ body.light .theme-switch::before{
     left:3px;
     right:auto;
 }
+
+
+
+/* Dashboard v3.4 */
+.panel{
+    background:linear-gradient(180deg,#111b2f,#0c1525);
+    border:1px solid #23314b;
+    border-radius:24px;
+    padding:25px;
+    box-shadow:0 15px 35px rgba(0,0,0,.35);
+}
+
+.card{
+    background:linear-gradient(180deg,#111b2f,#0c1525);
+    border:1px solid #23314b;
+    border-radius:24px;
+    padding:25px;
+    box-shadow:0 15px 35px rgba(0,0,0,.35);
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+th{
+    text-align:left;
+    padding:12px;
+    background:#162338;
+}
+
+td{
+    padding:12px;
+    border-bottom:1px solid #22324c;
+}
+
+canvas{
+    width:100% !important;
+}
+
+body.light .panel,
+body.light .card{
+    background:white;
+    border-color:#d9e0ea;
+}
