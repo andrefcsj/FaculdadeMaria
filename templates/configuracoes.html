@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block title %}Configurações{% endblock %}
+{% block content %}
+<h1 style="font-size:52px;font-weight:800;">⚙️ CONFIGURAÇÕES</h1>
+<p>Parâmetros principais do sistema.</p>
+
+<div class="panel">
+<form class="form labeled">
+
+<div>
+<span>Capital Inicial</span>
+<input type="number" value="4000">
+</div>
+
+<div>
+<span>Meta de ROI (%)</span>
+<input type="number" step="0.01" value="5">
+</div>
+
+<div>
+<span>Alíquota de IR (%)</span>
+<input type="number" step="0.01" value="15">
+</div>
+
+<div>
+<span>Tamanho do Contrato</span>
+<input type="number" value="100">
+</div>
+
+<div>
+<span>Outras Configurações</span>
+<input type="text" placeholder="Em breve">
+</div>
+
+<p style="margin-top:20px;">
+<button type="button">💾 Salvar Configurações</button>
+</p>
+
+</form>
+</div>
+{% endblock %}
