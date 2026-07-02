@@ -75,26 +75,54 @@
   </div>
 
   
+
 <aside class="operation-sidebar panel">
 <h3>➕ NOVA OPERAÇÃO</h3>
 
-<div class="op-form">
-<input id="codigo_opcao" name="codigo_opcao" placeholder="Código da Opção">
-<input id="strike" name="strike" placeholder="Strike" readonly>
-<div class="op-row">
-<select name="estrategia"><option>Venda</option><option>Compra</option></select>
-<select name="status"><option>Aberta</option><option>Fechada</option></select>
+<form class="op-form" method="POST" action="/nova">
+
+<label>Tipo</label>
+<div class="toggle-op">
+<button type="button" class="active" onclick="document.getElementById('tipo').value='PUT'">PUT</button>
+<button type="button" onclick="document.getElementById('tipo').value='CALL'">CALL</button>
 </div>
-<input type="date" name="vencimento">
-<input type="number" name="contratos" step="100" placeholder="Contratos">
-<input type="number" step="0.01" name="premio_opcao" placeholder="Prêmio da Opção">
-<input type="number" step="0.01" name="custos" placeholder="Custos Operacionais">
-<input type="number" step="0.01" name="irrf" placeholder="IRRF">
-<textarea name="observacao" placeholder="Observação"></textarea>
-<button class="save-op">💾 Salvar Operação</button>
+<input type="hidden" id="tipo" name="Tipo" value="PUT">
+
+<input id="codigo_opcao" name="Ativo" placeholder="Código da Opção">
+
+<input id="strike" name="Strike" placeholder="Strike">
+
+<div class="op-row">
+<select name="Estrategia">
+<option>Venda</option>
+<option>Compra</option>
+</select>
+
+<select name="Status">
+<option>Aberta</option>
+<option>Encerrada</option>
+</select>
 </div>
 
+<input type="date" name="Vencimento">
+
+<input type="number" id="contratos" name="Contratos" placeholder="Contratos">
+
+<small id="acoesInfo">0 ações</small>
+
+<input id="premio" name="Premio_opcao" placeholder="Prêmio da Opção">
+
+<input id="custos" name="Custos" placeholder="Custos Operacionais">
+
+<input id="irrf" name="IRRF" placeholder="IRRF">
+
+<textarea name="Observacao" placeholder="Observação"></textarea>
+
+<button type="submit" class="save-op">💾 Salvar Operação</button>
+
+</form>
 </aside>
+
 
 
 </div>
