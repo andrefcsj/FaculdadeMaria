@@ -1,5 +1,53 @@
 {% extends 'base.html' %}
 {% block content %}
-<h1>📂 Operações Abertas</h1>
-<input id="buscaAtivo" placeholder="Buscar ativo..." style="padding:10px;max-width:320px;">
+<div class="hero">
+  <div>
+    <h1>📂 Operações Abertas</h1>
+    <p>Central premium das operações em andamento</p>
+  </div>
+  <input id="buscaAtivo" placeholder="🔍 Buscar ativo ou opção..." class="busca-op">
+</div>
+
+<div class="panel">
+<table class="premium-ops" id="tabelaOperacoes">
+<thead>
+<tr>
+<th>Logo</th>
+<th>Ação</th>
+<th>Opção</th>
+<th>Tipo</th>
+<th>Estratégia</th>
+<th>Vencimento</th>
+<th>Dias</th>
+<th>Capital</th>
+<th>Prêmio</th>
+<th>ROI</th>
+<th>Ações</th>
+</tr>
+</thead>
+<tbody>
+{% for o in abertas %}
+<tr>
+<td><div class="acao-icon">{{ o.Ativo[:1] if o.Ativo else '📈' }}</div></td>
+<td>{{ o.Ativo[:4] }}4</td>
+<td>{{ o.Ativo }}</td>
+<td><span class="badge-mini">{{ o.Tipo }}</span></td>
+<td>{{ o['Estratégia'] }}</td>
+<td>{{ o.Vencimento_fmt }}</td>
+<td>{{ o.Dias }}</td>
+<td>R$ {{ '%.2f'|format(o.Capital)|replace('.', ',') }}</td>
+<td>R$ {{ '%.2f'|format(o.Premio_liquido)|replace('.', ',') }}</td>
+<td>{{ '%.2f'|format(o.ROI)|replace('.', ',') }}%</td>
+<td class="actions">
+<a href="/editar/{{ o.ID }}" title="Editar">✏️</a>
+<a href="/fechar/{{ o.ID }}" title="Fechar">🔒</a>
+<a href="/excluir/{{ o.ID }}" title="Excluir">🗑️</a>
+</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+
+<script src="{{ url_for('static', filename='op_abertas.js') }}"></script>
 {% endblock %}
