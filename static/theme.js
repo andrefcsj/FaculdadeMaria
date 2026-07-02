@@ -1,27 +1,17 @@
+
 function applyTheme(){
-    const tema = localStorage.getItem('tema') || 'dark';
-    document.body.classList.toggle('light', tema === 'light');
-
-    const icon = document.querySelector('.theme-icon');
-    if(icon){
-        icon.textContent = tema === 'light' ? '🌙' : '☀️';
-    }
+ const t=localStorage.getItem('tema')||'dark';
+ document.body.classList.toggle('light',t==='light');
+ const c=document.getElementById('themeToggle');
+ if(c) c.checked=t==='light';
 }
-
-function toggleTheme(){
-    const novoTema = document.body.classList.contains('light')
-        ? 'dark'
-        : 'light';
-
-    localStorage.setItem('tema', novoTema);
+document.addEventListener('DOMContentLoaded',()=>{
+ applyTheme();
+ const c=document.getElementById('themeToggle');
+ if(c){
+  c.addEventListener('change',()=>{
+    localStorage.setItem('tema',c.checked?'light':'dark');
     applyTheme();
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-    applyTheme();
-
-    const btn = document.querySelector('.theme-switch');
-    if(btn){
-        btn.addEventListener('click', toggleTheme);
-    }
+  });
+ }
 });
