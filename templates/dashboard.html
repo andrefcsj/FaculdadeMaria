@@ -77,48 +77,23 @@
   
 <aside class="operation-sidebar panel">
 <h3>➕ NOVA OPERAÇÃO</h3>
+
 <div class="op-form">
-<label>Tipo de Operação</label>
-<div class="toggle-op">
-<button class="active" type="button">PUT</button>
-<button type="button">CALL</button>
-</div>
-
+<input id="codigo_opcao" name="codigo_opcao" placeholder="Código da Opção">
+<input id="strike" name="strike" placeholder="Strike" readonly>
 <div class="op-row">
-<input placeholder="Ativo">
-<input placeholder="Vencimento">
+<select name="estrategia"><option>Venda</option><option>Compra</option></select>
+<select name="status"><option>Aberta</option><option>Fechada</option></select>
 </div>
-
-<div class="op-row">
-<input placeholder="Strike">
-<input placeholder="Prêmio Recebido (R$)">
-</div>
-
-<div class="op-row">
-<input placeholder="Quantidade">
-<input placeholder="Capital Necessário (R$)">
-</div>
-
-<div class="op-row">
-<input placeholder="ROI Estimado (%)">
-<select>
-<option>Estratégia</option>
-<option>Put Vendida</option>
-<option>Call Coberta</option>
-</select>
-</div>
-
-<select>
-<option>Corretora</option>
-<option>XP</option>
-<option>Rico</option>
-<option>Inter</option>
-</select>
-
-<textarea placeholder="Observações (opcional)"></textarea>
-
+<input type="date" name="vencimento">
+<input type="number" name="contratos" step="100" placeholder="Contratos">
+<input type="number" step="0.01" name="premio_opcao" placeholder="Prêmio da Opção">
+<input type="number" step="0.01" name="custos" placeholder="Custos Operacionais">
+<input type="number" step="0.01" name="irrf" placeholder="IRRF">
+<textarea name="observacao" placeholder="Observação"></textarea>
 <button class="save-op">💾 Salvar Operação</button>
 </div>
+
 </aside>
 
 
