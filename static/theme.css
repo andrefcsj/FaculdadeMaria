@@ -293,3 +293,59 @@ body{overflow-x:hidden;}
     position:static;
   }
 }
+
+
+/* ===== Cortex 4.1 Operações ===== */
+.dashboard-layout{
+  grid-template-columns:minmax(0,1fr) 320px !important;
+  gap:18px !important;
+}
+.dashboard-grid{
+  gap:18px !important;
+}
+.operation-sidebar{
+  width:100%;
+}
+.toggle-op{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+}
+.toggle-op button{
+  border:none;
+  background:#101c30;
+  color:#fff;
+  padding:12px;
+  border-radius:12px;
+  cursor:pointer;
+}
+.toggle-op button.active{
+  background:linear-gradient(90deg,#3b6bff,#2f4be0);
+}
+.op-form label{
+  color:#b9c7dd;
+  font-size:13px;
+}
+.op-form textarea{
+  min-height:90px;
+}
+.pizza-wrapper{
+  min-height:240px !important;
+}
+#pizzaChart{
+  width:220px !important;
+  height:220px !important;
+  max-width:220px !important;
+  max-height:220px !important;
+}
+.metric{
+  padding:20px;
+}
+.hero-tools .button{
+  box-shadow:0 10px 30px rgba(59,107,255,.25);
+}
+@media(max-width:1600px){
+ .dashboard-layout{
+    grid-template-columns:1fr !important;
+ }
+}

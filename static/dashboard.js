@@ -13,6 +13,9 @@ document.addEventListener("DOMContentLoaded", () => {
           label: "Lucro",
           data: [0,0,0,0,0,0],
           borderColor: "#4d8cff",
+          borderWidth:3,
+          fill:true,
+          backgroundColor:"rgba(77,140,255,.12)",
           tension: 0.3
         }]
       },
@@ -28,7 +31,8 @@ document.addEventListener("DOMContentLoaded", () => {
         labels: ["Jan","Fev","Mar","Abr","Mai","Jun"],
         datasets: [{
           data: [0,0,0,0,0,0],
-          backgroundColor: "#46e85b"
+          backgroundColor: "rgba(70,232,91,.8)",
+          borderRadius:8
         }]
       },
       options: {responsive:true, plugins:{legend:{display:false}}}
