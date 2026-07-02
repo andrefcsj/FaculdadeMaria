@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% block title %}Operações Abertas{% endblock %}
+{% block content %}
+<h1 style="font-size:52px;font-weight:800;">📂 OPERAÇÕES ABERTAS</h1>
+<p>Gerenciamento das operações atualmente em carteira.</p>
+
+<div class="cards-top">
+<div class="panel"><h3>📂 Total de Operações</h3><h2>{{ ind.abertas if ind else 0 }}</h2></div>
+<div class="panel"><h3>🔒 Capital Comprometido</h3><h2>{{ ind.capital_comp if ind else 'R$ 0,00' }}</h2></div>
+<div class="panel"><h3>🎁 Prêmios Ativos</h3><h2>{{ ind.premios_ativos if ind else 'R$ 0,00' }}</h2></div>
+<div class="panel"><h3>🎯 ROI Médio</h3><h2>{{ ind.roi_medio_abertas if ind else '0,00' }}%</h2></div>
+</div>
+
+<div class="panel">
+<h3>🔎 Filtros</h3>
+<input type="text" placeholder="Pesquisar ativo..." style="max-width:300px;">
+</div>
+
+<div class="panel">
+<h3>📋 Lista de Operações</h3>
+<table style="width:100%">
+<thead>
+<tr>
+<th>Ativo</th>
+<th>Tipo</th>
+<th>Strike</th>
+<th>Prêmio</th>
+<th>ROI</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+{% if abertas %}
+{% for op in abertas %}
+<tr>
+<td>{{ op.Ativo if op.Ativo else '-' }}</td>
+<td>{{ op.Tipo if op.Tipo else '-' }}</td>
+<td>{{ op.Strike_n if op.Strike_n else '-' }}</td>
+<td>{{ op.Premio_liquido if op.Premio_liquido else '-' }}</td>
+<td>{{ op.ROI if op.ROI else '-' }}</td>
+<td>🟢 Aberta</td>
+</tr>
+{% endfor %}
+{% else %}
+<tr><td colspan="6" style="text-align:center;padding:30px;">Nenhuma operação aberta.</td></tr>
+{% endif %}
+</tbody>
+</table>
+</div>
+{% endblock %}
