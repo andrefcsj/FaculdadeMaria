@@ -47,8 +47,7 @@
 </div>
 
 <div class="panel">
-<h3>🥧 DISTRIBUIÇÃO DOS PRÊMIOS ATIVOS</h3>
-<canvas id="pizzaChart" height="180"></canvas>
+<h3>🥧 DISTRIBUIÇÃO DOS PRÊMIOS ATIVOS</h3><div class="pizza-wrapper"><canvas id="pizzaChart" height="180"></canvas></div>
 </div>
 
 <div class="panel">
@@ -68,6 +67,19 @@
 </div>
 {% endif %}
 </div>
+
+<div class="panel new-operation">
+<h3>➕ NOVA OPERAÇÃO</h3>
+<div class="op-form">
+<input placeholder="Ativo">
+<select><option>Estratégia</option><option>Put Vendida</option><option>Call Coberta</option></select>
+<input placeholder="Prêmio">
+<input placeholder="Strike">
+<input placeholder="Vencimento">
+<button class="save-op">Salvar Operação</button>
+</div>
+</div>
+
 </div>
 
 <div class="footer-stats">
