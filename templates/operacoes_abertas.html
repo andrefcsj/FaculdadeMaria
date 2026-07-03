@@ -1,3 +1,4 @@
+{% block head %}<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">{% endblock %}
 {% extends 'base.html' %}
 {% block content %}
 <div class="hero">
@@ -28,24 +29,37 @@
 <tbody>
 {% for o in abertas %}
 <tr>
-<td><div class="acao-icon">{{ o.Ativo[:1] if o.Ativo else '📈' }}</div></td>
-<td class='acao-nome'>{{ o.Ativo[:4] }}4</td>
-<td class='opcao-nome'>{{ o.Ativo }}</td>
-<td><span class="badge-mini">{{ o.Tipo }}</span></td>
+<td>
+{% set ticker = (o.Ativo[:4] ~ '4') %}
+<img class="logo-acao" src="https://img.logo.dev/{{ ticker.lower() }}.com" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+<div class="acao-icon fallback-icon" style="display:none">{{ o.Ativo[:1] if o.Ativo else '📈' }}</div>
+</td>
+<td class='acao-nome col-acao'>{{ o.Ativo[:4] }}4</td>
+<td class='opcao-nome col-opcao'>{{ o.Ativo }}</td>
+<td><span class="badge-mini {% if o.Tipo == 'PUT' %}put{% else %}call{% endif %}">{{ o.Tipo }}</span></td>
 <td>{{ o['Estratégia'] }}</td>
 <td>{{ o.Vencimento_fmt }}</td>
-<td class='contratos-cor'>{{ o.Dias }}</td>
+<td class='contratos-cor col-contratos'>{{ o.Dias }}</td>
 <td>R$ {{ '%.2f'|format(o.Capital)|replace('.', ',') }}</td>
 <td>R$ {{ '%.2f'|format(o.Premio_liquido)|replace('.', ',') }}</td>
-<td class='roi-cor'>{{ '%.2f'|format(o.ROI)|replace('.', ',') }}%</td>
+<td class='roi-cor col-roi'>{{ '%.2f'|format(o.ROI)|replace('.', ',') }}%</td>
 <td class="actions">
-<a class="btn-action edit" href="/editar/{{ o.ID }}" title="Editar">✏</a>
-<a class="btn-action close" href="/fechar/{{ o.ID }}" title="Fechar">✓</a>
-<a class="btn-action delete" href="/excluir/{{ o.ID }}" title="Excluir">🗑</a>
+<a class="btn-action edit" href="/editar/{{ o.ID }}" title="Editar"><i class="fas fa-pen"></i></a>
+<a class="btn-action close" href="/fechar/{{ o.ID }}" title="Fechar"><i class="fas fa-lock"></i></a>
+<a class="btn-action delete" href="/excluir/{{ o.ID }}" title="Excluir"><i class="fas fa-trash"></i></a>
 </td>
 </tr>
 {% endfor %}
 </tbody>
+<tfoot>
+<tr class="totais-row">
+<td colspan="7"><strong>Totais</strong></td>
+<td><strong>R$ {{ "%.2f"|format(abertas|sum(attribute="Capital"))|replace(".", ",") }}</strong></td>
+<td><strong>R$ {{ "%.2f"|format(abertas|sum(attribute="Premio_liquido"))|replace(".", ",") }}</strong></td>
+<td><strong>{{ "%.2f"|format((abertas|sum(attribute="ROI")) / (abertas|length if abertas else 1))|replace(".", ",") }}%</strong></td>
+<td></td>
+</tr>
+</tfoot>
 </table>
 </div>
 
