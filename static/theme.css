@@ -527,3 +527,30 @@ background:#0b1728;
 font-weight:800;
 border-top:2px solid #1d355a;
 }
+
+
+/* ===== VENDA / COMPRA com mesmo visual de PUT / CALL ===== */
+.toggle-buy{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+}
+
+.toggle-buy button{
+  border:none;
+  background:#101c30;
+  color:#fff;
+  padding:12px;
+  border-radius:12px;
+  cursor:pointer;
+  transition:all .25s ease;
+}
+
+.toggle-buy button.active{
+  background:linear-gradient(90deg,#3b6bff,#2f4be0);
+}
+
+.toggle-buy button:hover{
+  transform:translateY(-2px);
+  box-shadow:0 12px 30px rgba(59,107,255,.25);
+}
