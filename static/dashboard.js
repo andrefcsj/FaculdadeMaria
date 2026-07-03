@@ -126,6 +126,9 @@ document.addEventListener('DOMContentLoaded',()=>{
     });
   }
 
+  
+  money(document.getElementById('strike'));
+
   money(document.getElementById('premio'));
   money(document.getElementById('custos'));
   money(document.getElementById('irrf'));
@@ -224,9 +227,9 @@ document.addEventListener('DOMContentLoaded',()=>{
   const premio=document.getElementById('premio');
   const vencimento=document.querySelector('[name="Vencimento"]');
 
-  document.querySelectorAll('.toggle-op button').forEach(btn=>{
+  document.querySelectorAll('.toggle-op:not(.toggle-buy) button').forEach(btn=>{
     btn.addEventListener('click',()=>{
-      document.querySelectorAll('.toggle-op button').forEach(b=>b.classList.remove('active'));
+      document.querySelectorAll('.toggle-op:not(.toggle-buy) button').forEach(b=>b.classList.remove('active'));
       btn.classList.add('active');
     });
   });
