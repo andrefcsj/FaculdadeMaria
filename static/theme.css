@@ -399,3 +399,106 @@ padding:6px 10px;
 border-radius:10px;
 font-weight:700;
 }
+
+
+/* ===== Cortex Premium Visual Pack ===== */
+.premium-ops th{
+  background:rgba(13,27,49,.95);
+  backdrop-filter:blur(12px);
+  letter-spacing:.5px;
+}
+
+.premium-ops td{
+  vertical-align:middle;
+  padding:16px 14px;
+}
+
+.premium-ops tbody tr{
+  transition:all .2s ease;
+}
+
+.premium-ops tbody tr:hover{
+  transform:scale(1.01);
+}
+
+.col-acao{
+  color:#22c55e;
+  font-weight:800;
+}
+
+.col-opcao{
+  color:#4ea3ff;
+  font-weight:700;
+}
+
+.badge-put{
+  background:#dc2626;
+  color:#fff;
+  padding:6px 10px;
+  border-radius:10px;
+  font-weight:700;
+}
+
+.badge-call{
+  background:#2563eb;
+  color:#fff;
+  padding:6px 10px;
+  border-radius:10px;
+  font-weight:700;
+}
+
+.col-contratos{
+  color:#facc15;
+  font-weight:800;
+}
+
+.col-roi{
+  color:#22c55e;
+  font-weight:800;
+}
+
+.action-btn{
+  width:36px;
+  height:36px;
+  border-radius:10px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  margin-right:6px;
+  color:#fff;
+  text-decoration:none;
+  font-weight:700;
+}
+
+.action-edit{
+  background:#2563eb;
+}
+
+.action-close{
+  background:#d4a017;
+}
+
+.action-delete{
+  background:#dc2626;
+}
+
+.toggle-op button,
+.hero-tools .button,
+.save-op{
+  transition:all .25s ease;
+}
+
+.toggle-op button:hover,
+.hero-tools .button:hover,
+.save-op:hover{
+  transform:translateY(-2px);
+  box-shadow:0 12px 30px rgba(59,107,255,.25);
+}
+
+.op-form input:focus,
+.op-form select:focus,
+.op-form textarea:focus{
+  outline:none;
+  border-color:#4ea3ff;
+  box-shadow:0 0 0 3px rgba(78,163,255,.15);
+}
