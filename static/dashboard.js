@@ -156,18 +156,21 @@ document.addEventListener('DOMContentLoaded',()=>{
 
     const capital = s * c * 100;
     const premioBruto = p * c * 100;
-    const roi = capital > 0 ? (premioBruto / capital) * 100 : 0;
+    const custos = parseBRL(document.getElementById('custos')?.value);
+    const irrf = parseBRL(document.getElementById('irrf')?.value);
+    const premioLiquido = premioBruto - custos - irrf;
+    const roi = capital > 0 ? (premioLiquido / capital) * 100 : 0;
 
     const a=document.getElementById('capitalCalc');
     const b=document.getElementById('premioCalc');
     const r=document.getElementById('roiCalc');
 
     if(a) a.innerHTML = moeda(capital);
-    if(b) b.innerHTML = moeda(premioBruto);
+    if(b) b.innerHTML = moeda(premioLiquido);
     if(r) r.innerHTML = roi.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}) + '%';
  }
 
- [strike, contratos, premio].forEach(el=>{
+ [strike, contratos, premio, document.getElementById('custos'), document.getElementById('irrf')].forEach(el=>{
    if(el) el.addEventListener('input', atualizarResumo);
  });
 
@@ -235,7 +238,10 @@ document.addEventListener('DOMContentLoaded',()=>{
 
     const capital=s*c*100;
     const premioBruto=p*c*100;
-    const roi=capital>0?(premioBruto/capital)*100:0;
+    const custos=parseNumeroBR((document.getElementById('custos')?.value||'').replace(/[R$\s]/g,''));
+    const irrf=parseNumeroBR((document.getElementById('irrf')?.value||'').replace(/[R$\s]/g,''));
+    const premioLiquido=premioBruto-custos-irrf;
+    const roi=capital>0?(premioLiquido/capital)*100:0;
 
     const moeda=v=>v.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
 
@@ -244,11 +250,11 @@ document.addEventListener('DOMContentLoaded',()=>{
     const r=document.getElementById('roiCalc');
 
     if(a) a.innerHTML=moeda(capital);
-    if(b) b.innerHTML=moeda(premioBruto);
+    if(b) b.innerHTML=moeda(premioLiquido);
     if(r) r.innerHTML=roi.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})+'%';
   }
 
-  [strike,contratos,premio].forEach(el=>{
+  [strike,contratos,premio,document.getElementById('custos'),document.getElementById('irrf')].forEach(el=>{
     if(el) el.addEventListener('input', atualizarResumo2);
   });
 
