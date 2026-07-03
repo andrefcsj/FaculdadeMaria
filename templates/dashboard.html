@@ -81,6 +81,13 @@
 
 <form class="op-form" method="POST" action="/nova">
 
+<label>Estratégia</label>
+<div class="toggle-buy">
+<button type="button" class="active" onclick="document.getElementById('estrategia').value='Venda'">VENDA</button>
+<button type="button" onclick="document.getElementById('estrategia').value='Compra'">COMPRA</button>
+</div>
+<input type="hidden" id="estrategia" name="Estrategia" value="Venda">
+
 <label>Tipo</label>
 <div class="toggle-op">
 <button type="button" class="active" onclick="document.getElementById('tipo').value='PUT'">PUT</button>
@@ -93,11 +100,6 @@
 <input id="strike" name="Strike" placeholder="Strike">
 
 <div class="op-row">
-<select name="Estrategia">
-<option>Venda</option>
-<option>Compra</option>
-</select>
-
 <select name="Status">
 <option>Aberta</option>
 <option>Encerrada</option>
