@@ -502,3 +502,28 @@ font-weight:700;
   border-color:#4ea3ff;
   box-shadow:0 0 0 3px rgba(78,163,255,.15);
 }
+
+.logo-acao{width:34px;height:34px;border-radius:50%;object-fit:cover}
+.premium-ops th,.premium-ops td{text-align:center;vertical-align:middle}
+.premium-ops tbody tr:hover{transform:none;background:rgba(59,107,255,.08)}
+.acao-nome,.col-acao{color:#22c55e;font-weight:800}
+.opcao-nome,.col-opcao{color:#62a9ff;font-weight:700}
+.contratos-cor,.col-contratos{color:#facc15;font-weight:800}
+.roi-cor,.col-roi{color:#22c55e;font-weight:800}
+.badge-mini.put{background:#dc2626}
+.badge-mini.call{background:#2563eb}
+.btn-action{
+width:44px;height:44px;border-radius:12px;
+display:inline-flex;align-items:center;justify-content:center;
+margin:0 4px;color:#fff;text-decoration:none;
+box-shadow:0 8px 18px rgba(0,0,0,.25);
+font-size:16px;
+}
+.btn-action.edit{background:#4a7df0}
+.btn-action.close{background:#d4a017}
+.btn-action.delete{background:#f04e3e}
+.totais-row td{
+background:#0b1728;
+font-weight:800;
+border-top:2px solid #1d355a;
+}
