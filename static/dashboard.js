@@ -209,7 +209,12 @@ document.addEventListener('DOMContentLoaded',()=>{
 
 function parseNumeroBR(v){
   if(!v) return 0;
-  return parseFloat(String(v).replace('.', '').replace(',', '.')) || 0;
+  return Number(
+    String(v)
+      .replace(/[^0-9,]/g,'')
+      .replace('.','')
+      .replace(',','.')
+  ) || 0;
 }
 
 document.addEventListener('DOMContentLoaded',()=>{
@@ -219,10 +224,16 @@ document.addEventListener('DOMContentLoaded',()=>{
   const premio=document.getElementById('premio');
   const vencimento=document.querySelector('[name="Vencimento"]');
 
-  const toggleBtns=document.querySelectorAll('.toggle-op button');
-  toggleBtns.forEach(btn=>{
+  document.querySelectorAll('.toggle-op button').forEach(btn=>{
     btn.addEventListener('click',()=>{
-      toggleBtns.forEach(b=>b.classList.remove('active'));
+      document.querySelectorAll('.toggle-op button').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+
+  document.querySelectorAll('.toggle-buy button').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      document.querySelectorAll('.toggle-buy button').forEach(b=>b.classList.remove('active'));
       btn.classList.add('active');
     });
   });
