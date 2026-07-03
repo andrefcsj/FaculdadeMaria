@@ -262,3 +262,12 @@ document.addEventListener('DOMContentLoaded',()=>{
     oldRemove(()=>toast.remove(),6000);
   }
 });
+
+document.addEventListener('DOMContentLoaded',()=>{
+ document.querySelectorAll('.toggle-buy button').forEach(btn=>{
+   btn.addEventListener('click',()=>{
+      document.querySelectorAll('.toggle-buy button').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+   });
+ });
+});
