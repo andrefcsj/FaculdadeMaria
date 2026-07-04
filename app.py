@@ -1111,7 +1111,7 @@ def operacoes_abertas():
         o["ticker"] = acao
         o["cotacao_atual"] = cotacao_yahoo(acao)
         dominio = logos.get(acao)
-        o["logo_url"] = f"https://img.logo.dev/{dominio}" if dominio else None
+        o["logo_url"] = f"https://raw.githubusercontent.com/thefintz/icones-b3/main/icones/{acao}.png" if acao else None
 
     return render_template(
         'operacoes_abertas.html',
