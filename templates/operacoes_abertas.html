@@ -15,6 +15,7 @@
 <tr>
 <th></th>
 <th>Ação</th>
+<th>Cotação Atual</th>
 <th>Opção</th>
 <th>Tipo</th>
 <th>Estratégia</th>
@@ -30,11 +31,13 @@
 {% for o in abertas %}
 <tr>
 <td>
-{% set ticker = (o.Ativo[:4] ~ '4') %}
-<img class="logo-acao" src="https://img.logo.dev/{{ ticker.lower() }}.com" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+{% if o.logo_url %}
+<img class="logo-acao" src="{{ o.logo_url }}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+{% endif %}
 <div class="acao-icon fallback-icon" style="display:none">{{ o.Ativo[:1] if o.Ativo else '📈' }}</div>
 </td>
-<td class='acao-nome col-acao'>{{ o.Ativo[:4] }}4</td>
+<td class='acao-nome col-acao'>{{ o.ticker }}</td>
+<td>{% if o.cotacao_atual %}R$ {{ '%.2f'|format(o.cotacao_atual)|replace('.', ',') }}{% else %}--{% endif %}</td>
 <td class='opcao-nome col-opcao'>{{ o.Ativo }}</td>
 <td><span class="badge-mini {% if o.Tipo == 'PUT' %}put{% else %}call{% endif %}">{{ o.Tipo }}</span></td>
 <td>{{ o['Estratégia'] }}</td>
