@@ -596,7 +596,9 @@ applyTheme();
         fechadas=fechadas,
         cfg=cfg,
         ind=ind,
-        hist=hist
+        hist=hist,
+        brl=brl,
+        pct=pct
     )
 
 def salvar_operacao_pg(row):
