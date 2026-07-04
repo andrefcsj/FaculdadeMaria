@@ -18,11 +18,11 @@
 </div>
 
 <div class="premium-cards">
-  <div class="metric blue"><div class="icon">💲</div><div><small>PRÊMIOS ACUMULADOS</small><h2>{{ brl(ind.premios_total) }}</h2></div></div>
-  <div class="metric green"><div class="icon">📈</div><div><small>ROI ABERTO</small><h2>{{ pct(ind.roi_medio_abertas) }}</h2></div></div>
-  <div class="metric purple"><div class="icon">🕒</div><div><small>CAPITAL NECESSÁRIO</small><h2>{{ brl(ind.capital_comp) }}</h2></div></div>
+  <div class="metric blue"><div class="icon">💲</div><div><small>PRÊMIOS ACUMULADOS</small><h2>{{ ind.premios_total }}</h2></div></div>
+  <div class="metric green"><div class="icon">📈</div><div><small>ROI ABERTO</small><h2>{{ ind.roi_abertas }}</h2></div></div>
+  <div class="metric purple"><div class="icon">🕒</div><div><small>CAPITAL NECESSÁRIO</small><h2>{{ ind.capital_comp }}</h2></div></div>
   <div class="metric gold"><div class="icon">⭐</div><div><small>NOTA CORTEX</small><h2>4,0 / 10</h2></div></div>
-  <div class="metric emerald"><div class="icon">💰</div><div><small>LUCRO DO MÊS</small><h2>{{ brl(ind.lucro_mes) }}</h2></div></div>
+  <div class="metric emerald"><div class="icon">💰</div><div><small>LUCRO DO MÊS</small><h2>{{ ind.lucro_mes }}</h2></div></div>
 </div>
 
 <div class="dashboard-layout">
