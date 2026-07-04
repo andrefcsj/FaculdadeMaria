@@ -17,6 +17,7 @@
 <th>Ação</th>
 <th>Cotação Atual</th>
 <th>Opção</th>
+<th>Strike</th>
 <th>Tipo</th>
 <th>Estratégia</th>
 <th>Vencimento</th>
@@ -34,11 +35,12 @@
 {% if o.logo_url %}
 <img class="logo-acao" src="{{ o.logo_url }}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
 {% endif %}
-<div class="acao-icon fallback-icon" style="display:none">{{ o.Ativo[:1] if o.Ativo else '📈' }}</div>
+<div class="acao-icon fallback-icon" style="display:none">{{ o.ticker[:2] if o.ticker else '📈' }}</div>
 </td>
 <td class='acao-nome col-acao'>{{ o.ticker }}</td>
 <td>{% if o.cotacao_atual %}R$ {{ '%.2f'|format(o.cotacao_atual)|replace('.', ',') }}{% else %}--{% endif %}</td>
 <td class='opcao-nome col-opcao'>{{ o.Ativo }}</td>
+<td>R$ {{ '%.2f'|format(o.Strike_n)|replace('.', ',') }}</td>
 <td><span class="badge-mini {% if o.Tipo == 'PUT' %}put{% else %}call{% endif %}">{{ o.Tipo }}</span></td>
 <td>{{ o['Estratégia'] }}</td>
 <td>{{ o.Vencimento_fmt }}</td>
