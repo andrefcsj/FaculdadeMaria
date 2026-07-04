@@ -296,7 +296,7 @@ def metrics(ops: List[Dict[str, object]], fechadas: List[Dict[str, str]], cfg: D
     mes_atual = current_month_label()
     # DARF e lucro do mês vêm apenas das operações fechadas.
     # Preferimos Premio_liquido; se não existir, usamos Lucro_tributavel/Resultado_final como fallback.
-    lucro_mes = 0.0
+    lucro_mes = sum(float(o.get("Premio_liquido",0)) for o in abertas if o.get("Mes_abertura")==mes_atual)
     for f in fechadas:
         if f.get("Mes") == mes_atual:
             base_f = fnum(f.get("Premio_liquido"), 0)
@@ -320,7 +320,7 @@ def metrics(ops: List[Dict[str, object]], fechadas: List[Dict[str, str]], cfg: D
         if not base_f:
             base_f = fnum(f.get("Lucro_tributavel"), fnum(f.get("Resultado_final"), 0))
         premios_fechados_total += base_f
-    premios_total = premios_ativos + premios_fechados_total
+    premios_total = premios_fechados_total
     caixa_livre = max(capital_total - capital_comp, 0)
     patrimonio_atual = capital_comp + premios_total
     return {"capital_total": capital_total, "capital_comp": capital_comp, "caixa": caixa_livre, "caixa_livre": caixa_livre, "premios_ativos": premios_ativos, "premios_total": premios_total, "patrimonio_atual": patrimonio_atual, "lucro_mes": lucro_mes, "darf": darf, "roi_mes": roi_mes, "roi_abertas": roi_abertas, "roi_medio_abertas": roi_medio_abertas, "roi_medio_fechadas": roi_medio_fechadas, "mes_atual": mes_atual, "abertas": len(abertas), "encerradas": len(ops) - len(abertas)}
@@ -542,7 +542,7 @@ def index():
     <aside><div class="logo"><div class="brain">✺</div><div class="brand">CORTEX<br><span>INVEST</span></div></div><div class="strategy">WHEEL STRATEGY</div><div class="side-block">📅<div><b>DATA ATUALIZAÇÃO</b><br>{datetime.now().strftime("%d/%m/%Y<br>%H:%M:%S")}</div></div><label>MÊS SELECIONADO</label><select><option>{ind["mes_atual"]}</option></select><nav><a class="active">🏠 Dashboard</a><a>📂 Operações Abertas</a><a href='/op-fechadas'>✅ Operações Fechadas</a><a>📊 Histórico</a><a>📈 Desempenho</a><a>💼 Ativos</a><a>📄 Relatórios</a><a>⚙️ Configurações</a><a href='/backup'>💾 Backup</a></nav><div class='theme-box'><div class='theme-label'>TEMA</div><div class='theme-toggle'><div class='theme-icon'>☀️</div><div class='theme-switch' onclick='toggleTheme()'></div></div></div><div class="quote">“A consistência é o que transforma estratégia em patrimônio.”<br><small>– CORTEX INVEST</small></div><div class="version">VERSÃO 3.3</div></aside>
     <main><header><h1>DASHBOARD <span>WHEEL</span></h1><p>Painel automático com prêmios mensais, ROI abertas e histórico por mês</p></header>
     <section class="metrics">
-    {metric_card('🎁','PRÊMIOS ACUMULADOS',brl(float(ind['premios_total'])),'Abertas + fechadas','purple')}{metric_card('🎯','ROI ABERTAS',pct(float(ind['roi_medio_abertas'])),'Média das abertas','green')}{metric_card('🔒','CAPITAL COMPROMETIDO',brl(float(ind['capital_comp'])),'Em operações abertas','green')}{metric_card('💼','CAIXA DISPONÍVEL',brl(float(ind['caixa_livre'])),'Para novas operações','blue')}{metric_card('📅','PRÓXIMO VENCIMENTO',prox_venc,prox_sub,'orange')}{metric_card('⭐','NOTA CORTEX',nota_cortex,'Média das abertas','cyan')}{metric_card('🏛️','DARF DO MÊS',brl(float(ind['darf'])),str(ind['mes_atual']),'red')}{metric_card('📈','LUCRO DO MÊS',brl(float(ind['lucro_mes'])),str(ind['mes_atual']),'orange')}
+    {metric_card('🎁','PRÊMIOS ACUMULADOS',brl(float(ind['premios_total'])),'Abertas + fechadas','purple')}{metric_card('🎯','ROI ABERTO',pct(float(ind['roi_medio_abertas'])),'Média das operações abertas','green')}{metric_card('🔒','CAPITAL NECESSÁRIO',brl(float(ind['capital_comp'])),'Em operações abertas','green')}{metric_card('💼','CAIXA DISPONÍVEL',brl(float(ind['caixa_livre'])),'Para novas operações','blue')}{metric_card('📅','PRÓXIMO VENCIMENTO',prox_venc,prox_sub,'orange')}{metric_card('⭐','NOTA CORTEX',nota_cortex,'Média das abertas','cyan')}{metric_card('🏛️','DARF DO MÊS',brl(float(ind['darf'])),str(ind['mes_atual']),'red')}{metric_card('📈','LUCRO DO MÊS',brl(float(ind['lucro_mes'])),str(ind['mes_atual']),'orange')}
     </section>
     <section class="grid two"><div class="panel"><h2>EVOLUÇÃO DO LUCRO (R$)</h2>{line_chart(hist,'lucro')}</div><div class="panel"><h2>PRÊMIOS RECEBIDOS POR MÊS (R$)</h2>{bar_chart(hist,'premios')}</div></section>
     <section class="grid three"><div class="panel wide"><h2>EVOLUÇÃO DO PATRIMÔNIO (R$)</h2>{line_chart(hist,'patrimonio','#a85cff')}</div><div class="panel"><h2>VELOCÍMETRO ROI MÉDIO (FECHADAS)</h2>{gauge(float(ind['roi_medio_fechadas']), 'ROI fechadas')}</div><div class="panel"><h2>VELOCÍMETRO ROI MÉDIO (ABERTAS)</h2>{gauge(float(ind['roi_medio_abertas']), 'ROI abertas')}</div></section>
