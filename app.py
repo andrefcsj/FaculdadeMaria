@@ -1096,6 +1096,23 @@ def configuracoes():
 def operacoes_abertas():
     ops, fechadas, cfg = load_all()
     abertas = [o for o in ops if str(o.get("Status","")).lower() == "aberta"]
+
+    logos = {
+        "PETR4": "petrobras.com.br",
+        "VALE3": "vale.com",
+        "BBAS3": "bb.com.br",
+        "BBDC4": "bradesco.com.br",
+        "ITSA4": "itausa.com.br",
+        "CPLE6": "copel.com"
+    }
+
+    for o in abertas:
+        acao = infer_acao_from_option(o.get("Ativo", ""))
+        o["ticker"] = acao
+        o["cotacao_atual"] = cotacao_yahoo(acao)
+        dominio = logos.get(acao)
+        o["logo_url"] = f"https://img.logo.dev/{dominio}" if dominio else None
+
     return render_template(
         'operacoes_abertas.html',
         abertas=abertas,
