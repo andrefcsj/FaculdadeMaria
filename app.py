@@ -752,7 +752,7 @@ def editar(oid: str):
     rows = read_csv(OPERACOES)
     r = get_operacao_pg(oid) if USE_POSTGRES else find_row(rows, oid)
     if not r:
-        return redirect(url_for('index'))
+        return redirect(url_for('operacoes_abertas'))
     fields = ['ID', 'Data abertura', 'Ativo', 'Tipo', 'Estratégia', 'Status', 'Contratos', 'Strike', 'Premio_opcao', 'Custos', 'IRRF', 'Vencimento', 'Cotacao_atual', 'Resultado_realizado']
     if request.method == 'POST':
         for campo in ['Ativo', 'Tipo', 'Status', 'Contratos', 'Strike', 'Premio_opcao', 'Custos', 'IRRF', 'Vencimento', 'Cotacao_atual']:
@@ -777,7 +777,7 @@ def editar(oid: str):
             conn.close()
         else:
             write_csv(OPERACOES, rows, fields)
-        return redirect(url_for('index'))
+        return redirect(url_for('operacoes_abertas'))
     html = f'''<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Editar operação</title><style>{CSS}</style></head><body><main class="edit-page"><section class="panel"><h2>EDITAR OPERAÇÃO</h2><form method="post" class="form labeled">
     <div><span>Código da opção</span><input name="Ativo" value="{r.get('Ativo','')}"></div>
     <div><span>Tipo</span><select name="Tipo"><option {'selected' if r.get('Tipo')=='PUT' else ''}>PUT</option><option {'selected' if r.get('Tipo')=='CALL' else ''}>CALL</option></select></div>
@@ -807,7 +807,7 @@ def fechar(oid: str):
     elif r:
         r['Status'] = 'Encerrada'
         write_csv(OPERACOES, rows, ['ID', 'Data abertura', 'Ativo', 'Tipo', 'Estratégia', 'Status', 'Contratos', 'Strike', 'Premio_opcao', 'Custos', 'IRRF', 'Vencimento', 'Cotacao_atual', 'Resultado_realizado'])
-    return redirect(url_for('index'))
+    return redirect(url_for('operacoes_abertas'))
 
 
 @app.route('/excluir/<oid>')
@@ -822,7 +822,7 @@ def excluir(oid: str):
         rows = read_csv(OPERACOES)
         rows = [r for r in rows if str(r.get('ID')) != str(oid)]
         write_csv(OPERACOES, rows, ['ID', 'Data abertura', 'Ativo', 'Tipo', 'Estratégia', 'Status', 'Contratos', 'Strike', 'Premio_opcao', 'Custos', 'IRRF', 'Vencimento', 'Cotacao_atual', 'Resultado_realizado'])
-    return redirect(url_for('index'))
+    return redirect(url_for('operacoes_abertas'))
 
 
 
