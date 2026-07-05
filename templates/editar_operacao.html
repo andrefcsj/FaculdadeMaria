@@ -1,113 +1,54 @@
-{% extends 'base.html' %}
-{% block title %}Editar Operação{% endblock %}
-{% block content %}
+<!-- Substitua o arquivo templates/editar_operacao.html por este -->
 <style>
-.edit-page{max-width:1400px;margin:auto}
-.edit-header h1{font-size:56px;margin-bottom:8px}
-.edit-header p{font-size:22px;color:#6b7280}
-.edit-card{background:#fff;border:1px solid #e5e7eb;border-radius:26px;padding:30px;margin-top:24px;box-shadow:0 6px 24px rgba(0,0,0,.05)}
-.edit-section-title{font-size:34px;font-weight:800;margin-bottom:24px}
-.edit-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
-.edit-grid label{display:block;font-size:22px;font-weight:700;margin-bottom:10px}
-.edit-grid input,.edit-grid select,.edit-grid textarea{width:100%;padding:18px;border:1px solid #d1d5db;border-radius:18px;font-size:26px;background:#fff;color:#111827}
-.edit-actions{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:30px}
-.cancel-btn,.save-btn{padding:18px;border-radius:18px;font-size:24px;font-weight:700;text-align:center;text-decoration:none;border:none;cursor:pointer}
-.cancel-btn{background:#fff;border:2px solid #2563eb;color:#2563eb}
-.save-btn{background:linear-gradient(90deg,#2563eb,#3b82f6);color:#fff}
-@media(max-width:1200px){.edit-grid{grid-template-columns:1fr}.edit-header h1{font-size:38px}}
+.edit-page{max-width:1450px;margin:auto}
+.edit-card{background:#fff;border:1px solid #e5e7eb;border-radius:28px;padding:34px;margin-top:28px;box-shadow:0 8px 24px rgba(0,0,0,.05)}
+.edit-grid{
+ display:grid;
+ grid-template-columns:repeat(3,minmax(260px,1fr));
+ gap:34px 42px;
+ align-items:end;
+}
+.edit-grid label{
+ display:block;
+ font-size:24px;
+ font-weight:800;
+ margin-bottom:12px;
+}
+.edit-grid input,
+.edit-grid select{
+ width:100%;
+ min-height:68px;
+ padding:18px 20px;
+ font-size:30px;
+ border:1px solid #d1d5db;
+ border-radius:18px;
+}
+.edit-actions{
+ display:grid;
+ grid-template-columns:1fr 1fr;
+ gap:24px;
+ margin-top:36px;
+}
+.money{font-variant-numeric:tabular-nums}
+@media(max-width:1200px){
+ .edit-grid{grid-template-columns:1fr}
+}
 </style>
 
-<div class="edit-page">
-<div class="edit-header">
-<h1>✏️ Editar Operação</h1>
-<p>Altere as informações da operação e salve as mudanças.</p>
-</div>
-
-<form method="post">
-
-<div class="edit-card">
-<div class="edit-section-title">📄 Informações Básicas</div>
-
-<div class="edit-grid">
-<div>
-<label>Código da Opção</label>
-<input type="text" name="Ativo" value="{{ op.get('Ativo','') }}" required>
-</div>
-
-<div>
-<label>Estratégia</label>
-<select name="Estrategia">
-{% set est = op.get('Estratégia','Venda') %}
-<option value="Venda" {% if est in ['Venda','Wheel'] %}selected{% endif %}>VENDA</option>
-<option value="Compra" {% if est == 'Compra' %}selected{% endif %}>COMPRA</option>
-</select>
-</div>
-
-<div>
-<label>Tipo</label>
-<select name="Tipo">
-<option value="PUT" {% if op.get('Tipo')=='PUT' %}selected{% endif %}>PUT</option>
-<option value="CALL" {% if op.get('Tipo')=='CALL' %}selected{% endif %}>CALL</option>
-</select>
-</div>
-
-<div>
-<label>Vencimento</label>
-<input type="date" name="Vencimento" value="{{ op.get('Vencimento','') }}">
-</div>
-
-<div>
-<label>Status</label>
-<select name="Status">
-<option value="Aberta" {% if op.get('Status')=='Aberta' %}selected{% endif %}>Aberta</option>
-<option value="Encerrada" {% if op.get('Status')=='Encerrada' %}selected{% endif %}>Encerrada</option>
-</select>
-</div>
-
-<div>
-<label>Contratos</label>
-<input type="number" name="Contratos" value="{{ op.get('Contratos','1') }}">
-</div>
-</div>
-</div>
-
-<div class="edit-card">
-<div class="edit-section-title">🎯 Dados da Opção</div>
-<div class="edit-grid">
-<div>
-<label>Strike</label>
-<input type="text" name="Strike" value="{{ op.get('Strike','') }}">
-</div>
-<div>
-<label>Prêmio (por opção)</label>
-<input type="text" name="Premio_opcao" value="{{ op.get('Premio_opcao','') }}">
-</div>
-<div>
-<label>Cotação Atual</label>
-<input type="text" name="Cotacao_atual" value="{{ op.get('Cotacao_atual','') }}">
-</div>
-</div>
-</div>
-
-<div class="edit-card">
-<div class="edit-section-title">💵 Financeiro</div>
-<div class="edit-grid">
-<div>
-<label>Custos Operacionais</label>
-<input type="text" name="Custos" value="{{ op.get('Custos','') }}">
-</div>
-<div>
-<label>IRRF</label>
-<input type="text" name="IRRF" value="{{ op.get('IRRF','') }}">
-</div>
-</div>
-</div>
-
-<div class="edit-actions">
-<a class="cancel-btn" href="/operacoes-abertas">↩ Voltar</a>
-<button class="save-btn" type="submit">💾 Salvar Alterações</button>
-</div>
-
-</form>
-</div>
-{% endblock %}
+<script>
+document.addEventListener('DOMContentLoaded',()=>{
+  document.querySelectorAll('.money').forEach(el=>{
+    el.addEventListener('blur',()=>{
+      let v=el.value.replace(/[^\d,.-]/g,'');
+      if(!v) return;
+      v=v.replace(/\./g,'').replace(',','.');
+      let n=parseFloat(v);
+      if(isNaN(n)) return;
+      el.value=n.toLocaleString('pt-BR',{
+        style:'currency',
+        currency:'BRL'
+      });
+    });
+  });
+});
+</script>
