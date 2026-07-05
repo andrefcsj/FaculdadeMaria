@@ -1,86 +1,112 @@
 {% extends 'base.html' %}
-
 {% block title %}Editar Operação{% endblock %}
-
 {% block content %}
-<div class="hero">
-  <div>
-    <h1>✏️ Editar Operação</h1>
-    <p>Altere os dados da operação e salve para voltar à lista de operações abertas.</p>
-  </div>
+<style>
+.edit-page{max-width:1400px;margin:auto}
+.edit-header h1{font-size:56px;margin-bottom:8px}
+.edit-header p{font-size:22px;color:#6b7280}
+.edit-card{background:#fff;border:1px solid #e5e7eb;border-radius:26px;padding:30px;margin-top:24px;box-shadow:0 6px 24px rgba(0,0,0,.05)}
+.edit-section-title{font-size:34px;font-weight:800;margin-bottom:24px}
+.edit-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.edit-grid label{display:block;font-size:22px;font-weight:700;margin-bottom:10px}
+.edit-grid input,.edit-grid select,.edit-grid textarea{width:100%;padding:18px;border:1px solid #d1d5db;border-radius:18px;font-size:26px;background:#fff;color:#111827}
+.edit-actions{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:30px}
+.cancel-btn,.save-btn{padding:18px;border-radius:18px;font-size:24px;font-weight:700;text-align:center;text-decoration:none;border:none;cursor:pointer}
+.cancel-btn{background:#fff;border:2px solid #2563eb;color:#2563eb}
+.save-btn{background:linear-gradient(90deg,#2563eb,#3b82f6);color:#fff}
+@media(max-width:1200px){.edit-grid{grid-template-columns:1fr}.edit-header h1{font-size:38px}}
+</style>
+
+<div class="edit-page">
+<div class="edit-header">
+<h1>✏️ Editar Operação</h1>
+<p>Altere as informações da operação e salve as mudanças.</p>
 </div>
 
-<div class="panel">
-<form method="post" class="form labeled">
+<form method="post">
 
-  <div>
-    <span>Código da opção</span>
-    <input type="text" name="Ativo" value="{{ op.get('Ativo','') }}" required>
-  </div>
+<div class="edit-card">
+<div class="edit-section-title">📄 Informações Básicas</div>
 
-  <div>
-    <span>Strike</span>
-    <input type="number" step="0.01" name="Strike" value="{{ op.get('Strike','') }}">
-  </div>
+<div class="edit-grid">
+<div>
+<label>Código da Opção</label>
+<input type="text" name="Ativo" value="{{ op.get('Ativo','') }}" required>
+</div>
 
-  <div>
-    <span>Tipo</span>
-    <select name="Tipo">
-      <option value="PUT" {% if op.get('Tipo')=='PUT' %}selected{% endif %}>PUT</option>
-      <option value="CALL" {% if op.get('Tipo')=='CALL' %}selected{% endif %}>CALL</option>
-    </select>
-  </div>
+<div>
+<label>Estratégia</label>
+<select name="Estrategia">
+{% set est = op.get('Estratégia','Venda') %}
+<option value="Venda" {% if est in ['Venda','Wheel'] %}selected{% endif %}>VENDA</option>
+<option value="Compra" {% if est == 'Compra' %}selected{% endif %}>COMPRA</option>
+</select>
+</div>
 
-  <div>
-    <span>Estratégia</span>
-    <select name="Estrategia">
-      <option value="Wheel" {% if op.get('Estratégia')=='Wheel' %}selected{% endif %}>Wheel</option>
-      <option value="Pozinho" {% if op.get('Estratégia')=='Pozinho' %}selected{% endif %}>Pozinho</option>
-    </select>
-  </div>
+<div>
+<label>Tipo</label>
+<select name="Tipo">
+<option value="PUT" {% if op.get('Tipo')=='PUT' %}selected{% endif %}>PUT</option>
+<option value="CALL" {% if op.get('Tipo')=='CALL' %}selected{% endif %}>CALL</option>
+</select>
+</div>
 
-  <div>
-    <span>Status</span>
-    <select name="Status">
-      <option value="Aberta" {% if op.get('Status')=='Aberta' %}selected{% endif %}>Aberta</option>
-      <option value="Encerrada" {% if op.get('Status')=='Encerrada' %}selected{% endif %}>Encerrada</option>
-    </select>
-  </div>
+<div>
+<label>Vencimento</label>
+<input type="date" name="Vencimento" value="{{ op.get('Vencimento','') }}">
+</div>
 
-  <div>
-    <span>Vencimento</span>
-    <input type="date" name="Vencimento" value="{{ op.get('Vencimento','') }}">
-  </div>
+<div>
+<label>Status</label>
+<select name="Status">
+<option value="Aberta" {% if op.get('Status')=='Aberta' %}selected{% endif %}>Aberta</option>
+<option value="Encerrada" {% if op.get('Status')=='Encerrada' %}selected{% endif %}>Encerrada</option>
+</select>
+</div>
 
-  <div>
-    <span>Contratos</span>
-    <input type="number" name="Contratos" value="{{ op.get('Contratos','1') }}">
-  </div>
+<div>
+<label>Contratos</label>
+<input type="number" name="Contratos" value="{{ op.get('Contratos','1') }}">
+</div>
+</div>
+</div>
 
-  <div>
-    <span>Prêmio por opção</span>
-    <input type="number" step="0.01" name="Premio_opcao" value="{{ op.get('Premio_opcao','') }}">
-  </div>
+<div class="edit-card">
+<div class="edit-section-title">🎯 Dados da Opção</div>
+<div class="edit-grid">
+<div>
+<label>Strike</label>
+<input type="text" name="Strike" value="{{ op.get('Strike','') }}">
+</div>
+<div>
+<label>Prêmio (por opção)</label>
+<input type="text" name="Premio_opcao" value="{{ op.get('Premio_opcao','') }}">
+</div>
+<div>
+<label>Cotação Atual</label>
+<input type="text" name="Cotacao_atual" value="{{ op.get('Cotacao_atual','') }}">
+</div>
+</div>
+</div>
 
-  <div>
-    <span>Custos</span>
-    <input type="number" step="0.01" name="Custos" value="{{ op.get('Custos','') }}">
-  </div>
+<div class="edit-card">
+<div class="edit-section-title">💵 Financeiro</div>
+<div class="edit-grid">
+<div>
+<label>Custos Operacionais</label>
+<input type="text" name="Custos" value="{{ op.get('Custos','') }}">
+</div>
+<div>
+<label>IRRF</label>
+<input type="text" name="IRRF" value="{{ op.get('IRRF','') }}">
+</div>
+</div>
+</div>
 
-  <div>
-    <span>IRRF</span>
-    <input type="number" step="0.01" name="IRRF" value="{{ op.get('IRRF','') }}">
-  </div>
-
-  <div>
-    <span>Cotação Atual</span>
-    <input type="number" step="0.01" name="Cotacao_atual" value="{{ op.get('Cotacao_atual','') }}">
-  </div>
-
-  <div style="grid-column:1/-1;display:flex;gap:12px;margin-top:10px">
-    <button type="submit">💾 Salvar Alterações</button>
-    <a class="button" href="/operacoes-abertas">↩ Voltar</a>
-  </div>
+<div class="edit-actions">
+<a class="cancel-btn" href="/operacoes-abertas">↩ Voltar</a>
+<button class="save-btn" type="submit">💾 Salvar Alterações</button>
+</div>
 
 </form>
 </div>
