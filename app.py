@@ -814,7 +814,7 @@ def editar(oid: str):
         else:
             write_csv(OPERACOES, rows, fields)
 
-        return redirect(url_for('index'))
+        return redirect(url_for('operacoes_abertas'))
 
     return render_template(
         'editar_operacao.html',
