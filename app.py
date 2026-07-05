@@ -753,7 +753,7 @@ def editar(oid: str):
     r = get_operacao_pg(oid) if USE_POSTGRES else find_row(rows, oid)
 
     if not r:
-        return redirect(url_for('index'))
+        return redirect(url_for('operacoes_abertas'))
 
     fields = [
         'ID', 'Data abertura', 'Ativo', 'Tipo', 'Estratégia',
@@ -822,19 +822,53 @@ def editar(oid: str):
     )
 
 
-@app.route('/fechar/<oid>')
+@app.route('/fechar/<oid>', methods=['GET', 'POST'])
 def fechar(oid: str):
     rows = read_csv(OPERACOES)
-    r = find_row(rows, oid)
+    r = get_operacao_pg(oid) if USE_POSTGRES else find_row(rows, oid)
+
+    if not r:
+        return redirect(url_for('operacoes_abertas'))
+
+    if request.method == 'GET':
+        premio = r.get('Premio_liquido', r.get('Premio_opcao', '0'))
+        return render_template(
+            'fechar_operacao.html',
+            op=r,
+            premio=premio
+        )
+
+    valor_recompra = float(
+        request.form.get('valor_recompra', '0').replace(',', '.')
+    )
+
     if USE_POSTGRES:
         conn = get_pg_conn()
         cur = conn.cursor()
-        cur.execute("UPDATE operacoes SET status='Encerrada' WHERE id=%s", (oid,))
+
+        try:
+            cur.execute(
+                '''
+                UPDATE operacoes
+                   SET status='Encerrada',
+                       valor_recompra=%s
+                 WHERE id=%s
+                ''',
+                (str(valor_recompra), oid)
+            )
+        except Exception:
+            cur.execute(
+                "UPDATE operacoes SET status='Encerrada' WHERE id=%s",
+                (oid,)
+            )
+
         conn.commit()
         conn.close()
-    elif r:
+
+    else:
         r['Status'] = 'Encerrada'
-        write_csv(OPERACOES, rows, ['ID', 'Data abertura', 'Ativo', 'Tipo', 'Estratégia', 'Status', 'Contratos', 'Strike', 'Premio_opcao', 'Custos', 'IRRF', 'Vencimento', 'Cotacao_atual', 'Resultado_realizado'])
+        r['Valor_recompra'] = str(valor_recompra)
+
     return redirect(url_for('operacoes_abertas'))
 
 
