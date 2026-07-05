@@ -1,45 +1,87 @@
 {% extends 'base.html' %}
+
+{% block title %}Editar Operação{% endblock %}
+
 {% block content %}
-<div class="panel" style="max-width:900px;margin:auto">
-  <h2>✏️ Editar Operação</h2>
+<div class="hero">
+  <div>
+    <h1>✏️ Editar Operação</h1>
+    <p>Altere os dados da operação e salve para voltar à lista de operações abertas.</p>
+  </div>
+</div>
 
-  <form method="post" class="form-grid">
+<div class="panel">
+<form method="post" class="form labeled">
 
-    <label>Ativo</label>
-    <input type="text" name="Ativo" value="{{ op.Ativo }}" required>
+  <div>
+    <span>Código da opção</span>
+    <input type="text" name="Ativo" value="{{ op.get('Ativo','') }}" required>
+  </div>
 
-    <label>Tipo</label>
+  <div>
+    <span>Strike</span>
+    <input type="number" step="0.01" name="Strike" value="{{ op.get('Strike','') }}">
+  </div>
+
+  <div>
+    <span>Tipo</span>
     <select name="Tipo">
-      <option value="CALL" {% if op.Tipo=='CALL' %}selected{% endif %}>CALL</option>
-      <option value="PUT" {% if op.Tipo=='PUT' %}selected{% endif %}>PUT</option>
+      <option value="PUT" {% if op.get('Tipo')=='PUT' %}selected{% endif %}>PUT</option>
+      <option value="CALL" {% if op.get('Tipo')=='CALL' %}selected{% endif %}>CALL</option>
     </select>
+  </div>
 
-    <label>Estratégia</label>
-    <input type="text" name="Estratégia" value="{{ op['Estratégia'] }}">
+  <div>
+    <span>Estratégia</span>
+    <select name="Estrategia">
+      <option value="Wheel" {% if op.get('Estratégia')=='Wheel' %}selected{% endif %}>Wheel</option>
+      <option value="Pozinho" {% if op.get('Estratégia')=='Pozinho' %}selected{% endif %}>Pozinho</option>
+    </select>
+  </div>
 
-    <label>Contratos</label>
-    <input type="number" name="Contratos" value="{{ op.Contratos }}">
+  <div>
+    <span>Status</span>
+    <select name="Status">
+      <option value="Aberta" {% if op.get('Status')=='Aberta' %}selected{% endif %}>Aberta</option>
+      <option value="Encerrada" {% if op.get('Status')=='Encerrada' %}selected{% endif %}>Encerrada</option>
+    </select>
+  </div>
 
-    <label>Strike</label>
-    <input type="number" step="0.01" name="Strike" value="{{ op.Strike }}">
+  <div>
+    <span>Vencimento</span>
+    <input type="date" name="Vencimento" value="{{ op.get('Vencimento','') }}">
+  </div>
 
-    <label>Prêmio da Opção</label>
-    <input type="number" step="0.01" name="Premio_opcao" value="{{ op.Premio_opcao }}">
+  <div>
+    <span>Contratos</span>
+    <input type="number" name="Contratos" value="{{ op.get('Contratos','1') }}">
+  </div>
 
-    <label>Custos</label>
-    <input type="number" step="0.01" name="Custos" value="{{ op.Custos }}">
+  <div>
+    <span>Prêmio por opção</span>
+    <input type="number" step="0.01" name="Premio_opcao" value="{{ op.get('Premio_opcao','') }}">
+  </div>
 
-    <label>IRRF</label>
-    <input type="number" step="0.01" name="IRRF" value="{{ op.IRRF }}">
+  <div>
+    <span>Custos</span>
+    <input type="number" step="0.01" name="Custos" value="{{ op.get('Custos','') }}">
+  </div>
 
-    <label>Vencimento</label>
-    <input type="date" name="Vencimento" value="{{ op.Vencimento }}">
+  <div>
+    <span>IRRF</span>
+    <input type="number" step="0.01" name="IRRF" value="{{ op.get('IRRF','') }}">
+  </div>
 
-    <div style="margin-top:25px;display:flex;gap:10px">
-      <button type="submit">💾 Salvar Alterações</button>
-      <a href="{{ url_for('operacoes_abertas') }}">Cancelar</a>
-    </div>
+  <div>
+    <span>Cotação Atual</span>
+    <input type="number" step="0.01" name="Cotacao_atual" value="{{ op.get('Cotacao_atual','') }}">
+  </div>
 
-  </form>
+  <div style="grid-column:1/-1;display:flex;gap:12px;margin-top:10px">
+    <button type="submit">💾 Salvar Alterações</button>
+    <a class="button" href="/operacoes-abertas">↩ Voltar</a>
+  </div>
+
+</form>
 </div>
 {% endblock %}
