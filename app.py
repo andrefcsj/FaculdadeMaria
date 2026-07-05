@@ -751,102 +751,90 @@ def find_row(rows: List[Dict[str, str]], oid: str) -> Dict[str, str] | None:
 def editar(oid: str):
     rows = read_csv(OPERACOES)
     r = get_operacao_pg(oid) if USE_POSTGRES else find_row(rows, oid)
+
     if not r:
-        return redirect(url_for('operacoes_abertas'))
-    fields = ['ID', 'Data abertura', 'Ativo', 'Tipo', 'Estratégia', 'Status', 'Contratos', 'Strike', 'Premio_opcao', 'Custos', 'IRRF', 'Vencimento', 'Cotacao_atual', 'Resultado_realizado']
+        return redirect(url_for('index'))
+
+    fields = [
+        'ID', 'Data abertura', 'Ativo', 'Tipo', 'Estratégia',
+        'Status', 'Contratos', 'Strike', 'Premio_opcao',
+        'Custos', 'IRRF', 'Vencimento',
+        'Cotacao_atual', 'Resultado_realizado'
+    ]
+
     if request.method == 'POST':
-        for campo in ['Ativo', 'Tipo', 'Status', 'Contratos', 'Strike', 'Premio_opcao', 'Custos', 'IRRF', 'Vencimento', 'Cotacao_atual']:
+        for campo in [
+            'Ativo', 'Tipo', 'Status', 'Contratos',
+            'Strike', 'Premio_opcao', 'Custos',
+            'IRRF', 'Vencimento', 'Cotacao_atual'
+        ]:
             r[campo] = request.form.get(campo, r.get(campo, ''))
-        r['Estratégia'] = request.form.get('Estrategia', r.get('Estratégia', 'Wheel'))
+
+        r['Estratégia'] = request.form.get(
+            'Estrategia',
+            r.get('Estratégia', 'Wheel')
+        )
+
         if USE_POSTGRES:
             conn = get_pg_conn()
             cur = conn.cursor()
-            cur.execute("""
+            cur.execute(
+                """
                 UPDATE operacoes
-                SET ativo=%s,tipo=%s,estrategia=%s,status=%s,
-                    contratos=%s,strike=%s,premio_opcao=%s,
-                    custos=%s,irrf=%s,vencimento=%s,cotacao_atual=%s
-                WHERE id=%s
-            """, (
-                r['Ativo'], r['Tipo'], r['Estratégia'], r['Status'],
-                r['Contratos'], r['Strike'], r['Premio_opcao'],
-                r['Custos'], r['IRRF'], r['Vencimento'],
-                r['Cotacao_atual'], oid
-            ))
+                   SET ativo=%s,
+                       tipo=%s,
+                       estrategia=%s,
+                       status=%s,
+                       contratos=%s,
+                       strike=%s,
+                       premio_opcao=%s,
+                       custos=%s,
+                       irrf=%s,
+                       vencimento=%s,
+                       cotacao_atual=%s
+                 WHERE id=%s
+                """,
+                (
+                    r['Ativo'],
+                    r['Tipo'],
+                    r['Estratégia'],
+                    r['Status'],
+                    r['Contratos'],
+                    r['Strike'],
+                    r['Premio_opcao'],
+                    r['Custos'],
+                    r['IRRF'],
+                    r['Vencimento'],
+                    r['Cotacao_atual'],
+                    oid
+                )
+            )
             conn.commit()
             conn.close()
         else:
             write_csv(OPERACOES, rows, fields)
-        return redirect(url_for('operacoes_abertas'))
-    html = f'''<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Editar operação</title><style>{CSS}</style></head><body><main class="edit-page"><section class="panel"><h2>EDITAR OPERAÇÃO</h2><form method="post" class="form labeled">
-    <div><span>Código da opção</span><input name="Ativo" value="{r.get('Ativo','')}"></div>
-    <div><span>Tipo</span><select name="Tipo"><option {'selected' if r.get('Tipo')=='PUT' else ''}>PUT</option><option {'selected' if r.get('Tipo')=='CALL' else ''}>CALL</option></select></div>
-    <div><span>Status</span><select name="Status"><option {'selected' if r.get('Status')=='Aberta' else ''}>Aberta</option><option {'selected' if r.get('Status')=='Encerrada' else ''}>Encerrada</option></select></div>
-    <div><span>Estratégia</span><input name="Estrategia" value="{r.get('Estratégia','Wheel')}"></div>
-    <div><span>Vencimento da opção</span><input type="date" name="Vencimento" value="{r.get('Vencimento','')}"></div>
-    <div><span>Contratos</span><input type="number" name="Contratos" value="{r.get('Contratos','1')}"></div>
-    <div><span>Strike real</span><input type="number" step="0.01" name="Strike" value="{r.get('Strike','')}"></div>
-    <div><span>Prêmio por opção</span><input type="number" step="0.01" name="Premio_opcao" value="{r.get('Premio_opcao','')}"></div>
-    <div><span>Custos</span><input type="number" step="0.01" name="Custos" value="{r.get('Custos','')}"></div>
-    <div><span>IRRF</span><input type="number" step="0.01" name="IRRF" value="{r.get('IRRF','')}"></div>
-    <input type="hidden" name="Cotacao_atual" value="{r.get('Cotacao_atual','')}">
-    <button>Salvar alterações</button><a class="button danger" href="/excluir/{oid}" onclick="return confirm('Excluir esta operação definitivamente?')">Excluir operação</a><a class="button" href="/">Voltar</a></form></section></main></body></html>'''
-    return html
 
+        return redirect(url_for('index'))
 
-@app.route('/fechar/<oid>', methods=['GET', 'POST'])
-def fechar(oid: str):
-    rows = read_csv(OPERACOES)
-    r = get_operacao_pg(oid) if USE_POSTGRES else find_row(rows, oid)
-
-    if not r:
-        return redirect(url_for('operacoes_abertas'))
-
-    if request.method == 'GET':
-        premio = r.get('Premio_liquido', r.get('Premio_opcao', '0'))
-        return render_template(
-            'fechar_operacao.html',
-            op=r,
-            premio=premio
-        )
-
-    valor_recompra = float(
-        request.form.get('valor_recompra', '0').replace(',', '.')
+    return render_template(
+        'editar_operacao.html',
+        op=r
     )
 
+
+@app.route('/fechar/<oid>')
+def fechar(oid: str):
+    rows = read_csv(OPERACOES)
+    r = find_row(rows, oid)
     if USE_POSTGRES:
         conn = get_pg_conn()
         cur = conn.cursor()
-        try:
-            cur.execute(
-                """
-                UPDATE operacoes
-                   SET status='Encerrada',
-                       valor_recompra=%s
-                 WHERE id=%s
-                """,
-                (str(valor_recompra), oid)
-            )
-        except Exception:
-            cur.execute(
-                "UPDATE operacoes SET status='Encerrada' WHERE id=%s",
-                (oid,)
-            )
+        cur.execute("UPDATE operacoes SET status='Encerrada' WHERE id=%s", (oid,))
         conn.commit()
         conn.close()
-    else:
+    elif r:
         r['Status'] = 'Encerrada'
-        r['Valor_recompra'] = str(valor_recompra)
-        write_csv(
-            OPERACOES,
-            rows,
-            ['ID', 'Data abertura', 'Ativo', 'Tipo', 'Estratégia',
-             'Status', 'Contratos', 'Strike', 'Premio_opcao',
-             'Custos', 'IRRF', 'Vencimento',
-             'Cotacao_atual', 'Resultado_realizado',
-             'Valor_recompra']
-        )
-
+        write_csv(OPERACOES, rows, ['ID', 'Data abertura', 'Ativo', 'Tipo', 'Estratégia', 'Status', 'Contratos', 'Strike', 'Premio_opcao', 'Custos', 'IRRF', 'Vencimento', 'Cotacao_atual', 'Resultado_realizado'])
     return redirect(url_for('operacoes_abertas'))
 
 
