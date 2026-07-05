@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="panel" style="max-width:900px;margin:auto">
+  <h2>✏️ Editar Operação</h2>
+
+  <form method="post" class="form-grid">
+
+    <label>Ativo</label>
+    <input type="text" name="Ativo" value="{{ op.Ativo }}" required>
+
+    <label>Tipo</label>
+    <select name="Tipo">
+      <option value="CALL" {% if op.Tipo=='CALL' %}selected{% endif %}>CALL</option>
+      <option value="PUT" {% if op.Tipo=='PUT' %}selected{% endif %}>PUT</option>
+    </select>
+
+    <label>Estratégia</label>
+    <input type="text" name="Estratégia" value="{{ op['Estratégia'] }}">
+
+    <label>Contratos</label>
+    <input type="number" name="Contratos" value="{{ op.Contratos }}">
+
+    <label>Strike</label>
+    <input type="number" step="0.01" name="Strike" value="{{ op.Strike }}">
+
+    <label>Prêmio da Opção</label>
+    <input type="number" step="0.01" name="Premio_opcao" value="{{ op.Premio_opcao }}">
+
+    <label>Custos</label>
+    <input type="number" step="0.01" name="Custos" value="{{ op.Custos }}">
+
+    <label>IRRF</label>
+    <input type="number" step="0.01" name="IRRF" value="{{ op.IRRF }}">
+
+    <label>Vencimento</label>
+    <input type="date" name="Vencimento" value="{{ op.Vencimento }}">
+
+    <div style="margin-top:25px;display:flex;gap:10px">
+      <button type="submit">💾 Salvar Alterações</button>
+      <a href="{{ url_for('operacoes_abertas') }}">Cancelar</a>
+    </div>
+
+  </form>
+</div>
+{% endblock %}
