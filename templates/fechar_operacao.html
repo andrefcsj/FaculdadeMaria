@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="panel" style="max-width:700px;margin:auto">
+  <h2>🔒 Fechar Operação</h2>
+
+  <form method="post">
+    <div style="margin-bottom:15px">
+      <strong>Ativo:</strong> {{ op.Ativo }}
+    </div>
+
+    <div style="margin-bottom:15px">
+      <strong>Contratos:</strong> {{ op.Contratos }}
+    </div>
+
+    <div style="margin-bottom:15px">
+      <strong>Prêmio recebido:</strong>
+      R$ {{ premio }}
+    </div>
+
+    <label>Valor de recompra por opção</label>
+    <input
+      type="number"
+      step="0.01"
+      name="valor_recompra"
+      required
+      style="width:100%;padding:10px;margin-top:8px"
+    >
+
+    <div style="margin-top:25px;display:flex;gap:10px">
+      <button type="submit">Fechar Operação</button>
+      <a href="{{ url_for('operacoes_abertas') }}">Cancelar</a>
+    </div>
+  </form>
+</div>
+{% endblock %}
