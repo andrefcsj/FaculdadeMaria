@@ -762,3 +762,31 @@ table,
   letter-spacing:.4px;
   color:#fff !important;
 }
+
+
+/* Ajustes finais do card estilo mockup */
+.metric{
+  border-radius:32px !important;
+}
+.metric .icon{
+  width:78px !important;
+  height:78px !important;
+  font-size:40px !important;
+  box-shadow:0 0 30px rgba(255,255,255,.28), inset 0 2px 6px rgba(255,255,255,.45) !important;
+}
+
+.metric::after{
+  content:'';
+  position:absolute;
+  left:18px;
+  right:18px;
+  bottom:18px;
+  height:105px;
+  opacity:.28;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='340' height='120'%3E%3Cpolyline points='10,105 45,103 80,92 115,94 150,74 185,78 220,58 255,52 290,36 325,54' fill='none' stroke='white' stroke-width='3' stroke-linecap='round'/%3E%3Ccircle cx='80' cy='92' r='4' fill='white'/%3E%3Ccircle cx='150' cy='74' r='4' fill='white'/%3E%3Ccircle cx='220' cy='58' r='4' fill='white'/%3E%3Ccircle cx='290' cy='36' r='4' fill='white'/%3E%3C/svg%3E") no-repeat center/contain;
+}
+
+.metric-content p{
+  margin-top:16px !important;
+  font-weight:600 !important;
+}
