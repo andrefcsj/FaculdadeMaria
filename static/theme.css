@@ -627,3 +627,12 @@ table,
   border:1px solid #e5e7eb !important;
   color:#374151 !important;
 }
+
+
+/* ===== Correção linha Totais no tema claro ===== */
+.totais-row td{
+  background:#f8fafc !important;
+  color:#1f2937 !important;
+  border-top:2px solid #e5e7eb !important;
+  border-bottom:none !important;
+}
