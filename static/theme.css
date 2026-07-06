@@ -833,3 +833,17 @@ table,
     min-width:auto;
   }
 }
+
+
+/* ===== Linhas Intercaladas - Operações Abertas ===== */
+.premium-ops tbody tr:nth-child(odd){
+  background:#f8fafc;
+}
+
+.premium-ops tbody tr:nth-child(even){
+  background:#ffffff;
+}
+
+.premium-ops tbody tr:hover{
+  background:#eef5ff !important;
+}
