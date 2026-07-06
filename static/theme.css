@@ -790,3 +790,46 @@ table,
   margin-top:16px !important;
   font-weight:600 !important;
 }
+
+
+/* ===== Dashboard Layout Ajustado ===== */
+.dashboard-layout{
+  grid-template-columns:minmax(0,1fr) 430px !important;
+  gap:20px !important;
+}
+
+.dashboard-grid{
+  grid-template-columns:1fr 1fr !important;
+  gap:16px !important;
+}
+
+.dashboard-grid .panel{
+  min-height:280px;
+}
+
+.dashboard-grid .panel canvas{
+  max-height:180px;
+}
+
+.operation-sidebar{
+  min-width:430px;
+}
+
+.operation-sidebar.panel{
+  padding:30px;
+}
+
+.op-form input,
+.op-form textarea,
+.op-form select{
+  padding:16px;
+}
+
+@media(max-width:1600px){
+  .dashboard-layout{
+    grid-template-columns:1fr !important;
+  }
+  .operation-sidebar{
+    min-width:auto;
+  }
+}
