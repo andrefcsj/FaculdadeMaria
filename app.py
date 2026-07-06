@@ -1132,6 +1132,29 @@ def desempenho():
         ativos[ativo] = ativos.get(ativo,0) + 1
     ativo_mais_operado = max(ativos, key=ativos.get) if ativos else '--'
 
+    melhor_ativo = '--'
+    pior_ativo = '--'
+    if fechadas_ops:
+        melhor = max(fechadas_ops, key=lambda x: float(x.get('ROI',0)))
+        pior = min(fechadas_ops, key=lambda x: float(x.get('ROI',0)))
+        melhor_ativo = melhor.get('Ativo','--')
+        pior_ativo = pior.get('Ativo','--')
+
+    nota_carteira = round(
+        min(
+            ((taxa_acerto/10) + max(ind.get('roi_medio_fechadas',0),0)),
+            10
+        ),
+        1
+    )
+
+    sequencia_ganhos = 0
+    for o in reversed(fechadas_ops):
+        if float(o.get('ROI',0)) > 0:
+            sequencia_ganhos += 1
+        else:
+            break
+
     return render_template(
         'desempenho.html',
         ops=ops,
@@ -1144,6 +1167,10 @@ def desempenho():
         media_lucro=media_lucro,
         ativo_mais_operado=ativo_mais_operado,
         total_fechadas=total_fechadas,
+        melhor_ativo=melhor_ativo,
+        pior_ativo=pior_ativo,
+        nota_carteira=nota_carteira,
+        sequencia_ganhos=sequencia_ganhos,
         brl=brl,
         pct=pct
     )
