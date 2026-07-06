@@ -772,7 +772,7 @@ def editar(oid: str):
 
         r['Estratégia'] = request.form.get(
             'Estrategia',
-            r.get('Estratégia', 'Wheel')
+            r.get('Estratégia', 'Venda')
         )
 
         if USE_POSTGRES:
