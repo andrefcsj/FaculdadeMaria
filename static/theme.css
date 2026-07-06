@@ -724,3 +724,41 @@ table,
    grid-template-columns:repeat(auto-fit,minmax(260px,1fr)) !important;
  }
 }
+
+
+/* ===== Cards Mockup Final ===== */
+.metric-content p{
+  margin:12px 0 0;
+  font-size:15px;
+  line-height:1.4;
+  color:rgba(255,255,255,.92) !important;
+  font-weight:600;
+  max-width:180px;
+}
+
+.metric .icon{
+  box-shadow:0 8px 18px rgba(255,255,255,.25);
+}
+
+.metric::after{
+  content:'';
+  position:absolute;
+  left:22px;
+  right:16px;
+  bottom:14px;
+  height:90px;
+  opacity:.55;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='90'%3E%3Cpolyline points='5,75 40,78 75,58 110,60 145,35 180,42 215,18 250,22 285,8 315,30' fill='none' stroke='white' stroke-width='3'/%3E%3Ccircle cx='75' cy='58' r='3' fill='white'/%3E%3Ccircle cx='145' cy='35' r='3' fill='white'/%3E%3Ccircle cx='215' cy='18' r='3' fill='white'/%3E%3Ccircle cx='285' cy='8' r='3' fill='white'/%3E%3C/svg%3E") no-repeat center/contain;
+}
+
+.metric h2{
+  font-size:28px !important;
+  font-weight:900;
+}
+
+.metric small{
+  font-size:14px;
+  font-weight:800;
+  letter-spacing:.4px;
+  color:#fff !important;
+}
