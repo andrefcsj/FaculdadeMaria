@@ -636,3 +636,60 @@ table,
   border-top:2px solid #e5e7eb !important;
   border-bottom:none !important;
 }
+
+
+/* ===== Dashboard Premium Cards v4.1 ===== */
+.badge{
+  background:linear-gradient(135deg,#2563eb,#3b82f6) !important;
+  color:#fff !important;
+  box-shadow:0 10px 25px rgba(37,99,235,.25);
+}
+
+.metric{
+  color:#fff !important;
+  border:none !important;
+  overflow:hidden;
+  position:relative;
+  transition:transform .25s ease, box-shadow .25s ease !important;
+}
+
+.metric:hover{
+  transform:translateY(-8px) scale(1.02) !important;
+  box-shadow:0 20px 40px rgba(0,0,0,.18) !important;
+}
+
+.metric small,
+.metric h2{
+  color:#fff !important;
+}
+
+.metric .icon{
+  background:rgba(255,255,255,.9) !important;
+}
+
+.metric.blue{
+  background:linear-gradient(135deg,#16a34a,#10b981) !important;
+}
+.metric.green{
+  background:linear-gradient(135deg,#3b82f6,#2563eb) !important;
+}
+.metric.purple{
+  background:linear-gradient(135deg,#facc15,#f59e0b) !important;
+}
+.metric.gold{
+  background:linear-gradient(135deg,#a855f7,#7c3aed) !important;
+}
+.metric.emerald{
+  background:linear-gradient(135deg,#fb923c,#f97316) !important;
+}
+
+.metric::after{
+  content:'';
+  position:absolute;
+  right:-40px;
+  bottom:-40px;
+  width:140px;
+  height:140px;
+  background:rgba(255,255,255,.10);
+  border-radius:50%;
+}
