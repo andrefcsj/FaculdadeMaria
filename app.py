@@ -1115,12 +1115,22 @@ def historico():
 @app.route('/desempenho')
 def desempenho():
     ops, fechadas, cfg = load_all()
+    ind = metrics(ops, fechadas, cfg)
+
+    fechadas_ops = [o for o in ops if str(o.get('Status','')).lower() == 'encerrada']
+    melhor_roi = max([float(o.get('ROI', 0)) for o in fechadas_ops], default=0)
+    pior_roi = min([float(o.get('ROI', 0)) for o in fechadas_ops], default=0)
+
     return render_template(
         'desempenho.html',
         ops=ops,
         fechadas=fechadas,
         cfg=cfg,
-        ind=metrics(ops, fechadas, cfg)
+        ind=ind,
+        melhor_roi=melhor_roi,
+        pior_roi=pior_roi,
+        brl=brl,
+        pct=pct
     )
 
 @app.route('/carteira')
