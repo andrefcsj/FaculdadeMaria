@@ -1121,6 +1121,17 @@ def desempenho():
     melhor_roi = max([float(o.get('ROI', 0)) for o in fechadas_ops], default=0)
     pior_roi = min([float(o.get('ROI', 0)) for o in fechadas_ops], default=0)
 
+    total_fechadas = len(fechadas_ops)
+    vencedoras = len([o for o in fechadas_ops if float(o.get('ROI',0)) > 0])
+    taxa_acerto = (vencedoras / total_fechadas * 100) if total_fechadas else 0
+    media_lucro = (sum(float(o.get('Premio_liquido',0)) for o in fechadas_ops) / total_fechadas) if total_fechadas else 0
+
+    ativos = {}
+    for o in ops:
+        ativo = str(o.get('Ativo',''))
+        ativos[ativo] = ativos.get(ativo,0) + 1
+    ativo_mais_operado = max(ativos, key=ativos.get) if ativos else '--'
+
     return render_template(
         'desempenho.html',
         ops=ops,
@@ -1129,6 +1140,10 @@ def desempenho():
         ind=ind,
         melhor_roi=melhor_roi,
         pior_roi=pior_roi,
+        taxa_acerto=taxa_acerto,
+        media_lucro=media_lucro,
+        ativo_mais_operado=ativo_mais_operado,
+        total_fechadas=total_fechadas,
         brl=brl,
         pct=pct
     )
