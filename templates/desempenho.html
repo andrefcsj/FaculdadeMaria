@@ -1,30 +1,91 @@
 {% extends 'base.html' %}
-{% block title %}Desempenho{% endblock %}
+{% block title %}Central de Desempenho{% endblock %}
 {% block content %}
-<h1 style="font-size:52px;font-weight:800;">📈 DESEMPENHO</h1>
-<p>Análise de performance da estratégia Wheel.</p>
 
-<div class="cards-top">
-<div class="panel"><h3>🎯 ROI Médio Abertas</h3><h2>{{ ind.roi_medio_abertas if ind else '0,00' }}%</h2></div>
-<div class="panel"><h3>🏆 ROI Médio Fechadas</h3><h2>{{ ind.roi_medio_fechadas if ind else '0,00' }}%</h2></div>
-<div class="panel"><h3>📈 Lucro do Mês</h3><h2>{{ ind.lucro_mes if ind else 'R$ 0,00' }}</h2></div>
+<h1 style="font-size:48px;font-weight:800;">📈 CENTRAL DE DESEMPENHO</h1>
+<p style="color:#6b7280;margin-bottom:25px;">
+Acompanhe os resultados, evolução e qualidade das operações.
+</p>
+
+<div class="cards-top" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px;">
+  <div class="panel">
+    <h3>💰 Lucro Acumulado</h3>
+    <h2>{{ brl(ind.premios_total) if brl is defined else ind.premios_total }}</h2>
+    <small>Total de prêmios recebidos.</small>
+  </div>
+
+  <div class="panel">
+    <h3>🎯 ROI Médio Abertas</h3>
+    <h2>{{ pct(ind.roi_medio_abertas) if pct is defined else ind.roi_medio_abertas }}</h2>
+    <small>Retorno médio das operações abertas.</small>
+  </div>
+
+  <div class="panel">
+    <h3>🏆 ROI Médio Fechadas</h3>
+    <h2>{{ pct(ind.roi_medio_fechadas) if pct is defined else ind.roi_medio_fechadas }}</h2>
+    <small>Retorno médio das operações encerradas.</small>
+  </div>
+
+  <div class="panel">
+    <h3>📁 Operações Abertas</h3>
+    <h2>{{ ind.abertas }}</h2>
+    <small>Posições atualmente em carteira.</small>
+  </div>
+
+  <div class="panel">
+    <h3>💼 Patrimônio Atual</h3>
+    <h2>{{ brl(ind.patrimonio_atual) if brl is defined else ind.patrimonio_atual }}</h2>
+    <small>Capital + prêmios acumulados.</small>
+  </div>
 </div>
 
-<div class="panel">
-<h3>📊 Indicadores de Desempenho</h3>
-<table style="width:100%">
-<thead>
-<tr>
-<th>Métrica</th>
-<th>Resultado</th>
-</tr>
-</thead>
-<tbody>
-<tr><td>Prêmios Totais</td><td>{{ ind.premios_total if ind else 'R$ 0,00' }}</td></tr>
-<tr><td>DARF</td><td>{{ ind.darf if ind else 'R$ 0,00' }}</td></tr>
-<tr><td>Patrimônio</td><td>{{ ind.patrimonio_atual if ind else 'R$ 0,00' }}</td></tr>
-<tr><td>Mês Atual</td><td>{{ ind.mes_atual if ind else '--' }}</td></tr>
-</tbody>
-</table>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:20px;">
+  <div class="panel">
+    <h3>📊 Indicadores de Desempenho</h3>
+    <table style="width:100%">
+      <tbody>
+        <tr><td>Prêmios Totais</td><td>{{ brl(ind.premios_total) if brl is defined else ind.premios_total }}</td></tr>
+        <tr><td>DARF do Mês</td><td>{{ brl(ind.darf) if brl is defined else ind.darf }}</td></tr>
+        <tr><td>Lucro do Mês</td><td>{{ brl(ind.lucro_mes) if brl is defined else ind.lucro_mes }}</td></tr>
+        <tr><td>Caixa Livre</td><td>{{ brl(ind.caixa_livre) if brl is defined else ind.caixa_livre }}</td></tr>
+        <tr><td>Mês Atual</td><td>{{ ind.mes_atual }}</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="panel">
+    <h3>🏅 Resumo da Carteira</h3>
+    <div style="display:grid;gap:14px;margin-top:15px;">
+      <div style="padding:14px;border-radius:14px;background:#f8fafc;">
+        <strong>🎯 Objetivo:</strong><br>
+        Acompanhar a evolução e a consistência da estratégia.
+      </div>
+
+      <div style="padding:14px;border-radius:14px;background:#f8fafc;">
+        <strong>📈 Próxima etapa:</strong><br>
+        Gráficos de lucro mensal, ROI e ranking de ativos.
+      </div>
+
+      <div style="padding:14px;border-radius:14px;background:#f8fafc;">
+        <strong>🧠 Nota da Carteira:</strong><br>
+        Em breve teremos uma nota automática de desempenho.
+      </div>
+    </div>
+  </div>
 </div>
+
+<div class="panel" style="margin-top:20px;">
+  <h3>🚀 Em Desenvolvimento</h3>
+  <p>
+    Na próxima atualização serão adicionados:
+  </p>
+  <ul style="line-height:2;">
+    <li>📈 Evolução do lucro por mês;</li>
+    <li>🥇 Ranking dos ativos mais lucrativos;</li>
+    <li>🎯 Taxa de acerto das operações;</li>
+    <li>🔥 Melhor e pior operação;</li>
+    <li>💰 Estatísticas avançadas da carteira.</li>
+  </ul>
+</div>
+
 {% endblock %}
