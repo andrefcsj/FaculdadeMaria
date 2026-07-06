@@ -17,13 +17,54 @@
   </div>
 </div>
 
+
 <div class="premium-cards">
-  <div class="metric blue"><div class="icon">💲</div><div><small>PRÊMIOS ACUMULADOS</small><h2>{{ brl(ind.premios_total) }}</h2></div></div>
-  <div class="metric green"><div class="icon">📈</div><div><small>ROI ABERTO</small><h2>{{ pct(ind.roi_medio_abertas) }}</h2></div></div>
-  <div class="metric purple"><div class="icon">🕒</div><div><small>CAPITAL NECESSÁRIO</small><h2>{{ brl(ind.capital_comp) }}</h2></div></div>
-  <div class="metric gold"><div class="icon">⭐</div><div><small>NOTA CORTEX</small><h2>4,0 / 10</h2></div></div>
-  <div class="metric emerald"><div class="icon">💰</div><div><small>LUCRO DO MÊS</small><h2>{{ brl(ind.lucro_mes) }}</h2></div></div>
+  <div class="metric blue">
+    <div class="icon">💲</div>
+    <div class="metric-content">
+      <small>PRÊMIOS ACUMULADOS</small>
+      <h2>{{ brl(ind.premios_total) }}</h2>
+      <p>Total recebido em prêmios</p>
+    </div>
+  </div>
+
+  <div class="metric green">
+    <div class="icon">📈</div>
+    <div class="metric-content">
+      <small>ROI ABERTO</small>
+      <h2>{{ pct(ind.roi_medio_abertas) }}</h2>
+      <p>ROI médio das operações abertas</p>
+    </div>
+  </div>
+
+  <div class="metric purple">
+    <div class="icon">🪙</div>
+    <div class="metric-content">
+      <small>CAPITAL NECESSÁRIO</small>
+      <h2>{{ brl(ind.capital_comp) }}</h2>
+      <p>Capital comprometido atualmente</p>
+    </div>
+  </div>
+
+  <div class="metric gold">
+    <div class="icon">⭐</div>
+    <div class="metric-content">
+      <small>NOTA CORTEX</small>
+      <h2>4,0 / 10</h2>
+      <p>Qualidade média das operações</p>
+    </div>
+  </div>
+
+  <div class="metric emerald">
+    <div class="icon">💰</div>
+    <div class="metric-content">
+      <small>LUCRO DO MÊS</small>
+      <h2>{{ brl(ind.lucro_mes) }}</h2>
+      <p>Resultado das operações no mês atual</p>
+    </div>
+  </div>
 </div>
+
 
 <div class="dashboard-layout">
   <div class="dashboard-main">
