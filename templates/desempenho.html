@@ -1,5 +1,21 @@
 {% extends 'base.html' %}
-{% block title %}Central de Desempenho{% endblock %}
+{% block title %}Central de Desempenho
+<div class="panel" style="margin-top:20px;">
+  <h3>🏆 Estatísticas Reais</h3>
+  <table style="width:100%">
+    <tbody>
+      <tr><td>Taxa de Acerto</td><td>{{ pct(taxa_acerto) }}</td></tr>
+      <tr><td>Melhor ROI</td><td>{{ pct(melhor_roi) }}</td></tr>
+      <tr><td>Pior ROI</td><td>{{ pct(pior_roi) }}</td></tr>
+      <tr><td>Média de Lucro por Operação</td><td>{{ brl(media_lucro) }}</td></tr>
+      <tr><td>Ativo Mais Operado</td><td>{{ ativo_mais_operado }}</td></tr>
+      <tr><td>Total de Operações Fechadas</td><td>{{ total_fechadas }}</td></tr>
+    </tbody>
+  </table>
+</div>
+
+{% endblock %}
+
 {% block content %}
 
 <h1 style="font-size:48px;font-weight:800;">📈 CENTRAL DE DESEMPENHO</h1>
@@ -88,4 +104,20 @@ Acompanhe os resultados, evolução e qualidade das operações.
   </ul>
 </div>
 
+
+<div class="panel" style="margin-top:20px;">
+  <h3>🏆 Estatísticas Reais</h3>
+  <table style="width:100%">
+    <tbody>
+      <tr><td>Taxa de Acerto</td><td>{{ pct(taxa_acerto) }}</td></tr>
+      <tr><td>Melhor ROI</td><td>{{ pct(melhor_roi) }}</td></tr>
+      <tr><td>Pior ROI</td><td>{{ pct(pior_roi) }}</td></tr>
+      <tr><td>Média de Lucro por Operação</td><td>{{ brl(media_lucro) }}</td></tr>
+      <tr><td>Ativo Mais Operado</td><td>{{ ativo_mais_operado }}</td></tr>
+      <tr><td>Total de Operações Fechadas</td><td>{{ total_fechadas }}</td></tr>
+    </tbody>
+  </table>
+</div>
+
 {% endblock %}
+
