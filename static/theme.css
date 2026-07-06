@@ -835,15 +835,26 @@ table,
 }
 
 
-/* ===== Linhas Intercaladas - Operações Abertas ===== */
-.premium-ops tbody tr:nth-child(odd){
-  background:#f8fafc;
+/* ===== Layout 60% gráficos | 40% Nova Operação ===== */
+.dashboard-layout{
+  grid-template-columns: minmax(0, 3fr) minmax(520px, 2fr) !important;
+  gap:24px !important;
 }
 
-.premium-ops tbody tr:nth-child(even){
-  background:#ffffff;
+.dashboard-grid{
+  gap:16px !important;
 }
 
-.premium-ops tbody tr:hover{
-  background:#eef5ff !important;
+.operation-sidebar{
+  min-width:520px !important;
+}
+
+@media(max-width:1600px){
+  .dashboard-layout{
+    grid-template-columns:1fr !important;
+  }
+
+  .operation-sidebar{
+    min-width:auto !important;
+  }
 }
