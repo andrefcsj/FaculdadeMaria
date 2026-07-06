@@ -119,5 +119,17 @@ Acompanhe os resultados, evolução e qualidade das operações.
   </table>
 </div>
 
-{% endblock %}
 
+<div class="panel" style="margin-top:20px;">
+  <h3>⭐ Indicadores Avançados</h3>
+  <table style="width:100%">
+    <tbody>
+      <tr><td>🏆 Melhor Operação</td><td>{{ melhor_ativo }}</td></tr>
+      <tr><td>📉 Pior Operação</td><td>{{ pior_ativo }}</td></tr>
+      <tr><td>🔥 Sequência de Ganhos</td><td>{{ sequencia_ganhos }}</td></tr>
+      <tr><td>⭐ Nota da Carteira</td><td>{{ nota_carteira }}/10</td></tr>
+    </tbody>
+  </table>
+</div>
+
+{% endblock %}
