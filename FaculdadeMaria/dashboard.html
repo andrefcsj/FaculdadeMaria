@@ -1,0 +1,164 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard | Cortex Invest{% endblock %}
+
+{% block content %}
+<style>
+.top-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:30px;
+    flex-wrap:wrap;
+}
+
+.logo-cortex{
+    font-size:54px;
+    font-weight:800;
+    line-height:1;
+}
+
+.logo-cortex span{
+    color:#4d8cff;
+}
+
+.subtitle{
+    font-size:18px;
+    opacity:.9;
+    margin-top:10px;
+}
+
+.info-bar{
+    display:flex;
+    gap:25px;
+    flex-wrap:wrap;
+    margin-top:25px;
+    margin-bottom:25px;
+}
+
+.info-card{
+    background:#0d1c2f;
+    border:1px solid #1d3554;
+    border-radius:18px;
+    padding:15px 20px;
+}
+
+.cards-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:20px;
+    margin-top:25px;
+}
+
+.card{
+    background:linear-gradient(180deg,#0d1c2f,#08111b);
+    border:1px solid #1d3554;
+    border-radius:22px;
+    padding:24px;
+    box-shadow:0 8px 25px rgba(0,0,0,.35);
+}
+
+.card-title{
+    font-size:13px;
+    color:#8eb4ff;
+    margin-bottom:12px;
+    text-transform:uppercase;
+}
+
+.card-value{
+    font-size:26px;
+    font-weight:bold;
+}
+
+.card-sub{
+    margin-top:10px;
+    color:#aab7ca;
+    font-size:14px;
+}
+</style>
+
+<div class="top-header">
+    <div>
+        <div class="logo-cortex">DASHBOARD <span>WHEEL</span></div>
+        <div class="subtitle">
+            Painel automático com prêmios mensais, ROI abertas e histórico por mês
+        </div>
+    </div>
+</div>
+
+<div class="info-bar">
+    <div class="info-card">
+        📅 Data Atualização<br>
+        {{ cfg.data_atualizacao if cfg and cfg.data_atualizacao else '--/--/----' }}
+    </div>
+
+    <div class="info-card">
+        🗓️ Mês Selecionado<br>
+        {{ cfg.mes if cfg and cfg.mes else 'Atual' }}
+    </div>
+</div>
+
+<div class="cards-grid">
+
+    <div class="card">
+        <div class="card-title">🎁 Prêmios Acumulados</div>
+        <div class="card-value">R$ {{ '%.2f'|format(ind.premios_total)|replace('.', ',') }}</div>
+        <div class="card-sub">Abertas + fechadas</div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">🎯 ROI Abertas</div>
+        <div class="card-value">{{ '%.2f'|format(ind.roi_abertas)|replace('.', ',') if ind.roi_abertas is defined else '0,00' }}%</div>
+        <div class="card-sub">Média das abertas</div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">🔒 Capital Comprometido</div>
+        <div class="card-value">R$ {{ '%.2f'|format(ind.capital_comprometido)|replace('.', ',') if ind.capital_comprometido is defined else '0,00' }}</div>
+        <div class="card-sub">Em operações abertas</div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">💼 Caixa Disponível</div>
+        <div class="card-value">R$ {{ '%.2f'|format(ind.caixa)|replace('.', ',') if ind.caixa is defined else '0,00' }}</div>
+        <div class="card-sub">Para novas operações</div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">📅 Próximo Vencimento</div>
+        <div class="card-value">{{ ind.proximo_vencimento if ind.proximo_vencimento is defined else '-- dias' }}</div>
+        <div class="card-sub">Próxima operação</div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">⭐ Nota Cortex</div>
+        <div class="card-value">{{ ind.nota_cortex if ind.nota_cortex is defined else '4,0' }}</div>
+        <div class="card-sub">Média das abertas</div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">🏛 DARF do Mês</div>
+        <div class="card-value">R$ {{ '%.2f'|format(ind.darf)|replace('.', ',') }}</div>
+        <div class="card-sub">Mês atual</div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">📈 Lucro do Mês</div>
+        <div class="card-value">R$ {{ '%.2f'|format(ind.lucro_mes)|replace('.', ',') }}</div>
+        <div class="card-sub">Mês atual</div>
+    </div>
+
+</div>
+
+<div class="card" style="margin-top:30px;">
+    <h2>📊 Área dos gráficos</h2>
+    <p>Na próxima etapa serão adicionados:</p>
+    <ul>
+        <li>Evolução do Lucro</li>
+        <li>Prêmios por Mês</li>
+        <li>Evolução do Patrimônio</li>
+        <li>Velocímetros ROI</li>
+        <li>Histórico e Top 5</li>
+    </ul>
+</div>
+
+{% endblock %}

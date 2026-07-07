@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block title %}Configurações{% endblock %}
+{% block content %}
+<h1 style="font-size:52px;font-weight:800;">⚙️ CONFIGURAÇÕES</h1>
+<p>Parâmetros principais do sistema.</p>
+
+<div class="panel">
+<form class="form labeled" method="post" action="/configuracoes/salvar">
+
+<div>
+<span>Capital Inicial</span>
+<input type="number" step="0.01" name="capital_inicial" value="{{ cfg['Capital total inicial'] }}">
+</div>
+
+<div>
+<span>Meta de ROI (%)</span>
+<input type="number" step="0.01" name="meta_roi" value="{{ (cfg['Meta ROI mensal']*100)|round(2) }}">
+</div>
+
+<div>
+<span>Alíquota de IR (%)</span>
+<input type="number" step="0.01" name="aliquota_ir" value="{{ (cfg['Aliquota IR opcoes']*100)|round(2) }}">
+</div>
+
+<div>
+<span>Tamanho do Contrato</span>
+<input type="number" name="tamanho_contrato" value="{{ cfg['Tamanho contrato opcoes'] }}">
+</div>
+
+<p style="margin-top:20px;">
+<button type="submit">💾 Salvar Configurações</button>
+</p>
+
+</form>
+</div>
+{% endblock %}
