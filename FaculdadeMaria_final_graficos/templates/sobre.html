@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% block title %}Sobre o Sistema{% endblock %}
+{% block content %}
+<h1 style="font-size:56px;font-weight:900;">🧠 SOBRE O SISTEMA</h1>
+<p style="color:#b8c6d8">Informações gerais do Cortex Invest PRO.</p>
+
+<div class="metrics">
+  <div class="metric blue"><div><div class="mlabel">Sistema</div><div class="mvalue">Cortex Invest PRO</div><div class="msub">Wheel Strategy</div></div></div>
+  <div class="metric green"><div><div class="mlabel">Versão</div><div class="mvalue">v{{ versao }}</div><div class="msub">Build estável</div></div></div>
+  <div class="metric purple"><div><div class="mlabel">Operações</div><div class="mvalue">{{ ops|length }}</div><div class="msub">Cadastradas</div></div></div>
+  <div class="metric orange"><div><div class="mlabel">Fechadas</div><div class="mvalue">{{ ind.encerradas }}</div><div class="msub">Encerradas</div></div></div>
+</div>
+
+<div class="grid two" style="margin-top:20px;">
+  <div class="panel">
+      <h2>📋 Informações do Sistema</h2>
+      <table>
+        <tbody>
+          <tr><td>Plataforma</td><td>Flask + Render</td></tr>
+          <tr><td>Estratégia</td><td>Wheel Strategy</td></tr>
+          <tr><td>Data/Hora</td><td>{{ agora.strftime('%d/%m/%Y %H:%M') }}</td></tr>
+          <tr><td>Capital Inicial</td><td>R$ {{ '%.2f'|format(cfg['Capital total inicial']) }}</td></tr>
+          <tr><td>Operações Abertas</td><td>{{ ind.abertas }}</td></tr>
+          <tr><td>Operações Fechadas</td><td>{{ ind.encerradas }}</td></tr>
+        </tbody>
+      </table>
+  </div>
+
+  <div class="panel">
+      <h2>📝 Changelog</h2>
+      <ul style="line-height:2;">
+        <li>v3.0 • Dashboard inicial</li>
+        <li>v3.2 • Backup e operações fechadas</li>
+        <li>v3.3 • Dashboard Wheel</li>
+        <li>v3.4 • Menus e páginas integradas</li>
+        <li>v3.5 • Exportações, busca e filtros</li>
+      </ul>
+  </div>
+</div>
+
+<div class="panel" style="margin-top:20px;">
+    <h2>🚀 Sobre o Projeto</h2>
+    <p>O Cortex Invest PRO é uma plataforma para gerenciamento da estratégia Wheel, acompanhamento de prêmios, ROI, patrimônio, histórico de operações e geração de relatórios.</p>
+    <p style="color:#9fb0c5;">© 2026 • Cortex Invest PRO • Disciplina, gestão e consistência.</p>
+</div>
+{% endblock %}

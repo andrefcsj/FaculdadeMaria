@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% block title %}Histórico{% endblock %}
+
+{% block content %}
+<h1 style="font-size:52px;font-weight:800;margin-bottom:10px;">📊 HISTÓRICO</h1>
+<p style="font-size:18px;margin-bottom:25px;">Resumo mensal de lucros, DARF, prêmios e ROI.</p>
+
+<div class="panel">
+    <h3>📅 Histórico Mensal</h3>
+
+    <table style="width:100%">
+        <thead>
+            <tr>
+                <th>Mês</th>
+                <th>Lucro</th>
+                <th>DARF</th>
+                <th>Prêmios</th>
+                <th>ROI</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if hist %}
+                {% for r in hist %}
+                <tr>
+                    <td>{{ r.mes }}</td>
+                    <td>R$ {{ '%.2f'|format(r.lucro) }}</td>
+                    <td>R$ {{ '%.2f'|format(r.darf) }}</td>
+                    <td>R$ {{ '%.2f'|format(r.premios) }}</td>
+                    <td>{{ '%.2f'|format(r.roi) }}%</td>
+                    <td>✅ Fechado</td>
+                </tr>
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="6" style="text-align:center;padding:30px;">
+                        Nenhum histórico encontrado.
+                    </td>
+                </tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+
+<div class="dashboard-grid" style="margin-top:25px;">
+    <div class="panel">
+        <h3>💰 Lucro Acumulado</h3>
+        <h2>{{ ind.premios_total if ind else 'R$ 0,00' }}</h2>
+    </div>
+
+    <div class="panel">
+        <h3>🏛 DARF Total</h3>
+        <h2>{{ ind.darf if ind else 'R$ 0,00' }}</h2>
+    </div>
+
+    <div class="panel">
+        <h3>🎯 ROI Médio</h3>
+        <h2>{{ ind.roi_medio_fechadas if ind else '0,00' }}%</h2>
+    </div>
+</div>
+{% endblock %}
