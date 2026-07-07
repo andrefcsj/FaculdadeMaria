@@ -858,3 +858,58 @@ table,
     min-width:auto !important;
   }
 }
+
+
+/* ===== Ajustes solicitados Julho ===== */
+
+/* Operações abertas com linhas intercaladas */
+.premium-ops tbody tr:nth-child(odd){
+  background:#edf2f7 !important;
+}
+
+.premium-ops tbody tr:nth-child(even){
+  background:#ffffff !important;
+}
+
+.premium-ops tbody tr:hover{
+  background:#dbeafe !important;
+}
+
+/* Tabelas da Central de Desempenho */
+.panel table tbody tr:nth-child(odd){
+  background:#edf2f7;
+}
+
+.panel table tbody tr:nth-child(even){
+  background:#ffffff;
+}
+
+.panel table tbody tr:hover{
+  background:#dbeafe;
+  transition:.2s;
+}
+
+/* Campos de Nova Operação maiores */
+.op-form label{
+  font-size:16px !important;
+  font-weight:700;
+}
+
+.op-form input,
+.op-form select,
+.op-form textarea{
+  font-size:18px !important;
+  padding:18px !important;
+  min-height:56px;
+}
+
+.op-form textarea{
+  min-height:120px;
+}
+
+.toggle-op button,
+.toggle-buy button,
+.save-op{
+  font-size:16px !important;
+  min-height:54px;
+}
