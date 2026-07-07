@@ -1335,3 +1335,8 @@ if __name__ == "__main__":
 # Preparado para integração dos cards superiores.
 
 # PACOTE_2_PIZZAS: base preparada para gráficos de pizza e linha de ROI.
+
+
+@app.route('/radar-oportunidades')
+def radar_oportunidades():
+    return render_template('radar_oportunidades.html')
