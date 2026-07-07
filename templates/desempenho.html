@@ -134,13 +134,14 @@ Acompanhe os resultados, evolução e qualidade das operações.
 
 
 <div class="panel" style="margin-top:20px;">
-  <h3>📈 Evolução do Lucro por Mês</h3>
+  <h3>📊 Evolução do ROI por Mês</h3>
   <div style="display:flex;align-items:end;gap:10px;height:260px;padding:20px;">
     {% for m in hist %}
-      {% set h = (m.lucro if m.lucro > 0 else 0) %}
+      {% set h = (m.roi if m.roi > 0 else 0) %}
       <div style="flex:1;text-align:center;">
-        <div style="background:linear-gradient(180deg,#60a5fa,#2563eb);border-radius:10px 10px 0 0;height:{{ (h/100)|round|int + 20 if h > 0 else 12 }}px;min-height:12px;"></div>
+        <div style="background:linear-gradient(180deg,#34d399,#059669);border-radius:10px 10px 0 0;height:{{ (h*12)|round|int + 12 if h > 0 else 8 }}px;min-height:8px;"></div>
         <small style="display:block;margin-top:8px;color:#6b7280;">{{ m.mes }}</small>
+        <small style="display:block;color:#10b981;font-weight:700;">{{ '%.1f'|format(m.roi) }}%</small>
       </div>
     {% endfor %}
   </div>
