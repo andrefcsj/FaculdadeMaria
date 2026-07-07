@@ -1333,3 +1333,5 @@ if __name__ == "__main__":
 
 # APP_V334
 # Preparado para integração dos cards superiores.
+
+# PACOTE_1_GRAFICOS: preparado para gráfico de linha ROI e pizza vencedoras/perdedoras.
