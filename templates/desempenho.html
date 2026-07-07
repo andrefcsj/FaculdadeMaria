@@ -147,53 +147,6 @@ Acompanhe os resultados, evolução e qualidade das operações.
   </div>
 </div>
 
-
-<div class="panel" style="margin-top:20px;">
-  <h3>🏆 Rankings e Distribuições</h3>
-
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
-
-    <div>
-      <h4>🥧 Operações Vencedoras x Perdedoras</h4>
-      <table style="width:100%">
-        <tr><td>✅ Vencedoras</td><td>{{ vitorias }}</td></tr>
-        <tr><td>❌ Perdedoras</td><td>{{ derrotas }}</td></tr>
-      </table>
-    </div>
-
-    <div>
-      <h4>🥇 Top 5 Ativos Mais Lucrativos</h4>
-      <table style="width:100%">
-        {% for ativo, lucro in ranking_ativos %}
-        <tr>
-          <td>{{ ativo }}</td>
-          <td>{{ brl(lucro) }}</td>
-        </tr>
-        {% endfor %}
-      </table>
-    </div>
-
-  </div>
-
-  <div style="margin-top:25px;">
-    <h4>🏆 Top 5 Operações por ROI</h4>
-    <table style="width:100%">
-      <thead>
-        <tr>
-          <th>Ativo</th>
-          <th>ROI</th>
-        </tr>
-      </thead>
-      <tbody>
-      {% for op in top_operacoes %}
-        <tr>
-          <td>{{ op.Ativo if op.Ativo is defined else op['Ativo'] }}</td>
-          <td>{{ pct(op.ROI if op.ROI is defined else op['ROI']) }}</td>
-        </tr>
-      {% endfor %}
-      </tbody>
-    </table>
-  </div>
-</div>
-
 {% endblock %}
+
+<!-- Preparado para gráfico de linha ROI e pizza de vencedoras x perdedoras -->
