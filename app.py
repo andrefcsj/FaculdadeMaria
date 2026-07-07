@@ -1161,6 +1161,7 @@ def desempenho():
         fechadas=fechadas,
         cfg=cfg,
         ind=ind,
+        hist=monthly(ops, fechadas, cfg),
         melhor_roi=melhor_roi,
         pior_roi=pior_roi,
         taxa_acerto=taxa_acerto,
