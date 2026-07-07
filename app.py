@@ -589,24 +589,6 @@ applyTheme();
 </script>
 
     </main><footer>🛡️ Dashboard protegido contra edição. Os dados são atualizados automaticamente. &nbsp; CORTEX INVEST v3.3 • WHEEL STRATEGY • DISCIPLINA, GESTÃO E CONSISTÊNCIA</footer></body></html>'''
-
-    vitorias = sum(1 for o in fechadas_ops if float(o.get('ROI',0)) > 0)
-    derrotas = max(total_fechadas - vitorias, 0)
-
-    ranking_ativos = []
-    ativos_lucro = {}
-    for o in fechadas_ops:
-        ativo = o.get('Ativo','--')
-        lucro = float(o.get('Lucro', o.get('Premio',0)) or 0)
-        ativos_lucro[ativo] = ativos_lucro.get(ativo,0) + lucro
-    ranking_ativos = sorted(ativos_lucro.items(), key=lambda x:x[1], reverse=True)[:5]
-
-    top_operacoes = sorted(
-        fechadas_ops,
-        key=lambda x: float(x.get('ROI',0)),
-        reverse=True
-    )[:5]
-
     return render_template(
         "dashboard.html",
         ops=ops,
@@ -615,10 +597,6 @@ applyTheme();
         cfg=cfg,
         ind=ind,
         hist=hist,
-        vitorias=vitorias,
-        derrotas=derrotas,
-        ranking_ativos=ranking_ativos,
-        top_operacoes=top_operacoes,
         brl=brl,
         pct=pct
     )
@@ -838,24 +816,6 @@ def editar(oid: str):
 
         return redirect(url_for('operacoes_abertas'))
 
-
-    vitorias = sum(1 for o in fechadas_ops if float(o.get('ROI',0)) > 0)
-    derrotas = max(total_fechadas - vitorias, 0)
-
-    ranking_ativos = []
-    ativos_lucro = {}
-    for o in fechadas_ops:
-        ativo = o.get('Ativo','--')
-        lucro = float(o.get('Lucro', o.get('Premio',0)) or 0)
-        ativos_lucro[ativo] = ativos_lucro.get(ativo,0) + lucro
-    ranking_ativos = sorted(ativos_lucro.items(), key=lambda x:x[1], reverse=True)[:5]
-
-    top_operacoes = sorted(
-        fechadas_ops,
-        key=lambda x: float(x.get('ROI',0)),
-        reverse=True
-    )[:5]
-
     return render_template(
         'editar_operacao.html',
         op=r
@@ -872,25 +832,7 @@ def fechar(oid: str):
 
     if request.method == 'GET':
         premio = r.get('Premio_liquido', r.get('Premio_opcao', '0'))
-    
-    vitorias = sum(1 for o in fechadas_ops if float(o.get('ROI',0)) > 0)
-    derrotas = max(total_fechadas - vitorias, 0)
-
-    ranking_ativos = []
-    ativos_lucro = {}
-    for o in fechadas_ops:
-        ativo = o.get('Ativo','--')
-        lucro = float(o.get('Lucro', o.get('Premio',0)) or 0)
-        ativos_lucro[ativo] = ativos_lucro.get(ativo,0) + lucro
-    ranking_ativos = sorted(ativos_lucro.items(), key=lambda x:x[1], reverse=True)[:5]
-
-    top_operacoes = sorted(
-        fechadas_ops,
-        key=lambda x: float(x.get('ROI',0)),
-        reverse=True
-    )[:5]
-
-    return render_template(
+        return render_template(
             'fechar_operacao.html',
             op=r,
             premio=premio
@@ -1153,24 +1095,6 @@ def backup_completo():
 
 @app.route('/backup')
 def backup_center():
-
-    vitorias = sum(1 for o in fechadas_ops if float(o.get('ROI',0)) > 0)
-    derrotas = max(total_fechadas - vitorias, 0)
-
-    ranking_ativos = []
-    ativos_lucro = {}
-    for o in fechadas_ops:
-        ativo = o.get('Ativo','--')
-        lucro = float(o.get('Lucro', o.get('Premio',0)) or 0)
-        ativos_lucro[ativo] = ativos_lucro.get(ativo,0) + lucro
-    ranking_ativos = sorted(ativos_lucro.items(), key=lambda x:x[1], reverse=True)[:5]
-
-    top_operacoes = sorted(
-        fechadas_ops,
-        key=lambda x: float(x.get('ROI',0)),
-        reverse=True
-    )[:5]
-
     return render_template('backup.html')
 
 
@@ -1179,24 +1103,6 @@ def backup_center():
 @app.route('/historico')
 def historico():
     ops, fechadas, cfg = load_all()
-
-    vitorias = sum(1 for o in fechadas_ops if float(o.get('ROI',0)) > 0)
-    derrotas = max(total_fechadas - vitorias, 0)
-
-    ranking_ativos = []
-    ativos_lucro = {}
-    for o in fechadas_ops:
-        ativo = o.get('Ativo','--')
-        lucro = float(o.get('Lucro', o.get('Premio',0)) or 0)
-        ativos_lucro[ativo] = ativos_lucro.get(ativo,0) + lucro
-    ranking_ativos = sorted(ativos_lucro.items(), key=lambda x:x[1], reverse=True)[:5]
-
-    top_operacoes = sorted(
-        fechadas_ops,
-        key=lambda x: float(x.get('ROI',0)),
-        reverse=True
-    )[:5]
-
     return render_template(
         'historico.html',
         ops=ops,
@@ -1249,24 +1155,6 @@ def desempenho():
         else:
             break
 
-
-    vitorias = sum(1 for o in fechadas_ops if float(o.get('ROI',0)) > 0)
-    derrotas = max(total_fechadas - vitorias, 0)
-
-    ranking_ativos = []
-    ativos_lucro = {}
-    for o in fechadas_ops:
-        ativo = o.get('Ativo','--')
-        lucro = float(o.get('Lucro', o.get('Premio',0)) or 0)
-        ativos_lucro[ativo] = ativos_lucro.get(ativo,0) + lucro
-    ranking_ativos = sorted(ativos_lucro.items(), key=lambda x:x[1], reverse=True)[:5]
-
-    top_operacoes = sorted(
-        fechadas_ops,
-        key=lambda x: float(x.get('ROI',0)),
-        reverse=True
-    )[:5]
-
     return render_template(
         'desempenho.html',
         ops=ops,
@@ -1284,10 +1172,6 @@ def desempenho():
         pior_ativo=pior_ativo,
         nota_carteira=nota_carteira,
         sequencia_ganhos=sequencia_ganhos,
-        vitorias=vitorias,
-        derrotas=derrotas,
-        ranking_ativos=ranking_ativos,
-        top_operacoes=top_operacoes,
         brl=brl,
         pct=pct
     )
@@ -1295,24 +1179,6 @@ def desempenho():
 @app.route('/carteira')
 def carteira():
     ops, fechadas, cfg = load_all()
-
-    vitorias = sum(1 for o in fechadas_ops if float(o.get('ROI',0)) > 0)
-    derrotas = max(total_fechadas - vitorias, 0)
-
-    ranking_ativos = []
-    ativos_lucro = {}
-    for o in fechadas_ops:
-        ativo = o.get('Ativo','--')
-        lucro = float(o.get('Lucro', o.get('Premio',0)) or 0)
-        ativos_lucro[ativo] = ativos_lucro.get(ativo,0) + lucro
-    ranking_ativos = sorted(ativos_lucro.items(), key=lambda x:x[1], reverse=True)[:5]
-
-    top_operacoes = sorted(
-        fechadas_ops,
-        key=lambda x: float(x.get('ROI',0)),
-        reverse=True
-    )[:5]
-
     return render_template(
         'carteira.html',
         ops=ops,
@@ -1324,24 +1190,6 @@ def carteira():
 @app.route('/relatorios')
 def relatorios():
     ops, fechadas, cfg = load_all()
-
-    vitorias = sum(1 for o in fechadas_ops if float(o.get('ROI',0)) > 0)
-    derrotas = max(total_fechadas - vitorias, 0)
-
-    ranking_ativos = []
-    ativos_lucro = {}
-    for o in fechadas_ops:
-        ativo = o.get('Ativo','--')
-        lucro = float(o.get('Lucro', o.get('Premio',0)) or 0)
-        ativos_lucro[ativo] = ativos_lucro.get(ativo,0) + lucro
-    ranking_ativos = sorted(ativos_lucro.items(), key=lambda x:x[1], reverse=True)[:5]
-
-    top_operacoes = sorted(
-        fechadas_ops,
-        key=lambda x: float(x.get('ROI',0)),
-        reverse=True
-    )[:5]
-
     return render_template(
         'relatorios.html',
         ops=ops,
@@ -1353,24 +1201,6 @@ def relatorios():
 @app.route('/configuracoes')
 def configuracoes():
     ops, fechadas, cfg = load_all()
-
-    vitorias = sum(1 for o in fechadas_ops if float(o.get('ROI',0)) > 0)
-    derrotas = max(total_fechadas - vitorias, 0)
-
-    ranking_ativos = []
-    ativos_lucro = {}
-    for o in fechadas_ops:
-        ativo = o.get('Ativo','--')
-        lucro = float(o.get('Lucro', o.get('Premio',0)) or 0)
-        ativos_lucro[ativo] = ativos_lucro.get(ativo,0) + lucro
-    ranking_ativos = sorted(ativos_lucro.items(), key=lambda x:x[1], reverse=True)[:5]
-
-    top_operacoes = sorted(
-        fechadas_ops,
-        key=lambda x: float(x.get('ROI',0)),
-        reverse=True
-    )[:5]
-
     return render_template(
         'configuracoes.html',
         cfg=cfg,
@@ -1397,24 +1227,6 @@ def operacoes_abertas():
         o["cotacao_atual"] = cotacao_yahoo(acao)
         dominio = logos.get(acao)
         o["logo_url"] = f"https://raw.githubusercontent.com/thefintz/icones-b3/main/icones/{acao}.png" if acao else None
-
-
-    vitorias = sum(1 for o in fechadas_ops if float(o.get('ROI',0)) > 0)
-    derrotas = max(total_fechadas - vitorias, 0)
-
-    ranking_ativos = []
-    ativos_lucro = {}
-    for o in fechadas_ops:
-        ativo = o.get('Ativo','--')
-        lucro = float(o.get('Lucro', o.get('Premio',0)) or 0)
-        ativos_lucro[ativo] = ativos_lucro.get(ativo,0) + lucro
-    ranking_ativos = sorted(ativos_lucro.items(), key=lambda x:x[1], reverse=True)[:5]
-
-    top_operacoes = sorted(
-        fechadas_ops,
-        key=lambda x: float(x.get('ROI',0)),
-        reverse=True
-    )[:5]
 
     return render_template(
         'operacoes_abertas.html',
@@ -1476,24 +1288,6 @@ def exportar_tudo():
 def sobre():
     ops, fechadas, cfg = load_all()
     ind = metrics(ops, fechadas, cfg)
-
-    vitorias = sum(1 for o in fechadas_ops if float(o.get('ROI',0)) > 0)
-    derrotas = max(total_fechadas - vitorias, 0)
-
-    ranking_ativos = []
-    ativos_lucro = {}
-    for o in fechadas_ops:
-        ativo = o.get('Ativo','--')
-        lucro = float(o.get('Lucro', o.get('Premio',0)) or 0)
-        ativos_lucro[ativo] = ativos_lucro.get(ativo,0) + lucro
-    ranking_ativos = sorted(ativos_lucro.items(), key=lambda x:x[1], reverse=True)[:5]
-
-    top_operacoes = sorted(
-        fechadas_ops,
-        key=lambda x: float(x.get('ROI',0)),
-        reverse=True
-    )[:5]
-
     return render_template(
         'sobre.html',
         ops=ops,
