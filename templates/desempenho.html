@@ -134,14 +134,17 @@ Acompanhe os resultados, evolução e qualidade das operações.
 
 
 <div class="panel" style="margin-top:20px;">
-  <h3>📊 Evolução do ROI por Mês</h3>
-  <div style="display:flex;align-items:end;gap:10px;height:260px;padding:20px;">
+  <h3>📈 Evolução do ROI por Mês</h3>
+  <div style="display:flex;align-items:flex-end;gap:18px;height:260px;padding:20px;">
     {% for m in hist %}
-      {% set h = (m.roi if m.roi > 0 else 0) %}
+      {% set p = 130 - (m.roi * 6) %}
       <div style="flex:1;text-align:center;">
-        <div style="background:linear-gradient(180deg,#34d399,#059669);border-radius:10px 10px 0 0;height:{{ (h*12)|round|int + 12 if h > 0 else 8 }}px;min-height:8px;"></div>
-        <small style="display:block;margin-top:8px;color:#6b7280;">{{ m.mes }}</small>
-        <small style="display:block;color:#10b981;font-weight:700;">{{ '%.1f'|format(m.roi) }}%</small>
+        <div style="height:150px;position:relative;">
+          <div style="width:14px;height:14px;border-radius:50%;background:#2563eb;position:absolute;left:50%;transform:translateX(-50%);top:{{ p if p > 10 else 10 }}px;box-shadow:0 0 0 4px rgba(37,99,235,.15);"></div>
+          <div style="position:absolute;left:50%;top:0;bottom:0;border-left:2px dashed #dbeafe;"></div>
+        </div>
+        <small style="display:block;color:#6b7280;">{{ m.mes }}</small>
+        <small style="display:block;color:#2563eb;font-weight:700;">{{ '%.1f'|format(m.roi) }}%</small>
       </div>
     {% endfor %}
   </div>
@@ -151,7 +154,7 @@ Acompanhe os resultados, evolução e qualidade das operações.
 <div class="panel" style="margin-top:20px;">
   <h3>🥧 Distribuição dos Ativos</h3>
   <p style="color:#6b7280;">
-    Espaço preparado para o gráfico de distribuição dos ativos negociados.
+    Em breve exibiremos a participação de cada ativo negociado em formato de pizza.
   </p>
 </div>
 
