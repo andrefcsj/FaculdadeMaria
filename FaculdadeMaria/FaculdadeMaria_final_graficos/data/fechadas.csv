@@ -1,5 +1,0 @@
-Data fechamento,Ativo,Tipo,Estratégia,Contratos,Strike,Premio_liquido,Resultado_final,Custos_total,Lucro_tributavel,Mes,Observacoes
-2026-02-20,EXEMPLO1,PUT,Wheel,1,10.00,25.00,18.00,1.07,18.00,fev/26,Exemplo histórico
-2026-03-20,EXEMPLO2,PUT,Wheel,1,10.00,42.00,19.00,1.07,19.00,mar/26,Exemplo histórico
-2026-04-20,EXEMPLO3,PUT,Wheel,1,10.00,67.00,39.00,1.07,39.00,abr/26,Exemplo histórico
-2026-05-25,ITSAS125,PUT,Wheel,1,12.62,17.00,14.00,1.07,43.00,mai/26,Exemplo: prêmio recebido

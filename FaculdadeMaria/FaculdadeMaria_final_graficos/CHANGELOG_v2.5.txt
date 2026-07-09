@@ -1,9 +1,0 @@
-CORTEX INVEST - CHANGELOG
-
-Versão: v2.5
-Data: 29/06/2026
-
-- Corrigido o texto do velocímetro de ROI.
-- Adicionada classificação: RUIM, BOM, ÓTIMO e EXCELENTE.
-- README atualizado corretamente.
-- Nenhuma alteração nas regras de negócio.
