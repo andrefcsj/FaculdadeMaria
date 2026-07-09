@@ -39,3 +39,7 @@
 
 ## Versão 2.9.1
 - Layout de Operações Fechadas preparado para integração.
+
+
+## v4.1
+Estrutura inicial do Motor IA adicionada.

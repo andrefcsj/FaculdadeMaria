@@ -1,0 +1,1 @@
+INDICADORES=list(["MM21","MM200","IFR14","Bollinger","Volume","Liquidez","Volatilidade Implícita","Distância Strike","Dias"])

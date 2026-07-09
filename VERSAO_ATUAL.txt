@@ -1,3 +1,2 @@
-Projeto FaculdadeMaria
-Versão: v2.6
-Base: v2.5 + alterações solicitadas.
+FaculdadeMaria v4.1
+Motor IA (estrutura inicial)
