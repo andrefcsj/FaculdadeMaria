@@ -1,5 +1,0 @@
-ID,Data abertura,Ativo,Tipo,Estratégia,Status,Contratos,Strike,Premio_opcao,Custos,IRRF,Vencimento,Cotacao_atual,Resultado_realizado
-1,2026-06-25,BBDCS167,PUT,Wheel,Aberta,1,16.89,0.33,1.07,0.05,2026-07-17,17.96,0
-2,2026-06-18,ITSAS127,PUT,Wheel,Aberta,1,12.62,0.27,1.07,0.04,2026-07-17,13.35,0
-3,2026-06-18,GOAUS139,PUT,Wheel,Aberta,1,10.22,0.17,1.07,0.04,2026-07-17,9.59,0
-4,2026-06-18,CPLES15,PUT,Wheel,Aberta,1,15.28,0.45,1.07,0.04,2026-07-17,15.21,0
