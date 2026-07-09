@@ -1,1 +1,9 @@
-PESOS={"mm21":10,"mm200":15,"ifr14":15,"bollinger":10,"volume":10,"liquidez":10,"vi":15,"strike":10,"dias":5}
+PESOS={
+"tendencia":20,
+"liquidez":15,
+"volume":15,
+"volatilidade":10,
+"strike":20,
+"dias":10,
+"roi":10,
+}
