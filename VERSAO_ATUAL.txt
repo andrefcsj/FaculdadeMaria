@@ -1,2 +1,1 @@
-FaculdadeMaria v4.1
-Motor IA (estrutura inicial)
+FaculdadeMaria v4.2 - Central do Motor IA
