@@ -1,25 +1,37 @@
 # Sprint 1.1-R - Relatorio Tecnico Final
 
-## 1. Status
+## 1. Status oficial
 
 - Sprint: `1.1-R`
 - Issue: `#1 - Reconciliar infraestrutura do Decision Engine`
-- Branch: `sprint-1-1-r`
-- Status tecnico: concluida
-- Merge em `main`: nao realizado
-- Issue #1: aberta
+- Aprovacao arquitetural: aprovada por Andre
+- Branch de origem: `sprint-1-1-r`
+- Branch oficial: `main`
+- Pull Request: `#2`
+- Commit de merge: `6e3416402e83a281dad4ab4a399ae3d4c059235b`
+- Merge em `main`: concluido
+- Issue #1: encerrada apos o fechamento formal registrado no GitHub
 - Sprint 2: nao iniciada
-- Aprovacao: aguardando autorizacao arquitetural explicita
 
 ## 2. Objetivo da Sprint
 
-Reconciliar o codigo real com `ARQUITETURA_V4.md`, `DECISION_ENGINE_SPEC.md`, `ROADMAP_V5.md` e `SPRINT_01.md`, materializando somente a fundacao tecnica do novo `engine/`.
+Reconciliar o codigo real do repositorio com a infraestrutura definida em `ARQUITETURA_V4.md`, `DECISION_ENGINE_SPEC.md`, `ROADMAP_V5.md` e `SPRINT_01.md`, materializando somente a fundacao tecnica do novo pacote `engine/`.
 
-Nao fazem parte desta Sprint: indicadores, MM21, MM200, IFR14, Bollinger, ATR, volatilidade, score, ranking, scanner, providers reais, integracao Flask, persistencia de decisoes ou Machine Learning.
+Nao fizeram parte desta Sprint:
+
+- indicadores tecnicos;
+- MM21, MM200, IFR14, Bollinger, ATR ou volatilidade;
+- score;
+- ranking;
+- scanner;
+- providers reais;
+- integracao Flask;
+- persistencia de decisoes;
+- Machine Learning.
 
 ## 3. Escopo executado
 
-- hierarquia de erros de dominio;
+- hierarquia de erros do Decision Engine;
 - telemetria local em memoria;
 - versao centralizada do motor;
 - contexto com metadata, traces e telemetria;
@@ -28,33 +40,17 @@ Nao fazem parte desta Sprint: indicadores, MM21, MM200, IFR14, Bollinger, ATR, v
 - testes de arquitetura e isolamento;
 - auditoria de `main`;
 - validacao formal de mergeabilidade;
-- documentacao da Sprint corretiva.
+- documentacao da Sprint corretiva;
+- merge controlado para `main` apos aprovacao arquitetural.
 
-## 4. Branch utilizada
+## 4. Arquivos criados
 
-```txt
-sprint-1-1-r
-```
-
-Merge-base auditado:
-
-```txt
-7b1d5ba7effd1ec1a82ebd88e4bd398d8a8c9e4d
-```
-
-Head anterior ao commit final deste relatorio:
-
-```txt
-ab15a7cc649faefa9b8ef4610f17389ca248941d
-```
-
-## 5. Arquivos criados
-
-### 5.1 Documentacao
+### 4.1 Documentacao
 
 - `docs/SPRINT_01_R.md`
+- `docs/SPRINT_01_R_ENCERRAMENTO.md`
 
-### 5.2 Decision Engine
+### 4.2 Decision Engine
 
 - `engine/__init__.py`
 - `engine/errors.py`
@@ -66,7 +62,7 @@ ab15a7cc649faefa9b8ef4610f17389ca248941d
 - `engine/providers/__init__.py`
 - `engine/providers/base.py`
 
-### 5.3 Testes
+### 4.3 Testes
 
 - `tests/test_engine_architecture.py`
 - `tests/test_engine_context.py`
@@ -75,9 +71,9 @@ ab15a7cc649faefa9b8ef4610f17389ca248941d
 - `tests/test_engine_provider_contract.py`
 - `tests/test_engine_telemetry.py`
 
-## 6. Arquivos modificados
+## 5. Arquivos modificados
 
-No diff final da Sprint, nenhum arquivo fora de `docs/`, `engine/` e `tests/` foi alterado.
+No diff final da Sprint, nenhum arquivo funcional fora de `docs/`, `engine/` e `tests/` foi alterado.
 
 Permaneceram inalterados:
 
@@ -93,9 +89,9 @@ Permaneceram inalterados:
 - legado `motor_ia/`;
 - funcionalidades existentes.
 
-`docs/SPRINT_01.md` foi preservado sem alteracao final. A reconciliacao ficou registrada somente em `docs/SPRINT_01_R.md`.
+`docs/SPRINT_01.md` foi preservado sem alteracao final.
 
-## 7. Estrutura final do Decision Engine
+## 6. Estrutura final do Decision Engine
 
 ```txt
 engine/
@@ -112,7 +108,7 @@ engine/
     `-- base.py
 ```
 
-### 7.1 Erros
+### 6.1 Erros
 
 `engine/errors.py` define:
 
@@ -125,7 +121,7 @@ engine/
 
 Os erros possuem `code`, `message`, `details` e `to_dict()`.
 
-### 7.2 Telemetria
+### 6.2 Telemetria
 
 `engine/telemetry.py` implementa em memoria:
 
@@ -136,35 +132,40 @@ Os erros possuem `code`, `message`, `details` e `to_dict()`.
 
 Registra eventos, metricas, spans, duracao e resumo. Nao usa rede, banco ou servico externo.
 
-### 7.3 Versao
+### 6.3 Versao do motor
 
-`engine/version.py` centraliza `ENGINE_VERSION`, `ENGINE_CODENAME` e `get_engine_version()`.
+`engine/version.py` centraliza:
 
-### 7.4 Contexto
+- `ENGINE_VERSION`;
+- `ENGINE_CODENAME`;
+- `get_engine_version()`.
 
-`DecisionContext` mantem metadata, traces e `TelemetryRecorder`. Cada trace tambem registra evento local.
+### 6.4 Contexto
 
-### 7.5 Pipeline
+`DecisionContext` mantem metadata, traces e `TelemetryRecorder`. Cada trace registra evento local de telemetria.
+
+### 6.5 Pipeline
 
 `DecisionPipeline` e `run_pipeline` executam apenas orquestracao pass-through:
 
-- validam contrato minimo da colecao;
+- validam contrato minimo;
 - registram inicio e fim;
 - registram quantidade de candidatos;
 - medem span;
 - registram trace;
-- incluem versoes e resumo de telemetria;
-- devolvem os candidatos sem regra de negocio.
+- incluem `pipeline_version` e `engine_version`;
+- incluem resumo de telemetria;
+- devolvem candidatos sem regra de negocio.
 
 Nao calculam indicador, score, ranking, probabilidade ou explicacao financeira.
 
-### 7.6 Providers
+### 6.6 Providers
 
 `MarketDataProvider` e abstrato. `ProviderError` herda de `EngineProviderError`. Nenhuma chamada de rede foi implementada.
 
-## 8. Testes executados e resultados
+## 7. Testes executados e resultados
 
-Comando:
+Comando executado:
 
 ```bash
 python -m unittest discover -s tests -v
@@ -203,9 +204,27 @@ Imports diretos proibidos verificados em `engine/`:
 - `yfinance`;
 - `requests`.
 
-## 9. Commits realizados
+## 8. Branch utilizada
 
-A branch passa a conter 23 commits em relacao ao merge-base apos o commit final deste relatorio.
+Branch de trabalho:
+
+```txt
+sprint-1-1-r
+```
+
+Merge-base auditado:
+
+```txt
+7b1d5ba7effd1ec1a82ebd88e4bd398d8a8c9e4d
+```
+
+Branch oficial apos aprovacao e merge:
+
+```txt
+main
+```
+
+## 9. Commits realizados
 
 Principais commits tecnicos auditados:
 
@@ -213,31 +232,15 @@ Principais commits tecnicos auditados:
 - `490525684fb7aeff7aaa371ebe6a7ec908672fcb` - erros estruturados;
 - `c73db960bb57f4a019c2355333130334e2eacb43` - versao centralizada;
 - `79cd149c73cf306bae0debf1e3f6412d4c82fec5` - pacote core;
-- `eda7c5eb129038341627fa172240662b5c83f51f` - pipeline sem negocio;
+- `eda7c5eb129038341627fa172240662b5c83f51f` - pipeline sem regra de negocio;
 - `8e85336178b410e4d7a1059b81bf5fdc6243ada0` - telemetria;
 - `710737d776a1a6d9c2e41f427ef5cfd80890b83a` - isolamento de dependencias;
-- `d0d5132937c37886d1d24e0b7b37f4e2b870fbb4` - sincronizacao documental intermediaria;
 - `e3b08c51cd46e9fb0b84d392618cf677c3c3f9b0` - consolidacao de testes;
-- `9a2110846a44275ff895dc5b2f99ea22c7b912f4` - preservacao do documento original;
-- `06bb338a4a725bc558d1d22194e75863850473b2` - compatibilidade preventiva;
-- `bbf459fb0bd73b15a9d4b2d0675cc261d2b9bb03` - restauracao de telemetria;
+- `9a2110846a44275ff895dc5b2f99ea22c7b912f4` - preservacao documental;
 - `f4593621b7af2e39c3b1f06a55e887e240442e91` - telemetria completa verificada;
-- `f5913874a9559e5a2441ff1c0139b9541f852f56` - relatorio tecnico expandido;
-- `ab15a7cc649faefa9b8ef4610f17389ca248941d` - correcao de metadata documental.
-
-O total inclui commits incrementais de publicacao/plumbing. Nenhum squash destrutivo ou reescrita de historico foi executado.
-
-Commits corretivos aplicados em `main` apos gravacoes acidentais:
-
-- `ca26821723471e0d87ac15536534a632f8247b19`;
-- `554e43da18c40d146c1ec44d03688d054790cae0`;
-- `68d5a8f11e6559b31d7f6cc48fae05f6160153d1`;
-- `38c6a60b0b107be9b3d31007be5f543de7c914da`;
-- `9ab49421c4dac293070a8c6707573b898da127d3`;
-- `04e1bd8a589c053956797c9a052b3e888d1c2226`;
-- `84b73f378e116c185770dc3be4338334a9f28e17`.
-
-Resultado: a arvore final de `main` e identica ao ponto pre-Sprint.
+- `7ef1e50a0035fd26040bc2da1df4eceda1492678` - relatorio final pre-merge;
+- `6e3416402e83a281dad4ab4a399ae3d4c059235b` - commit de merge aprovado;
+- `b432c2c4798c30687b2216c15893cbd7e2ddfba2` - registro oficial de encerramento.
 
 ## 10. Divergencias encontradas
 
@@ -267,9 +270,9 @@ Correcao: recriacao do blob completo, verificacao integral e publicacao final co
 
 ### 10.5 Historico divergente
 
-`main` e `sprint-1-1-r` divergem no historico por gravacoes e reversoes.
+`main` e `sprint-1-1-r` divergiram no historico por gravacoes e reversoes.
 
-Validacao: `main` possui zero diferencas de arquivos contra o ponto pre-Sprint; o diff da Sprint esta restrito a `docs/`, `engine/` e `tests/`; o PR draft #2 foi usado para verificacao formal de conflitos.
+Validacao: a `main` foi confirmada integra em conteudo; o diff da Sprint ficou restrito a `docs/`, `engine/` e `tests/`; o PR #2 foi confirmado `mergeable: true` antes do merge.
 
 ## 11. Correcoes aplicadas
 
@@ -278,49 +281,35 @@ Validacao: `main` possui zero diferencas de arquivos contra o ponto pre-Sprint; 
 - criacao dos testes;
 - reversao das gravacoes acidentais em `main`;
 - restauracao de `SPRINT_01.md`;
-- criacao deste relatorio;
-- correcao de truncamento de telemetria;
+- criacao do relatorio 1.1-R;
+- correcao do truncamento de telemetria;
 - auditoria final de escopo;
-- validacao de integridade de `main`;
-- validacao formal de mergeabilidade com PR draft #2.
+- validacao de integridade da `main`;
+- validacao formal de mergeabilidade;
+- merge controlado apos aprovacao arquitetural;
+- registro oficial de encerramento.
 
-## 12. Validacao final de merge
+## 12. Versao oficial atual do projeto
 
-PR de validacao:
+A versao oficial do produto permanece:
 
 ```txt
-#2 - [DRAFT] Sprint 1.1-R — validacao arquitetural
-base: main
-head: sprint-1-1-r
-draft: true
-merged: false
+FaculdadeMaria v4.3 - Score IA Inteligente
 ```
 
-O GitHub confirmou `mergeable: true` antes do commit final deste relatorio. Como este commit altera somente `docs/SPRINT_01_R.md`, a mergeabilidade deve ser reconsultada e confirmada novamente apos a publicacao deste documento.
+Nao houve bump de versao porque a Sprint 1.1-R foi de reconciliacao arquitetural e infraestrutura, sem alteracao funcional do produto.
 
-Nenhum merge foi executado.
+O Decision Engine possui versao interna centralizada em `engine/version.py`.
 
 ## 13. Recomendacoes para a Sprint 2
 
-A Sprint 2 nao deve iniciar antes de:
+A Sprint 2 nao foi iniciada.
 
-1. aprovacao arquitetural da Sprint 1.1-R;
-2. autorizacao explicita para merge;
-3. merge controlado da branch em `main`;
-4. nova Issue exclusiva para Sprint 2;
-5. nova leitura da documentacao oficial.
+Recomendacoes para futura autorizacao:
 
-Ordem recomendada conforme a especificacao:
-
-- indicadores e filtros primeiro;
-- score e ranking depois;
-- explicacao depois;
-- aprendizado somente em fase futura.
-
-Recomendacoes tecnicas:
-
+- abrir nova Issue exclusiva;
+- reler documentacao oficial;
 - manter `engine/` independente de Flask;
-- receber dados por contratos;
 - implementar indicadores como funcoes puras;
 - usar fixtures deterministicas;
 - testar dados ausentes e invalidos;
@@ -329,25 +318,44 @@ Recomendacoes tecnicas:
 - nao conectar Radar/Flask antes da validacao da camada de dominio;
 - ampliar testes antes de exposicao na interface.
 
-## 14. Confirmacao final de sincronizacao
+Ordem recomendada:
 
-Arquitetura, codigo e documentacao descrevem o mesmo estado:
+- indicadores e filtros primeiro;
+- score e ranking depois;
+- explicacao depois;
+- aprendizado somente em fase futura.
 
-- fundacao do Decision Engine presente;
+## 14. Pendencias existentes
+
+Permanecem propositalmente fora desta Sprint:
+
+- indicadores tecnicos;
+- filtros funcionais;
+- score;
+- ranking;
+- scanner;
+- providers reais;
+- integracao Flask/Radar;
+- persistencia de decisoes;
+- explicacao de negocio;
+- aprendizado futuro.
+
+Esses itens nao constituem falha da Sprint 1.1-R e dependem de novas Sprints autorizadas.
+
+## 15. Confirmacao final de sincronizacao
+
+A branch `main` passa a representar oficialmente o estado atual do FaculdadeMaria com:
+
+- fundacao do Decision Engine integrada;
 - erros estruturados presentes;
 - telemetria local presente;
-- versao centralizada presente;
+- versao do motor centralizada;
 - contexto presente;
 - pipeline pass-through presente;
 - provider abstrato presente;
 - testes aprovados;
-- nenhuma regra de negocio implementada;
+- nenhuma regra de negocio implementada no novo motor;
 - nenhuma funcionalidade existente alterada;
-- nenhum merge executado;
-- Issue #1 permanece aberta.
+- documentacao oficial sincronizada.
 
-## 15. Encerramento
-
-A Sprint 1.1-R esta tecnicamente concluida e pronta para aprovacao arquitetural.
-
-Este documento nao autoriza merge, fechamento da Issue #1 ou inicio da Sprint 2. Essas acoes dependem de autorizacao explicita.
+A Sprint 2 nao foi iniciada.
