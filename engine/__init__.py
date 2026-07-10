@@ -17,6 +17,13 @@ from .indicators import (
     true_range,
 )
 from .metrics import PutMetricAssumptions, PutMetrics, calculate_put_metrics
+from .score import (
+    DEFAULT_TARGET_GROSS_ROI,
+    ExplainableScoreConfig,
+    ScoreComponent,
+    ScoreEvaluation,
+    calculate_put_score,
+)
 from .strategy import PutStrategyConfig, PutStrategyEvaluation, evaluate_put_strategy
 from .version import ENGINE_VERSION, get_engine_version
 
@@ -25,8 +32,10 @@ __all__ = [
     "AssetQualityPolicy",
     "AssetQualityProfile",
     "BollingerBands",
+    "DEFAULT_TARGET_GROSS_ROI",
     "DecisionEngineError",
     "ENGINE_VERSION",
+    "ExplainableScoreConfig",
     "OptionOpportunity",
     "PutMetricAssumptions",
     "PutMetrics",
@@ -34,10 +43,13 @@ __all__ = [
     "PutStrategyEvaluation",
     "SafetyEvaluation",
     "SafetyFilterConfig",
+    "ScoreComponent",
+    "ScoreEvaluation",
     "assess_asset_quality",
     "average_true_range",
     "bollinger_bands",
     "calculate_put_metrics",
+    "calculate_put_score",
     "evaluate_put_safety",
     "evaluate_put_strategy",
     "get_engine_version",
