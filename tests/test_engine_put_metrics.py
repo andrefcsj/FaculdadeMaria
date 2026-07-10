@@ -37,6 +37,10 @@ class EnginePutMetricsTests(unittest.TestCase):
         self.assertEqual(metrics.gross_premium_income, Decimal("140.00"))
         self.assertEqual(metrics.nominal_committed_capital, Decimal("2800"))
         self.assertEqual(metrics.gross_roi, Decimal("0.05"))
+        self.assertEqual(metrics.discount_to_market, Decimal("3.40") / Decimal("30"))
+        self.assertEqual(metrics.strike_distance_pct, Decimal("2") / Decimal("30"))
+        self.assertEqual(metrics.annualized_roi, Decimal("0.05") * Decimal("365") / Decimal("42"))
+        self.assertEqual(metrics.return_per_day, Decimal("0.05") / Decimal("42"))
         self.assertEqual(metrics.net_premium_income, Decimal("130.00"))
         self.assertEqual(metrics.net_roi, Decimal("130") / Decimal("2800"))
         self.assertEqual(metrics.capital_efficiency, Decimal("0.07"))
@@ -86,3 +90,16 @@ class EnginePutMetricsTests(unittest.TestCase):
                 self._opportunity(option_type="CALL"),
                 PutMetricAssumptions(as_of_date=date(2026, 7, 10)),
             )
+
+    def test_rejects_invalid_assumptions(self):
+        with self.assertRaises(EngineContractError):
+            PutMetricAssumptions(as_of_date=date(2026, 7, 10), contract_size=0)
+        with self.assertRaises(EngineContractError):
+            PutMetricAssumptions(as_of_date=date(2026, 7, 10), costs_total=Decimal("-1"))
+
+    def test_same_input_produces_same_output(self):
+        opportunity = self._opportunity()
+        assumptions = PutMetricAssumptions(as_of_date=date(2026, 7, 10), contract_size=100)
+        first = calculate_put_metrics(opportunity, assumptions)
+        second = calculate_put_metrics(opportunity, assumptions)
+        self.assertEqual(first, second)
