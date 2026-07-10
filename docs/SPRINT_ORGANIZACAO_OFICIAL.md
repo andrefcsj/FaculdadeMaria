@@ -1,17 +1,27 @@
 # Relatório Técnico — Sprint de Organização Oficial
 
-## 1. Status
+## 1. Status oficial pós-merge
 
 - Sprint: Organização Oficial.
 - Issue: `#7 — Sprint de Organização Oficial — visão, backlog, regras e changelog`.
 - Product Owner: Andre.
-- Branch: `sprint-organizacao-oficial`.
-- Branch base operacional: `fix-docs-estrategia-operacional-closure`.
-- Base indireta oficial: `main` no commit `7ee1a5a6598182bd1ba313c1e582dc036e1d3614`.
+- Branch de origem: `sprint-organizacao-oficial`.
+- Pull Request: `#8`.
+- Branch oficial: `main`.
+- Commit de merge: `c76fb448490141c45121bfa71a1c25b441daf169`.
+- Merge: concluído.
+- Issue #7: encerrada como `completed`.
 - Natureza: documental, governança e direção de produto.
 - Alteração funcional: nenhuma.
-- Sprint 2 funcional: não iniciada.
-- Merge: não realizado.
+- Sprint Funcional A: não iniciada neste encerramento.
+
+A Sprint utilizou inicialmente como base operacional a branch `fix-docs-estrategia-operacional-closure`. Após a integração do PR #6 em `main`, o PR #8 foi retargetado para `main`, revalidado como mergeável e integrado de forma sequencial.
+
+Estado da correção precedente:
+
+- Issue #5: encerrada como `completed`;
+- Pull Request #6: mergeado;
+- commit de merge do PR #6: `2edecb8b3bc2d514733b68b7519bd5433819bfaf`.
 
 ---
 
@@ -32,28 +42,28 @@ Entregas principais:
 
 ## 3. Motivação
 
-Antes desta Sprint, o projeto possuía:
+Antes desta Sprint, o projeto já possuía:
 
-- arquitetura;
+- arquitetura oficial;
 - especificação do Decision Engine;
 - roadmap;
 - estratégia operacional;
 - relatórios de Sprints.
 
-Porém ainda faltavam documentos oficiais para:
+Ainda faltavam documentos oficiais para:
 
 - visão de produto;
 - priorização viva;
 - regras permanentes consolidadas;
 - histórico cronológico de desenvolvimento.
 
-A ausência desses documentos aumentava o risco de:
+A Sprint reduziu riscos de:
 
 - prioridades dispersas;
 - ideias não registradas;
 - repetição de decisões;
 - conflitos de governança;
-- dificuldade para acelerar rumo ao resultado visual.
+- aceleração visual sem base técnica confiável.
 
 ---
 
@@ -92,18 +102,18 @@ Define:
 - arquitetura;
 - aprendizado futuro.
 
-Ideias estratégicas registradas automaticamente:
+Ideias estratégicas formalizadas incluem:
 
 - qualidade do ativo antes do prêmio;
 - preço líquido como eixo central;
 - rolagem automática quando houver PUT aberta;
-- alternativa melhor obrigatória;
-- penalização de ROI alto causado por risco extremo;
+- apresentação de alternativa objetivamente melhor;
+- penalização de ROI alto associado a risco extremo;
 - confiança de dados separada do Score IA;
-- exercício bem-sucedido por preço líquido;
+- exercício avaliado pelo preço líquido e qualidade do ativo;
 - Score de eficiência do capital;
-- comparador entre strikes;
-- comparador entre ativos;
+- comparação entre strikes;
+- comparação entre ativos;
 - explicação de por que não operar;
 - modo diagnóstico de descartados;
 - alertas de concentração;
@@ -140,13 +150,13 @@ Registra cronologicamente:
 - integração da fundação do Decision Engine;
 - estratégia operacional;
 - reconciliação arquitetural;
-- correção pós-merge em revisão;
-- Sprint de Organização em revisão;
-- próximas mudanças esperadas.
+- correção pós-merge;
+- Sprint de Organização Oficial;
+- direção futura até o Radar Premium.
 
 ### 4.5 `docs/SPRINT_ORGANIZACAO_OFICIAL.md`
 
-Este relatório técnico.
+Este relatório técnico, atualizado para refletir o estado real pós-merge.
 
 ---
 
@@ -186,7 +196,7 @@ O primeiro grande resultado visual futuro do novo Decision Engine será o:
 Radar Premium v1
 ```
 
-Essa tela não será construída antes das camadas mínimas que garantem dados e decisões confiáveis.
+A interface não deve apresentar score, precisão ou recomendação fictícia. O visual Premium deverá ser sustentado por contratos, métricas e regras confiáveis.
 
 ### 6.2 Caminho crítico
 
@@ -206,7 +216,7 @@ Sequência recomendada:
 
 ### 6.3 Qualidade antes de prêmio
 
-O backlog e a Product Vision reforçam que:
+A Product Vision, o Backlog e a Estratégia Operacional reforçam que:
 
 - maior prêmio não é prioridade principal;
 - maior ROI nominal não implica melhor oportunidade;
@@ -218,11 +228,11 @@ O backlog e a Product Vision reforçam que:
 
 ## 7. Sequência recomendada de Sprints futuras
 
-Cada Sprint abaixo exige autorização específica.
+Cada Sprint depende de autorização específica do Product Owner.
 
 ### Sprint Funcional A — Contratos e métricas de PUT
 
-Itens:
+Itens principais:
 
 - `FM-ENG-010`;
 - `FM-PUT-010`;
@@ -230,7 +240,7 @@ Itens:
 
 ### Sprint Funcional B — Indicadores e segurança
 
-Itens:
+Itens principais:
 
 - `FM-ENG-020`;
 - `FM-RISK-010`;
@@ -238,7 +248,7 @@ Itens:
 
 ### Sprint Funcional C — Qualidade do ativo e estratégia PUT
 
-Itens:
+Itens principais:
 
 - `FM-ASSET-010`;
 - `FM-PUT-020`;
@@ -246,7 +256,7 @@ Itens:
 
 ### Sprint Funcional D — Score e explicação
 
-Itens:
+Itens principais:
 
 - `FM-SCORE-010`;
 - `FM-EXPLAIN-010`;
@@ -254,90 +264,64 @@ Itens:
 
 ### Sprint Funcional E — Ranking e serviço de Radar
 
-Itens:
+Itens principais:
 
 - `FM-RANK-010`;
 - `FM-SVC-010`.
 
 ### Sprint Visual F — Radar Premium v1
 
-Itens:
+Itens principais:
 
 - `FM-UI-010`;
 - parte de `FM-UI-020`.
 
 ---
 
-## 8. Comparação com a branch de correção
+## 8. Comparações e integração
 
-Comparação:
+### 8.1 Sprint isolada antes do merge
+
+A comparação entre a branch de correção e a branch da Sprint confirmou:
+
+- branch da Sprint à frente;
+- `behind_by: 0`;
+- diff restrito a `docs/`;
+- nenhum arquivo funcional alterado.
+
+Após o relatório técnico, a Sprint possuía sete arquivos documentais no diff isolado.
+
+### 8.2 Integração sequencial
+
+Fluxo executado:
+
+1. PR #6 validado como mergeável;
+2. PR #6 integrado em `main`;
+3. PR #8 retargetado para `main`;
+4. PR #8 revalidado como `mergeable: true`;
+5. PR #8 integrado com proteção pelo head SHA auditado.
+
+Commits oficiais:
 
 ```text
-base: fix-docs-estrategia-operacional-closure
-head: sprint-organizacao-oficial
+PR #6: 2edecb8b3bc2d514733b68b7519bd5433819bfaf
+PR #8: c76fb448490141c45121bfa71a1c25b441daf169
 ```
-
-Resultado antes deste relatório:
-
-- status: `ahead`;
-- `ahead_by: 6`;
-- `behind_by: 0`;
-- 6 arquivos alterados;
-- todos em `docs/`.
-
-Arquivos:
-
-- `docs/ARQUITETURA_V4.md`;
-- `docs/BACKLOG.md`;
-- `docs/CHANGELOG_DESENVOLVIMENTO.md`;
-- `docs/ESTRATEGIA_OPERACIONAL.md`;
-- `docs/PRODUCT_VISION.md`;
-- `docs/REGRAS_DO_PROJETO.md`.
-
-Após a criação deste relatório, o diff da Sprint passa a incluir também:
-
-- `docs/SPRINT_ORGANIZACAO_OFICIAL.md`.
 
 ---
 
-## 9. Comparação com `main`
+## 9. Testes executados
 
-Comparação:
-
-```text
-base: main
-head: sprint-organizacao-oficial
-```
-
-Resultado antes deste relatório:
-
-- status: `ahead`;
-- `ahead_by: 9`;
-- `behind_by: 0`;
-- 7 arquivos alterados;
-- todos em `docs/`.
-
-O diff total inclui:
-
-1. a correção pós-merge da Issue #5;
-2. a Sprint de Organização Oficial da Issue #7.
-
-Nenhum arquivo funcional foi alterado.
-
----
-
-## 10. Testes executados
-
-Comando:
+Comando oficial:
 
 ```bash
 python -m unittest discover -s tests -v
 ```
 
-Resultado final antes deste relatório:
+Resultado da validação da Sprint:
 
 ```text
-Ran 7 tests in 0.002s
+Ran 7 tests
 OK
 ```
 
@@ -348,7 +332,16 @@ Resumo:
 - 0 falhas;
 - 0 erros.
 
-Testes cobrem:
+A regressão foi executada novamente no ciclo pós-merge sobre os arquivos exatos versionados do `engine/` e da suíte `tests/`, também com resultado:
+
+```text
+Ran 7 tests
+OK
+```
+
+Um aviso externo de warmup do `artifact_tool` apareceu no ambiente Python durante a validação pós-merge, sem relação com o FaculdadeMaria e sem afetar a execução da suíte `unittest`, que terminou com código de retorno zero.
+
+Cobertura validada:
 
 - pipeline pass-through;
 - versão centralizada;
@@ -360,9 +353,9 @@ Testes cobrem:
 
 ---
 
-## 11. Ausência de regressões
+## 10. Ausência de regressões
 
-Confirmado no diff da Sprint:
+Confirmado no escopo e no diff:
 
 - nenhum arquivo Python alterado;
 - `engine/` inalterado;
@@ -380,7 +373,7 @@ Confirmado no diff da Sprint:
 
 ---
 
-## 12. Escopo executado
+## 11. Escopo executado
 
 Executado:
 
@@ -394,13 +387,16 @@ Executado:
 - registro de ideias estratégicas;
 - testes;
 - comparação de branches;
-- relatório técnico.
+- relatório técnico;
+- merge sequencial autorizado;
+- encerramento das Issues #5 e #7;
+- sincronização documental pós-merge.
 
 ---
 
-## 13. Escopo não executado
+## 12. Escopo não executado
 
-Não executado:
+Não executado nesta Sprint:
 
 - contratos funcionais do Decision Engine;
 - métricas de PUT;
@@ -419,57 +415,41 @@ Não executado:
 - rolagem funcional;
 - Machine Learning.
 
-A Sprint 2 funcional não foi iniciada.
+A Sprint Funcional A não foi iniciada dentro desta Sprint documental.
 
 ---
 
-## 14. Riscos
+## 13. Riscos e mitigação
 
-### 14.1 Ansiedade por resultado visual
+### 13.1 Ansiedade por resultado visual
 
-Risco:
+Risco: antecipar interface antes de contratos e regras confiáveis.
 
-Antecipar interface antes de contratos e regras confiáveis.
+Mitigação: caminho crítico explícito e Radar Premium priorizado como primeiro grande resultado visual.
 
-Mitigação:
+### 13.2 Backlog excessivo
 
-Caminho crítico explícito e Radar Premium priorizado como primeiro grande resultado visual.
+Risco: muitas ideias competirem por prioridade.
 
-### 14.2 Backlog excessivo
+Mitigação: prioridades, dependências, identificadores e sequência de Sprints.
 
-Risco:
+### 13.3 Score prematuro
 
-Muitas ideias competirem por prioridade.
+Risco: criar nota antes de qualidade do ativo, segurança e dados confiáveis.
 
-Mitigação:
+Mitigação: Score bloqueado por avaliador de PUT e camadas anteriores.
 
-Prioridades, dependências e sequência de Sprints.
+### 13.4 Confusão entre oportunidade e confiança
 
-### 14.3 Score prematuro
+Risco: Score alto baseado em dados incompletos.
 
-Risco:
-
-Criar nota antes de qualidade do ativo, segurança e dados confiáveis.
-
-Mitigação:
-
-Score bloqueado por avaliador de PUT e camadas anteriores.
-
-### 14.4 Confusão entre oportunidade e confiança
-
-Risco:
-
-Score alto baseado em dados incompletos.
-
-Mitigação:
-
-Item específico de confiança separada do score.
+Mitigação: confiança do dado separada da qualidade da oportunidade.
 
 ---
 
-## 15. Pendências
+## 14. Pendências funcionais prioritárias
 
-Pendências funcionais prioritárias:
+Permanecem no backlog:
 
 - `FM-ENG-010`;
 - `FM-PUT-010`;
@@ -486,13 +466,13 @@ Pendências funcionais prioritárias:
 
 ---
 
-## 16. Conclusão
+## 15. Conclusão
 
-A Sprint de Organização Oficial transforma a visão, as regras e as ideias do projeto em uma estrutura formal e rastreável.
+A Sprint de Organização Oficial transformou visão, regras e ideias do projeto em uma estrutura formal e rastreável.
 
-O projeto passa a possuir:
+O projeto passa a possuir oficialmente:
 
-- arquitetura oficial;
+- arquitetura;
 - estratégia operacional;
 - Product Vision;
 - backlog priorizado;
@@ -503,8 +483,8 @@ O projeto passa a possuir:
 
 Nenhuma funcionalidade existente foi alterada.
 
-Nenhum merge foi realizado nesta Sprint.
+O PR #8 foi integrado em `main` no commit `c76fb448490141c45121bfa71a1c25b441daf169`.
 
-A Issue #7 permanece aberta.
+A Issue #7 foi encerrada como `completed`.
 
-O próximo passo depende de revisão e autorização explícita do Product Owner.
+A `main` representa o estado oficial atual do FaculdadeMaria após a Organização Oficial.
