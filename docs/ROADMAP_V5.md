@@ -1,35 +1,121 @@
-# ROADMAP V5 - FaculdadeMaria / Cortex Invest PRO
+# ROADMAP V5 — FaculdadeMaria
 
-## Objetivo
+## 1. Status do documento
 
-Evoluir o projeto FaculdadeMaria ate a versao 5.0 com uma arquitetura mais clara, segura e preparada para crescimento, preservando as funcionalidades existentes durante toda a migracao.
+Este documento define o roadmap técnico vigente do FaculdadeMaria rumo a uma base modular, segura, explicável e visualmente Premium.
 
-Este roadmap define a arquitetura alvo, a ordem correta de implementacao, os riscos por etapa, a estrategia de protecao contra regressao e os criterios de conclusao das versoes v4.4, v4.5, v4.6, v4.7 e v5.0.
+Ele deve ser interpretado em conjunto com:
 
-## 1. Arquitetura Alvo do Sistema
+- `ARQUITETURA_V4.md`;
+- `DECISION_ENGINE_SPEC.md`;
+- `ESTRATEGIA_OPERACIONAL.md`;
+- `PRODUCT_VISION.md`;
+- `BACKLOG.md`;
+- `REGRAS_DO_PROJETO.md`.
 
-### Visao Geral
+Em caso de divergência, a implementação deve ser interrompida e a documentação reconciliada antes de prosseguir.
 
-A arquitetura alvo e uma aplicacao Flask modular, organizada por dominio, com separacao entre rotas, servicos, persistencia, modelos, utilitarios e interface.
+A ordem operacional vigente de itens do Decision Engine é definida pelo backlog oficial e pela Sprint autorizada.
 
-O sistema deve continuar simples de executar, mas com responsabilidades bem definidas:
+---
 
-- Rotas Flask cuidam de entrada HTTP e resposta.
-- Servicos concentram regras de negocio.
-- Repositorios concentram acesso a dados.
-- Modelos definem estruturas de dados.
-- Templates e arquivos estaticos cuidam da interface.
-- Motor IA fica isolado como modulo de analise e ranking.
+## 2. Objetivo
 
-### Estrutura Alvo
+Evoluir o FaculdadeMaria preservando as funcionalidades existentes e construindo, gradualmente:
 
-```txt
+- arquitetura limpa;
+- baixo acoplamento;
+- Decision Engine independente;
+- análise sistemática de PUTs;
+- IA explicável;
+- segurança das alterações;
+- dados confiáveis;
+- eficiência do capital;
+- experiência Premium;
+- Radar de Oportunidades útil e auditável.
+
+O roadmap não autoriza implementação automática.
+
+---
+
+## 3. Estado oficial atual
+
+### 3.1 Produto
+
+O produto permanece funcionalmente baseado no monólito Flask existente.
+
+Responsabilidades ainda concentradas em `app.py` incluem:
+
+- rotas;
+- acesso a dados;
+- cálculos financeiros legados;
+- cotações;
+- parte da apresentação.
+
+Persistência atual inclui:
+
+- CSV local;
+- PostgreSQL quando configurado;
+- vestígios de SQLite.
+
+### 3.2 Decision Engine
+
+O novo caminho oficial é:
+
+```text
+engine/
+```
+
+Fundação atual:
+
+- erros estruturados;
+- telemetria local;
+- versão centralizada;
+- contexto;
+- pipeline pass-through;
+- provider abstrato;
+- testes de isolamento.
+
+O pacote:
+
+```text
+motor_ia/
+```
+
+é legado isolado.
+
+Regra:
+
+> O roadmap vigente não prevê integrar `motor_ia/` ao Radar. O caminho oficial de evolução analítica é o novo `engine/`.
+
+Qualquer correção, integração, remoção ou refatoração do legado depende de Sprint específica e autorização explícita.
+
+### 3.3 Governança consolidada
+
+O projeto já possui:
+
+- arquitetura oficial;
+- especificação técnica do Decision Engine;
+- estratégia operacional;
+- Product Vision;
+- backlog priorizado;
+- regras permanentes;
+- changelog;
+- relatórios de Sprint.
+
+---
+
+## 4. Arquitetura alvo
+
+A evolução continua gradual.
+
+Estrutura conceitual:
+
+```text
 app.py
 cortex/
   __init__.py
-  config.py
   routes/
-    __init__.py
     dashboard.py
     operacoes.py
     historico.py
@@ -40,7 +126,6 @@ cortex/
     backup.py
     radar.py
   services/
-    __init__.py
     metricas_service.py
     operacoes_service.py
     cotacoes_service.py
@@ -48,558 +133,584 @@ cortex/
     exportacoes_service.py
     radar_service.py
   repositories/
-    __init__.py
     base_repository.py
     csv_repository.py
     postgres_repository.py
   models/
-    __init__.py
     operacao.py
     configuracao.py
   utils/
-    __init__.py
     datas.py
     formatadores.py
     validadores.py
+engine/
+  core/
+  market/
+  providers/
+  metrics/
+  indicators/
+  asset_quality/
+  filters/
+  strategies/
+  score/
+  ranking/
+  probability/
+  explain/
+  learning/
 templates/
 static/
 data/
-motor_ia/
+motor_ia/              # legado isolado
 tests/
+docs/
 ```
 
-### Fluxo Alvo
+A estrutura é alvo conceitual e não autoriza criação automática de módulos.
+
+---
+
+## 5. Fluxo alvo
 
 ```mermaid
 flowchart LR
-  Browser["Usuario / Navegador"] --> Routes["Rotas Flask"]
-  Routes --> Services["Servicos de Negocio"]
-  Services --> Repositories["Repositorios"]
+  Browser["Usuário / Navegador"] --> Routes["Rotas Flask"]
+  Routes --> Services["Serviços de Aplicação"]
+  Services --> Repositories["Repositórios"]
   Repositories --> Storage["CSV local ou Postgres"]
-  Services --> Cotacoes["Servico de Cotacoes"]
-  Services --> IA["Motor IA"]
+  Services --> Engine["Decision Engine engine/"]
+  Engine --> Services
   Services --> Templates["Templates Jinja"]
   Templates --> Browser
 ```
 
-### Principios da Arquitetura
+Regra obrigatória:
 
-- O comportamento atual deve ser preservado antes de qualquer melhoria visual ou funcional.
-- Nenhuma rota deve acessar CSV ou Postgres diretamente depois da migracao para repositorios.
-- Nenhum template deve conter regra financeira complexa.
-- Calculos de ROI, DARF, lucro, patrimonio e premios devem ficar em servicos.
-- O sistema deve funcionar localmente mesmo sem Postgres.
-- O Postgres deve ser usado em producao quando `DATABASE_URL` estiver configurado.
-- O Motor IA deve ser integrado somente depois que dados e metricas estiverem estaveis.
+> Flask nunca implementa regra analítica do Decision Engine.
 
-## 2. Etapas da Migracao
+A integração ocorre por camada de serviço.
 
-### Etapa 1 - Estabilizacao da Base Atual
+---
 
-Objetivo: garantir que o sistema atual seja compreendido, documentado e verificavel antes da reorganizacao.
+## 6. Trilhas de evolução
 
-Atividades:
+O projeto possui duas trilhas complementares.
 
-- Mapear rotas existentes.
-- Identificar templates usados e arquivos legados.
-- Confirmar campos reais de `operacoes.csv`, `fechadas.csv` e `config.csv`.
-- Criar uma lista de funcionalidades que nao podem quebrar.
-- Definir dados de exemplo para teste manual.
-- Levantar inconsistencias entre CSV, SQLite e Postgres.
+### Trilha A — Decision Engine e Radar Premium
 
-Riscos:
+Objetivo:
 
-- Haver comportamento importante escondido em HTML string dentro de `app.py`.
-- Algumas telas podem depender de campos calculados implicitamente.
-- O sistema pode ter arquivos antigos que parecem ativos, mas nao sao usados.
+- construir inteligência operacional;
+- analisar PUTs;
+- ranquear oportunidades com segurança;
+- explicar decisões;
+- entregar o Radar Premium.
 
-Mitigacao:
+### Trilha B — Modernização gradual da aplicação existente
 
-- Registrar o comportamento atual antes de mover qualquer codigo.
-- Migrar uma rota por vez.
-- Comparar resultados antes e depois da alteracao.
+Objetivo:
 
-### Etapa 2 - Criacao da Camada de Utilitarios
+- reduzir responsabilidades de `app.py`;
+- criar serviços;
+- criar repositórios;
+- modularizar rotas;
+- padronizar interface;
+- melhorar dashboard, backup, exportações e produção.
 
-Objetivo: extrair funcoes puras e reutilizaveis sem alterar comportamento.
+As trilhas podem evoluir de forma independente quando o acoplamento permitir.
 
-Atividades:
+Nenhuma delas autoriza alteração fora de Sprint.
 
-- Mover formatacao monetaria para `utils/formatadores.py`.
-- Mover conversao numerica para `utils/formatadores.py`.
-- Mover funcoes de data para `utils/datas.py`.
-- Criar testes simples para conversao de numeros, datas e formatacao.
+---
 
-Riscos:
+## 7. Caminho crítico vigente até o Radar Premium
 
-- Pequenas diferencas de formatacao podem afetar templates.
-- Conversao de numeros brasileiros pode alterar calculos existentes.
+A sequência preferencial é definida pelo `BACKLOG.md`.
 
-Mitigacao:
+### Sprint Funcional A — Contratos e métricas de PUT
 
-- Copiar comportamento atual antes de melhorar.
-- Criar testes com valores reais dos CSVs.
-- Evitar refatoracao estetica nesta etapa.
+Itens principais:
 
-### Etapa 3 - Criacao da Camada de Repositorios
+- `FM-ENG-010`;
+- `FM-PUT-010`;
+- parte de `FM-DATA-010`.
 
-Objetivo: padronizar acesso aos dados sem que as rotas saibam se a origem e CSV ou Postgres.
+Objetivos:
 
-Atividades:
+- contrato completo de oportunidade;
+- validação de entrada;
+- campos ausentes explícitos;
+- preço líquido;
+- desconto sobre mercado;
+- ROI bruto;
+- ROI líquido;
+- ROI anualizado;
+- distância do strike;
+- DTE;
+- capital comprometido;
+- eficiência do capital;
+- normalização mínima de snapshot.
 
-- Criar interface de repositorio.
-- Implementar `csv_repository.py`.
-- Implementar `postgres_repository.py`.
-- Padronizar metodos:
-  - listar operacoes.
-  - buscar operacao.
-  - criar operacao.
-  - atualizar operacao.
-  - excluir operacao.
-  - fechar operacao.
-  - reabrir operacao.
-  - carregar configuracoes.
-  - salvar configuracoes.
+Critérios:
 
-Riscos:
+- independente de Flask;
+- sem rede real;
+- sem banco;
+- funções e contratos testáveis;
+- premissas explícitas;
+- custos não inventados;
+- margem não inventada;
+- mesma entrada gera mesma saída analítica.
 
-- O Postgres pode nao ter as mesmas colunas do CSV.
-- Algumas rotas hoje ainda leem CSV diretamente mesmo com Postgres ativo.
-- Fechamento de operacao pode usar campos ainda inexistentes no banco.
+Resultado:
 
-Mitigacao:
+> O motor passa a representar oportunidades e calcular métricas de PUT de forma auditável.
 
-- Definir schema minimo oficial.
-- Manter fallback CSV.
-- Fazer migracao de uso por rota, nao de uma vez.
-- Criar backup antes de qualquer mudanca futura de dados.
+### Sprint Funcional B — Indicadores e segurança
 
-### Etapa 4 - Criacao da Camada de Servicos
+Itens principais:
 
-Objetivo: mover regras de negocio para servicos testaveis.
+- `FM-ENG-020`;
+- `FM-RISK-010`;
+- `FM-RISK-030`.
 
-Atividades:
+Objetivos:
 
-- Criar `metricas_service.py`.
-- Criar `operacoes_service.py`.
-- Criar `cotacoes_service.py`.
-- Criar `configuracoes_service.py`.
-- Mover calculos de capital, premio liquido, ROI, DARF, patrimonio e historico mensal.
-- Criar testes para os principais calculos financeiros.
+- MM21;
+- MM200;
+- IFR14;
+- Bandas de Bollinger;
+- ATR;
+- volatilidade histórica;
+- filtros mínimos;
+- distância do strike ajustada por risco;
+- motivos explicáveis de descarte.
 
-Riscos:
+Critérios:
 
-- Mudanca em calculo financeiro pode alterar numeros exibidos.
-- Alguns templates podem depender de nomes de campos atuais.
+- funções puras;
+- fixtures determinísticas;
+- histórico insuficiente tratado;
+- sem acesso direto a rede ou persistência.
 
-Mitigacao:
+### Sprint Funcional C — Qualidade do ativo e estratégia PUT
 
-- Preservar nomes de campos retornados para templates.
-- Criar testes comparando resultados antigos e novos.
-- Validar dashboard, abertas, fechadas, historico e desempenho apos cada migracao.
+Itens principais:
 
-### Etapa 5 - Modularizacao das Rotas
+- `FM-ASSET-010`;
+- `FM-PUT-020`;
+- `FM-CAP-010`.
 
-Objetivo: reduzir o tamanho de `app.py` e separar paginas por dominio.
+Objetivos:
 
-Atividades:
+- qualidade do ativo;
+- aceitabilidade do exercício;
+- avaliador específico de venda de PUT;
+- segurança;
+- risco;
+- eficiência do capital;
+- fatores positivos;
+- pontos de atenção.
 
-- Criar blueprints por area.
-- Migrar rotas de dashboard.
-- Migrar rotas de operacoes.
-- Migrar rotas de historico/desempenho/carteira.
-- Migrar rotas de relatorios/exportacoes.
-- Migrar rotas de configuracoes e backup.
-- Manter URLs atuais.
+Princípio:
 
-Riscos:
+> Prêmio alto não compensa ativo inadequado para exercício e longo prazo.
 
-- Quebra de `url_for`.
-- Erro em nomes de endpoints.
-- Duplicidade de rotas durante transicao.
+### Sprint Funcional D — Score e explicação
 
-Mitigacao:
+Itens principais:
 
-- Manter as mesmas URLs publicas.
-- Migrar uma area por vez.
-- Testar navegacao pelo menu apos cada grupo de rotas.
+- `FM-SCORE-010`;
+- `FM-EXPLAIN-010`;
+- `FM-EXPLAIN-040`.
 
-### Etapa 6 - Padronizacao da Interface
+Objetivos:
 
-Objetivo: transformar telas em templates consistentes, removendo HTML gerado dentro de Python.
+- Score IA de 0 a 100;
+- nota de 0 a 10;
+- fatores rastreáveis;
+- penalidades explícitas;
+- confiança dos dados separada;
+- resumo técnico;
+- pontos positivos;
+- pontos de atenção;
+- principal risco;
+- motivo da nota.
 
-Atividades:
+Regra:
 
-- Garantir que todas as paginas usem `base.html`.
-- Criar template proprio para operacoes fechadas.
-- Remover HTML string de rotas.
-- Padronizar cards, tabelas, formularios e botoes.
-- Reduzir estilos inline.
-- Consolidar CSS em `static/theme.css`.
+> Score IA não pode resgatar oportunidade inelegível.
 
-Riscos:
+### Sprint Funcional E — Ranking e serviço de Radar
 
-- Mudanca visual pode ocultar informacoes importantes.
-- Tabelas podem perder colunas ou acoes.
-- Responsividade pode piorar.
+Itens principais:
 
-Mitigacao:
+- `FM-RANK-010`;
+- `FM-SVC-010`.
 
-- Manter conteudo e acoes antes de redesenhar.
-- Validar telas em desktop e mobile.
-- Fazer melhoria visual em passos pequenos.
+Objetivos:
 
-### Etapa 7 - Dashboard com Dados Reais
+- ranking ajustado ao perfil operacional;
+- separação entre elegível, observação, não elegível e dado insuficiente;
+- serviço entre Flask e engine;
+- nenhum cálculo analítico dentro da rota.
 
-Objetivo: remover graficos estaticos e alimentar o dashboard com metricas reais.
+Princípios de ranking:
 
-Atividades:
+1. elegibilidade;
+2. qualidade do ativo;
+3. segurança;
+4. Score IA;
+5. preço líquido;
+6. risco x retorno;
+7. eficiência do capital;
+8. liquidez;
+9. confiança dos dados;
+10. desempates configuráveis.
 
-- Enviar dados reais do backend para o template.
-- Alimentar Chart.js com historico mensal real.
-- Exibir distribuicao real por ativo.
-- Exibir top 5 real de operacoes abertas.
-- Exibir patrimonio, lucro, ROI e DARF calculados pelo servico.
+### Sprint Visual F — Radar Premium v1
 
-Riscos:
+Itens principais:
 
-- Dados ausentes podem quebrar graficos.
-- Campos numericos podem chegar como string.
-- Meses sem operacao podem gerar grafico vazio.
+- `FM-UI-010`;
+- parte de `FM-UI-020`.
 
-Mitigacao:
+Objetivo:
 
-- Garantir valores padrao.
-- Normalizar dados no backend.
-- Criar estados vazios amigaveis.
+Entregar o primeiro grande resultado visual do novo Decision Engine.
 
-### Etapa 8 - Integracao do Motor IA
+Componentes previstos:
 
-Objetivo: conectar `motor_ia` ao Radar de Oportunidades.
+- cabeçalho executivo;
+- cards de resumo;
+- lista ou tabela de oportunidades;
+- Score IA;
+- nota 0 a 10;
+- badges de risco e liquidez;
+- preço líquido;
+- ROI bruto, líquido e anualizado;
+- distância do strike;
+- vencimento;
+- pontos positivos;
+- pontos de atenção;
+- conclusão técnica;
+- filtros;
+- ordenação;
+- estado vazio;
+- loading;
+- erro amigável;
+- responsividade.
 
-Atividades:
+Direção visual:
 
-- Corrigir inconsistencias internas do modulo.
-- Definir contrato de entrada e saida do motor.
-- Criar `radar_service.py`.
-- Integrar rota `/radar-oportunidades`.
-- Criar ranking com score, classe e explicacao.
-- Preparar providers de mercado para evolucao.
+- Premium;
+- limpa;
+- sofisticada;
+- densa sem ser confusa;
+- risco visível;
+- confiança visível;
+- sem precisão fictícia.
 
-Riscos:
+---
 
-- Dados de mercado podem falhar ou ficar indisponiveis.
-- Score pode dar falsa sensacao de recomendacao financeira.
-- Motor atual ainda esta incompleto.
+## 8. Evoluções após o primeiro Radar Premium
 
-Mitigacao:
+### Inteligência de rolagem
 
-- Tratar IA como apoio analitico, nao recomendacao absoluta.
-- Exibir motivos do score.
-- Criar fallback quando providers nao retornarem dados.
-- Integrar primeiro com dados simulados/controlados, depois com mercado real.
+Backlog principal:
 
-### Etapa 9 - Exportacoes, Backup e Producao
+- detector de PUT aberta;
+- lucro capturado;
+- prêmio restante;
+- custo de recompra;
+- comparação com nova oportunidade;
+- impacto da margem;
+- retorno incremental;
+- recomendação manter, fechar ou rolar.
 
-Objetivo: preparar a v5.0 para uso confiavel.
+Regra:
 
-Atividades:
+> Nunca rolar apenas para adiar prejuízo ou esconder deterioração.
 
-- Melhorar backup completo.
-- Padronizar exportacoes.
-- Criar relatorio mensal.
-- Criar relatorio de DARF.
-- Documentar uso local e deploy.
-- Criar testes basicos.
-- Revisar configuracao Render/Neon.
+### Comparadores
 
-Riscos:
+Evoluções previstas:
 
-- Exportacao pode divergir dos dados exibidos.
-- Backup pode omitir arquivos importantes.
-- Ambiente de producao pode ter schema diferente do local.
+- comparação entre strikes;
+- comparação entre ativos;
+- comparação lado a lado;
+- alternativa melhor obrigatória quando objetivamente identificada.
 
-Mitigacao:
+### Gestão de risco
 
-- Usar os mesmos servicos das telas para gerar relatorios.
-- Incluir manifesto no backup.
-- Validar schema no startup.
+Evoluções previstas:
 
-## 3. Ordem Correta de Implementacao
+- spread bid/ask;
+- concentração por ativo;
+- concentração por vencimento;
+- visão de risco da carteira;
+- alertas antes da entrada.
 
-A ordem recomendada e:
+### Aprendizado futuro
 
-1. Documentar estado atual.
-2. Criar testes manuais e criterios de nao regressao.
-3. Extrair utilitarios.
-4. Criar repositorios.
-5. Criar servicos de negocio.
-6. Migrar rotas por dominio.
-7. Padronizar templates.
-8. Corrigir dashboard com dados reais.
-9. Completar fluxo de operacoes abertas e fechadas.
-10. Integrar Motor IA.
-11. Melhorar exportacoes e backup.
-12. Adicionar testes automatizados.
-13. Atualizar documentacao final.
-14. Preparar release v5.0.
+Somente após:
 
-## 4. Riscos Por Etapa
+- histórico de decisões;
+- resultados reais;
+- critérios validados;
+- governança;
+- auditoria.
 
-| Etapa | Risco Principal | Impacto | Mitigacao |
+Machine Learning não é prioridade inicial.
+
+---
+
+## 9. Modernização gradual da aplicação existente
+
+Esta trilha preserva objetivos válidos do roadmap anterior.
+
+### 9.1 Estabilização da base
+
+Atividades candidatas:
+
+- mapear rotas;
+- identificar templates usados;
+- confirmar schemas reais;
+- listar funcionalidades que não podem quebrar;
+- criar dados de teste;
+- levantar divergências CSV/Postgres/SQLite.
+
+### 9.2 Utilitários
+
+Atividades candidatas:
+
+- formatação monetária;
+- conversão numérica;
+- datas;
+- validadores;
+- testes puros.
+
+### 9.3 Repositórios
+
+Atividades candidatas:
+
+- contrato de repositório;
+- CSV;
+- PostgreSQL;
+- schema mínimo;
+- fallback local.
+
+### 9.4 Serviços
+
+Atividades candidatas:
+
+- métricas;
+- operações;
+- cotações;
+- configurações;
+- exportações.
+
+### 9.5 Rotas modulares
+
+Atividades candidatas:
+
+- blueprints;
+- migração por domínio;
+- preservação de URLs;
+- testes de navegação.
+
+### 9.6 Interface existente
+
+Atividades candidatas:
+
+- uso consistente de `base.html`;
+- remover HTML gerado em Python;
+- padronizar cards e tabelas;
+- reduzir estilos inline;
+- manter ações e conteúdo.
+
+### 9.7 Dashboard com dados reais
+
+Atividades candidatas:
+
+- históricos reais;
+- top 5 real;
+- distribuição real por ativo;
+- métricas reais;
+- estados vazios.
+
+### 9.8 Exportações, backup e produção
+
+Atividades candidatas:
+
+- relatórios coerentes com serviços;
+- backup com manifesto;
+- documentação local;
+- Render/Neon;
+- variáveis de ambiente;
+- validação de schema.
+
+Nenhuma dessas atividades está autorizada por este roadmap.
+
+---
+
+## 10. Estratégia de não regressão
+
+### Regras de proteção
+
+- não misturar comportamento e grande refatoração sem justificativa;
+- manter URLs existentes;
+- manter nomes de campos usados por templates durante transição;
+- migrar área pequena por vez;
+- preservar fallback CSV enquanto oficial;
+- criar backup antes de mudança de persistência;
+- evitar remover legado sem validação;
+- preferir extração antes de reescrita;
+- comparar resultados antes e depois.
+
+### Funcionalidades que não podem quebrar
+
+- dashboard;
+- cadastro de operação;
+- operações abertas;
+- edição;
+- fechamento;
+- reabertura;
+- exclusão;
+- histórico;
+- desempenho;
+- carteira;
+- configurações;
+- backup;
+- exportações;
+- execução local sem PostgreSQL;
+- produção com `DATABASE_URL` quando configurada.
+
+---
+
+## 11. Validação mínima por Sprint
+
+Toda Sprint deve:
+
+- executar testes oficiais aplicáveis;
+- validar diff contra `main`;
+- listar arquivos alterados;
+- confirmar escopo;
+- validar regressões;
+- atualizar documentação;
+- produzir relatório técnico;
+- parar para revisão;
+- realizar merge apenas após autorização explícita.
+
+Quando houver impacto no fluxo existente, validar manualmente conforme escopo:
+
+1. abrir `/`;
+2. abrir `/operacoes-abertas`;
+3. criar operação de teste;
+4. editar;
+5. fechar;
+6. conferir `/op-fechadas`;
+7. reabrir;
+8. conferir `/historico`;
+9. conferir `/desempenho`;
+10. salvar configurações;
+11. testar backup;
+12. testar exportações.
+
+Não executar validação irrelevante apenas para produzir aparência de cobertura.
+
+---
+
+## 12. Riscos principais
+
+| Área | Risco | Impacto | Mitigação |
 |---|---|---:|---|
-| Estabilizacao | Comportamento oculto em codigo legado | Alto | Mapear rotas e validar telas antes de mudar |
-| Utilitarios | Mudanca em formatacao ou conversao | Medio | Testes com valores reais |
-| Repositorios | Divergencia CSV/Postgres | Alto | Interface unica e schema oficial |
-| Servicos | Alteracao em calculos financeiros | Alto | Testes de ROI, DARF, premios e patrimonio |
-| Rotas | Quebra de navegacao ou `url_for` | Medio | Manter URLs e migrar por dominio |
-| Interface | Perda de colunas, acoes ou responsividade | Medio | Validacao visual por tela |
-| Dashboard | Graficos vazios ou incorretos | Medio | Dados padrao e estados vazios |
-| Motor IA | Score inconsistente ou providers falhando | Medio | Fallback e explicacao dos criterios |
-| Exportacoes | Relatorios divergentes | Medio | Reusar servicos oficiais |
-| Producao | Diferencas entre local e Render/Neon | Alto | Checklist de ambiente e backup |
+| Contratos | Estrutura instável | Alto | Contratos explícitos e testes |
+| Métricas PUT | Fórmula ambígua | Alto | Premissas e base de capital declaradas |
+| Dados | Dado ausente tratado como zero | Alto | Estado explícito de ausência |
+| Qualidade do ativo | Critério subjetivo oculto | Alto | Configuração e explicabilidade |
+| Gates | Score compensar falha crítica | Alto | Elegibilidade antes de Score |
+| Score | Falsa precisão | Alto | Fatores e confiança separados |
+| Ranking | Priorizar prêmio/ROI | Alto | Ordem alinhada ao perfil |
+| Provider | Indisponibilidade externa | Alto | Timeout, erro e fallback |
+| Interface | Mascarar risco | Alto | Semântica visual clara |
+| Persistência | Divergência CSV/Postgres | Alto | Repositórios e schema oficial |
+| Rotas | Quebra de URL | Médio | Preservar URLs e migrar por domínio |
+| Legado | Integrar módulo incorreto | Alto | `motor_ia/` isolado; `engine/` oficial |
 
-## 5. Estrategia Para Evitar Quebrar Funcionalidades Existentes
+---
 
-### Regras de Protecao
+## 13. Critérios gerais de conclusão
 
-- Nao alterar comportamento e arquitetura na mesma etapa.
-- Manter URLs existentes.
-- Manter nomes de campos usados pelos templates durante a transicao.
-- Migrar uma rota ou grupo pequeno por vez.
-- Preservar CSV local como fallback.
-- Criar backup antes de alterar persistencia.
-- Evitar remover arquivos legados ate confirmar que nao sao usados.
-- Preferir extracao de codigo antes de reescrita.
+Uma etapa só pode ser considerada concluída quando:
 
-### Funcionalidades que Nao Podem Quebrar
+- escopo autorizado foi cumprido;
+- escopo não autorizado permaneceu intacto;
+- testes aplicáveis passaram;
+- regressões foram avaliadas;
+- documentação reflete o estado real;
+- diff foi comparado com `main`;
+- riscos e pendências foram registrados;
+- Product Owner revisou;
+- merge foi autorizado quando aplicável.
 
-- Abrir dashboard.
-- Cadastrar nova operacao.
-- Listar operacoes abertas.
-- Editar operacao.
-- Fechar operacao.
-- Reabrir operacao.
-- Excluir operacao.
-- Exibir historico.
-- Exibir desempenho.
-- Salvar configuracoes.
-- Baixar backup.
-- Exportar dados.
-- Rodar localmente sem Postgres.
-- Rodar em producao com `DATABASE_URL`.
+---
 
-### Validacao Manual Minima
+## 14. Versões e releases
 
-A cada versao:
+A versão do produto não deve avançar automaticamente com Sprints internas.
 
-1. Abrir `/`.
-2. Abrir `/operacoes-abertas`.
-3. Criar uma operacao de teste.
-4. Editar a operacao.
-5. Fechar a operacao.
-6. Conferir `/op-fechadas`.
-7. Reabrir a operacao.
-8. Conferir `/historico`.
-9. Conferir `/desempenho`.
-10. Salvar configuracoes.
-11. Baixar backup completo.
-12. Testar exportacoes.
+A versão interna do Decision Engine é independente da versão comercial do produto.
 
-## 6. Checklist Por Versao
+Releases futuras devem possuir:
 
-## v4.4 - Persistencia e Base Estavel
+- objetivo claro;
+- critérios de aceite;
+- changelog;
+- testes;
+- documentação;
+- decisão explícita.
 
-Objetivo: padronizar acesso a dados e reduzir risco entre CSV/Postgres.
+O roadmap anterior baseado em blocos rígidos `v4.4`, `v4.5`, `v4.6` e `v4.7` é substituído, para a evolução do Decision Engine, pela sequência oficial do backlog e das Sprints Funcionais A–F.
 
-Checklist:
+Isso evita associar número de versão a implementação ainda não autorizada.
 
-- [ ] Definir schema oficial de operacao.
-- [ ] Definir schema oficial de configuracao.
-- [ ] Criar camada de repositorio.
-- [ ] Implementar repositorio CSV.
-- [ ] Implementar repositorio Postgres.
-- [ ] Garantir fallback local sem `DATABASE_URL`.
-- [ ] Revisar criacao de tabelas Postgres.
-- [ ] Garantir que fechamento de operacao tenha campos previstos.
-- [ ] Documentar campos obrigatorios e opcionais.
-- [ ] Validar fluxo completo com CSV.
-- [ ] Validar fluxo completo com Postgres, quando disponivel.
+---
 
-Riscos:
+## 15. Definição de sucesso da evolução V5
 
-- Quebra de operacoes existentes por diferenca de schema.
-- Perda de dados se a gravacao for alterada sem backup.
-- Rotas continuarem usando CSV diretamente.
+A evolução V5 será considerada madura quando o FaculdadeMaria possuir, de forma progressiva e validada:
 
-Criterios de conclusao:
+- aplicação existente preservada;
+- arquitetura mais modular;
+- acesso a dados organizado;
+- regras de aplicação em serviços apropriados;
+- novo Decision Engine independente;
+- contratos estáveis;
+- métricas de PUT auditáveis;
+- qualidade do ativo;
+- gates de segurança;
+- Score IA explicável;
+- ranking alinhado ao perfil;
+- Radar Premium;
+- rolagem explicável;
+- backup e exportações confiáveis;
+- testes suficientes;
+- documentação sincronizada;
+- deploy validado quando aplicável.
 
-- Todas as operacoes de CRUD passam pela camada de repositorio.
-- O app continua funcionando localmente com CSV.
-- O app funciona em producao com Postgres configurado.
-- Nenhuma URL publica foi alterada.
+---
 
-## v4.5 - Servicos e Calculos Financeiros
+## 16. Conclusão
 
-Objetivo: concentrar regras de negocio em servicos testaveis.
+O caminho oficial do FaculdadeMaria combina duas prioridades:
 
-Checklist:
+1. construir o novo `engine/` com segurança, explicabilidade e aderência à estratégia de venda sistemática de PUT;
+2. modernizar gradualmente a aplicação Flask sem quebrar funcionalidades existentes.
 
-- [ ] Criar servico de metricas.
-- [ ] Criar servico de operacoes.
-- [ ] Criar servico de cotacoes.
-- [ ] Mover calculo de capital.
-- [ ] Mover calculo de premio bruto e liquido.
-- [ ] Mover calculo de ROI.
-- [ ] Mover calculo de DARF.
-- [ ] Mover calculo de patrimonio.
-- [ ] Mover historico mensal.
-- [ ] Criar testes para formatacao e conversao numerica.
-- [ ] Criar testes para calculos principais.
-- [ ] Conferir valores exibidos no dashboard antes e depois.
+O `motor_ia/` não é o motor a ser integrado ao novo Radar.
 
-Riscos:
+O primeiro grande resultado visual futuro é o Radar Premium, sustentado por contratos, métricas, qualidade, segurança, Score, ranking e explicação reais.
 
-- Numeros mudarem por pequenas diferencas de arredondamento.
-- Templates quebrarem por mudanca de nomes de campos.
-- Cotacoes externas afetarem carregamento de paginas.
+A meta não é chegar ao visual mais rápido a qualquer custo.
 
-Criterios de conclusao:
-
-- Calculos financeiros nao estao mais espalhados pelas rotas.
-- Resultados principais batem com a versao anterior.
-- Dashboard, historico, desempenho e carteira usam os mesmos servicos.
-- Falha de cotacao externa nao derruba a pagina.
-
-## v4.6 - Rotas Modulares e Fluxo de Operacoes
-
-Objetivo: organizar rotas por dominio e consolidar ciclo de vida das operacoes.
-
-Checklist:
-
-- [ ] Criar blueprints.
-- [ ] Migrar rotas de dashboard.
-- [ ] Migrar rotas de operacoes.
-- [ ] Migrar rotas de configuracoes.
-- [ ] Migrar rotas de backup.
-- [ ] Migrar rotas de relatorios.
-- [ ] Manter todas as URLs atuais.
-- [ ] Criar template proprio para operacoes fechadas.
-- [ ] Remover HTML string da rota de operacoes fechadas.
-- [ ] Melhorar fluxo de fechamento com data, valor de recompra e resultado.
-- [ ] Garantir reabertura de operacao.
-- [ ] Garantir exclusao com confirmacao visual.
-
-Riscos:
-
-- Quebra de menu lateral.
-- Endpoints Flask mudarem de nome.
-- Fluxo de fechar/reabrir divergir entre CSV e Postgres.
-
-Criterios de conclusao:
-
-- `app.py` fica enxuto e responsavel apenas por criar a aplicacao.
-- Rotas estao separadas por dominio.
-- Operacao pode ser criada, editada, fechada, reaberta e excluida.
-- Operacoes fechadas usam template Jinja padronizado.
-
-## v4.7 - Dashboard Real e Motor IA Inicial
-
-Objetivo: dashboard com dados reais e primeira integracao funcional do Motor IA.
-
-Checklist:
-
-- [ ] Remover dados estaticos dos graficos principais.
-- [ ] Enviar historico real para Chart.js.
-- [ ] Exibir top 5 real.
-- [ ] Exibir distribuicao real por ativo.
-- [ ] Exibir ROI abertas e fechadas com dados reais.
-- [ ] Corrigir contrato interno do `motor_ia`.
-- [ ] Criar `radar_service.py`.
-- [ ] Integrar `/radar-oportunidades` ao Motor IA.
-- [ ] Exibir score, classe e motivos da analise.
-- [ ] Criar fallback quando nao houver dados de mercado.
-
-Riscos:
-
-- Graficos quebrarem com lista vazia.
-- Motor IA produzir score sem explicacao.
-- Dependencia externa deixar pagina lenta.
-
-Criterios de conclusao:
-
-- Dashboard nao possui graficos principais hardcoded.
-- Radar de oportunidades carrega sem erro.
-- Cada oportunidade analisada tem score, classe e explicacao.
-- Falha de provider externo e tratada com mensagem amigavel.
-
-## v5.0 - Release Estavel
-
-Objetivo: entregar uma versao organizada, testada, documentada e pronta para uso continuo.
-
-Checklist:
-
-- [ ] Revisar arquitetura final.
-- [ ] Remover ou arquivar arquivos legados nao usados.
-- [ ] Consolidar CSS e JS.
-- [ ] Padronizar estados vazios.
-- [ ] Padronizar mensagens de sucesso e erro.
-- [ ] Melhorar exportacoes.
-- [ ] Melhorar backup completo.
-- [ ] Criar documentacao de instalacao local.
-- [ ] Criar documentacao de deploy no Render.
-- [ ] Criar documentacao de variaveis de ambiente.
-- [ ] Criar testes automatizados minimos.
-- [ ] Validar fluxo completo local.
-- [ ] Validar fluxo completo em ambiente de producao.
-- [ ] Atualizar changelog.
-- [ ] Marcar release v5.0.
-
-Riscos:
-
-- Limpeza de legado remover arquivo ainda usado.
-- Ambiente de producao revelar diferencas nao vistas localmente.
-- Testes cobrirem pouco dos fluxos criticos.
-
-Criterios de conclusao:
-
-- Sistema roda localmente.
-- Sistema roda no Render.
-- Fluxo principal de operacoes funciona.
-- Dashboard mostra dados reais.
-- Backup e exportacoes funcionam.
-- Motor IA inicial esta integrado.
-- README e documentacao estao atualizados.
-- Ha testes para calculos financeiros principais.
-
-## 7. Criterios Gerais de Conclusao
-
-Uma versao so deve ser considerada concluida quando:
-
-- O app inicia sem erro.
-- Todas as rotas principais abrem.
-- O fluxo de operacoes funciona.
-- Os calculos principais foram conferidos.
-- A navegacao pelo menu funciona.
-- Nao houve mudanca indesejada nas URLs.
-- O backup foi testado.
-- As exportacoes foram testadas.
-- Os riscos conhecidos foram documentados.
-- A proxima etapa pode comecar sem depender de correcao critica da etapa anterior.
-
-## Definicao de Pronto da v5.0
-
-A v5.0 sera considerada pronta quando o FaculdadeMaria / Cortex Invest PRO estiver com:
-
-- arquitetura modular;
-- persistencia padronizada;
-- regras de negocio em servicos;
-- dashboard com dados reais;
-- operacoes abertas e fechadas consolidadas;
-- Motor IA integrado ao radar;
-- exportacoes e backup confiaveis;
-- documentacao atualizada;
-- testes minimos dos calculos financeiros;
-- deploy validado.
-
-O foco da v5.0 nao e adicionar complexidade desnecessaria. O foco e transformar o sistema atual em uma base organizada, resistente e pronta para evoluir com seguranca.
+A meta é chegar a um visual Premium que mereça confiança.
