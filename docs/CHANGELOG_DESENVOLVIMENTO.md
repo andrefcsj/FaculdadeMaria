@@ -35,11 +35,19 @@ Mudanças ainda em branch podem aparecer como `Em revisão`.
 
 ## 2026-07-10 — Reconciliação da especificação e roadmap do Decision Engine
 
-Status: `Em revisão`
+Status: `Integrado`
 
-Issue: `#13`
+Issue: `#13` — encerrada como `completed`
 
-Branch:
+Pull Request: `#14`
+
+Commit de merge:
+
+```text
+793bd4ea9007949eb1bcf89f819316dc3a9d0d83
+```
+
+Branch de origem:
 
 ```text
 docs-reconciliacao-decision-engine
@@ -71,6 +79,14 @@ Foram reconciliadas divergências entre documentos antigos e a política operaci
 - Flask inalterado;
 - interface inalterada;
 - persistência inalterada.
+
+### Validated
+
+- 7 testes executados;
+- 7 aprovados;
+- 0 falhas;
+- 0 erros;
+- diff pré-merge restrito a `docs/`.
 
 ---
 
