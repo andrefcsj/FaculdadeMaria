@@ -1,191 +1,343 @@
-# Arquitetura V4 - Cortex Invest PRO
+# Arquitetura V4 - FaculdadeMaria / Cortex Invest PRO
 
-## Visao Geral
+## 1. Status do documento
 
-Este projeto e um monolito Flask para controle de operacoes da estrategia Wheel, chamado Cortex Invest PRO. A aplicacao inteira gira em torno de `app.py`, que concentra rotas, leitura e gravacao de dados, calculos financeiros, geracao de metricas e parte do HTML/CSS legado.
+Este documento descreve a arquitetura oficial atual do projeto FaculdadeMaria após a conclusão e integração da Sprint 1.1-R.
 
-Fluxo principal:
+A documentação da pasta `docs/` é a referência oficial de arquitetura do projeto.
+
+Documentos complementares obrigatórios:
+
+- `DECISION_ENGINE_SPEC.md`;
+- `ROADMAP_V5.md`;
+- `SPRINT_01.md`;
+- `SPRINT_01_R.md`;
+- `SPRINT_01_R_ENCERRAMENTO.md`;
+- `ESTRATEGIA_OPERACIONAL.md`.
+
+Antes de qualquer evolução do Decision Engine, `ESTRATEGIA_OPERACIONAL.md` deve ser lido integralmente.
+
+---
+
+## 2. Visão geral
+
+O FaculdadeMaria é atualmente uma aplicação Flask monolítica para gestão de operações com opções, com persistência local por CSV e suporte a PostgreSQL quando `DATABASE_URL` está configurada.
+
+A aplicação existente continua centrada em `app.py`, que concentra rotas, acesso a dados, cálculos financeiros e partes do fluxo de apresentação.
+
+Após a Sprint 1.1-R, o projeto também possui um novo pacote independente `engine/`, que representa a fundação oficial do futuro Decision Engine.
+
+O pacote legado `motor_ia/` permanece preservado, isolado e não deve ser confundido com o novo `engine/`.
+
+Fluxo atual:
 
 ```mermaid
 flowchart LR
   UI["Templates HTML + JS/CSS"] --> Flask["app.py / Flask"]
   Flask --> Dados["CSV local ou Postgres"]
-  Flask --> Yahoo["Yahoo Finance / cotacoes"]
-  Flask --> Calculos["Metricas, ROI, DARF, patrimonio"]
+  Flask --> Yahoo["Yahoo Finance / cotações"]
+  Flask --> Calculos["Métricas, ROI, DARF, patrimônio"]
   Calculos --> UI
-  IA["motor_ia"] -. ainda nao integrado .-> Flask
+  Legacy["motor_ia/ legado"] -. não integrado .-> Flask
+  Engine["engine/ Decision Engine"] -. fundação independente, ainda não integrada .-> Flask
 ```
 
-## Camadas
+---
 
-### 1. Aplicacao Web
+## 3. Estado arquitetural oficial pós-Sprint 1.1-R
 
-O nucleo esta em `app.py`. Ele cria o app Flask, registra as rotas e faz quase todo o trabalho de negocio.
+### 3.1 Aplicação web
 
-Rotas principais:
+O núcleo web continua em `app.py`.
 
-- `/`: dashboard.
-- `/nova`: cria operacao.
-- `/editar/<oid>`: edita operacao.
-- `/fechar/<oid>`: encerra operacao.
-- `/excluir/<oid>`: remove operacao.
-- `/reabrir/<oid>`: reabre operacao.
-- `/operacoes-abertas`: lista operacoes abertas.
-- `/op-fechadas`: lista operacoes encerradas.
-- `/historico`: historico mensal.
-- `/desempenho`: indicadores de desempenho.
-- `/carteira`: visao consolidada da carteira.
-- `/relatorios`: exportacoes.
-- `/configuracoes`: parametros do sistema.
-- `/backup`: central de backup.
-- `/sobre`: informacoes do sistema.
-- `/cotacao`: consulta cotacao via Yahoo.
+Responsabilidades atuais concentradas no monólito:
 
-### 2. Persistencia
+- rotas HTTP;
+- leitura e gravação de dados;
+- cálculos financeiros;
+- consultas de cotação;
+- exportações;
+- backup;
+- parte da composição de interface legada.
 
-Ha tres modos ou vestigios de persistencia:
+Rotas principais conhecidas:
 
-- CSV local em `data/operacoes.csv`, `data/fechadas.csv` e `data/config.csv`.
-- SQLite preparado em `data/cortex.db`, mas pouco usado no fluxo principal atual.
-- Postgres/Neon ativado quando existe a variavel `DATABASE_URL`.
+- `/`: dashboard;
+- `/nova`: cria operação;
+- `/editar/<oid>`: edita operação;
+- `/fechar/<oid>`: encerra operação;
+- `/excluir/<oid>`: remove operação;
+- `/reabrir/<oid>`: reabre operação;
+- `/operacoes-abertas`: lista operações abertas;
+- `/op-fechadas`: lista operações encerradas;
+- `/historico`: histórico mensal;
+- `/desempenho`: indicadores de desempenho;
+- `/carteira`: visão consolidada da carteira;
+- `/relatorios`: exportações;
+- `/configuracoes`: parâmetros do sistema;
+- `/backup`: central de backup;
+- `/sobre`: informações do sistema;
+- `/cotacao`: consulta cotação via Yahoo.
 
-A arquitetura real hoje e: CSV local por padrao, Postgres em producao se configurado.
+### 3.2 Persistência
 
-### 3. Regras de Negocio
+Existem três modos ou vestígios de persistência:
 
-As principais regras de negocio estao em `app.py`, especialmente nas funcoes:
+- CSV local em `data/operacoes.csv`, `data/fechadas.csv` e `data/config.csv`;
+- SQLite preparado em `data/cortex.db`, com uso reduzido no fluxo principal;
+- PostgreSQL/Neon quando existe `DATABASE_URL`.
 
-- `enrich_ops`: enriquece operacoes com capital, premio liquido, ROI, dias ate vencimento, nota e alerta.
-- `metrics`: calcula capital comprometido, caixa livre, premios, lucro mensal, DARF, ROI e totais.
-- `monthly`: monta historico mensal de lucro, premios, DARF, ROI e patrimonio.
+A arquitetura real permanece:
 
-Essa logica ainda nao esta em uma camada separada de servicos.
+- CSV local por padrão;
+- PostgreSQL em produção quando configurado.
 
-### 4. Interface
+O novo `engine/` não pode acessar diretamente PostgreSQL, SQLite ou CSV.
 
-A UI nova usa templates Jinja em `templates/`, com uma base compartilhada em `templates/base.html`.
+### 3.3 Regras de negócio existentes
+
+As principais regras de negócio do sistema legado continuam concentradas em `app.py`, especialmente em funções como:
+
+- `enrich_ops`;
+- `metrics`;
+- `monthly`.
+
+Essa lógica ainda não foi migrada para uma camada de serviços.
+
+A Sprint 1.1-R não alterou esse comportamento.
+
+### 3.4 Interface
+
+A interface usa templates Jinja em `templates/`, com base compartilhada em `templates/base.html`.
 
 Principais templates:
 
-- `templates/dashboard.html`
-- `templates/operacoes_abertas.html`
-- `templates/configuracoes.html`
-- `templates/historico.html`
-- `templates/desempenho.html`
-- `templates/carteira.html`
-- `templates/relatorios.html`
-- `templates/backup.html`
-- `templates/sobre.html`
+- `templates/dashboard.html`;
+- `templates/operacoes_abertas.html`;
+- `templates/configuracoes.html`;
+- `templates/historico.html`;
+- `templates/desempenho.html`;
+- `templates/carteira.html`;
+- `templates/relatorios.html`;
+- `templates/backup.html`;
+- `templates/sobre.html`.
 
-Os assets ficam em `static/`:
+Assets principais em `static/`:
 
-- `static/theme.css`
-- `static/dashboard.js`
-- `static/op_abertas.js`
-- `static/search_filters.js`
-- `static/theme.js`
-- `static/favicon.svg`
+- `static/theme.css`;
+- `static/dashboard.js`;
+- `static/op_abertas.js`;
+- `static/search_filters.js`;
+- `static/theme.js`;
+- `static/favicon.svg`.
 
-Tambem existem arquivos HTML e CSS antigos na raiz, como `dashboard.html`, `theme.css` e `op_fechadas_v2_layout.html`. Eles parecem sobras ou versoes anteriores, nao o caminho principal usado pelo Flask.
+Arquivos HTML e CSS antigos na raiz podem representar legado e não devem ser removidos sem validação específica.
 
-### 5. Motor IA
+---
 
-Existe um modulo separado em `motor_ia/`, com score, ranking, configuracao, cache e providers Yahoo/Brapi.
+## 4. Decision Engine oficial
 
-Arquivos principais:
+O novo Decision Engine vive em `engine/`.
 
-- `motor_ia/central.py`
-- `motor_ia/score.py`
-- `motor_ia/ranking.py`
-- `motor_ia/configuracao.py`
-- `motor_ia/cache.py`
-- `motor_ia/explicacao.py`
-- `motor_ia/providers/yahoo.py`
-- `motor_ia/providers/brapi.py`
+Ele é o núcleo analítico futuro do FaculdadeMaria e deve permanecer desacoplado de:
 
-No estado atual, o modulo ainda parece embrionario e nao esta conectado as rotas do Flask. Tambem ha indicios de inconsistencias internas:
+- Flask;
+- rotas;
+- templates;
+- PostgreSQL;
+- SQLite;
+- CSV;
+- `yfinance`;
+- bibliotecas de rede.
 
-- `central.py` chama `calcular_score(op, PESOS)`, mas `score.py` define `calcular_score(metricas)`.
-- `central.py` importa `ordenar_oportunidades`, mas `ranking.py` define `ordenar`.
-- Os providers `YahooProvider` e `BrapiProvider` retornam listas vazias.
+Estrutura atual integrada à `main` após a Sprint 1.1-R:
 
-### 6. Deploy
+```text
+engine/
+|-- __init__.py
+|-- errors.py
+|-- telemetry.py
+|-- version.py
+|-- core/
+|   |-- __init__.py
+|   |-- context.py
+|   `-- pipeline.py
+`-- providers/
+    |-- __init__.py
+    `-- base.py
+```
 
-O projeto esta preparado para Render via `render.yaml`.
+### 4.1 Responsabilidades atuais
 
-Comando de build:
+A fundação implementada oferece:
 
-```txt
+- hierarquia estruturada de erros;
+- telemetria local em memória;
+- versão centralizada do motor;
+- contexto de execução;
+- pipeline pass-through sem regra de negócio;
+- contrato abstrato de provider;
+- testes de arquitetura e isolamento.
+
+### 4.2 Restrições atuais
+
+O `engine/` ainda não implementa:
+
+- indicadores técnicos;
+- filtros funcionais;
+- score;
+- ranking;
+- scanner;
+- providers reais;
+- integração Flask/Radar;
+- persistência de decisões;
+- explicação financeira final;
+- Machine Learning.
+
+Esses itens dependem de Sprints futuras autorizadas.
+
+### 4.3 Política operacional obrigatória
+
+Toda evolução do `engine/` deve respeitar `docs/ESTRATEGIA_OPERACIONAL.md`.
+
+Entre os princípios centrais:
+
+- o FaculdadeMaria não é um sistema para especulação;
+- o perfil oficial é de venda sistemática de PUT;
+- o exercício não é falha automática;
+- qualidade do ativo e segurança precedem prêmio;
+- preço líquido de aquisição é critério central;
+- explicabilidade é obrigatória;
+- maior prêmio nunca deve ser o principal critério.
+
+---
+
+## 5. `motor_ia/` legado
+
+Existe um módulo anterior em `motor_ia/`, com arquivos de score, ranking, configuração, cache, explicação e providers.
+
+Arquivos conhecidos:
+
+- `motor_ia/central.py`;
+- `motor_ia/score.py`;
+- `motor_ia/ranking.py`;
+- `motor_ia/configuracao.py`;
+- `motor_ia/cache.py`;
+- `motor_ia/explicacao.py`;
+- `motor_ia/providers/yahoo.py`;
+- `motor_ia/providers/brapi.py`.
+
+O módulo permanece legado, não integrado ao fluxo principal e isolado do novo `engine/`.
+
+Inconsistências históricas conhecidas:
+
+- `central.py` chama `calcular_score(op, PESOS)`, enquanto `score.py` define outra assinatura;
+- `central.py` importa `ordenar_oportunidades`, enquanto `ranking.py` define `ordenar`;
+- providers retornam listas vazias.
+
+Regra oficial:
+
+> Não corrigir, remover, integrar ou refatorar `motor_ia/` sem Sprint específica e autorização explícita.
+
+---
+
+## 6. Deploy
+
+O projeto está preparado para Render via `render.yaml`.
+
+Build:
+
+```text
 pip install -r requirements.txt
 ```
 
-Comando de start:
+Start:
 
-```txt
+```text
 gunicorn app:app --bind 0.0.0.0:$PORT
 ```
 
-Dependencias principais em `requirements.txt`:
+Dependências principais conhecidas:
 
-- Flask
-- gunicorn
-- psycopg2-binary
-- yfinance
+- Flask;
+- gunicorn;
+- psycopg2-binary;
+- yfinance.
 
-## Estrutura Atual
+Essas dependências pertencem à aplicação existente e não autorizam seu uso dentro do novo `engine/`.
 
-```txt
-Flask monolitico
-├── app.py
-│   ├── rotas HTTP
-│   ├── calculos financeiros
-│   ├── acesso a CSV/Postgres
-│   ├── consultas de cotacao
-│   └── exportacoes/backup
-├── templates/
-│   └── telas Jinja
-├── static/
-│   └── CSS e JS da interface
-├── data/
-│   └── CSVs usados como banco local
-└── motor_ia/
-    └── modulo planejado de analise/ranking, ainda nao integrado
+---
+
+## 7. Estrutura atual oficial
+
+```text
+FaculdadeMaria
+|-- app.py
+|   |-- rotas HTTP
+|   |-- cálculos financeiros legados
+|   |-- acesso a CSV/Postgres
+|   |-- consultas de cotação
+|   `-- exportações/backup
+|-- templates/
+|   `-- telas Jinja
+|-- static/
+|   `-- CSS e JavaScript
+|-- data/
+|   `-- CSVs e persistência local
+|-- motor_ia/
+|   `-- módulo legado isolado
+|-- engine/
+|   |-- erros estruturados
+|   |-- telemetria local
+|   |-- versão centralizada
+|   |-- core de orquestração
+|   `-- contrato abstrato de providers
+`-- tests/
+    `-- testes do Decision Engine e isolamento
 ```
 
-## Diagnostico
+---
 
-A arquitetura atual e funcional e direta, mas ainda bastante concentrada em `app.py`. O projeto funciona como um produto web simples, porem nao tem separacao forte entre controller, service, repository e domain.
+## 8. Diagnóstico
 
-Pontos fortes:
+### Pontos fortes
 
-- Aplicacao Flask simples de rodar.
-- Templates Jinja ja organizados em `templates/`.
-- Dados locais simples em CSV.
-- Preparacao para Postgres/Neon.
-- Deploy no Render ja previsto.
-- Modulo `motor_ia` iniciado para evolucao futura.
+- aplicação Flask simples de executar;
+- templates Jinja organizados;
+- persistência local simples;
+- suporte a PostgreSQL em produção;
+- deploy previsto;
+- fundação independente do Decision Engine integrada;
+- testes arquiteturais do novo motor;
+- política operacional formalizada.
 
-Pontos de atencao:
+### Pontos de atenção
 
-- `app.py` concentra responsabilidades demais.
-- Ha mistura de persistencia CSV, SQLite e Postgres.
-- Parte da UI ainda e gerada como HTML string dentro de `app.py`.
-- Alguns arquivos legados permanecem na raiz.
-- O dashboard usa partes com dados estaticos no JavaScript.
-- `motor_ia` ainda nao esta integrado e tem inconsistencias internas.
-- Algumas rotas ainda usam CSV diretamente mesmo quando Postgres esta ativo.
+- `app.py` concentra responsabilidades demais;
+- mistura de CSV, SQLite e PostgreSQL;
+- parte da UI ainda é gerada em Python;
+- arquivos legados permanecem na raiz;
+- dashboard possui partes historicamente estáticas;
+- `motor_ia/` possui inconsistências e permanece legado;
+- o novo `engine/` ainda não está integrado ao Flask;
+- documentação futura deve distinguir sempre `engine/` de `motor_ia/`.
 
-## Proxima Evolucao Recomendada
+---
 
-O proximo passo arquitetural natural e extrair de `app.py` tres grupos de modulos:
+## 9. Arquitetura alvo
 
-- `repositories`: acesso a dados, CSV e Postgres.
-- `services`: calculos financeiros, metricas, cotacoes e regras de operacao.
-- `routes`: rotas Flask separadas por dominio.
+A evolução recomendada continua sendo gradual, com separação entre:
 
-Estrutura sugerida:
+- `routes`: entrada e saída HTTP;
+- `services`: regras de aplicação;
+- `repositories`: persistência;
+- `models`: contratos de domínio;
+- `utils`: funções auxiliares;
+- `engine`: análise de oportunidades independente.
 
-```txt
+Estrutura alvo conceitual:
+
+```text
 app.py
 cortex/
   __init__.py
@@ -195,11 +347,13 @@ cortex/
     relatorios.py
     configuracoes.py
     backup.py
+    radar.py
   services/
     calculos.py
     cotacoes.py
     operacoes_service.py
     metricas.py
+    radar_service.py
   repositories/
     csv_repository.py
     postgres_repository.py
@@ -209,10 +363,57 @@ cortex/
   utils/
     formatadores.py
     datas.py
+engine/
+  core/
+  providers/
+  market/
+  indicators/
+  strategies/
+  filters/
+  score/
+  ranking/
+  probability/
+  explain/
+  learning/
 templates/
 static/
 data/
 motor_ia/
 ```
 
-Isso permitiria evoluir o Cortex Invest PRO ate a versao 5.0 com menos risco, mantendo o comportamento atual enquanto a base fica mais organizada e preparada para novas funcionalidades.
+A integração entre Flask e Decision Engine deverá ocorrer somente por camada de serviço, nunca por importação de regra analítica dentro de rotas.
+
+---
+
+## 10. Regras permanentes de evolução
+
+1. Ler integralmente `docs/` antes de implementar.
+2. Interromper diante de divergência entre documentação e código.
+3. Trabalhar apenas no escopo da Sprint autorizada.
+4. Usar branch própria.
+5. Nunca alterar `main` diretamente.
+6. Preservar funcionalidades existentes.
+7. Executar testes e validar regressões.
+8. Atualizar documentação necessária.
+9. Apresentar relatório técnico.
+10. Fazer merge somente após autorização explícita do Product Owner.
+
+---
+
+## 11. Conclusão
+
+O FaculdadeMaria permanece funcionalmente baseado no monólito Flask atual, mas agora possui uma fundação independente e oficial para o novo Decision Engine.
+
+O `engine/` é o caminho arquitetural oficial para a evolução analítica futura.
+
+O `motor_ia/` permanece legado isolado.
+
+Toda evolução do Decision Engine deverá respeitar simultaneamente:
+
+- esta arquitetura;
+- `DECISION_ENGINE_SPEC.md`;
+- `ROADMAP_V5.md`;
+- `ESTRATEGIA_OPERACIONAL.md`;
+- a governança oficial definida pelo Product Owner.
+
+O objetivo é evoluir com segurança, baixo acoplamento, explicabilidade e preservação integral das funcionalidades existentes.
