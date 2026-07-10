@@ -1,13 +1,16 @@
 # Relatório Técnico - Sprint Documental de Estratégia Operacional
 
-## 1. Status
+## 1. Status oficial
 
 - Natureza: Sprint documental corretiva e de governança.
 - Product Owner: Andre.
-- Branch: `sprint-docs-estrategia-operacional`.
-- Base: `main` no commit `24b3ae07123243a1a588972455ab2517d82bcd91`.
-- Merge em `main`: não realizado.
-- Sprint 2: não iniciada.
+- Branch de origem: `sprint-docs-estrategia-operacional`.
+- Branch oficial após aprovação e merge: `main`.
+- Pull Request: `#4`.
+- Commit de merge: `7ee1a5a6598182bd1ba313c1e582dc036e1d3614`.
+- Issue correspondente: `#3`.
+- Issue #3: encerrada como `completed`.
+- Sprint 2 funcional: não iniciada.
 - Alteração funcional: nenhuma.
 
 ## 2. Objetivos
@@ -21,7 +24,7 @@
 
 `ARQUITETURA_V4.md` ainda descrevia a estrutura atual sem o novo pacote `engine/`, enquanto a `main` já continha a fundação oficial do Decision Engine integrada após a Sprint 1.1-R.
 
-A correção documental passa a distinguir explicitamente:
+A correção documental passou a distinguir explicitamente:
 
 - `engine/`: fundação oficial do novo Decision Engine;
 - `motor_ia/`: legado isolado e não integrado;
@@ -70,22 +73,22 @@ Foram formalizados:
 
 ## 7. Comparação com `main`
 
-Comparação executada entre:
+Antes do merge, a comparação foi executada entre:
 
 ```text
 base: main
 head: sprint-docs-estrategia-operacional
 ```
 
-Estado antes da criação deste relatório:
+Estado validado:
 
 - branch `ahead`;
-- `ahead_by: 3`;
+- `ahead_by: 4`;
 - `behind_by: 0`;
 - somente arquivos em `docs/` alterados;
 - nenhum arquivo funcional alterado.
 
-Após este relatório, o diff deverá continuar restrito exclusivamente a `docs/`.
+O Pull Request #4 registrou 3 arquivos alterados, todos documentais.
 
 ## 8. Testes e regressão
 
@@ -97,7 +100,7 @@ python -m unittest discover -s tests -v
 
 A tentativa inicial de `git clone` no ambiente de execução falhou por indisponibilidade de resolução DNS do sandbox.
 
-Para não omitir a validação, os arquivos exatos versionados do `engine/` e da suíte `tests/` foram lidos da branch e reconstruídos localmente para execução.
+Para não omitir a validação, os arquivos exatos versionados do `engine/` e da suíte `tests/` foram lidos do repositório e reconstruídos localmente para execução.
 
 Resultado:
 
@@ -139,7 +142,7 @@ Confirmado:
 - `engine/` inalterado;
 - comportamento funcional inalterado.
 
-A Sprint é exclusivamente documental.
+A Sprint foi exclusivamente documental.
 
 ## 10. Decisões arquiteturais
 
@@ -172,14 +175,39 @@ Também permanecem fora desta Sprint:
 - persistência de decisões;
 - Machine Learning.
 
-## 12. Encerramento
+## 12. Encerramento oficial
 
-A Sprint documental conclui a reconciliação arquitetural principal identificada e formaliza a estratégia operacional oficial.
+A Sprint documental concluiu a reconciliação arquitetural principal identificada e formalizou a estratégia operacional oficial.
 
-Nenhum merge foi realizado.
+O Pull Request #4 foi mergeado com sucesso na `main`.
 
-A `main` permanece intocada.
+Commit oficial de merge:
 
-A Sprint 2 não foi iniciada.
+```text
+7ee1a5a6598182bd1ba313c1e582dc036e1d3614
+```
 
-O próximo passo obrigatório é revisão do Product Owner e autorização explícita antes de qualquer merge.
+A Issue #3 foi encerrada como `completed`.
+
+A `main` passou a representar oficialmente o estado atualizado do projeto com:
+
+- arquitetura reconciliada;
+- estratégia operacional oficial integrada;
+- `engine/` reconhecido como fundação oficial do novo Decision Engine;
+- `motor_ia/` mantido como legado isolado;
+- nenhuma alteração funcional.
+
+A Sprint 2 funcional não foi iniciada.
+
+## 13. Correção pós-merge deste relatório
+
+Após o merge, foi identificada uma divergência exclusivamente documental: esta versão do relatório ainda registrava estado pré-merge.
+
+A correção pós-merge atualiza apenas o estado formal do documento para refletir:
+
+- PR #4 mergeado;
+- commit `7ee1a5a6598182bd1ba313c1e582dc036e1d3614`;
+- Issue #3 encerrada;
+- `main` como estado oficial atualizado.
+
+Nenhuma funcionalidade foi alterada por esta correção.
