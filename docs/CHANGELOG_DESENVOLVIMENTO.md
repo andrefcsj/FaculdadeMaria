@@ -19,15 +19,58 @@ Seu objetivo é oferecer uma visão cronológica e legível da evolução oficia
 
 Categorias utilizadas:
 
-- `Added`: adicionado.
-- `Changed`: alterado.
-- `Fixed`: corrigido.
-- `Validated`: validado.
-- `Deprecated`: marcado como legado.
-- `Security`: segurança ou integridade.
+- `Added`: adicionado;
+- `Changed`: alterado;
+- `Fixed`: corrigido;
+- `Validated`: validado;
+- `Deprecated`: marcado como legado;
+- `Security`: segurança ou integridade;
 - `Docs`: documentação e governança.
 
-Somente mudanças oficialmente integradas à `main` são tratadas como estado vigente.
+Somente mudanças integradas à `main` são estado vigente.
+
+Mudanças ainda em branch podem aparecer como `Em revisão`.
+
+---
+
+## 2026-07-10 — Reconciliação da especificação e roadmap do Decision Engine
+
+Status: `Em revisão`
+
+Issue: `#13`
+
+Branch:
+
+```text
+docs-reconciliacao-decision-engine
+```
+
+### Fixed
+
+Foram reconciliadas divergências entre documentos antigos e a política operacional vigente:
+
+- ranking antigo centrado em Score, classe, liquidez e ROI;
+- roadmap antigo ainda orientado à integração do legado `motor_ia/`;
+- recomendações históricas de ordem de implementação superadas pelo backlog oficial.
+
+### Changed
+
+- `docs/DECISION_ENGINE_SPEC.md` passa a refletir a estratégia operacional oficial;
+- `docs/ROADMAP_V5.md` passa a reconhecer `engine/` como único caminho oficial do novo motor;
+- gates de elegibilidade passam a preceder Score e ranking;
+- Score IA não pode resgatar oportunidade inelegível;
+- confiança dos dados passa a ser dimensão separada da qualidade da oportunidade;
+- ranking passa a ser ajustado ao perfil operacional;
+- caminho vigente até o Radar Premium passa a seguir o backlog e as Sprints Funcionais A–F.
+
+### Preserved
+
+- nenhum código funcional alterado;
+- `engine/` inalterado;
+- `motor_ia/` inalterado;
+- Flask inalterado;
+- interface inalterada;
+- persistência inalterada.
 
 ---
 
@@ -36,6 +79,14 @@ Somente mudanças oficialmente integradas à `main` são tratadas como estado vi
 Status: `Integrado`
 
 Issue: `#10`
+
+Pull Request: `#12`
+
+Commit de merge:
+
+```text
+f2425862c95f290f626eeb5af47dd88eb7482573
+```
 
 ### Docs
 
@@ -79,9 +130,9 @@ c76fb448490141c45121bfa71a1c25b441daf169
 
 ### Changed
 
-- `docs/ARQUITETURA_V4.md` passou a reconhecer os documentos oficiais de visão, backlog, regras e changelog;
-- `docs/ESTRATEGIA_OPERACIONAL.md` passou a apontar para o backlog oficial existente;
-- formalizado o caminho crítico até o primeiro Radar Premium;
+- `docs/ARQUITETURA_V4.md` passou a reconhecer visão, backlog, regras e changelog oficiais;
+- `docs/ESTRATEGIA_OPERACIONAL.md` passou a apontar para o backlog oficial;
+- formalizado o caminho crítico até o Radar Premium;
 - formalizadas prioridades `P0` a `P3`;
 - criados identificadores oficiais de backlog;
 - consolidadas regras permanentes do projeto.
@@ -107,10 +158,6 @@ Foi registrado como primeiro grande resultado visual futuro:
 - 7 testes aprovados;
 - nenhuma regressão funcional;
 - PR revalidado como mergeável após retarget para `main`.
-
-### Escopo funcional
-
-Nenhuma funcionalidade foi alterada nesta Sprint documental.
 
 ---
 
@@ -297,7 +344,7 @@ Criar uma Sprint corretiva exclusiva para reconciliar a infraestrutura do Decisi
 Ficaram explicitamente fora de escopo:
 
 - indicadores;
-- score;
+- Score;
 - ranking;
 - scanner;
 - integração Flask;
@@ -321,7 +368,14 @@ Versão interna atual do Decision Engine:
 1.1.0
 ```
 
-O produto permanece funcionalmente baseado no monólito Flask existente, com a fundação independente do novo Decision Engine integrada e a camada oficial de visão, backlog, regras e estratégia operacional consolidada.
+O produto permanece funcionalmente baseado no monólito Flask existente, com:
+
+- fundação independente do novo Decision Engine integrada;
+- estratégia operacional oficial;
+- Product Vision;
+- backlog priorizado;
+- regras permanentes;
+- documentação de arquitetura e desenvolvimento.
 
 ---
 
@@ -329,7 +383,7 @@ O produto permanece funcionalmente baseado no monólito Flask existente, com a f
 
 Dependem de Sprints específicas e autorização do Product Owner.
 
-Prioridades do caminho crítico:
+Caminho crítico vigente:
 
 1. contratos completos de oportunidade;
 2. métricas operacionais de PUT;
@@ -339,8 +393,8 @@ Prioridades do caminho crítico:
 6. filtros de segurança;
 7. avaliador de PUT;
 8. Score IA explicável;
-9. ranking;
+9. ranking ajustado ao perfil;
 10. serviço de Radar;
 11. Radar Premium v1.
 
-A ordem oficial de execução deve ser confirmada pelo backlog e pela Sprint autorizada.
+A ordem oficial de execução é confirmada pelo `BACKLOG.md`, pela especificação vigente e pela Sprint autorizada.
