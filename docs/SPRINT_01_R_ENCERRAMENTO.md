@@ -10,6 +10,7 @@
 - Commit de merge: `6e3416402e83a281dad4ab4a399ae3d4c059235b`
 - Pull Request: `#2`
 - Merge: concluido
+- Issue #1: encerrada como `completed`
 - Sprint 2: nao iniciada
 
 ## Versao oficial do projeto
@@ -41,7 +42,7 @@ engine/
 
 ## Estado oficial
 
-A partir deste encerramento, a branch `main` passa a representar oficialmente o estado atual do FaculdadeMaria com a fundacao do Decision Engine integrada.
+A partir deste encerramento, a branch `main` representa oficialmente o estado atual do FaculdadeMaria com a fundacao do Decision Engine integrada.
 
 A infraestrutura permanece sem regras de negocio, sem indicadores, sem score, sem ranking, sem scanner, sem providers reais e sem integracao Flask.
 
@@ -64,6 +65,6 @@ Permanecem para Sprints futuras, mediante autorizacao especifica:
 
 A Sprint 1.1-R foi aprovada arquiteturalmente e integrada em `main`.
 
-A Issue #1 deve ser encerrada como concluida.
+A Issue #1 foi encerrada como concluida.
 
 A Sprint 2 nao foi iniciada.
