@@ -1,1184 +1,1037 @@
-# DECISION_ENGINE_SPEC - FaculdadeMaria / Cortex Invest PRO
+# DECISION_ENGINE_SPEC — FaculdadeMaria
 
-## Status do Documento
+## 1. Status e autoridade do documento
 
-Este documento e a especificacao tecnica oficial do Decision Engine do projeto FaculdadeMaria / Cortex Invest PRO.
+Este documento é a especificação técnica oficial vigente do Decision Engine do FaculdadeMaria.
 
-Ele deve orientar todas as implementacoes futuras relacionadas ao Motor de Decisao, Radar de Oportunidades, score de operacoes, ranking, explicacoes em linguagem natural e aprendizado futuro a partir de operacoes encerradas.
+Ele substitui, para decisões futuras do motor, as orientações conceituais anteriores que conflitem com:
 
-Este documento nao define recomendacao financeira automatica. O Decision Engine deve ser tratado como mecanismo de apoio analitico, explicavel e configuravel.
+- `ARQUITETURA_V4.md`;
+- `ESTRATEGIA_OPERACIONAL.md`;
+- `PRODUCT_VISION.md`;
+- `BACKLOG.md`;
+- `REGRAS_DO_PROJETO.md`.
 
-## 1. Objetivo do Decision Engine
+Documentos históricos de Sprint preservam o contexto temporal em que foram escritos, mas não definem a ordem vigente de evolução quando houver conflito com o backlog oficial e com esta especificação.
 
-### Problema que Resolve
+O Decision Engine é um mecanismo de apoio analítico, explicável, auditável e configurável. Ele não promete lucro, não afirma certeza de mercado e não transforma Score IA em garantia.
 
-O projeto FaculdadeMaria atualmente gerencia operacoes da estrategia Wheel, calcula indicadores como ROI, premio, capital, DARF e patrimonio, e possui um modulo inicial chamado `motor_ia`. Esse modulo ainda nao esta integrado ao fluxo principal da aplicacao.
+---
 
-O Decision Engine resolve o problema de transformar dados dispersos de mercado, configuracoes do usuario, indicadores tecnicos e regras de estrategia em oportunidades organizadas, ranqueadas e explicadas.
+## 2. Estado atual oficial
 
-Ele deve responder perguntas como:
+O produto permanece funcionalmente baseado na aplicação Flask existente.
 
-- Quais ativos/opcoes merecem atencao agora?
-- Uma venda de PUT esta alinhada com os criterios do usuario?
-- Uma CALL coberta faz sentido para uma posicao existente?
-- A oportunidade tem liquidez suficiente?
-- O ROI esperado compensa o risco?
-- O strike esta em uma distancia aceitavel?
-- A tendencia do ativo favorece ou enfraquece a operacao?
-- Por que uma oportunidade recebeu determinado score?
+O novo Decision Engine vive em:
 
-### Papel Dentro da Arquitetura
+```text
+engine/
+```
 
-O Decision Engine sera um modulo de dominio independente, responsavel por analise, classificacao e explicacao de oportunidades.
+Estado atual integrado à `main`:
 
-Ele deve ficar desacoplado do Flask. As rotas da aplicacao nao devem conter regra de score, calculo de indicadores ou logica de ranking. O Flask deve apenas receber a requisicao, chamar um servico de aplicacao e renderizar o resultado.
+```text
+engine/
+|-- __init__.py
+|-- errors.py
+|-- telemetry.py
+|-- version.py
+|-- core/
+|   |-- __init__.py
+|   |-- context.py
+|   `-- pipeline.py
+`-- providers/
+    |-- __init__.py
+    `-- base.py
+```
 
-Na arquitetura alvo, o fluxo esperado e:
+A fundação atual oferece:
 
-```txt
-Flask route /radar-oportunidades
-  -> cortex.services.radar_service
-    -> engine.core.pipeline
-      -> providers de mercado
+- erros estruturados;
+- telemetria local em memória;
+- versão centralizada;
+- contexto de execução;
+- pipeline pass-through;
+- contrato abstrato de provider;
+- testes de arquitetura e isolamento.
+
+A pipeline atual não implementa:
+
+- indicadores;
+- qualidade do ativo;
+- filtros de segurança;
+- métricas funcionais de PUT;
+- Score IA;
+- ranking;
+- explicação financeira final;
+- provider real;
+- integração Flask/Radar;
+- aprendizado.
+
+O pacote legado:
+
+```text
+motor_ia/
+```
+
+permanece isolado e não é o caminho oficial de evolução do novo motor.
+
+Regra:
+
+> O novo caminho oficial é `engine/`. Não corrigir, integrar, remover ou refatorar `motor_ia/` sem Sprint específica e autorização explícita.
+
+---
+
+## 3. Objetivo do Decision Engine
+
+O Decision Engine transforma dados de mercado, contratos de oportunidade, contexto operacional e regras de estratégia em análises:
+
+- comparáveis;
+- reproduzíveis;
+- explicáveis;
+- auditáveis;
+- alinhadas ao perfil operacional oficial.
+
+O motor deve ajudar a responder perguntas como:
+
+- Qual PUT merece atenção agora?
+- O ativo é aceitável para aquisição por exercício?
+- O preço líquido de aquisição é atrativo?
+- O prêmio compensa o risco assumido?
+- O capital está sendo usado com eficiência?
+- A opção possui liquidez suficiente?
+- O strike oferece margem de segurança adequada?
+- Os dados são completos e confiáveis?
+- Existe oportunidade objetivamente melhor?
+- Uma PUT aberta deveria ser mantida, encerrada ou rolada quando a funcionalidade existir?
+- Por que a IA atribuiu determinada nota?
+- Por que a melhor decisão pode ser não operar?
+
+---
+
+## 4. Perfil operacional oficial
+
+A prioridade inicial do produto é a venda sistemática de PUTs na B3.
+
+Perfil do Product Owner:
+
+- vendedor sistemático de PUT;
+- geração de renda recorrente;
+- aquisição de ativos por exercício;
+- foco em ativos de qualidade;
+- horizonte de longo prazo.
+
+### 4.1 Exercício
+
+O exercício não é falha automática.
+
+Uma PUT exercida pode ser considerada coerente ou bem-sucedida quando:
+
+- o ativo é adequado à estratégia;
+- o preço líquido de aquisição é atrativo;
+- o risco assumido é aceitável;
+- a concentração resultante é compatível com a carteira;
+- as premissas da entrada permanecem válidas.
+
+Referência operacional:
+
+```text
+Preço líquido de aquisição = Strike - Prêmio recebido
+```
+
+### 4.2 Estratégias futuras
+
+CALL coberta e Wheel continuam compatíveis com a arquitetura futura, mas não possuem precedência sobre a prioridade operacional atual de venda de PUT.
+
+Sua implementação depende de backlog e Sprint específicos.
+
+---
+
+## 5. Hierarquia oficial de decisão
+
+Toda análise deve considerar, nesta ordem conceitual:
+
+1. qualidade do ativo;
+2. segurança da operação;
+3. preço líquido de aquisição;
+4. relação risco x retorno;
+5. eficiência do capital;
+6. liquidez;
+7. probabilidade de exercício, quando houver metodologia e dados válidos;
+8. prêmio recebido.
+
+O maior prêmio nunca deve ser o principal critério.
+
+ROI nominal elevado também não é prova de boa oportunidade.
+
+### 5.1 Princípio de não compensação indevida
+
+Fatores positivos não podem compensar ilimitadamente falhas estruturais.
+
+Exemplos:
+
+```text
+Ativo inelegível + prêmio alto != boa oportunidade
+```
+
+```text
+Dado crítico ausente + ROI alto != análise confiável
+```
+
+```text
+Liquidez inadequada + Score alto != prioridade operacional
+```
+
+### 5.2 Gates de elegibilidade
+
+Quando aplicável, critérios críticos devem funcionar como gates de elegibilidade, e não apenas como pesos.
+
+Gates candidatos:
+
+- ativo explicitamente inelegível;
+- dado crítico ausente;
+- preço não confiável;
+- liquidez abaixo do mínimo obrigatório;
+- spread operacional excessivo;
+- risco incompatível com limites configurados;
+- concentração incompatível com a política futura de carteira;
+- vencimento fora de limites obrigatórios;
+- inconsistência contratual.
+
+Regra central:
+
+> O Score IA não pode resgatar uma oportunidade que falhou em gate obrigatório.
+
+Todo gate deve produzir motivo rastreável e explicável.
+
+---
+
+## 6. Arquitetura do motor
+
+O Decision Engine é um módulo de domínio independente.
+
+Ele deve permanecer desacoplado de:
+
+- Flask;
+- rotas;
+- templates;
+- PostgreSQL;
+- SQLite;
+- CSV;
+- `yfinance`;
+- bibliotecas de rede no core.
+
+### 6.1 Relação com Flask
+
+Fluxo alvo:
+
+```text
+Flask route
+  -> camada de serviço
+    -> Decision Engine
+      -> contratos
+      -> normalização
+      -> métricas
       -> indicadores
-      -> estrategias
-      -> filtros
-      -> score
+      -> qualidade do ativo
+      -> gates/filtros
+      -> avaliação da estratégia
+      -> Score IA
       -> ranking
-      -> explicacao
+      -> explicação
+    -> view model
   -> template Radar
 ```
 
-### Relacao com Flask
-
-O Flask deve se relacionar com o Decision Engine apenas por uma camada de servico, por exemplo `cortex/services/radar_service.py`.
-
 Responsabilidades do Flask:
 
-- Receber requisicoes HTTP.
-- Ler parametros de tela, quando existirem.
-- Chamar o servico de radar.
-- Renderizar oportunidades, scores, rankings e explicacoes.
-- Tratar erros de apresentacao.
+- receber requisição HTTP;
+- ler parâmetros de apresentação;
+- chamar serviço de aplicação;
+- renderizar resultados;
+- tratar erro de apresentação.
 
-Responsabilidades que nao pertencem ao Flask:
+Não pertencem ao Flask:
 
-- Calcular score.
-- Calcular indicadores tecnicos.
-- Consultar diretamente provedores de mercado.
-- Ordenar oportunidades por regra de negocio.
-- Montar explicacoes tecnicas.
+- calcular Score IA;
+- calcular indicadores;
+- aplicar ranking de negócio;
+- consultar provider do motor diretamente;
+- construir regra de elegibilidade;
+- gerar conclusão técnica do domínio.
 
-### Relacao com PostgreSQL
+### 6.2 Relação com persistência
 
-O Decision Engine nao deve acessar PostgreSQL diretamente.
+O Decision Engine não acessa banco ou CSV diretamente.
 
-Quando precisar de dados historicos, configuracoes ou operacoes encerradas, ele deve receber esses dados por interfaces de repositorio ou servicos do dominio principal.
+Dados devem chegar por:
 
-Exemplos de dados que podem vir do PostgreSQL:
+- contratos;
+- serviços;
+- interfaces de repositório externas ao motor.
 
-- Operacoes abertas.
-- Operacoes encerradas.
-- Resultado realizado.
-- Ativos negociados pelo usuario.
-- Configuracoes de risco.
-- Pesos personalizados do score.
-- Historico de oportunidades analisadas.
+### 6.3 Relação com providers
 
-O Decision Engine deve depender de contratos de dados, nao de detalhes de banco.
+Providers concretos encapsulam integrações externas.
 
-### Relacao com Interfaces
+O domínio depende de contratos substituíveis.
 
-As interfaces web devem apresentar o resultado do Decision Engine, nao implementar sua logica.
+Requisitos futuros:
 
-Principais telas consumidoras:
+- timeout;
+- erro estruturado;
+- timestamp;
+- identificação de fonte;
+- tratamento de rate limit;
+- testes com mock;
+- fallback planejado;
+- nenhuma dependência direta do Flask.
 
-- Radar de Oportunidades.
-- Dashboard.
-- Operacoes Abertas.
-- Operacoes Fechadas.
-- Desempenho.
-- Relatorios.
+---
 
-O Radar sera a interface principal do motor. O Dashboard podera consumir apenas resumos, como quantidade de oportunidades boas, melhor oportunidade do momento ou distribuicao por classe de score.
+## 7. Pipeline alvo
 
-## 2. Arquitetura do Motor
+A evolução oficial segue o caminho crítico do backlog.
 
-### Visao Geral
-
-O Decision Engine sera composto por modulos especializados que executam uma pipeline de analise.
-
-```mermaid
-flowchart TD
-  Entrada["Entrada: ativos, opcoes, configuracoes"] --> Mercado["Market Data"]
-  Mercado --> Indicadores["Indicadores Tecnicos e Operacionais"]
-  Indicadores --> Estrategias["Avaliacao de Estrategias"]
-  Estrategias --> Filtros["Filtros de Elegibilidade"]
-  Filtros --> Score["Score IA"]
-  Score --> Probabilidade["Probabilidade e Risco"]
-  Probabilidade --> Ranking["Ranking"]
-  Ranking --> Explicacao["Explicacao"]
-  Explicacao --> Saida["Oportunidades para Radar"]
+```text
+Contratos de oportunidade
+  -> Snapshot normalizado
+  -> Métricas operacionais de PUT
+  -> Indicadores técnicos
+  -> Qualidade do ativo
+  -> Gates e filtros de segurança
+  -> Avaliador de venda de PUT
+  -> Score IA explicável
+  -> Ranking ajustado ao perfil
+  -> Explicação
+  -> Serviço de Radar
+  -> Radar Premium
 ```
 
-### Componentes Internos
+A ordem acima é conceitual. Cada etapa depende de Sprint autorizada.
+
+### 7.1 Core
+
+Responsável por:
+
+- orquestração;
+- contexto;
+- traces;
+- telemetria;
+- encadeamento de etapas;
+- tratamento estruturado de falhas.
 
-#### Core
+O core não contém:
 
-Coordena a execucao da pipeline. Nao deve conter calculo especifico de indicador ou estrategia. Sua responsabilidade e orquestrar os passos.
+- fórmula de indicador;
+- regra específica de Score;
+- ranking de negócio;
+- acesso a provider concreto;
+- persistência.
 
-#### Market
+### 7.2 Contracts
 
-Normaliza dados de mercado vindos de provedores externos. Deve transformar respostas diferentes em uma estrutura interna unica.
+Responsável por estruturas estáveis de entrada e saída.
 
-#### Providers
+Primeiro contrato completo de oportunidade deve contemplar, conforme disponibilidade:
 
-Implementa integracoes com fontes de dados, como Yahoo Finance, Brapi ou outros provedores futuros.
+- ativo;
+- código da opção;
+- tipo da opção;
+- vencimento;
+- cotação atual;
+- strike;
+- prêmio;
+- bid;
+- ask;
+- volume;
+- negócios;
+- liquidez;
+- volatilidade implícita;
+- timestamp;
+- fonte;
+- confiança do dado.
 
-#### Indicators
+### 7.3 Market
 
-Calcula ou prepara indicadores usados pelo motor. Nesta especificacao os calculos nao sao implementados; apenas se define a finalidade e o papel de cada indicador.
+Responsável por:
 
-#### Strategies
+- normalizar dados;
+- validar timestamp;
+- identificar fonte;
+- marcar campos ausentes;
+- distinguir ausência de dado de baixa liquidez;
+- preservar rastreabilidade.
 
-Avalia oportunidades de acordo com estrategias suportadas: Venda de PUT, CALL Coberta e Wheel.
+### 7.4 Metrics
 
-#### Filters
+Responsável por métricas puras e auditáveis.
 
-Remove oportunidades que nao atendem criterios minimos, como liquidez insuficiente, vencimento inadequado, ROI muito baixo ou falta de dados.
+Métricas iniciais de PUT:
 
-#### Score
+- preço líquido de aquisição;
+- desconto em relação ao mercado;
+- ROI bruto;
+- ROI líquido;
+- ROI anualizado;
+- distância percentual do strike;
+- dias até vencimento;
+- retorno por dia;
+- capital nominal comprometido;
+- eficiência do capital;
+- retorno sobre margem apenas quando margem real ou premissa explícita estiver disponível.
 
-Combina indicadores, estrategia e filtros em uma nota final configuravel.
+### 7.5 Indicators
 
-#### Ranking
+Responsável por sinais técnicos, sem decidir sozinho se uma oportunidade é boa.
 
-Ordena oportunidades por prioridade operacional.
+Indicadores iniciais previstos:
 
-#### Probability
+- MM21;
+- MM200;
+- IFR14;
+- Bandas de Bollinger;
+- ATR;
+- volatilidade histórica.
 
-Prepara a evolucao futura para estimativas de probabilidade e risco. Inicialmente pode apenas estruturar campos e contratos sem aplicar Machine Learning.
+Volatilidade implícita é dado de opção quando disponível; não deve ser inventada.
 
-#### Explain
+### 7.6 Asset Quality
 
-Gera justificativas em linguagem natural para cada score.
+Responsável por avaliar adequação do ativo ao perfil de aquisição por exercício e longo prazo.
 
-#### Learning
+Dimensões candidatas:
 
-Prepara a arquitetura para aprendizado futuro com base em operacoes encerradas. Nao deve implementar Machine Learning nesta fase.
+- elegibilidade configurável;
+- liquidez do ativo base;
+- histórico de negociação;
+- tendência estrutural;
+- volatilidade;
+- deterioração relevante;
+- concentração de carteira;
+- eventos relevantes quando houver fonte válida;
+- adequação ao horizonte de longo prazo.
 
-#### Config
+A definição final de critérios objetivos e configuráveis depende de Sprint específica.
 
-Centraliza pesos, limites, thresholds, provedores habilitados e parametros de estrategia.
+### 7.7 Filters e Gates
 
-## 3. Pipeline de Decisao
+Responsáveis por segurança e elegibilidade.
 
-### Fluxo Completo
+Devem:
 
-```txt
-Mercado
-↓
-Indicadores
-↓
-Estrategias
-↓
-Filtros
-↓
-Score
-↓
-Probabilidade
-↓
-Ranking
-↓
-Explicacao
-↓
-Radar
-```
+- produzir status;
+- registrar motivo;
+- ser auditáveis;
+- distinguir descarte de dado insuficiente;
+- permitir modo diagnóstico futuro.
 
-### Etapas
+### 7.8 Strategies
 
-#### 1. Mercado
+A prioridade inicial é `PUT selling`.
 
-Entrada de dados brutos:
+O avaliador de PUT deve considerar:
 
-- Ativo base.
-- Codigo da opcao.
-- Preco atual.
-- Strike.
-- Premio.
-- Vencimento.
-- Volume.
-- Liquidez.
-- Dados historicos de preco.
-- Volatilidade, quando disponivel.
+- qualidade do ativo;
+- aceitabilidade do exercício;
+- preço líquido;
+- segurança;
+- risco;
+- retorno;
+- liquidez;
+- prazo;
+- contexto técnico;
+- eficiência do capital;
+- confiança dos dados.
 
-Saida esperada:
+### 7.9 Score
 
-- Estrutura normalizada de mercado.
-- Sinalizacao de dados ausentes.
-- Fonte dos dados.
-- Timestamp da coleta.
+O Score IA é uma síntese explicável de 0 a 100.
 
-#### 2. Indicadores
+Ele deve ser:
 
-Transforma dados de mercado em sinais tecnicos e operacionais.
+- configurável;
+- testável;
+- reproduzível;
+- auditável;
+- separado por estratégia quando necessário;
+- composto por fatores rastreáveis;
+- acompanhado por confiança dos dados separada.
 
-Exemplos:
+O Score não é:
 
-- Tendencia pela MM21 e MM200.
-- Forca relativa pelo IFR14.
-- Regiao de preco pelas Bandas de Bollinger.
-- Risco de oscilacao pelo ATR.
-- Qualidade operacional por liquidez e volume.
-- Atratividade da opcao por ROI, dias e distancia do strike.
+- recomendação absoluta;
+- garantia de lucro;
+- substituto de gate de segurança;
+- mecanismo para esconder dado ausente.
 
-#### 3. Estrategias
+### 7.10 Ranking
 
-Avalia a oportunidade sob uma estrategia especifica:
+O ranking só ordena oportunidades após a avaliação de elegibilidade.
 
-- Venda de PUT.
-- CALL Coberta.
-- Wheel.
+Separação mínima:
 
-A mesma opcao pode ter uma nota diferente dependendo da estrategia.
+- elegíveis;
+- em observação;
+- não elegíveis;
+- dados insuficientes.
 
-#### 4. Filtros
+Ordem conceitual para oportunidades elegíveis:
 
-Aplica criterios minimos.
+1. aderência ao perfil operacional e elegibilidade;
+2. qualidade do ativo;
+3. segurança;
+4. Score IA;
+5. atratividade do preço líquido;
+6. risco ajustado ao retorno;
+7. eficiência do capital;
+8. liquidez;
+9. confiança dos dados;
+10. critérios de desempate configuráveis.
 
-Exemplos:
+O prêmio e o ROI nominal não possuem precedência automática.
 
-- Ignorar opcoes sem liquidez.
-- Ignorar vencimentos muito curtos ou muito longos, se fora da configuracao.
-- Ignorar ROI abaixo do minimo.
-- Ignorar ativos sem cotacao confiavel.
-- Ignorar strikes incompatíveis com a estrategia.
+Critérios de desempate candidatos:
 
-Filtros devem indicar o motivo da exclusao. Uma oportunidade descartada pode aparecer como "nao elegivel" em modo diagnostico.
+- maior confiança dos dados;
+- melhor liquidez;
+- menor risco relativo;
+- melhor adequação ao perfil;
+- menor concentração incremental;
+- melhor proximidade da faixa operacional desejada.
 
-#### 5. Score
+### 7.11 Probability e Risk
 
-Combina os sinais em uma nota de 0 a 100.
+Camada futura.
 
-O score deve ser:
+Não deve inventar probabilidade.
 
-- Configuravel.
-- Explicavel.
-- Testavel.
-- Reproduzivel.
-- Separado por estrategia.
+Enquanto não houver metodologia validada, dados suficientes e testes:
 
-#### 6. Probabilidade
+- probabilidade deve permanecer ausente ou explicitamente indisponível;
+- risco pode ser representado por fatores determinísticos e alertas;
+- confiança da análise deve permanecer separada.
 
-Camada reservada para evolucao futura.
+### 7.12 Explain
 
-Na primeira implementacao, pode apenas organizar campos como:
+Toda oportunidade relevante deve poder apresentar:
 
-- Probabilidade estimada de manter fora do dinheiro.
-- Risco de exercicio.
-- Risco de volatilidade.
-- Confianca da analise.
+- resumo;
+- principais fatores positivos;
+- principais fatores negativos;
+- principal risco;
+- impacto de dados ausentes;
+- motivo da nota;
+- motivo da elegibilidade ou descarte;
+- conclusão técnica;
+- alternativa melhor quando objetivamente identificada.
 
-Nao deve haver Machine Learning nesta fase.
+O motor deve poder concluir:
 
-#### 7. Ranking
+> Nenhuma oportunidade atual atende aos critérios mínimos.
 
-Ordena as oportunidades que passaram pelos filtros.
+### 7.13 Learning
 
-O ranking deve considerar score final e criterios de desempate.
+Aprendizado é fase futura.
 
-#### 8. Explicacao
+Não implementar Machine Learning antes de:
 
-Gera uma justificativa curta e clara para o usuario.
+- base histórica suficiente;
+- critérios validados;
+- governança de dados;
+- comparação expectativa x resultado;
+- aprovação explícita.
 
-A explicacao deve dizer por que a oportunidade recebeu aquele score, quais fatores ajudaram, quais prejudicaram e quais riscos merecem atencao.
+Nenhum peso pode mudar automaticamente sem auditoria.
 
-#### 9. Radar
+---
 
-Entrega final para interface:
+## 8. Estrutura alvo conceitual
 
-- Lista de oportunidades.
-- Score.
-- Classe.
-- Ranking.
-- Indicadores relevantes.
-- Explicacao.
-- Alertas.
-- Fonte e horario dos dados.
-
-## 4. Estrutura de Modulos
-
-Estrutura alvo do Decision Engine:
-
-```txt
+```text
 engine/
-  __init__.py
-  config.py
-  core/
-    __init__.py
-    pipeline.py
-    context.py
-    contracts.py
-  market/
-    __init__.py
-    normalizer.py
-    snapshot.py
-  providers/
-    __init__.py
-    base.py
-    yahoo.py
-    brapi.py
-  indicators/
-    __init__.py
-    trend.py
-    momentum.py
-    volatility.py
-    liquidity.py
-    options.py
-  strategies/
-    __init__.py
-    put_selling.py
-    covered_call.py
-    wheel.py
-  score/
-    __init__.py
-    calculator.py
-    weights.py
-    classes.py
-  ranking/
-    __init__.py
-    sorter.py
-    tie_breakers.py
-  probability/
-    __init__.py
-    estimator.py
-    risk.py
-  explain/
-    __init__.py
-    explainer.py
-    templates.py
-  learning/
-    __init__.py
-    history.py
-    feedback.py
-    dataset.py
+|-- __init__.py
+|-- errors.py
+|-- telemetry.py
+|-- version.py
+|-- config.py                    # futuro, Sprint específica
+|-- core/
+|   |-- __init__.py
+|   |-- context.py
+|   |-- pipeline.py
+|   `-- contracts.py             # caminho crítico
+|-- market/
+|   |-- __init__.py
+|   |-- snapshot.py
+|   `-- normalizer.py
+|-- providers/
+|   |-- __init__.py
+|   |-- base.py
+|   `-- providers concretos      # futuros
+|-- metrics/
+|   `-- options.py
+|-- indicators/
+|   |-- trend.py
+|   |-- momentum.py
+|   `-- volatility.py
+|-- asset_quality/
+|   `-- evaluator.py
+|-- filters/
+|   `-- safety.py
+|-- strategies/
+|   `-- put_selling.py
+|-- score/
+|   |-- calculator.py
+|   `-- classes.py
+|-- ranking/
+|   `-- sorter.py
+|-- probability/
+|   `-- risk.py                  # futuro
+|-- explain/
+|   `-- explainer.py
+`-- learning/                    # futuro
 ```
 
-### `engine/`
+A estrutura é conceitual e não autoriza criação automática de módulos.
 
-Pacote principal do Decision Engine. Deve ser importavel por servicos Flask, scripts, testes e tarefas futuras.
+---
 
-### `engine/config.py`
+## 9. Métricas operacionais de PUT
 
-Centraliza configuracoes do motor:
+### 9.1 Preço líquido de aquisição
 
-- Pesos padrao.
-- Limites minimos.
-- Parametros de elegibilidade.
-- Classes de score.
-- Provedores habilitados.
-- Timeouts e politicas de fallback.
+```text
+preco_liquido = strike - premio
+```
 
-Essas configuracoes devem poder ser sobrescritas por configuracoes do usuario no futuro.
+Premissas devem ser explícitas.
 
-### `engine/core/`
+### 9.2 Desconto em relação ao mercado
 
-Contem a orquestracao da pipeline.
+Conceitualmente:
 
-Responsabilidades:
+```text
+desconto = (cotacao_atual - preco_liquido) / cotacao_atual
+```
 
-- Definir contratos de entrada e saida.
-- Criar contexto de execucao.
-- Encadear mercado, indicadores, estrategias, filtros, score, ranking e explicacao.
-- Garantir que falhas parciais sejam tratadas.
+Unidade e arredondamento devem ser definidos na Sprint de implementação.
 
-Nao deve conter detalhes de provedores ou formulas especificas.
+### 9.3 ROI bruto
 
-### `engine/market/`
+A fórmula exata depende da definição oficial de capital comprometido.
 
-Responsavel por representar e normalizar dados de mercado.
+A Sprint funcional deve registrar a base usada e impedir ambiguidade entre:
 
-Responsabilidades:
+- capital nominal;
+- margem real;
+- capital líquido;
+- caixa reservado.
 
-- Converter dados brutos para formato interno.
-- Validar presenca de campos obrigatorios.
-- Identificar fonte dos dados.
-- Marcar dados incompletos ou inconsistentes.
+### 9.4 ROI líquido
 
-### `engine/providers/`
+Custos e tributos não podem ser inventados.
 
-Responsavel por integracoes externas.
+Quando indisponíveis:
 
-Responsabilidades:
+- informar ausência;
+- não apresentar precisão fictícia;
+- usar premissa somente se explicitamente configurada.
 
-- Buscar cotacoes.
-- Buscar historico de precos.
-- Buscar dados de opcoes, quando disponivel.
-- Encapsular detalhes de cada API.
-- Retornar dados em formato bruto para o modulo `market`.
+### 9.5 ROI anualizado
 
-Provedores iniciais previstos:
+Deve:
 
-- Yahoo.
-- Brapi.
+- declarar convenção de dias;
+- tratar DTE zero ou inválido;
+- evitar anualização enganosa;
+- permanecer reproduzível.
 
-O motor deve estar preparado para multiplos provedores e fallback entre eles.
+### 9.6 Eficiência do capital
 
-### `engine/indicators/`
+Deve comparar retorno com o capital realmente comprometido quando esse dado existir.
 
-Responsavel por preparar sinais tecnicos e operacionais.
+Retorno sobre margem só pode ser tratado como real quando houver margem real.
 
-Responsabilidades:
+---
 
-- Organizar indicadores de tendencia.
-- Organizar indicadores de momentum.
-- Organizar indicadores de volatilidade.
-- Organizar indicadores de liquidez.
-- Organizar indicadores especificos de opcoes.
-
-Este modulo nao deve decidir se uma oportunidade e boa sozinho. Ele apenas gera insumos.
-
-### `engine/strategies/`
-
-Responsavel por avaliar oportunidades dentro de uma estrategia.
-
-Responsabilidades:
-
-- Aplicar regras de Venda de PUT.
-- Aplicar regras de CALL Coberta.
-- Aplicar regras da Wheel.
-- Definir elegibilidade por estrategia.
-- Produzir sinais especificos da estrategia.
-
-### `engine/score/`
-
-Responsavel por transformar sinais em nota.
-
-Responsabilidades:
-
-- Aplicar pesos.
-- Normalizar sinais.
-- Gerar score final de 0 a 100.
-- Classificar score em faixas.
-- Permitir configuracao de pesos por usuario ou por perfil.
-
-### `engine/ranking/`
-
-Responsavel por ordenar oportunidades.
-
-Responsabilidades:
-
-- Ordenar por score final.
-- Aplicar criterios de desempate.
-- Separar oportunidades elegiveis e nao elegiveis.
-- Preparar top oportunidades para o Radar.
-
-### `engine/probability/`
-
-Modulo reservado para estimativas futuras de probabilidade e risco.
-
-Responsabilidades futuras:
-
-- Estimar chance de a opcao vencer fora do dinheiro.
-- Estimar risco de exercicio.
-- Avaliar confianca da analise.
-- Incorporar historico de acertos e erros.
-
-Na fase inicial, deve apenas manter contratos e campos preparados.
-
-### `engine/explain/`
-
-Responsavel por linguagem natural.
-
-Responsabilidades:
-
-- Traduzir score em justificativa.
-- Destacar fatores positivos.
-- Destacar fatores negativos.
-- Explicar filtros.
-- Informar riscos.
-- Gerar texto claro para usuario nao tecnico.
-
-### `engine/learning/`
-
-Modulo preparado para aprendizado futuro.
-
-Responsabilidades futuras:
-
-- Receber operacoes encerradas.
-- Comparar expectativa do score com resultado real.
-- Montar dataset historico.
-- Gerar estatisticas de acerto por criterio.
-- Apoiar ajuste de pesos.
-
-Nao deve implementar Machine Learning ate que haja base historica suficiente e criterios validados.
-
-## 5. Indicadores Utilizados
-
-Esta secao descreve a finalidade dos indicadores. Nao define nem implementa formulas.
+## 10. Indicadores previstos
 
 ### MM21
 
-Media movel de 21 periodos.
-
-Finalidade:
-
-- Capturar tendencia de curto prazo.
-- Indicar se o ativo esta em movimento recente de alta, baixa ou lateralidade.
-- Apoiar avaliacao de timing para operacoes de opcoes.
-
-Uso esperado:
-
-- Em Venda de PUT, tendencia de curto prazo positiva ou estavel tende a favorecer.
-- Em CALL Coberta, tendencia muito forte de alta pode exigir cuidado, pois aumenta risco de exercicio.
-- Na Wheel, ajuda a entender o momento do ativo dentro do ciclo.
+Uso: tendência de curto prazo.
 
 ### MM200
 
-Media movel de 200 periodos.
+Uso: tendência estrutural.
 
-Finalidade:
+Ativo abaixo da MM200 pode exigir alerta, mas nenhuma regra fixa deve ser implementada sem Sprint específica.
 
-- Capturar tendencia estrutural de longo prazo.
-- Diferenciar ativos em tendencia principal de alta, baixa ou consolidacao.
-- Ajudar a evitar operacoes contra um movimento estrutural relevante.
+### IFR14
 
-Uso esperado:
+Uso: momentum e regiões extremas.
 
-- Ativo acima da MM200 pode indicar contexto estrutural mais saudavel.
-- Ativo abaixo da MM200 pode exigir score menor ou alerta de risco.
-- Cruzamentos e distancia em relacao a MM200 podem ser usados como sinais de tendencia.
-
-### IFR14 (RSI)
-
-Indice de Forca Relativa de 14 periodos.
-
-Finalidade:
-
-- Medir momentum.
-- Identificar regioes de sobrecompra ou sobrevenda.
-- Apoiar avaliacao de entrada em ativos esticados.
-
-Uso esperado:
-
-- IFR muito baixo pode indicar sobrevenda, mas tambem risco de queda persistente.
-- IFR muito alto pode indicar sobrecompra e risco de correcao.
-- Valores intermediarios podem ser considerados mais neutros.
+Sobrevenda não é automaticamente oportunidade.
 
 ### Bandas de Bollinger
 
-Indicador de faixa de preco baseado em media e desvio.
-
-Finalidade:
-
-- Avaliar se o preco esta em regiao extrema da sua variacao recente.
-- Observar compressao ou expansao de volatilidade.
-- Apoiar leitura de risco de reversao ou continuidade.
-
-Uso esperado:
-
-- Preco proximo da banda inferior pode indicar ativo pressionado ou oportunidade de reversao.
-- Preco proximo da banda superior pode indicar ativo esticado.
-- Bandas muito abertas sinalizam volatilidade maior.
+Uso: posição relativa do preço e regime de volatilidade.
 
 ### ATR
 
-Average True Range.
+Uso: amplitude e risco de oscilação.
 
-Finalidade:
+Distância do strike pode ser comparada ao ATR em Sprint futura.
 
-- Medir amplitude media de movimento do ativo.
-- Representar risco de oscilacao.
-- Apoiar avaliacao de distancia segura do strike.
+### Volatilidade implícita
 
-Uso esperado:
+Uso: expectativa implícita no prêmio quando o dado estiver disponível.
 
-- ATR alto sugere maior risco de o preco atingir o strike.
-- ATR baixo sugere ativo menos volátil, mas pode reduzir premios.
-- Distancia do strike pode ser comparada com a amplitude esperada.
+IV alta pode elevar prêmio e risco simultaneamente.
 
-### Volatilidade Implicita
+### Liquidez e volume
 
-Volatilidade embutida no preco das opcoes.
+Devem apoiar executabilidade e confiança do preço.
 
-Finalidade:
+O motor deve distinguir:
 
-- Indicar expectativa de oscilacao futura.
-- Explicar premios altos ou baixos.
-- Ajudar a avaliar se o premio compensa o risco.
+- falta de dado;
+- baixa liquidez;
+- preço stale;
+- spread excessivo.
 
-Uso esperado:
+---
 
-- Volatilidade implicita alta pode melhorar premio, mas aumenta risco.
-- Volatilidade baixa pode reduzir ROI esperado.
-- Deve ser analisada em conjunto com ATR, dias para vencimento e distancia do strike.
+## 11. Análise padrão de PUT
 
-### Liquidez
+Sempre que os dados estiverem disponíveis, a saída deve contemplar:
 
-Capacidade de entrar e sair de uma operacao com impacto aceitavel.
+- ativo;
+- vencimento;
+- strike;
+- prêmio;
+- preço líquido de aquisição;
+- desconto em relação ao mercado;
+- ROI bruto;
+- ROI líquido;
+- ROI anualizado;
+- volatilidade implícita;
+- liquidez;
+- distância do strike;
+- risco;
+- nota de 0 a 10;
+- Score IA de 0 a 100;
+- confiança dos dados;
+- pontos positivos;
+- pontos de atenção;
+- conclusão técnica.
 
-Finalidade:
+A ausência de dado deve ser explícita.
 
-- Evitar oportunidades teoricamente boas, mas dificilmente executaveis.
-- Reduzir risco de spread alto.
-- Melhorar confiabilidade do score.
+---
 
-Uso esperado:
+## 12. Rolagem
 
-- Liquidez insuficiente deve reduzir muito o score ou tornar a oportunidade inelegivel.
-- O motor deve distinguir falta de liquidez de falta de dados.
+Quando houver PUT aberta e a funcionalidade estiver implementada, a análise deve considerar automaticamente:
 
-### Volume
+- lucro capturado;
+- prêmio restante;
+- custo de recompra;
+- nova oportunidade;
+- crédito ou débito líquido;
+- novo strike;
+- novo vencimento;
+- novo preço líquido;
+- impacto da margem;
+- mudança de risco;
+- retorno esperado;
+- eficiência incremental do capital.
 
-Quantidade negociada do ativo ou da opcao.
+Não recomendar rolagem apenas para:
 
-Finalidade:
+- adiar prejuízo;
+- ocultar deterioração;
+- aumentar risco sem compensação;
+- prolongar capital ineficiente.
 
-- Confirmar interesse de mercado.
-- Apoiar leitura de confiabilidade do preco.
-- Complementar a analise de liquidez.
+---
 
-Uso esperado:
+## 13. Confiança dos dados
 
-- Volume alto favorece execucao e confiabilidade.
-- Volume baixo exige alerta.
-- Volume anormalmente alto pode indicar evento ou risco.
+Confiança é dimensão separada da qualidade da oportunidade.
 
-### Distancia do Strike
+Uma oportunidade pode ser:
 
-Distancia entre o preco atual do ativo e o strike da opcao.
+- boa com alta confiança;
+- boa com baixa confiança;
+- ruim com alta confiança;
+- impossível de concluir por insuficiência de dados.
 
-Finalidade:
+Fatores candidatos de confiança:
 
-- Avaliar margem de seguranca.
-- Medir risco de exercicio.
-- Comparar premio recebido com distancia ate o ponto critico.
+- completude;
+- frescor;
+- consistência;
+- fonte;
+- timestamp;
+- coerência bid/ask;
+- disponibilidade de volume e negócios.
 
-Uso esperado:
+Regra:
 
-- Em Venda de PUT, strike abaixo do preco atual tende a oferecer margem de seguranca.
-- Em CALL Coberta, strike acima do preco atual define potencial de ganho e risco de chamada.
-- Distancia deve ser interpretada junto com ATR, volatilidade e dias para vencimento.
-
-### Dias para Vencimento
-
-Tempo restante ate o vencimento da opcao.
-
-Finalidade:
-
-- Avaliar exposicao temporal.
-- Relacionar premio com prazo.
-- Apoiar decisao sobre eficiencia do ROI.
-
-Uso esperado:
-
-- Vencimentos muito curtos podem ter risco operacional maior.
-- Vencimentos muito longos podem travar capital por tempo demais.
-- A faixa ideal deve ser configuravel.
-
-### ROI Esperado
-
-Retorno estimado da operacao em relacao ao capital comprometido.
-
-Finalidade:
-
-- Medir atratividade financeira da oportunidade.
-- Comparar oportunidades de strikes, ativos e vencimentos diferentes.
-- Apoiar ranking.
-
-Uso esperado:
-
-- ROI abaixo do minimo configurado reduz score ou elimina a oportunidade.
-- ROI alto demais deve ser analisado com cuidado, pois pode refletir risco elevado.
-- ROI deve ser combinado com liquidez, volatilidade e distancia do strike.
-
-## 6. Estrategias Suportadas
-
-### Venda de PUT
-
-Estrategia em que o usuario vende uma opcao PUT e recebe premio, assumindo a possibilidade de comprar o ativo pelo strike se for exercido.
-
-Deve ser utilizada quando:
-
-- O usuario aceita comprar o ativo no strike analisado.
-- O ativo tem qualidade minima segundo criterios configurados.
-- O strike oferece margem de seguranca adequada.
-- O premio gera ROI esperado compativel.
-- A liquidez e suficiente.
-- O vencimento esta dentro da faixa desejada.
-
-Sinais favoraveis:
-
-- Ativo em tendencia positiva ou estavel.
-- Strike abaixo do preco atual.
-- Boa distancia do strike em relacao ao ATR.
-- Premio atrativo sem volatilidade excessiva.
-- Volume e liquidez adequados.
-
-Alertas:
-
-- Ativo abaixo da MM200.
-- Queda forte recente.
-- IFR indicando pressao relevante.
-- Baixa liquidez.
-- ROI alto causado por risco extremo.
-
-### CALL Coberta
-
-Estrategia em que o usuario possui o ativo e vende uma opcao CALL, recebendo premio e aceitando a possibilidade de vender o ativo no strike.
-
-Deve ser utilizada quando:
-
-- O usuario ja possui o ativo ou esta em fase da Wheel com ativo em carteira.
-- O strike representa um preco aceitavel de venda.
-- O premio compensa a obrigacao assumida.
-- A tendencia nao indique risco desproporcional de chamada indesejada.
-
-Sinais favoraveis:
-
-- Ativo lateral ou com alta moderada.
-- Strike acima do preco atual.
-- Premio adequado para o prazo.
-- Liquidez suficiente.
-- Contexto tecnico sem excesso de sobrecompra.
-
-Alertas:
-
-- Tendencia de alta muito forte.
-- Preco muito proximo do strike.
-- IFR muito alto.
-- Volatilidade elevada.
-- Risco de perder upside relevante.
-
-### Estrategia Wheel
-
-Estrategia composta por ciclos de venda de PUT, eventual compra do ativo por exercicio e posterior venda de CALL coberta.
-
-Deve ser utilizada quando:
-
-- O usuario aceita acumular ou vender ativos dentro de um processo disciplinado.
-- O ativo e considerado adequado para a carteira.
-- O objetivo e gerar premios recorrentes.
-- Ha controle de capital, risco e vencimentos.
-
-Sinais favoraveis:
-
-- Ativos liquidos e conhecidos.
-- Premios consistentes.
-- Boa relacao entre ROI e risco.
-- Historico de operacoes bem-sucedidas no ativo.
-- Capacidade de manter o ativo em carteira, se exercido.
-
-Alertas:
-
-- Concentracao excessiva em um unico ativo.
-- Capital insuficiente.
-- Ativo com tendencia estrutural deteriorada.
-- Liquidez ruim.
-- Excesso de operacoes simultaneas no mesmo vencimento.
-
-## 7. Sistema de Score
-
-### Composicao do Score IA
-
-O Score IA deve representar uma avaliacao sintetica da oportunidade em uma escala de 0 a 100.
-
-Ele deve combinar:
-
-- Tendencia.
-- Momentum.
-- Volatilidade.
-- Liquidez.
-- Volume.
-- Distancia do strike.
-- Dias para vencimento.
-- ROI esperado.
-- Adequacao da estrategia.
-- Risco operacional.
-- Confianca dos dados.
-
-O score nao deve ser uma recomendacao absoluta. Ele e um mecanismo de priorizacao e explicacao.
-
-### Classes Iniciais
-
-| Faixa | Classe | Interpretacao |
-|---:|---|---|
-| 90 a 100 | Excelente | Oportunidade muito forte dentro dos criterios atuais |
-| 80 a 89 | Muito Boa | Oportunidade atrativa com poucos alertas |
-| 70 a 79 | Boa | Oportunidade valida, mas exige revisao dos pontos fracos |
-| 60 a 69 | Regular | Pode ser considerada, mas nao deve ser prioridade |
-| 0 a 59 | Atencao | Risco, dados fracos ou baixa aderencia aos criterios |
-
-### Pesos Iniciais
-
-| Fator | Peso Inicial |
-|---|---:|
-| Tendencia MM21/MM200 | 15 |
-| Momentum IFR14 | 8 |
-| Bandas de Bollinger | 7 |
-| ATR / risco de oscilacao | 8 |
-| Volatilidade implicita | 10 |
-| Liquidez | 12 |
-| Volume | 8 |
-| Distancia do strike | 12 |
-| Dias para vencimento | 8 |
-| ROI esperado | 12 |
-| Total | 100 |
-
-### Configurabilidade
-
-Todos os pesos devem ser configuraveis.
-
-No inicio, os pesos podem viver em `engine/config.py`. Em fases posteriores, poderao ser armazenados no banco e editados pela tela de configuracoes.
-
-Configuracoes esperadas:
-
-- Peso por indicador.
-- ROI minimo.
-- Liquidez minima.
-- Volume minimo.
-- Faixa ideal de dias para vencimento.
-- Distancia minima do strike.
-- Perfil de risco.
-- Estrategias habilitadas.
-- Provedores de dados habilitados.
-
-### Regras do Score
-
-- O score final deve ser reproduzivel para a mesma entrada.
-- Cada componente do score deve poder ser auditado.
-- O sistema deve guardar os fatores que contribuiram para a nota.
-- Dados ausentes devem reduzir confianca ou gerar alerta.
-- O score deve permitir explicacao em linguagem natural.
-
-## 8. Ranking
-
-O ranking define a ordem em que oportunidades aparecem no Radar.
-
-### Ordenacao Principal
-
-Oportunidades elegiveis devem ser ordenadas por:
-
-1. Score final decrescente.
-2. Classe de score.
-3. Liquidez.
-4. ROI esperado.
-5. Distancia do strike.
-6. Dias para vencimento mais proximos da faixa ideal.
-7. Confianca dos dados.
-
-### Separacao por Status
-
-O ranking deve separar oportunidades em grupos:
-
-- Elegiveis.
-- Em observacao.
-- Nao elegiveis.
-- Dados insuficientes.
-
-O Radar principal deve priorizar elegiveis e em observacao. Itens nao elegiveis podem aparecer em modo diagnostico.
-
-### Criterios de Desempate
-
-Quando duas oportunidades tiverem score semelhante, desempatar por:
-
-- Maior liquidez.
-- Melhor confianca dos dados.
-- Menor risco de oscilacao relativo.
-- Melhor adequacao ao perfil do usuario.
-- Maior diversificacao em relacao a operacoes abertas.
-
-## 9. Explicacao em Linguagem Natural
-
-Cada oportunidade deve ser acompanhada de uma explicacao clara.
-
-### Objetivo da Explicacao
-
-A explicacao deve permitir que o usuario entenda:
-
-- Por que a oportunidade recebeu aquele score.
-- Quais fatores foram positivos.
-- Quais fatores foram negativos.
-- Quais dados estao ausentes.
-- Qual e o principal risco.
-- Qual estrategia esta sendo avaliada.
-
-### Estrutura Recomendada
-
-Cada explicacao deve conter:
-
-- Resumo curto.
-- Pontos favoraveis.
-- Pontos de atencao.
-- Indicadores que mais influenciaram o score.
-- Conclusao operacional.
-
-Exemplo conceitual:
-
-```txt
-Esta oportunidade recebeu score 82, classe Muito Boa.
-O ROI esperado esta acima do minimo configurado, a liquidez e adequada e o strike esta a uma distancia confortavel do preco atual.
-O principal ponto de atencao e a volatilidade elevada, que aumenta o risco de o ativo se aproximar do strike antes do vencimento.
+> Score alto com confiança baixa deve gerar interpretação limitada e alerta explícito.
+
+---
+
+## 14. Contratos conceituais
+
+### 14.1 Entrada de oportunidade
+
+```text
+id
+ativo
+opcao
+tipo_opcao
+vencimento
+cotacao_atual
+strike
+premio
+bid
+ask
+volume
+negocios
+liquidez
+volatilidade_implicita
+timestamp
+fonte
 ```
 
-### Regras de Linguagem
+### 14.2 Saída analisada
 
-- Ser objetiva.
-- Evitar jargao excessivo.
-- Nao afirmar certeza.
-- Nao prometer lucro.
-- Diferenciar oportunidade de recomendacao.
-- Explicar alertas de forma acionavel.
-
-## 10. Aprendizado Futuro
-
-O Decision Engine deve ser preparado para aprender com operacoes encerradas, mas sem implementar Machine Learning nas primeiras fases.
-
-### Dados Necessarios
-
-Para permitir aprendizado futuro, cada oportunidade analisada e cada operacao encerrada devem poder registrar:
-
-- Ativo.
-- Opcao.
-- Estrategia.
-- Data da analise.
-- Data de abertura.
-- Data de fechamento.
-- Score original.
-- Classe original.
-- Indicadores no momento da decisao.
-- Premio esperado.
-- ROI esperado.
-- Resultado realizado.
-- Motivo de fechamento.
-- Se houve exercicio.
-- Se a operacao foi vencedora.
-
-### Arquitetura Necessaria
-
-O modulo `engine/learning/` deve preparar:
-
-- Historico de decisoes.
-- Historico de resultados.
-- Comparacao entre score previsto e resultado real.
-- Dataset para analise futura.
-- Metricas por ativo, estrategia, vencimento e faixa de score.
-
-### Evolucoes Futuras Possiveis
-
-Sem implementar agora, a arquitetura deve permitir:
-
-- Ajuste automatico ou semi-automatico de pesos.
-- Analise de quais indicadores mais acertaram.
-- Identificacao de ativos com melhor desempenho historico.
-- Calibragem de risco por perfil do usuario.
-- Estimativa de probabilidade baseada em historico.
-
-### Restricoes
-
-- Nao implementar Machine Learning sem base historica suficiente.
-- Nao alterar pesos automaticamente sem auditoria.
-- Nao ocultar do usuario por que uma nota mudou.
-- Nao transformar o motor em caixa-preta.
-
-## 11. Roadmap Tecnico do Decision Engine
-
-### v4.4 - Contratos, Configuracao e Fundacao
-
-Entregas:
-
-- Definir pacote `engine/`.
-- Definir contratos de entrada e saida.
-- Definir configuracao inicial de pesos.
-- Definir classes de score.
-- Criar interfaces de providers.
-- Preparar normalizacao de dados de mercado.
-- Garantir que o motor seja desacoplado do Flask.
-
-Criterios de conclusao:
-
-- O motor pode ser importado sem iniciar Flask.
-- Existe contrato claro para oportunidade analisada.
-- Pesos iniciais estao centralizados.
-- Providers podem ser substituidos por mocks em testes.
-
-### v4.5 - Indicadores e Servico de Radar
-
-Entregas:
-
-- Estruturar modulos de indicadores.
-- Preparar indicadores tecnicos e operacionais.
-- Criar `cortex/services/radar_service.py`.
-- Integrar servico de radar com configuracoes do sistema.
-- Criar primeira saida estruturada de oportunidades.
-
-Criterios de conclusao:
-
-- O servico de radar consegue chamar o motor.
-- Indicadores retornam sinais normalizados.
-- Dados ausentes sao tratados sem quebrar a pagina.
-- Ainda nao e necessario ranking sofisticado.
-
-### v4.6 - Estrategias, Filtros e Score Inicial
-
-Entregas:
-
-- Implementar avaliacao conceitual por estrategia.
-- Suportar Venda de PUT.
-- Suportar CALL Coberta.
-- Suportar Wheel.
-- Aplicar filtros minimos.
-- Gerar score de 0 a 100.
-- Classificar oportunidades por faixa.
-
-Criterios de conclusao:
-
-- Cada oportunidade tem estrategia, score e classe.
-- Filtros explicam por que uma oportunidade foi descartada.
-- Pesos sao configuraveis em arquivo.
-- Testes cobrem score basico e filtros.
-
-### v4.7 - Ranking, Explicacao e Radar Visual
-
-Entregas:
-
-- Ordenar oportunidades por score.
-- Aplicar criterios de desempate.
-- Gerar explicacao em linguagem natural.
-- Integrar resultados a `/radar-oportunidades`.
-- Exibir score, classe, motivos e alertas.
-- Separar elegiveis, observacao e nao elegiveis.
-
-Criterios de conclusao:
-
-- Radar exibe oportunidades ordenadas.
-- Cada oportunidade possui explicacao clara.
-- Falhas de provider geram alerta amigavel.
-- O Flask nao contem regra do motor.
-
-### v5.0 - Motor Estavel, Auditavel e Preparado para Aprendizado
-
-Entregas:
-
-- Decision Engine modular e documentado.
-- Testes para pipeline, score, ranking e explicacao.
-- Configuracao de pesos validada.
-- Registro historico de decisoes preparado.
-- Integracao com operacoes encerradas planejada ou iniciada.
-- Documentacao de uso interno.
-- Fallback para multiplos provedores.
-
-Criterios de conclusao:
-
-- Motor pode ser usado por Radar, Dashboard e Relatorios.
-- Oportunidades sao reproduziveis e auditaveis.
-- Explicacoes sao consistentes com o score.
-- Estrutura de aprendizado futuro esta preparada.
-- Nenhuma dependencia direta com Flask ou PostgreSQL existe dentro do pacote `engine/`.
-
-## 12. Principios
-
-Todo codigo do Decision Engine deve seguir estes principios:
-
-### Desacoplado do Flask
-
-O motor nao deve importar `flask`, `request`, `render_template`, `url_for` ou objetos de rota.
-
-### Desacoplado do Banco
-
-O motor nao deve abrir conexao direta com PostgreSQL, SQLite ou CSV. Dados devem chegar por contratos.
-
-### Testavel
-
-Cada parte deve permitir teste unitario com dados controlados.
-
-### Modular
-
-Indicadores, estrategias, score, ranking e explicacao devem ser modulos separados.
-
-### Reutilizavel
-
-O motor deve poder ser usado por rotas, scripts, testes, jobs futuros e relatorios.
-
-### Configuravel
-
-Pesos, limites, provedores e estrategias devem ser configuraveis sem reescrever o motor.
-
-### Explicavel
-
-Todo score deve poder ser justificado. Nenhuma oportunidade deve receber nota sem fatores rastreaveis.
-
-### Preparado para Multiplos Provedores
-
-O motor deve suportar Yahoo, Brapi e provedores futuros por interfaces intercambiaveis.
-
-### Preparado para Falhas Externas
-
-Falhas de mercado, timeouts e dados ausentes devem gerar alertas, nao derrubar a aplicacao.
-
-### Sem Recomendacao Absoluta
-
-O motor deve apoiar decisao, nao prometer resultado ou automatizar recomendacao financeira sem contexto.
-
-### Reproduzivel
-
-A mesma entrada com a mesma configuracao deve gerar o mesmo score.
-
-### Auditavel
-
-O sistema deve guardar ou expor os fatores que compuseram o score.
-
-### Evolutivo
-
-A arquitetura deve permitir aprendizado futuro sem reescrever tudo.
-
-### Conservador com Dados Incompletos
-
-Dados ausentes devem reduzir confianca, gerar alerta ou impedir elegibilidade.
-
-### Compatibilidade com o Projeto Atual
-
-O motor deve evoluir respeitando a arquitetura planejada do FaculdadeMaria, sem quebrar dashboard, operacoes abertas, operacoes fechadas, historico, configuracoes, backup ou exportacoes.
-
-## Contrato Conceitual de Saida
-
-Toda oportunidade analisada deve poder ser representada conceitualmente com os campos abaixo:
-
-```txt
+```text
 id
 ativo
 opcao
 estrategia
+status_elegibilidade
+motivos_elegibilidade
 preco_atual
 strike
 premio
+preco_liquido
 vencimento
 dias_para_vencimento
-roi_esperado
+roi_bruto
+roi_liquido
+roi_anualizado
+desconto_mercado
+distancia_strike
 indicadores
+qualidade_ativo
 filtros
+risco
 score
+nota_0_10
 classe
 ranking
 explicacao
+pontos_positivos
+pontos_atencao
 alertas
 fonte_dados
 timestamp
-confianca
+confianca_dados
 ```
 
-Este contrato pode evoluir, mas qualquer mudanca deve preservar compatibilidade com o Radar e com testes existentes.
+Os contratos podem evoluir, mas mudanças devem preservar compatibilidade ou possuir estratégia explícita de migração.
 
-## Conclusao
+---
 
-O Decision Engine sera o nucleo analitico do FaculdadeMaria / Cortex Invest PRO. Sua funcao e transformar dados de mercado e regras de estrategia em oportunidades priorizadas, explicaveis e preparadas para evolucao.
+## 15. Testabilidade e reproduzibilidade
 
-A implementacao deve ser incremental:
+Todo componente deve permitir testes com dados controlados.
 
-1. Primeiro contratos e arquitetura.
-2. Depois indicadores e filtros.
-3. Depois score e ranking.
-4. Depois explicacao.
-5. Por fim, aprendizado futuro.
+Regras:
 
-O sucesso do motor nao sera medido apenas por gerar uma nota, mas por produzir analises confiaveis, compreensiveis, auditaveis e uteis para o usuario tomar decisoes melhores dentro da estrategia Wheel.
+- mesma entrada + mesma configuração = mesma saída analítica;
+- rede real não é requisito de teste unitário;
+- providers concretos devem permitir mock;
+- dados ausentes devem ser testados;
+- valores zero e inválidos devem ser testados;
+- DTE deve ser testado;
+- arredondamentos devem ser definidos;
+- gates devem possuir testes positivos e negativos;
+- Score deve expor fatores;
+- ranking deve ser determinístico para mesmas entradas.
+
+Telemetria temporal pode variar e deve ser tratada separadamente da saída analítica reproduzível.
+
+---
+
+## 16. Tratamento de falhas
+
+Falhas externas não devem derrubar a aplicação sem tratamento.
+
+Categorias:
+
+- contrato inválido;
+- dado ausente;
+- dado inconsistente;
+- provider indisponível;
+- timeout;
+- rate limit;
+- configuração inválida;
+- etapa parcial indisponível.
+
+A resposta deve:
+
+- usar erros estruturados;
+- preservar causa útil;
+- evitar vazamento indevido;
+- produzir alerta acionável;
+- limitar conclusão quando necessário.
+
+---
+
+## 17. Caminho crítico vigente
+
+A ordem vigente é definida pelo `BACKLOG.md` e por Sprints autorizadas.
+
+Sequência recomendada atual:
+
+### Sprint Funcional A — Contratos e métricas de PUT
+
+- `FM-ENG-010`;
+- `FM-PUT-010`;
+- parte de `FM-DATA-010`.
+
+### Sprint Funcional B — Indicadores e segurança
+
+- `FM-ENG-020`;
+- `FM-RISK-010`;
+- `FM-RISK-030`.
+
+### Sprint Funcional C — Qualidade do ativo e estratégia PUT
+
+- `FM-ASSET-010`;
+- `FM-PUT-020`;
+- `FM-CAP-010`.
+
+### Sprint Funcional D — Score e explicação
+
+- `FM-SCORE-010`;
+- `FM-EXPLAIN-010`;
+- `FM-EXPLAIN-040`.
+
+### Sprint Funcional E — Ranking e serviço de Radar
+
+- `FM-RANK-010`;
+- `FM-SVC-010`.
+
+### Sprint Visual F — Radar Premium v1
+
+- `FM-UI-010`;
+- parte de `FM-UI-020`.
+
+A presença neste documento não autoriza implementação automática.
+
+---
+
+## 18. Relação com versões do produto
+
+A versão oficial do produto permanece definida pela fonte própria do projeto.
+
+A versão interna do Decision Engine é independente do número de versão do produto.
+
+Não realizar bump de versão automaticamente por mudança documental ou por início de Sprint.
+
+Releases futuras dependem de decisão explícita e critérios de conclusão.
+
+---
+
+## 19. Princípios permanentes
+
+### Desacoplado
+
+Sem dependência direta de Flask ou persistência.
+
+### Modular
+
+Contratos, métricas, indicadores, qualidade, filtros, estratégia, Score, ranking e explicação em responsabilidades separadas.
+
+### Explicável
+
+Nenhuma nota sem fatores rastreáveis.
+
+### Conservador com dados incompletos
+
+Não inventar dados.
+
+### Orientado a qualidade
+
+Prêmio alto não supera ativo inadequado ou risco incompatível.
+
+### Seguro
+
+Gates críticos não são compensados por Score.
+
+### Reproduzível
+
+Mesma entrada e configuração geram mesma saída analítica.
+
+### Auditável
+
+Decisões, descartes e fatores devem poder ser explicados.
+
+### Evolutivo
+
+Arquitetura preparada para múltiplos providers e aprendizado futuro sem caixa-preta.
+
+### Compatível
+
+Preservar dashboard, operações, histórico, configurações, backup, exportações e fluxos existentes até Sprint específica de integração.
+
+### Premium com conteúdo real
+
+A interface futura deve ser sofisticada sem mascarar risco, dado ausente ou confiança baixa.
+
+---
+
+## 20. Fora de escopo automático
+
+Esta especificação não autoriza, por si só:
+
+- criação de indicador;
+- criação de Score;
+- criação de ranking;
+- provider real;
+- alteração Flask;
+- nova rota;
+- template;
+- CSS;
+- JavaScript;
+- persistência;
+- integração de `motor_ia/`;
+- Machine Learning;
+- execução automática de operações.
+
+Cada item depende de Sprint autorizada.
+
+---
+
+## 21. Conclusão
+
+O Decision Engine é o núcleo analítico futuro do FaculdadeMaria.
+
+Sua evolução deve transformar dados e regras operacionais em análises:
+
+- confiáveis;
+- compreensíveis;
+- auditáveis;
+- alinhadas ao perfil de venda sistemática de PUT;
+- orientadas à qualidade do ativo e à segurança;
+- sensíveis ao preço líquido, risco e eficiência do capital;
+- transparentes sobre confiança dos dados.
+
+A melhor oportunidade não é necessariamente a de maior prêmio, maior ROI ou maior Score isolado.
+
+A melhor oportunidade é a que permanece elegível, consistente e explicável dentro da estratégia operacional oficial.
