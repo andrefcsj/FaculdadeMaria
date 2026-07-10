@@ -27,22 +27,46 @@ Categorias utilizadas:
 - `Security`: segurança ou integridade.
 - `Docs`: documentação e governança.
 
-Somente mudanças oficialmente integradas à `main` devem ser tratadas como estado vigente.
+Somente mudanças oficialmente integradas à `main` são tratadas como estado vigente.
 
-Mudanças em branch podem ser registradas como `Em revisão`.
+---
+
+## 2026-07-10 — Sincronização pós-merge da Organização Oficial
+
+Status: `Integrado`
+
+Issue: `#10`
+
+### Docs
+
+- sincronizado `docs/SPRINT_ORGANIZACAO_OFICIAL.md` com o estado real pós-merge;
+- registrado o merge do PR #6;
+- registrado o merge do PR #8;
+- registrado o encerramento das Issues #5 e #7 como `completed`;
+- consolidado o estado oficial da `main` após a Organização Oficial.
+
+### Validated
+
+- regressão pós-merge executada;
+- 7 testes aprovados;
+- 0 falhas;
+- 0 erros;
+- diff da sincronização restrito à documentação.
 
 ---
 
 ## 2026-07-10 — Sprint de Organização Oficial
 
-Status: `Em revisão`
+Status: `Integrado`
 
-Issue: `#7`
+Issue: `#7` — encerrada como `completed`
 
-Branch:
+Pull Request: `#8`
+
+Commit de merge:
 
 ```text
-sprint-organizacao-oficial
+c76fb448490141c45121bfa71a1c25b441daf169
 ```
 
 ### Added
@@ -50,14 +74,17 @@ sprint-organizacao-oficial
 - `docs/PRODUCT_VISION.md`;
 - `docs/BACKLOG.md`;
 - `docs/REGRAS_DO_PROJETO.md`;
-- `docs/CHANGELOG_DESENVOLVIMENTO.md`.
+- `docs/CHANGELOG_DESENVOLVIMENTO.md`;
+- `docs/SPRINT_ORGANIZACAO_OFICIAL.md`.
 
 ### Changed
 
-- organização do caminho crítico até o primeiro Radar Premium;
-- formalização de prioridades `P0` a `P3`;
-- criação de identificadores oficiais de backlog;
-- consolidação das regras permanentes do projeto.
+- `docs/ARQUITETURA_V4.md` passou a reconhecer os documentos oficiais de visão, backlog, regras e changelog;
+- `docs/ESTRATEGIA_OPERACIONAL.md` passou a apontar para o backlog oficial existente;
+- formalizado o caminho crítico até o primeiro Radar Premium;
+- formalizadas prioridades `P0` a `P3`;
+- criados identificadores oficiais de backlog;
+- consolidadas regras permanentes do projeto.
 
 ### Direção de produto
 
@@ -74,6 +101,13 @@ Foi registrado como primeiro grande resultado visual futuro:
 - pontos de atenção;
 - conclusão técnica.
 
+### Validated
+
+- diff da Sprint restrito a `docs/`;
+- 7 testes aprovados;
+- nenhuma regressão funcional;
+- PR revalidado como mergeável após retarget para `main`.
+
 ### Escopo funcional
 
 Nenhuma funcionalidade foi alterada nesta Sprint documental.
@@ -82,14 +116,16 @@ Nenhuma funcionalidade foi alterada nesta Sprint documental.
 
 ## 2026-07-10 — Correção documental pós-merge da Estratégia Operacional
 
-Status: `Em revisão`
+Status: `Integrado`
 
-Issue: `#5`
+Issue: `#5` — encerrada como `completed`
 
-Branch:
+Pull Request: `#6`
+
+Commit de merge:
 
 ```text
-fix-docs-estrategia-operacional-closure
+2edecb8b3bc2d514733b68b7519bd5433819bfaf
 ```
 
 ### Fixed
@@ -171,7 +207,7 @@ Commit de merge:
 6e3416402e83a281dad4ab4a399ae3d4c059235b
 ```
 
-### Added
+### Added — Decision Engine
 
 Fundação oficial do novo Decision Engine:
 
@@ -185,7 +221,7 @@ Fundação oficial do novo Decision Engine:
 - `engine/providers/__init__.py`;
 - `engine/providers/base.py`.
 
-Testes:
+### Added — Testes
 
 - `tests/test_engine_architecture.py`;
 - `tests/test_engine_context.py`;
@@ -194,7 +230,7 @@ Testes:
 - `tests/test_engine_provider_contract.py`;
 - `tests/test_engine_telemetry.py`.
 
-Documentação:
+### Added — Documentação
 
 - `docs/SPRINT_01_R.md`;
 - `docs/SPRINT_01_R_ENCERRAMENTO.md`.
@@ -285,7 +321,7 @@ Versão interna atual do Decision Engine:
 1.1.0
 ```
 
-O produto permanece funcionalmente baseado no monólito Flask existente, com a fundação independente do novo Decision Engine integrada.
+O produto permanece funcionalmente baseado no monólito Flask existente, com a fundação independente do novo Decision Engine integrada e a camada oficial de visão, backlog, regras e estratégia operacional consolidada.
 
 ---
 
@@ -293,7 +329,7 @@ O produto permanece funcionalmente baseado no monólito Flask existente, com a f
 
 Dependem de Sprints específicas e autorização do Product Owner.
 
-Prioridades de caminho crítico:
+Prioridades do caminho crítico:
 
 1. contratos completos de oportunidade;
 2. métricas operacionais de PUT;
