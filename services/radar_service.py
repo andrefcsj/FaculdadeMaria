@@ -43,6 +43,8 @@ class RadarCard:
     net_price: str
     capital: str
     dte: int
+    roi_concept: str
+    roi_concept_class: str
     source: str = "demo"
 
 
@@ -53,6 +55,18 @@ def _money(value: Decimal) -> str:
 
 def _pct(value: Decimal) -> str:
     return f"{(value * Decimal('100')).quantize(Decimal('0.01'))}%".replace(".", ",")
+
+
+def _roi_concept(gross_roi: Decimal) -> tuple[str, str]:
+    """Classify only ROI attractiveness, not the full operation quality."""
+
+    if gross_roi >= Decimal("0.03"):
+        return "Excelente", "excellent"
+    if gross_roi >= Decimal("0.015"):
+        return "Bom", "good"
+    if gross_roi > Decimal("0"):
+        return "Ruim", "bad"
+    return "Sem ROI", "bad"
 
 
 def _decimal(value: Any) -> Decimal | None:
@@ -196,6 +210,7 @@ def _demo_inputs(as_of: date) -> tuple[tuple[OptionOpportunity, AssetQualityProf
 
 def _card_from_ranked(item: Any, indexed: dict[str, tuple[OptionOpportunity, Any]], *, source: str) -> RadarCard:
     opportunity, metrics = indexed[item.opportunity_id]
+    roi_label, roi_class = _roi_concept(metrics.gross_roi)
     return RadarCard(
         position=item.position,
         asset=opportunity.asset,
@@ -209,6 +224,8 @@ def _card_from_ranked(item: Any, indexed: dict[str, tuple[OptionOpportunity, Any
         net_price=_money(metrics.net_acquisition_price),
         capital=_money(metrics.nominal_committed_capital),
         dte=metrics.days_to_expiry,
+        roi_concept=roi_label,
+        roi_concept_class=roi_class,
         source=source,
     )
 
