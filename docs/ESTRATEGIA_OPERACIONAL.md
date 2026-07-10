@@ -2,7 +2,7 @@
 
 ## 1. Status do documento
 
-Este documento define a **política operacional padrão e oficial** do projeto FaculdadeMaria.
+Este documento define a política operacional padrão e oficial do projeto FaculdadeMaria.
 
 Ele deve ser lido integralmente antes de qualquer evolução relacionada a:
 
@@ -16,13 +16,21 @@ Ele deve ser lido integralmente antes de qualquer evolução relacionada a:
 - eficiência do capital;
 - seleção e priorização de oportunidades.
 
+Documentos complementares obrigatórios:
+
+- `PRODUCT_VISION.md`;
+- `BACKLOG.md`;
+- `REGRAS_DO_PROJETO.md`;
+- `DECISION_ENGINE_SPEC.md`;
+- `ARQUITETURA_V4.md`.
+
 Em caso de conflito entre uma nova funcionalidade e esta política, a implementação deve ser interrompida e submetida à validação do Product Owner.
 
 ---
 
 ## 2. Estratégia operacional oficial
 
-O FaculdadeMaria **não é um sistema para especulação**.
+O FaculdadeMaria não é um sistema para especulação.
 
 Seu objetivo é auxiliar operações sistemáticas de venda de opções na B3 utilizando Inteligência Artificial explicável, auditável e orientada à qualidade da decisão.
 
@@ -36,7 +44,7 @@ O perfil operacional oficial do Product Owner é:
 
 ### 2.1 Tratamento do exercício
 
-O exercício **não deve ser tratado como falha**.
+O exercício não deve ser tratado como falha.
 
 O exercício faz parte da estratégia.
 
@@ -65,7 +73,7 @@ Toda análise deverá priorizar, nesta ordem conceitual:
 7. Probabilidade de exercício.
 8. Prêmio recebido.
 
-O maior prêmio **nunca deverá ser o principal critério**.
+O maior prêmio nunca deverá ser o principal critério.
 
 Quando existir conflito entre prêmio elevado e operação consistente, o sistema deverá priorizar a alternativa mais robusta, explicável e compatível com o perfil operacional oficial.
 
@@ -109,11 +117,22 @@ O sistema não deve inventar:
 
 Dados incompletos devem reduzir a confiança da análise, gerar alerta ou impedir conclusão definitiva.
 
+### 4.2 Qualidade antes de retorno nominal
+
+Uma oportunidade não deve ser priorizada apenas porque apresenta:
+
+- ROI alto;
+- prêmio alto;
+- volatilidade alta;
+- strike próximo do dinheiro.
+
+Esses fatores devem ser interpretados em conjunto com qualidade do ativo, segurança, liquidez, preço líquido e risco.
+
 ---
 
 ## 5. Rolagem
 
-Sempre que existir uma PUT aberta, o sistema deverá analisar automaticamente a possibilidade de rolagem.
+Sempre que existir uma PUT aberta, o sistema deverá analisar automaticamente a possibilidade de rolagem assim que essa funcionalidade estiver implementada.
 
 A análise deverá considerar:
 
@@ -202,24 +221,66 @@ A oportunidade ideal não será necessariamente:
 
 A qualidade da oportunidade deverá resultar de uma análise multidimensional alinhada ao perfil operacional oficial.
 
+### 7.3 Confiança separada da qualidade
+
+O motor deve evoluir para distinguir:
+
+- qualidade da oportunidade;
+- confiança dos dados usados na análise.
+
+Uma oportunidade aparentemente boa com dados incompletos não deve receber a mesma interpretação de uma oportunidade igualmente boa com dados confiáveis.
+
 ---
 
-## 8. Backlog
+## 8. Backlog oficial
 
-Qualquer nova ideia que possa melhorar os itens abaixo deverá ser registrada no backlog oficial do projeto para futura análise e implementação:
+`docs/BACKLOG.md` existe e passa a ser o registro oficial de ideias, prioridades e dependências futuras do projeto.
+
+Qualquer nova ideia que possa melhorar os itens abaixo deverá ser registrada no backlog oficial:
 
 - seleção de oportunidades;
 - análise de risco;
 - rolagem;
 - explicabilidade da IA;
 - eficiência do capital;
-- qualidade das recomendações.
+- qualidade das recomendações;
+- experiência Premium;
+- robustez operacional.
 
-### 8.1 Regra de governança do backlog
+### 8.1 Regra de registro automático
 
-Enquanto `docs/BACKLOG.md` ainda não existir, a necessidade de registro permanece pendente para a Sprint de organização documental já prevista.
+Sempre que surgir uma ideia relevante:
 
-Nenhuma ideia de backlog deve ser implementada automaticamente fora de Sprint autorizada.
+1. registrar no `BACKLOG.md`;
+2. atribuir identificador;
+3. indicar prioridade inicial;
+4. registrar dependências quando conhecidas;
+5. não implementar automaticamente.
+
+### 8.2 Regra de governança
+
+Nenhuma ideia de backlog pode ser implementada fora de Sprint autorizada.
+
+O backlog organiza possibilidades e prioridades; não substitui o escopo formal de uma Sprint.
+
+### 8.3 Ideias estratégicas já registradas
+
+Entre as ideias oficiais já registradas estão:
+
+- qualidade do ativo antes do prêmio;
+- preço líquido como eixo central;
+- análise automática de rolagem;
+- alternativa melhor obrigatória;
+- penalização de ROI alto causado por risco extremo;
+- confiança de dados separada do Score IA;
+- exercício avaliado pelo preço líquido;
+- eficiência do capital;
+- comparação entre strikes;
+- comparação entre ativos;
+- explicação de por que não operar;
+- alertas de concentração;
+- Radar com foco em qualidade;
+- trilha visual da decisão.
 
 ---
 
@@ -238,7 +299,9 @@ Ele não autoriza alteração automática de:
 - `motor_ia/` legado;
 - funcionalidades existentes.
 
-Toda implementação deverá seguir o fluxo oficial do projeto:
+Toda implementação deverá seguir o fluxo oficial consolidado em `REGRAS_DO_PROJETO.md`.
+
+Resumo:
 
 1. leitura integral de `docs/`;
 2. comparação entre documentação e código;
@@ -271,11 +334,34 @@ Uma evolução do Decision Engine só poderá ser considerada alinhada a esta po
 
 ---
 
-## 11. Conclusão
+## 11. Relação com o Radar Premium
+
+O Radar Premium é o primeiro grande resultado visual futuro do Decision Engine, conforme `PRODUCT_VISION.md` e `BACKLOG.md`.
+
+Ele deverá apresentar informação operacional de forma clara e sofisticada, sem esconder:
+
+- risco;
+- liquidez baixa;
+- dados ausentes;
+- confiança baixa;
+- premissas.
+
+A experiência visual deve reforçar a qualidade da decisão, não substituir o raciocínio técnico.
+
+---
+
+## 12. Conclusão
 
 O FaculdadeMaria é um sistema profissional de apoio à gestão e análise de operações com opções da B3.
 
-Sua inteligência deve ser orientada por disciplina, qualidade, segurança, eficiência de capital e explicabilidade.
+Sua inteligência deve ser orientada por:
+
+- disciplina;
+- qualidade;
+- segurança;
+- eficiência de capital;
+- explicabilidade;
+- experiência Premium.
 
 O Decision Engine é o núcleo analítico do projeto e deverá evoluir de acordo com esta política operacional.
 
