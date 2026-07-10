@@ -1,21 +1,33 @@
-# Arquitetura V4 - FaculdadeMaria / Cortex Invest PRO
+# Arquitetura V4 — FaculdadeMaria / Cortex Invest PRO
 
 ## 1. Status do documento
 
-Este documento descreve a arquitetura oficial atual do projeto FaculdadeMaria após a conclusão e integração da Sprint 1.1-R.
+Este documento descreve a arquitetura oficial atual do projeto FaculdadeMaria após a integração da Sprint 1.1-R e da política operacional oficial.
 
-A documentação da pasta `docs/` é a referência oficial de arquitetura do projeto.
+A pasta `docs/` é a única referência oficial de arquitetura e governança do projeto.
 
-Documentos complementares obrigatórios:
+Documentos oficiais complementares:
 
 - `DECISION_ENGINE_SPEC.md`;
 - `ROADMAP_V5.md`;
+- `ESTRATEGIA_OPERACIONAL.md`;
+- `PRODUCT_VISION.md`;
+- `BACKLOG.md`;
+- `REGRAS_DO_PROJETO.md`;
+- `CHANGELOG_DESENVOLVIMENTO.md`;
 - `SPRINT_01.md`;
 - `SPRINT_01_R.md`;
 - `SPRINT_01_R_ENCERRAMENTO.md`;
-- `ESTRATEGIA_OPERACIONAL.md`.
+- relatórios técnicos de Sprints posteriores.
 
-Antes de qualquer evolução do Decision Engine, `ESTRATEGIA_OPERACIONAL.md` deve ser lido integralmente.
+Antes de qualquer evolução do Decision Engine, devem ser lidos integralmente, no mínimo:
+
+- este documento;
+- `DECISION_ENGINE_SPEC.md`;
+- `ESTRATEGIA_OPERACIONAL.md`;
+- `PRODUCT_VISION.md`;
+- `BACKLOG.md`;
+- `REGRAS_DO_PROJETO.md`.
 
 ---
 
@@ -25,7 +37,7 @@ O FaculdadeMaria é atualmente uma aplicação Flask monolítica para gestão de
 
 A aplicação existente continua centrada em `app.py`, que concentra rotas, acesso a dados, cálculos financeiros e partes do fluxo de apresentação.
 
-Após a Sprint 1.1-R, o projeto também possui um novo pacote independente `engine/`, que representa a fundação oficial do futuro Decision Engine.
+Após a Sprint 1.1-R, o projeto também possui um pacote independente `engine/`, que representa a fundação oficial do novo Decision Engine.
 
 O pacote legado `motor_ia/` permanece preservado, isolado e não deve ser confundido com o novo `engine/`.
 
@@ -44,7 +56,7 @@ flowchart LR
 
 ---
 
-## 3. Estado arquitetural oficial pós-Sprint 1.1-R
+## 3. Estado arquitetural oficial atual
 
 ### 3.1 Aplicação web
 
@@ -183,8 +195,12 @@ A fundação implementada oferece:
 
 O `engine/` ainda não implementa:
 
+- contratos completos de oportunidade;
+- snapshot normalizado de mercado;
 - indicadores técnicos;
 - filtros funcionais;
+- qualidade do ativo;
+- estratégia PUT funcional;
 - score;
 - ranking;
 - scanner;
@@ -194,21 +210,40 @@ O `engine/` ainda não implementa:
 - explicação financeira final;
 - Machine Learning.
 
-Esses itens dependem de Sprints futuras autorizadas.
+Esses itens dependem de Sprints futuras autorizadas e devem respeitar `BACKLOG.md`.
 
 ### 4.3 Política operacional obrigatória
 
 Toda evolução do `engine/` deve respeitar `docs/ESTRATEGIA_OPERACIONAL.md`.
 
-Entre os princípios centrais:
+Princípios centrais:
 
 - o FaculdadeMaria não é um sistema para especulação;
 - o perfil oficial é de venda sistemática de PUT;
 - o exercício não é falha automática;
 - qualidade do ativo e segurança precedem prêmio;
 - preço líquido de aquisição é critério central;
+- eficiência do capital é relevante;
 - explicabilidade é obrigatória;
 - maior prêmio nunca deve ser o principal critério.
+
+### 4.4 Direção de produto
+
+Toda evolução deve respeitar `PRODUCT_VISION.md`.
+
+O primeiro grande resultado visual futuro do Decision Engine é o Radar Premium, mas sua implementação depende das camadas funcionais previstas no backlog.
+
+### 4.5 Backlog oficial
+
+`BACKLOG.md` define:
+
+- itens;
+- prioridades;
+- dependências;
+- caminho crítico;
+- sequência recomendada de Sprints.
+
+Registro em backlog não autoriza implementação.
 
 ---
 
@@ -292,8 +327,17 @@ FaculdadeMaria
 |   |-- versão centralizada
 |   |-- core de orquestração
 |   `-- contrato abstrato de providers
-`-- tests/
-    `-- testes do Decision Engine e isolamento
+|-- tests/
+|   `-- testes do Decision Engine e isolamento
+`-- docs/
+    |-- arquitetura
+    |-- especificação
+    |-- estratégia operacional
+    |-- visão de produto
+    |-- backlog
+    |-- regras
+    |-- changelog
+    `-- relatórios de Sprint
 ```
 
 ---
@@ -309,7 +353,11 @@ FaculdadeMaria
 - deploy previsto;
 - fundação independente do Decision Engine integrada;
 - testes arquiteturais do novo motor;
-- política operacional formalizada.
+- política operacional formalizada;
+- Product Vision oficial;
+- backlog priorizado;
+- regras permanentes consolidadas;
+- changelog de desenvolvimento.
 
 ### Pontos de atenção
 
@@ -320,13 +368,14 @@ FaculdadeMaria
 - dashboard possui partes historicamente estáticas;
 - `motor_ia/` possui inconsistências e permanece legado;
 - o novo `engine/` ainda não está integrado ao Flask;
+- o Radar Premium depende de camadas funcionais ainda não implementadas;
 - documentação futura deve distinguir sempre `engine/` de `motor_ia/`.
 
 ---
 
 ## 9. Arquitetura alvo
 
-A evolução recomendada continua sendo gradual, com separação entre:
+A evolução recomendada continua gradual, com separação entre:
 
 - `routes`: entrada e saída HTTP;
 - `services`: regras de aplicação;
@@ -385,7 +434,33 @@ A integração entre Flask e Decision Engine deverá ocorrer somente por camada 
 
 ---
 
-## 10. Regras permanentes de evolução
+## 10. Caminho crítico até o Radar Premium
+
+A ordem preferencial está detalhada em `BACKLOG.md`.
+
+Resumo arquitetural:
+
+1. contratos completos de oportunidade;
+2. métricas operacionais de PUT;
+3. normalização de dados;
+4. indicadores técnicos puros;
+5. qualidade do ativo;
+6. filtros de segurança;
+7. avaliador de venda de PUT;
+8. Score IA explicável;
+9. ranking ajustado ao perfil;
+10. serviço de Radar;
+11. Radar Premium v1.
+
+Nenhuma dessas etapas está autorizada apenas por constar neste documento.
+
+---
+
+## 11. Regras permanentes de evolução
+
+As regras completas estão em `REGRAS_DO_PROJETO.md`.
+
+Resumo obrigatório:
 
 1. Ler integralmente `docs/` antes de implementar.
 2. Interromper diante de divergência entre documentação e código.
@@ -397,12 +472,14 @@ A integração entre Flask e Decision Engine deverá ocorrer somente por camada 
 8. Atualizar documentação necessária.
 9. Apresentar relatório técnico.
 10. Fazer merge somente após autorização explícita do Product Owner.
+11. Nunca iniciar nova Sprint sem autorização.
+12. Registrar novas ideias relevantes no backlog.
 
 ---
 
-## 11. Conclusão
+## 12. Conclusão
 
-O FaculdadeMaria permanece funcionalmente baseado no monólito Flask atual, mas agora possui uma fundação independente e oficial para o novo Decision Engine.
+O FaculdadeMaria permanece funcionalmente baseado no monólito Flask atual, mas possui uma fundação independente e oficial para o novo Decision Engine.
 
 O `engine/` é o caminho arquitetural oficial para a evolução analítica futura.
 
@@ -414,6 +491,9 @@ Toda evolução do Decision Engine deverá respeitar simultaneamente:
 - `DECISION_ENGINE_SPEC.md`;
 - `ROADMAP_V5.md`;
 - `ESTRATEGIA_OPERACIONAL.md`;
-- a governança oficial definida pelo Product Owner.
+- `PRODUCT_VISION.md`;
+- `BACKLOG.md`;
+- `REGRAS_DO_PROJETO.md`;
+- decisões autorizadas do Product Owner.
 
-O objetivo é evoluir com segurança, baixo acoplamento, explicabilidade e preservação integral das funcionalidades existentes.
+O objetivo é evoluir com segurança, baixo acoplamento, explicabilidade, experiência Premium e preservação integral das funcionalidades existentes.
