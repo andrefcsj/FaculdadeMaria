@@ -1,6 +1,6 @@
 from datetime import date
 
-from services.radar_service import build_demo_radar
+from services.radar_service import build_demo_radar, build_radar, build_radar_from_operations
 
 
 def test_demo_radar_returns_ranked_cards():
@@ -28,3 +28,37 @@ def test_demo_radar_uses_four_percent_target_context():
 
     assert cards[0].gross_roi_pct == "4,07%"
     assert cards[1].gross_roi_pct == "4,00%"
+
+
+def test_real_operations_build_radar_cards():
+    operations = [
+        {
+            "ID": "1",
+            "Ativo": "BBASQ270",
+            "ticker": "BBAS3",
+            "Tipo": "PUT",
+            "Status": "Aberta",
+            "Contratos": "1",
+            "Strike": "27.00",
+            "Premio_opcao": "1.10",
+            "Custos": "0",
+            "IRRF": "0",
+            "Vencimento": "2026-08-14",
+            "Cotacao_atual": "28.50",
+        }
+    ]
+
+    cards = build_radar_from_operations(operations, date(2026, 7, 10))
+
+    assert len(cards) == 1
+    assert cards[0].source == "real"
+    assert cards[0].asset == "BBAS3"
+    assert cards[0].option_code == "BBASQ270"
+    assert cards[0].gross_roi_pct == "4,07%"
+
+
+def test_build_radar_falls_back_to_demo_when_real_rows_are_incomplete():
+    cards = build_radar([{"Ativo": "PETRQ300", "Tipo": "PUT", "Status": "Aberta"}], date(2026, 7, 10))
+
+    assert len(cards) == 3
+    assert {card.source for card in cards} == {"demo"}

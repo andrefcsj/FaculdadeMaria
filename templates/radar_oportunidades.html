@@ -3,18 +3,19 @@
 {% block content %}
 <style>
 .radar-hero{display:flex;justify-content:space-between;gap:22px;align-items:flex-start;margin-bottom:24px;padding:26px;border:1px solid rgba(59,130,246,.28);border-radius:24px;background:linear-gradient(135deg,rgba(30,64,175,.28),rgba(15,23,42,.96));box-shadow:0 24px 60px rgba(0,0,0,.32)}
-.radar-hero h1{font-size:34px;margin:0 0 8px}.radar-hero p{color:#b8c6d8;margin:0;max-width:760px}.radar-badge{padding:10px 14px;border-radius:999px;border:1px solid rgba(45,212,191,.45);background:rgba(13,148,136,.16);font-weight:800;color:#7dd3fc;white-space:nowrap}.radar-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.radar-card{border:1px solid #24364c;border-radius:22px;background:linear-gradient(180deg,#111b2f,#0c1525);padding:20px;box-shadow:0 18px 42px rgba(0,0,0,.3)}.radar-card.eligible{border-color:rgba(34,197,94,.48)}.radar-card.watchlist{border-color:rgba(250,204,21,.50)}.radar-card.discarded{border-color:rgba(248,113,113,.48);opacity:.86}.radar-top{display:flex;justify-content:space-between;gap:12px;align-items:center}.radar-rank{width:38px;height:38px;border-radius:13px;background:#1e88ff;display:grid;place-items:center;font-weight:950}.radar-status{font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.7px;color:#a7f3d0}.watchlist .radar-status{color:#fde68a}.discarded .radar-status{color:#fecaca}.radar-asset{font-size:28px;font-weight:950;margin-top:16px}.radar-option{color:#93c5fd;font-weight:800;margin-top:2px}.radar-score{font-size:42px;font-weight:950;margin:18px 0 0}.radar-score small{font-size:14px;color:#9ca3af}.radar-reason{min-height:74px;color:#dbeafe;margin:14px 0 18px;line-height:1.45}.radar-kpis{display:grid;grid-template-columns:1fr 1fr;gap:8px}.radar-kpis div{border:1px solid rgba(148,163,184,.18);border-radius:14px;padding:10px;background:rgba(15,23,42,.5)}.radar-kpis small{display:block;color:#94a3b8;font-size:11px;text-transform:uppercase;font-weight:800}.radar-kpis b{display:block;margin-top:5px}.radar-note{margin-top:18px;border:1px solid rgba(148,163,184,.18);border-radius:18px;padding:16px;background:rgba(15,23,42,.45);color:#cbd5e1}.radar-actions{margin-top:18px;display:flex;gap:10px;flex-wrap:wrap}.radar-actions .button{display:inline-block;margin:0}.radar-table{margin-top:18px}.radar-table th,.radar-table td{font-size:13px}.pill{display:inline-block;padding:5px 9px;border-radius:999px;font-size:12px;font-weight:900}.pill-ok{background:rgba(34,197,94,.14);color:#86efac}.pill-watch{background:rgba(250,204,21,.14);color:#fde68a}.pill-out{background:rgba(248,113,113,.14);color:#fecaca}@media(max-width:1100px){.radar-grid{grid-template-columns:1fr}.radar-hero{display:block}.radar-badge{display:inline-block;margin-top:14px}}
+.radar-hero h1{font-size:34px;margin:0 0 8px}.radar-hero p{color:#b8c6d8;margin:0;max-width:760px}.radar-badge{padding:10px 14px;border-radius:999px;border:1px solid rgba(45,212,191,.45);background:rgba(13,148,136,.16);font-weight:800;color:#7dd3fc;white-space:nowrap}.radar-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.radar-card{border:1px solid #24364c;border-radius:22px;background:linear-gradient(180deg,#111b2f,#0c1525);padding:20px;box-shadow:0 18px 42px rgba(0,0,0,.3)}.radar-card.eligible{border-color:rgba(34,197,94,.48)}.radar-card.watchlist{border-color:rgba(250,204,21,.50)}.radar-card.discarded{border-color:rgba(248,113,113,.48);opacity:.86}.radar-card.real{box-shadow:0 18px 42px rgba(14,165,233,.18)}.radar-top{display:flex;justify-content:space-between;gap:12px;align-items:center}.radar-rank{width:38px;height:38px;border-radius:13px;background:#1e88ff;display:grid;place-items:center;font-weight:950}.radar-status{font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.7px;color:#a7f3d0}.watchlist .radar-status{color:#fde68a}.discarded .radar-status{color:#fecaca}.radar-asset{font-size:28px;font-weight:950;margin-top:16px}.radar-option{color:#93c5fd;font-weight:800;margin-top:2px}.radar-score{font-size:42px;font-weight:950;margin:18px 0 0}.radar-score small{font-size:14px;color:#9ca3af}.radar-reason{min-height:74px;color:#dbeafe;margin:14px 0 18px;line-height:1.45}.radar-kpis{display:grid;grid-template-columns:1fr 1fr;gap:8px}.radar-kpis div{border:1px solid rgba(148,163,184,.18);border-radius:14px;padding:10px;background:rgba(15,23,42,.5)}.radar-kpis small{display:block;color:#94a3b8;font-size:11px;text-transform:uppercase;font-weight:800}.radar-kpis b{display:block;margin-top:5px}.radar-note{margin-top:18px;border:1px solid rgba(148,163,184,.18);border-radius:18px;padding:16px;background:rgba(15,23,42,.45);color:#cbd5e1}.radar-actions{margin-top:18px;display:flex;gap:10px;flex-wrap:wrap}.radar-actions .button{display:inline-block;margin:0}.radar-table{margin-top:18px}.radar-table th,.radar-table td{font-size:13px}.pill{display:inline-block;padding:5px 9px;border-radius:999px;font-size:12px;font-weight:900}.pill-ok{background:rgba(34,197,94,.14);color:#86efac}.pill-watch{background:rgba(250,204,21,.14);color:#fde68a}.pill-out{background:rgba(248,113,113,.14);color:#fecaca}.source-chip{display:inline-block;margin-top:12px;padding:7px 10px;border-radius:999px;background:rgba(59,130,246,.16);border:1px solid rgba(96,165,250,.28);color:#bfdbfe;font-weight:800;font-size:12px}@media(max-width:1100px){.radar-grid{grid-template-columns:1fr}.radar-hero{display:block}.radar-badge{display:inline-block;margin-top:14px}}
 </style>
 
 <div class="radar-hero">
   <div>
     <h1>🔥 Radar Premium</h1>
-    <p>Primeira tela visual do novo motor. Esta prévia usa dados demonstrativos/controlados para mostrar como o sistema vai ranquear PUTs com Score IA, ROI alvo de 4%, preço líquido e resumo curto do motivo da operação.</p>
+    <p id="radarIntro">Radar visual do novo motor. Quando existirem PUTs abertas cadastradas, esta tela passa a mostrar as operações reais; se não houver dados suficientes, mantém a prévia demonstrativa.</p>
+    <span class="source-chip" id="radarSource">Fonte: dados demonstrativos</span>
   </div>
-  <div class="radar-badge">Motor IA ativo • Prévia visual</div>
+  <div class="radar-badge" id="radarBadge">Motor IA ativo • Prévia visual</div>
 </div>
 
-<div class="radar-grid">
+<div class="radar-grid" id="radarCards">
   <article class="radar-card eligible">
     <div class="radar-top"><div class="radar-rank">#1</div><div class="radar-status">Operação elegível</div></div>
     <div class="radar-asset">BBAS3</div>
@@ -64,7 +65,7 @@
     <thead>
       <tr><th>#</th><th>Ativo</th><th>Opção</th><th>Status</th><th>Score</th><th>ROI</th><th>Resumo</th></tr>
     </thead>
-    <tbody>
+    <tbody id="radarTableBody">
       <tr><td>1</td><td>BBAS3</td><td>BBASQ270</td><td><span class="pill pill-ok">Elegível</span></td><td>96</td><td>4,07%</td><td>Bom ativo, filtros aprovados e ROI acima da meta de 4%.</td></tr>
       <tr><td>2</td><td>ITSA4</td><td>ITSAQ100</td><td><span class="pill pill-watch">Observação</span></td><td>90</td><td>4,00%</td><td>Operação interessante, mas qualidade do ativo pede atenção.</td></tr>
       <tr><td>3</td><td>ALTO3</td><td>ALTOQ150</td><td><span class="pill pill-out">Descartada</span></td><td>--</td><td>8,00%</td><td>Ativo não aceito para exercício; prêmio alto não salva a operação.</td></tr>
@@ -72,7 +73,98 @@
   </table>
 </div>
 
-<div class="radar-note">
-  <b>Importante:</b> esta é a primeira tela visual com dados demonstrativos. A próxima etapa será ligar esse Radar às operações reais e depois ao provedor de mercado.
+<div class="radar-note" id="radarNote">
+  <b>Importante:</b> esta é a primeira tela visual. Ela usa operações reais quando o cadastro possui PUTs abertas com dados mínimos; caso contrário, mantém dados demonstrativos.
 </div>
+
+<script>
+(function(){
+  function parsePercent(txt){
+    if(!txt) return 0;
+    return Number(String(txt).replace('%','').replace('.', '').replace(',', '.').trim()) || 0;
+  }
+  function onlyNumber(txt){
+    return Number(String(txt || '').replace('R$','').replace(/\./g,'').replace(',', '.').replace(/[^0-9.-]/g,'')) || 0;
+  }
+  function statusFromRoi(roi){
+    if(roi >= 4) return {cls:'eligible', label:'Operação real', pill:'pill-ok', pillText:'Real'};
+    if(roi > 0) return {cls:'watchlist', label:'Abaixo da meta', pill:'pill-watch', pillText:'Observação'};
+    return {cls:'discarded', label:'Sem ROI válido', pill:'pill-out', pillText:'Atenção'};
+  }
+  function scoreFromRoi(roi){
+    if(roi <= 0) return '--';
+    return Math.min(99, Math.round(55 + (roi * 8)));
+  }
+  function reasonFor(op){
+    if(op.roi >= 4){
+      return `Operação real cadastrada. ROI ${op.roiText} atingiu a meta de 4%; conferir qualidade do ativo antes da execução.`;
+    }
+    return `Operação real cadastrada. ROI ${op.roiText} ainda abaixo da meta de 4%; manter em observação.`;
+  }
+  function render(ops){
+    const cards = document.getElementById('radarCards');
+    const body = document.getElementById('radarTableBody');
+    cards.innerHTML = '';
+    body.innerHTML = '';
+    ops.forEach((op, index) => {
+      const st = statusFromRoi(op.roi);
+      const score = scoreFromRoi(op.roi);
+      const reason = reasonFor(op);
+      cards.insertAdjacentHTML('beforeend', `
+        <article class="radar-card real ${st.cls}">
+          <div class="radar-top"><div class="radar-rank">#${index+1}</div><div class="radar-status">${st.label}</div></div>
+          <div class="radar-asset">${op.asset}</div>
+          <div class="radar-option">${op.option}</div>
+          <div class="radar-score">${score}<small>/100</small></div>
+          <p class="radar-reason">${reason}</p>
+          <div class="radar-kpis">
+            <div><small>Preço líquido</small><b>${op.netPrice}</b></div>
+            <div><small>ROI</small><b>${op.roiText}</b></div>
+            <div><small>Capital</small><b>${op.capital}</b></div>
+            <div><small>DTE</small><b>${op.dte} dias</b></div>
+          </div>
+        </article>`);
+      body.insertAdjacentHTML('beforeend', `<tr><td>${index+1}</td><td>${op.asset}</td><td>${op.option}</td><td><span class="pill ${st.pill}">${st.pillText}</span></td><td>${score}</td><td>${op.roiText}</td><td>${reason}</td></tr>`);
+    });
+    document.getElementById('radarSource').textContent = 'Fonte: operações reais cadastradas';
+    document.getElementById('radarBadge').textContent = 'Radar conectado • Operações reais';
+    document.getElementById('radarIntro').textContent = 'Radar conectado às operações abertas cadastradas no sistema. Esta versão usa os dados reais do cadastro e destaca rapidamente quais PUTs atingem a meta de ROI de 4%.';
+    document.getElementById('radarNote').innerHTML = '<b>Importante:</b> agora o Radar está lendo as operações reais abertas. A próxima etapa será aplicar o Score IA completo no servidor e conectar provedor de mercado.';
+  }
+  async function carregarReais(){
+    try{
+      const resp = await fetch('/operacoes-abertas', {cache:'no-store'});
+      if(!resp.ok) return;
+      const html = await resp.text();
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      const rows = Array.from(doc.querySelectorAll('#tabelaOperacoes tbody tr'));
+      const ops = rows.map(row => {
+        const c = row.querySelectorAll('td');
+        if(c.length < 12) return null;
+        const tipo = c[5].innerText.trim().toUpperCase();
+        if(tipo !== 'PUT') return null;
+        const strike = onlyNumber(c[4].innerText);
+        const premio = onlyNumber(c[10].innerText);
+        const netPrice = strike && premio ? `R$ ${(strike - premio).toFixed(2).replace('.', ',')}` : '--';
+        return {
+          asset: c[1].innerText.trim() || '--',
+          option: c[3].innerText.trim() || '--',
+          netPrice,
+          capital: c[9].innerText.trim() || '--',
+          dte: c[8].innerText.trim() || '--',
+          roiText: c[11].innerText.trim() || '0,00%',
+          roi: parsePercent(c[11].innerText)
+        };
+      }).filter(Boolean);
+      if(ops.length){
+        ops.sort((a,b) => b.roi - a.roi);
+        render(ops.slice(0, 6));
+      }
+    }catch(e){
+      // Mantém a prévia demonstrativa se a leitura das operações reais falhar.
+    }
+  }
+  carregarReais();
+})();
+</script>
 {% endblock %}
