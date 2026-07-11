@@ -161,7 +161,7 @@ def write_csv(path: Path, rows: List[Dict[str, str]], fieldnames: List[str]) -> 
 
 
 def load_config() -> Dict[str, float]:
-    cfg = {"Capital total inicial": 4000.0, "Aliquota IR opcoes": 0.15, "Meta ROI mensal": 0.01, "Tamanho contrato opcoes": 100.0}
+    cfg = {"Capital total inicial": 4000.0, "Aliquota IR opcoes": 0.15, "Meta ROI mensal": 0.04, "Tamanho contrato opcoes": 100.0}
     for row in read_csv(CONFIG):
         cfg[row.get("Parametro", "")] = fnum(row.get("Valor"), cfg.get(row.get("Parametro", ""), 0))
     return cfg
@@ -1303,7 +1303,7 @@ def sobre():
 def salvar_configuracoes():
     rows = [
         {"Parametro":"Capital total inicial","Valor":request.form.get("capital_inicial","4000")},
-        {"Parametro":"Meta ROI mensal","Valor":str(float(request.form.get("meta_roi","5"))/100)},
+        {"Parametro":"Meta ROI mensal","Valor":str(float(request.form.get("meta_roi","4"))/100)},
         {"Parametro":"Aliquota IR opcoes","Valor":str(float(request.form.get("aliquota_ir","15"))/100)},
         {"Parametro":"Tamanho contrato opcoes","Valor":request.form.get("tamanho_contrato","100")},
     ]
@@ -1314,7 +1314,7 @@ def salvar_configuracoes():
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
 
-# TODO v2.7: página Op. Fechadas e velocímetro meta 5%
+# TODO v2.7: página Op. Fechadas e velocímetro meta 4%
 
 
 # v2.9 - arquitetura simplificada
