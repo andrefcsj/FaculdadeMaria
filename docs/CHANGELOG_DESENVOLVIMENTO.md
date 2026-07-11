@@ -35,9 +35,12 @@ Mudanças ainda em branch podem aparecer como `Em revisão`.
 
 ## 2026-07-11 — Ajuste do Dashboard ao mockup aprovado
 
-Status: `Em revisão`
+Status: `Integrado`
 
 Branch: `agent/dashboard-premium-mockup-fiel`
+
+Pull Request: `#50`  
+Commit de merge: `8879a3d4e8f9fc2284ecc1217815e51a73a616f6`
 
 ### Changed
 
