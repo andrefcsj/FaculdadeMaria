@@ -17,6 +17,7 @@ from services.market_import_service import (
     save_market_import,
 )
 from services.radar_service import build_radar_from_market
+from services.open_operations_extension import register as register_open_operations
 
 app = legacy.app
 RADAR_IMPORTED = legacy.DATA / "market" / "imported_options.json"
@@ -135,6 +136,9 @@ def rolagem_inteligente():
         except Exception as exc:
             error = str(exc)
     return render_template("rolagem_inteligente.html", operations=operations, analysis=analysis, error=error, selected=selected)
+
+
+register_open_operations(app, legacy)
 
 
 if __name__ == "__main__":

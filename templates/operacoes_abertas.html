@@ -1,72 +1,16 @@
-{% block head %}<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">{% endblock %}
 {% extends 'base.html' %}
+{% block head %}<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">{% endblock %}
 {% block content %}
-<div class="hero">
-  <div>
-    <h1>📂 Operações Abertas</h1>
-    <p>Central premium das operações em andamento</p>
-  </div>
-  <input id="buscaAtivo" placeholder="🔍 Buscar ativo ou opção..." class="busca-op">
-</div>
-
-<div class="panel">
-<table class="premium-ops" id="tabelaOperacoes">
-<thead>
-<tr>
-<th></th>
-<th>Ação</th>
-<th>Cotação Atual</th>
-<th>Opção</th>
-<th>Strike</th>
-<th>Tipo</th>
-<th>Estratégia</th>
-<th>Vencimento</th>
-<th>Dias</th>
-<th>Capital</th>
-<th>Prêmio</th>
-<th>ROI</th>
-<th>Ações</th>
-</tr>
-</thead>
-<tbody>
-{% for o in abertas %}
-<tr>
-<td>
-{% if o.logo_url %}
-<img class="logo-acao" src="{{ o.logo_url }}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
-{% endif %}
-<div class="acao-icon fallback-icon" style="display:none">{{ o.ticker[:2] if o.ticker else '📈' }}</div>
-</td>
-<td class='acao-nome col-acao'>{{ o.ticker }}</td>
-<td>{% if o.cotacao_atual %}R$ {{ '%.2f'|format(o.cotacao_atual)|replace('.', ',') }}{% else %}--{% endif %}</td>
-<td class='opcao-nome col-opcao'>{{ o.Ativo }}</td>
-<td>R$ {{ '%.2f'|format(o.Strike_n)|replace('.', ',') }}</td>
-<td><span class="badge-mini {% if o.Tipo == 'PUT' %}put{% else %}call{% endif %}">{{ o.Tipo }}</span></td>
-<td>{{ o['Estratégia'] }}</td>
-<td>{{ o.Vencimento_fmt }}</td>
-<td class='contratos-cor col-contratos'>{{ o.Dias }}</td>
-<td>R$ {{ '%.2f'|format(o.Capital)|replace('.', ',') }}</td>
-<td>R$ {{ '%.2f'|format(o.Premio_liquido)|replace('.', ',') }}</td>
-<td class='roi-cor col-roi'>{{ '%.2f'|format(o.ROI)|replace('.', ',') }}%</td>
-<td class="actions">
-<a class="btn-action edit" href="/editar/{{ o.ID }}" title="Editar"><i class="fas fa-pen"></i></a>
-<a class="btn-action close" href="/fechar/{{ o.ID }}" title="Fechar"><i class="fas fa-lock"></i></a>
-<a class="btn-action delete" href="/excluir/{{ o.ID }}" title="Excluir"><i class="fas fa-trash"></i></a>
-</td>
-</tr>
-{% endfor %}
-</tbody>
-<tfoot>
-<tr class="totais-row">
-<td colspan="7"><strong>Totais</strong></td>
-<td><strong>R$ {{ "%.2f"|format(abertas|sum(attribute="Capital"))|replace(".", ",") }}</strong></td>
-<td><strong>R$ {{ "%.2f"|format(abertas|sum(attribute="Premio_liquido"))|replace(".", ",") }}</strong></td>
-<td><strong>{{ "%.2f"|format((abertas|sum(attribute="ROI")) / (abertas|length if abertas else 1))|replace(".", ",") }}%</strong></td>
-<td></td>
-</tr>
-</tfoot>
-</table>
-</div>
-
+<style>
+.ops-page{color:#172033}.ops-page .hero{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:18px}.ops-page .hero h1{margin:0;color:#111827}.ops-page .hero p{margin:6px 0 0;color:#6b7280}.busca-op{max-width:320px;background:#fff!important;color:#111827!important;border:1px solid #dbe3ef!important;border-radius:12px!important;padding:12px 14px!important}.ops-panel{background:#fff;border:1px solid #e1e8f2;border-radius:20px;box-shadow:0 12px 35px rgba(23,41,75,.08);overflow:auto}.premium-ops{width:100%;min-width:1450px;border-collapse:collapse}.premium-ops th{padding:14px 12px;background:#f7f9fc;color:#64748b;font-size:11px;text-transform:uppercase;letter-spacing:.55px;text-align:left;border-bottom:1px solid #e5ebf3}.premium-ops td{padding:14px 12px;border-bottom:1px solid #edf1f6;color:#1f2937;vertical-align:middle}.premium-ops tbody tr:hover{background:#f8fbff}.logo-acao,.acao-icon{width:38px;height:38px;border-radius:50%;object-fit:contain;background:#fff;border:1px solid #e5e7eb}.acao-icon{align-items:center;justify-content:center;font-weight:900;color:#2563eb}.acao-nome,.opcao-nome{font-weight:850}.badge-mini,.prob-badge{display:inline-flex;align-items:center;justify-content:center;border-radius:999px;padding:6px 9px;font-size:11px;font-weight:900}.badge-mini.put{background:#fee2e2;color:#dc2626}.badge-mini.call{background:#dbeafe;color:#1d4ed8}.prob-badge.high{background:#fee2e2;color:#b91c1c}.prob-badge.mid{background:#fef3c7;color:#b45309}.prob-badge.low{background:#dcfce7;color:#15803d}.prob-badge.unavailable{background:#eef2f7;color:#64748b}.prob-wrap small{display:block;margin-top:4px;color:#94a3b8;font-size:10px}.actions{white-space:nowrap}.btn-action{display:inline-grid;place-items:center;width:34px;height:34px;margin-right:5px;border-radius:10px;text-decoration:none;border:1px solid transparent;cursor:pointer}.btn-action.edit{background:#eaf2ff;color:#2563eb;border-color:#c9dcff}.btn-action.close{background:#ecfdf5;color:#059669;border-color:#bbf7d0}.btn-action.delete{background:#fff1f2;color:#e11d48;border-color:#fecdd3}.totais-row td{background:#fbfcfe;font-weight:800}
+.edit-modal[hidden]{display:none}.edit-modal{position:fixed;inset:0;z-index:9999;display:grid;place-items:center;padding:24px}.edit-modal__backdrop{position:absolute;inset:0;background:rgba(15,23,42,.58);backdrop-filter:blur(7px)}.edit-modal__dialog{position:relative;width:min(760px,96vw);max-height:92vh;overflow:auto;background:#fff;border:1px solid #e2e8f0;border-radius:24px;box-shadow:0 35px 90px rgba(15,23,42,.28)}.edit-modal__header{display:flex;align-items:center;justify-content:space-between;padding:20px 22px;border-bottom:1px solid #e8edf4}.edit-title{display:flex;gap:12px;align-items:center}.edit-title__icon{width:44px;height:44px;border-radius:14px;background:#dcfce7;color:#16a34a;display:grid;place-items:center;font-size:20px}.edit-title h2{margin:0;color:#111827;font-size:20px}.edit-title p{margin:4px 0 0;color:#64748b;font-size:13px}.modal-close{width:38px;height:38px;border:1px solid #dbe3ee;border-radius:11px;background:#fff;color:#64748b;cursor:pointer}.edit-modal__body{padding:22px}.toggle-row,.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.toggle-row{margin-bottom:18px}.segmented{display:grid;grid-template-columns:1fr 1fr;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:12px;padding:4px}.segmented input{display:none}.segmented label{margin:0!important;padding:10px 12px!important;text-align:center;border-radius:9px;color:#64748b!important;font-weight:850!important;cursor:pointer}.segmented input:checked+label{background:#fff;color:#2563eb!important;box-shadow:0 3px 10px rgba(15,23,42,.08)}.segmented.type input[value="PUT"]:checked+label{color:#dc2626!important;background:#fff1f2}.form-field label{display:block!important;margin:0 0 7px!important;color:#64748b!important;font-size:11px!important;font-weight:900!important;text-transform:uppercase;letter-spacing:.7px}.form-field input,.form-field select{width:100%;background:#fff!important;color:#111827!important;border:1px solid #d9e2ee!important;border-radius:12px!important;padding:12px 13px!important}.form-field small{display:block;margin-top:6px;color:#94a3b8}.edit-summary{display:flex;justify-content:space-between;gap:18px;align-items:center;margin-top:20px;padding:16px;border:1px solid #dbe5f0;border-radius:16px;background:#f8fafc}.edit-summary strong{display:block;color:#111827}.edit-summary span{color:#64748b;font-size:12px}.edit-summary__value{text-align:right}.edit-summary__value b{display:block;color:#16a34a;font-size:24px}.edit-warning{margin-top:16px;padding:14px 15px;border:1px solid #fed7aa;border-radius:14px;background:#fff7ed;color:#9a3412;font-size:13px}.edit-error{display:none;margin-top:14px;padding:12px 14px;border-radius:12px;background:#fef2f2;color:#b91c1c;border:1px solid #fecaca}.edit-modal__footer{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:17px 22px;border-top:1px solid #e8edf4}.footer-actions{display:flex;gap:10px}.btn-secondary,.btn-primary{border-radius:12px;padding:11px 17px;font-weight:900;cursor:pointer}.btn-secondary{background:#fff;border:1px solid #dbe3ee;color:#475569}.btn-primary{background:linear-gradient(180deg,#22c55e,#16a34a);border:1px solid #16a34a;color:#fff}
+@media(max-width:760px){.ops-page .hero{display:block}.busca-op{margin-top:14px;max-width:none}.toggle-row,.form-grid{grid-template-columns:1fr}.edit-modal{padding:10px}.edit-summary{display:block}.edit-summary__value{text-align:left;margin-top:10px}}
+</style>
+<div class="ops-page">
+<div class="hero"><div><h1>📂 Operações Abertas</h1><p>Central premium das operações em andamento</p></div><input id="buscaAtivo" placeholder="🔍 Buscar ativo ou opção..." class="busca-op"></div>
+<div class="ops-panel"><table class="premium-ops" id="tabelaOperacoes"><thead><tr><th></th><th>Ação</th><th>Cotação Atual</th><th>Opção</th><th>Strike</th><th>Tipo</th><th>Estratégia</th><th>Vencimento</th><th>Dias</th><th>Prob. de Exercício</th><th>Capital</th><th>Prêmio</th><th>ROI</th><th>Ações</th></tr></thead><tbody>
+{% for o in abertas %}<tr data-operation-id="{{ o.ID }}"><td>{% if o.logo_url %}<img class="logo-acao" src="{{ o.logo_url }}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">{% endif %}<div class="acao-icon fallback-icon" style="display:none">{{ o.ticker[:2] if o.ticker else '📈' }}</div></td><td class="acao-nome">{{ o.ticker }}</td><td>{% if o.cotacao_atual %}R$ {{ '%.2f'|format(o.cotacao_atual)|replace('.', ',') }}{% else %}--{% endif %}</td><td class="opcao-nome">{{ o.Ativo }}</td><td>R$ {{ '%.2f'|format(o.Strike_n)|replace('.', ',') }}</td><td><span class="badge-mini {% if o.Tipo == 'PUT' %}put{% else %}call{% endif %}">{{ o.Tipo }}</span></td><td>{{ o['Estratégia'] }}</td><td>{{ o.Vencimento_fmt }}</td><td>{{ o.Dias }}</td><td class="prob-wrap" title="{{ o.exercise_probability_tooltip }}"><span class="prob-badge {{ o.exercise_probability_class }}">{{ o.exercise_probability }}</span><small>{{ o.exercise_probability_label }}</small></td><td>R$ {{ '%.2f'|format(o.Capital)|replace('.', ',') }}</td><td>R$ {{ '%.2f'|format(o.Premio_liquido)|replace('.', ',') }}</td><td>{{ '%.2f'|format(o.ROI)|replace('.', ',') }}%</td><td class="actions"><button class="btn-action edit" type="button" data-edit-id="{{ o.ID }}" title="Editar"><i class="fas fa-pen"></i></button><a class="btn-action close" href="/fechar/{{ o.ID }}"><i class="fas fa-lock"></i></a><a class="btn-action delete" href="/excluir/{{ o.ID }}"><i class="fas fa-trash"></i></a></td></tr>{% endfor %}
+</tbody><tfoot><tr class="totais-row"><td colspan="10"><strong>Totais</strong></td><td><strong>R$ {{ '%.2f'|format(abertas|sum(attribute='Capital'))|replace('.', ',') }}</strong></td><td><strong>R$ {{ '%.2f'|format(abertas|sum(attribute='Premio_liquido'))|replace('.', ',') }}</strong></td><td><strong>{{ '%.2f'|format((abertas|sum(attribute='ROI'))/(abertas|length if abertas else 1))|replace('.', ',') }}%</strong></td><td></td></tr></tfoot></table></div></div>
+<div class="edit-modal" id="editOperationModal" hidden aria-hidden="true"><div class="edit-modal__backdrop" data-modal-close></div><section class="edit-modal__dialog" role="dialog" aria-modal="true"><header class="edit-modal__header"><div class="edit-title"><div class="edit-title__icon"><i class="fas fa-pen"></i></div><div><h2>Editar Opção</h2><p>Atualize os dados da posição sem sair desta página</p></div></div><button class="modal-close" type="button" data-modal-close><i class="fas fa-xmark"></i></button></header><form id="editOperationForm"><div class="edit-modal__body"><input type="hidden" id="editId"><div class="toggle-row"><div><div class="form-field"><label>Operação</label></div><div class="segmented"><input id="strategyVenda" type="radio" name="Estrategia" value="Venda"><label for="strategyVenda">↓ Lançada</label><input id="strategyCompra" type="radio" name="Estrategia" value="Compra"><label for="strategyCompra">↑ Comprada</label></div></div><div><div class="form-field"><label>Tipo</label></div><div class="segmented type"><input id="typeCall" type="radio" name="Tipo" value="CALL"><label for="typeCall">CALL</label><input id="typePut" type="radio" name="Tipo" value="PUT"><label for="typePut">PUT</label></div></div></div><div class="form-grid"><div class="form-field"><label>Ativo subjacente</label><input id="editUnderlying" readonly></div><div class="form-field"><label>Código da opção</label><input id="editAtivo" required></div><div class="form-field"><label>Strike (R$)</label><input id="editStrike" required></div><div class="form-field"><label>Quantidade</label><input id="editContratos" required></div><div class="form-field"><label>Prêmio unitário (R$)</label><input id="editPremio" required><small id="premiumTotal"></small></div><div class="form-field"><label>Vencimento</label><input id="editVencimento" type="date" required></div><div class="form-field"><label>Cotação atual (R$)</label><input id="editCotacao"></div><div class="form-field"><label>Status</label><select id="editStatus"><option>Aberta</option><option>Encerrada</option></select></div><div class="form-field"><label>Custos (R$)</label><input id="editCustos"></div><div class="form-field"><label>IRRF (R$)</label><input id="editIrrf"></div></div><div class="edit-summary"><div><strong id="summaryCode">Opção</strong><span id="summaryDetails">Dados da posição</span></div><div class="edit-summary__value"><span>Prêmio bruto estimado</span><b id="summaryPremium">R$ 0,00</b></div></div><div class="edit-warning"><strong>Atenção:</strong> a venda descoberta pode exigir capital ou margem para eventual exercício.</div><div class="edit-error" id="editError"></div></div><footer class="edit-modal__footer"><small>Editando posição existente</small><div class="footer-actions"><button class="btn-secondary" type="button" data-modal-close>Cancelar</button><button class="btn-primary" id="saveOperationButton" type="submit">Salvar alterações</button></div></footer></form></section></div>
 <script src="{{ url_for('static', filename='op_abertas.js') }}"></script>
 {% endblock %}
