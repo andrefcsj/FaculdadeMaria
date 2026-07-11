@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% block title %}Rolagem Inteligente{% endblock %}
+{% block content %}
+<style>
+.roll-page{color:#eef6ff}.roll-hero,.roll-panel,.roll-result{border:1px solid rgba(100,150,210,.28);border-radius:22px;background:linear-gradient(155deg,rgba(18,32,54,.98),rgba(7,14,26,.98));box-shadow:0 20px 50px rgba(0,0,0,.35)}
+.roll-hero{padding:24px 26px;margin-bottom:18px}.roll-hero h1{margin:0 0 8px;color:#fff}.roll-hero p{margin:0;color:#bfd0e6;line-height:1.5}.roll-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:18px}.roll-panel,.roll-result{padding:22px}.roll-panel h2,.roll-result h2{margin-top:0}.roll-form{display:grid;grid-template-columns:1fr 1fr;gap:12px}.roll-form .full{grid-column:1/-1}.roll-form label{display:block;color:#dbeafe;font-size:12px;font-weight:900;margin-bottom:6px}.roll-form input,.roll-form select{width:100%;border:1px solid #35506f;border-radius:11px;background:#07111f;color:#fff;padding:11px 12px}.roll-btn{grid-column:1/-1;border:1px solid #4c9aff;border-radius:12px;background:linear-gradient(180deg,#1686ff,#0754bc);color:#fff;padding:13px;font-weight:950;cursor:pointer}.roll-error{margin-bottom:15px;padding:12px;border:1px solid #ef4444;border-radius:12px;background:rgba(127,29,29,.3);color:#fecaca}.roll-empty{color:#9fb3cc}.roll-badge{display:inline-block;padding:7px 12px;border-radius:999px;background:#1d4ed8;color:#fff;font-weight:950}.roll-result.roll .roll-badge{background:#15803d}.roll-result.close .roll-badge{background:#a16207}.roll-result.maintain .roll-badge{background:#475569}.roll-kpis{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0}.roll-kpi{padding:12px;border:1px solid rgba(125,160,205,.22);border-radius:13px;background:#0a1626}.roll-kpi small{display:block;color:#9fb3cc;font-weight:800}.roll-kpi b{display:block;color:#fff;font-size:18px;margin-top:4px}.roll-list{padding-left:18px}.roll-list li{margin:8px 0;line-height:1.4}.positive{color:#86efac}.attention{color:#fde68a}@media(max-width:900px){.roll-grid{grid-template-columns:1fr}.roll-form{grid-template-columns:1fr}.roll-form .full,.roll-btn{grid-column:auto}}
+</style>
+<div class="roll-page">
+<section class="roll-hero"><h1>🔄 Rolagem Inteligente</h1><p>Compare sua PUT aberta com uma nova alternativa. O sistema não inventa preços: informe os valores reais da corretora.</p></section>
+{% if error %}<div class="roll-error">{{ error }}</div>{% endif %}
+<div class="roll-grid">
+<section class="roll-panel">
+<h2>Simular rolagem</h2>
+{% if operations %}
+<form method="post" class="roll-form">
+<div class="full"><label>PUT aberta</label><select required name="operation_id"><option value="">Selecione</option>{% for op in operations %}<option value="{{ op.ID }}" {% if selected and selected.ID == op.ID %}selected{% endif %}>{{ op.Ativo }} • Strike R$ {{ op.Strike }} • Venc. {{ op.Vencimento }}</option>{% endfor %}</select></div>
+<div><label>Preço para recomprar a PUT atual</label><input required name="buyback_price" inputmode="decimal" placeholder="Ex.: 0,35"></div>
+<div><label>Cotação atual do ativo</label><input required name="spot_price" inputmode="decimal" placeholder="Ex.: 37,20"></div>
+<div><label>Nova opção</label><input required name="new_option_code" placeholder="Ex.: PETRU380"></div>
+<div><label>Novo vencimento</label><input required type="date" name="new_expiry"></div>
+<div><label>Novo strike</label><input required name="new_strike" inputmode="decimal" placeholder="Ex.: 37,00"></div>
+<div><label>Novo prêmio</label><input required name="new_premium" inputmode="decimal" placeholder="Ex.: 1,10"></div>
+<div><label>Tamanho do contrato</label><input required name="contract_size" type="number" value="100" min="1"></div>
+<div><label>Custos totais estimados</label><input name="costs_total" inputmode="decimal" placeholder="Ex.: 2,50"></div>
+<button class="roll-btn" type="submit">Analisar manter, fechar ou rolar</button>
+</form>
+{% else %}<p class="roll-empty">Nenhuma PUT aberta cadastrada. Cadastre uma operação aberta antes de simular.</p>{% endif %}
+</section>
+<section class="roll-result {{ analysis.recommendation if analysis else '' }}">
+{% if analysis %}
+<span class="roll-badge">{{ analysis.recommendation_label }}</span>
+<h2>Conclusão técnica</h2><p>{{ analysis.explanation }}</p>
+<div class="roll-kpis">
+<div class="roll-kpi"><small>Lucro capturado</small><b>R$ {{ analysis.captured_profit_total }}</b></div>
+<div class="roll-kpi"><small>Prêmio capturado</small><b>{{ analysis.captured_pct }}%</b></div>
+<div class="roll-kpi"><small>Crédito/débito da rolagem</small><b>R$ {{ analysis.roll_credit_total }}</b></div>
+<div class="roll-kpi"><small>Dias adicionais</small><b>{{ analysis.extra_days }}</b></div>
+<div class="roll-kpi"><small>Preço líquido atual</small><b>R$ {{ analysis.current_net_price }}</b></div>
+<div class="roll-kpi"><small>Novo preço líquido</small><b>R$ {{ analysis.new_net_price }}</b></div>
+<div class="roll-kpi"><small>ROI atual</small><b>{{ analysis.current_roi }}%</b></div>
+<div class="roll-kpi"><small>Novo ROI acumulado</small><b>{{ analysis.new_cumulative_roi }}%</b></div>
+</div>
+{% if analysis.positive_factors %}<h3 class="positive">Pontos positivos</h3><ul class="roll-list">{% for item in analysis.positive_factors %}<li>{{ item }}</li>{% endfor %}</ul>{% endif %}
+{% if analysis.attention_points %}<h3 class="attention">Pontos de atenção</h3><ul class="roll-list">{% for item in analysis.attention_points %}<li>{{ item }}</li>{% endfor %}</ul>{% endif %}
+{% else %}<h2>Resultado</h2><p class="roll-empty">Preencha os dados ao lado para receber uma comparação explicável.</p>{% endif %}
+</section>
+</div></div>
+{% endblock %}
