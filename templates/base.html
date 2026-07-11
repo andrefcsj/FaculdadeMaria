@@ -3,47 +3,56 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>{% block title %}Cortex Invest PRO{% endblock %}</title>
+<title>{% block title %}FaculdadeMaria Executive{% endblock %}</title>
 <link rel="stylesheet" href="{{ url_for('static', filename='theme.css') }}">
 <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}">
 </head>
-<body>
+<body class="app-shell">
 <div class="layout">
-<aside class="sidebar">
-<div class="logo">
-<div class="brain">🧠</div>
-<div class="sub" style="font-size:14px;color:#6b7280;margin-top:6px;">CLARO</div>
-<h2>CORTEX</h2>
-<div class="sub">INVEST PRO</div>
-<div class="badge">v4.0</div>
-</div>
+<aside class="sidebar executive-sidebar">
+  <a class="executive-brand" href="/" aria-label="FaculdadeMaria">
+    <span class="executive-brand__brain">🧠</span>
+    <strong>FaculdadeMaria</strong>
+    <small>EXECUTIVE</small>
+  </a>
 
-<nav>
-<a href="/" class="{% if request.path=='/' %}active{% endif %}">🏠 Dashboard</a>
-<a href="/operacoes-abertas" class="{% if request.path=='/operacoes-abertas' %}active{% endif %}">📂 Operações Abertas</a>
-<a href="/op-fechadas" class="{% if request.path=='/op-fechadas' %}active{% endif %}">✅ Operações Fechadas</a>
-<a href="/historico" class="{% if request.path=='/historico' %}active{% endif %}">📊 Histórico</a>
-<a href="/radar-oportunidades" class="{% if request.path=='/radar-oportunidades' %}active{% endif %}">🔥 Radar de Oportunidades</a>
-<a href="/rolagem-inteligente" class="{% if request.path=='/rolagem-inteligente' %}active{% endif %}">🔄 Rolagem Inteligente</a>
-<a href="/desempenho" class="{% if request.path=='/desempenho' %}active{% endif %}">📈 Desempenho</a>
-<a href="/carteira" class="{% if request.path=='/carteira' %}active{% endif %}">💼 Carteira</a>
-<a href="/relatorios" class="{% if request.path=='/relatorios' %}active{% endif %}">📄 Relatórios</a>
-<a href="/configuracoes" class="{% if request.path=='/configuracoes' %}active{% endif %}">⚙️ Configurações</a>
-<a href="/backup" class="{% if request.path=='/backup' %}active{% endif %}">💾 Backup</a>
-<a href="/sobre" class="{% if request.path=='/sobre' %}active{% endif %}">🧠 Sobre o Sistema</a>
-</nav>
+  <nav class="executive-nav" aria-label="Menu principal">
+    <div class="nav-group">
+      <span class="nav-group__title">📊 VISÃO GERAL</span>
+      <a href="/" class="{% if request.path=='/' %}active{% endif %}"><span>▦</span> Dashboard Executivo</a>
+    </div>
+    <div class="nav-group">
+      <span class="nav-group__title">🔍 INTELIGÊNCIA</span>
+      <a href="/radar-oportunidades" class="{% if request.path=='/radar-oportunidades' %}active{% endif %}"><span>◎</span> Radar de Oportunidades</a>
+      <a href="/radar-oportunidades"><span>⌁</span> Scanner Inteligente</a>
+      <a href="/rolagem-inteligente" class="{% if request.path=='/rolagem-inteligente' %}active{% endif %}"><span>↻</span> Rolagem Inteligente</a>
+    </div>
+    <div class="nav-group">
+      <span class="nav-group__title">💼 OPERAÇÕES</span>
+      <a href="/operacoes-abertas" class="{% if request.path=='/operacoes-abertas' %}active{% endif %}"><span>▣</span> Carteira de PUTs</a>
+      <a href="/#nova-operacao"><span>＋</span> Cadastrar Operação</a>
+      <a href="/carteira"><span>⚖</span> Simulador de Exercício</a>
+      <a href="/radar-oportunidades#importar-mercado"><span>⇩</span> Importar Mercado</a>
+    </div>
+    <div class="nav-group">
+      <span class="nav-group__title">📑 GESTÃO</span>
+      <a href="/relatorios" class="{% if request.path=='/relatorios' %}active{% endif %}"><span>▤</span> Relatórios</a>
+      <a href="/historico" class="{% if request.path=='/historico' %}active{% endif %}"><span>◷</span> Histórico</a>
+    </div>
+    <div class="nav-group">
+      <span class="nav-group__title">⚙ SISTEMA</span>
+      <a href="/configuracoes" class="{% if request.path=='/configuracoes' %}active{% endif %}"><span>⚙</span> Configurações</a>
+      <a href="/backup" class="{% if request.path=='/backup' %}active{% endif %}"><span>▱</span> Backup</a>
+      <a href="/sobre" class="{% if request.path=='/sobre' %}active{% endif %}"><span>ⓘ</span> Sobre</a>
+    </div>
+  </nav>
 
-<div class="theme-area">
-<div class="theme-label">TEMA</div>
-<div class="theme-toggle">
-<span>☀️</span>
-<label class="switch">
-<input type="checkbox" id="themeToggle">
-<span class="slider"></span>
-</label>
-<span>🌙</span>
-</div>
-</div>
+  <div class="executive-sidebar__footer">
+    <span>AMBIENTE OPERACIONAL</span>
+    <strong><i></i> Sistema ativo</strong>
+    <input type="checkbox" id="themeToggle" hidden>
+    <button type="button" id="themeButton" class="executive-theme" aria-label="Alternar tema">☀︎ <span>Tema</span> ◐</button>
+  </div>
 </aside>
 
 <main class="content">
