@@ -1,7 +1,7 @@
 # Sprint — Ajuste Visual do Dashboard ao Mockup Aprovado
 
 **Projeto:** FaculdadeMaria  
-**Status:** Concluída — aguardando aprovação para merge  
+**Status:** Concluída e integrada  
 **Data:** 11/07/2026  
 **Branch:** `agent/dashboard-premium-mockup-fiel`
 
@@ -43,4 +43,6 @@ Aproximar o Dashboard Executivo do mockup visual aprovado pelo Product Owner e a
 
 ## Merge
 
-Nenhum merge foi realizado. Aguardando aprovação do Product Owner.
+Integrada na `main` pelo PR #50, commit `8879a3d4e8f9fc2284ecc1217815e51a73a616f6`.
+
+O deploy no Render foi validado com HTTP 200 e presença dos seis cards coloridos. Foi adicionada versão aos arquivos CSS/JS para impedir que o navegador mantenha o visual anterior em cache.
