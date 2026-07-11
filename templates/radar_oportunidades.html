@@ -2,81 +2,36 @@
 {% block title %}Radar Premium{% endblock %}
 {% block content %}
 <style>
-.radar-hero{display:flex;justify-content:space-between;gap:22px;align-items:flex-start;margin-bottom:24px;padding:26px;border:1px solid rgba(59,130,246,.28);border-radius:24px;background:linear-gradient(135deg,rgba(30,64,175,.28),rgba(15,23,42,.96));box-shadow:0 24px 60px rgba(0,0,0,.32)}
-.radar-hero h1{font-size:34px;margin:0 0 8px}.radar-hero p{color:#d7e4f7;margin:0;max-width:760px}.radar-badge{padding:10px 14px;border-radius:999px;border:1px solid rgba(45,212,191,.45);background:rgba(13,148,136,.16);font-weight:800;color:#dff8ff;white-space:nowrap}.radar-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.radar-card{border:1px solid #24364c;border-radius:22px;background:linear-gradient(180deg,#111b2f,#0c1525);padding:20px;box-shadow:0 18px 42px rgba(0,0,0,.3);color:#eaf2ff}.radar-card.eligible{border-color:rgba(34,197,94,.65)}.radar-card.watchlist{border-color:rgba(250,204,21,.65)}.radar-card.discarded{border-color:rgba(248,113,113,.65);opacity:.95}.radar-top{display:flex;justify-content:space-between;gap:12px;align-items:center}.radar-rank{width:38px;height:38px;border-radius:13px;background:#1e88ff;display:grid;place-items:center;font-weight:950;color:#fff}.radar-status{font-size:12px;font-weight:950;text-transform:uppercase;letter-spacing:.7px;color:#7cffb5}.watchlist .radar-status{color:#ffe66d}.discarded .radar-status{color:#ff9b9b}.radar-asset{font-size:28px;font-weight:950;margin-top:16px;color:#f8fbff}.radar-option{color:#b8d9ff;font-weight:800;margin-top:2px}.radar-score{font-size:42px;font-weight:950;margin:18px 0 0;color:#f8fbff}.radar-score small{font-size:14px;color:#d8e2f3}.radar-reason{min-height:74px;color:#e7f0ff;margin:14px 0 18px;line-height:1.45}.radar-kpis{display:grid;grid-template-columns:1fr 1fr;gap:8px}.radar-kpis div{border:1px solid rgba(191,219,254,.26);border-radius:14px;padding:10px;background:rgba(8,16,32,.76)}.radar-kpis small{display:block;color:#cbd5e1;font-size:11px;text-transform:uppercase;font-weight:900}.radar-kpis b{display:block;margin-top:5px;color:#ffffff;font-size:16px;font-weight:950;text-shadow:0 0 12px rgba(147,197,253,.22)}.radar-kpis .kpi-premium b{color:#f0abfc}.radar-kpis .kpi-roi b{color:#93f6ff}.radar-kpis .kpi-net b{color:#dbeafe}.radar-kpis .kpi-discount b{color:#c4f7c4}.radar-kpis .kpi-dte b{color:#fef3c7}.roi-concept{display:inline-block;margin-top:7px;padding:5px 10px;border-radius:999px;font-size:11px;font-weight:950;text-transform:uppercase;letter-spacing:.4px;color:#fff}.roi-excellent{background:#16a34a;border:1px solid #86efac;box-shadow:0 0 12px rgba(34,197,94,.38)}.roi-good{background:#2563eb;border:1px solid #93c5fd;box-shadow:0 0 12px rgba(59,130,246,.38)}.roi-bad{background:#dc2626;border:1px solid #fecaca;box-shadow:0 0 12px rgba(248,113,113,.38)}.radar-note{margin-top:18px;border:1px solid rgba(148,163,184,.18);border-radius:18px;padding:16px;background:rgba(15,23,42,.45);color:#e2e8f0}.radar-table{margin-top:18px;overflow-x:auto}.radar-table table{width:100%;border-collapse:collapse;table-layout:auto}.radar-table th,.radar-table td{font-size:13px;text-align:left;vertical-align:middle;padding:10px 12px;white-space:nowrap}.radar-table th:nth-child(9),.radar-table td:nth-child(9){white-space:normal;min-width:260px}.pill{display:inline-block;padding:6px 11px;border-radius:999px;font-size:12px;font-weight:950;color:#fff;text-transform:uppercase;letter-spacing:.2px}.pill-ok{background:#16a34a;border:1px solid #86efac;box-shadow:0 0 12px rgba(34,197,94,.32)}.pill-watch{background:#ca8a04;border:1px solid #fde68a;box-shadow:0 0 12px rgba(250,204,21,.32)}.pill-out{background:#dc2626;border:1px solid #fecaca;box-shadow:0 0 12px rgba(248,113,113,.32)}.source-chip{display:inline-block;margin-top:12px;padding:7px 10px;border-radius:999px;background:rgba(59,130,246,.16);border:1px solid rgba(96,165,250,.28);color:#dbeafe;font-weight:800;font-size:12px}@media(max-width:1100px){.radar-grid{grid-template-columns:1fr}.radar-hero{display:block}.radar-badge{display:inline-block;margin-top:14px}}
+.hero,.card,.empty{border:1px solid #24364c;border-radius:22px;background:linear-gradient(180deg,#111b2f,#0c1525);padding:20px;box-shadow:0 18px 42px rgba(0,0,0,.3)}
+.hero{display:flex;justify-content:space-between;gap:20px;align-items:center;margin-bottom:20px}.hero h1{margin:0}.hero p{color:#cbd5e1}.notice{margin:12px 0;padding:12px;border-radius:12px;background:#13233b;color:#dbeafe}.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.card.eligible{border-color:#22c55e}.card.watchlist{border-color:#eab308}.card.discarded{border-color:#ef4444}.top{display:flex;justify-content:space-between}.rank{font-weight:900;color:#60a5fa}.asset{font-size:27px;font-weight:950;margin-top:12px}.option{color:#93c5fd}.score{font-size:35px;font-weight:950;margin:12px 0}.kpis{display:grid;grid-template-columns:1fr 1fr;gap:8px}.kpis div{background:#091321;border-radius:11px;padding:9px}.kpis small{display:block;color:#94a3b8}.kpis b{color:#fff}.manual{margin-top:14px;padding-top:12px;border-top:1px solid #334155}.manual input{margin:5px 0}.btn{border:0;border-radius:10px;background:#1677ff;color:white;padding:11px 14px;font-weight:900;cursor:pointer}.source{font-size:12px;color:#94a3b8;margin-top:10px}@media(max-width:1050px){.grid{grid-template-columns:1fr}.hero{display:block}}
 </style>
-
-<div class="radar-hero">
-  <div>
-    <h1>🔥 Radar Premium</h1>
-    <p>Radar de oportunidades futuras de mercado. Esta página não mostra operações já abertas; ela servirá para escanear o mercado de opções e trazer novas PUTs candidatas quando o scanner/provider real for conectado.</p>
-    <span class="source-chip">Fonte: prévia demonstrativa</span>
-  </div>
-  <div class="radar-badge">Scanner de mercado • Em preparação</div>
+<section class="hero">
+  <div><h1>🔥 Radar Premium</h1><p>PUTs das 15 ações monitoradas, avaliadas pelo Decision Engine com ROI alvo de 4%.</p></div>
+  <form method="post" action="{{ url_for('atualizar_radar_b3') }}"><button class="btn" type="submit">Atualizar dados B3</button></form>
+</section>
+{% if message %}<div class="notice">{{ message }}</div>{% endif %}
+{% if not cards %}
+<div class="empty"><h3>Nenhuma oportunidade carregada</h3><p>{% if has_eod %}Os dados foram carregados, mas nenhuma PUT passou pela preparação atual.{% else %}Clique em “Atualizar dados B3” para carregar o último pregão disponível.{% endif %}</p></div>
+{% else %}
+<div class="grid">
+{% for card in cards %}
+<article class="card {{ card.status }}">
+  <div class="top"><span class="rank">#{{ card.position }}</span><b>{{ card.status }}</b></div>
+  <div class="asset">{{ card.asset }}</div><div class="option">PUT {{ card.option_code }}</div>
+  <div class="score">{{ card.score if card.score is not none else '--' }}<small>/100</small></div>
+  <p>{{ card.reason }}</p>
+  <div class="kpis"><div><small>Prêmio</small><b>{{ card.option_premium }}</b></div><div><small>ROI</small><b>{{ card.gross_roi_pct }}</b></div><div><small>Preço líquido</small><b>{{ card.net_price }}</b></div><div><small>DTE</small><b>{{ card.dte }} dias</b></div></div>
+  <form class="manual" method="post" action="{{ url_for('atualizar_preco_intraday') }}">
+    <input type="hidden" name="option_code" value="{{ card.option_code }}">
+    <label>Confirmar preço atual no BTG</label>
+    <input required name="premium" inputmode="decimal" placeholder="Prêmio atual">
+    <input name="bid" inputmode="decimal" placeholder="Bid opcional">
+    <input name="ask" inputmode="decimal" placeholder="Ask opcional">
+    <button class="btn" type="submit">Recalcular</button>
+  </form>
+  <div class="source">Fonte: {{ card.source }}</div>
+</article>
+{% endfor %}
 </div>
-
-<div class="radar-grid" id="radarCards">
-  <article class="radar-card eligible">
-    <div class="radar-top"><div class="radar-rank">#1</div><div class="radar-status">Oportunidade simulada</div></div>
-    <div class="radar-asset">BBAS3</div>
-    <div class="radar-option">PUT BBASQ270</div>
-    <div class="radar-score">96<small>/100</small></div>
-    <p class="radar-reason">Exemplo de oportunidade futura. Preço líquido calculado corretamente como strike menos prêmio por ação.</p>
-    <div class="radar-kpis">
-      <div class="kpi-premium"><small>Prêmio da opção</small><b>R$ 1,10</b></div>
-      <div class="kpi-net"><small>Preço líquido</small><b>R$ 25,90</b></div>
-      <div class="kpi-roi"><small>ROI</small><b>4,07%</b><span class="roi-concept roi-excellent">ROI Excelente</span></div>
-      <div class="kpi-discount"><small>Desconto</small><b>9,12%</b></div>
-      <div class="kpi-dte"><small>DTE</small><b>35 dias</b></div>
-    </div>
-  </article>
-
-  <article class="radar-card watchlist">
-    <div class="radar-top"><div class="radar-rank">#2</div><div class="radar-status">Oportunidade em observação</div></div>
-    <div class="radar-asset">ITSA4</div>
-    <div class="radar-option">PUT ITSAQ100</div>
-    <div class="radar-score">90<small>/100</small></div>
-    <p class="radar-reason">Exemplo em observação. O conceito de ROI é separado do conceito completo da operação.</p>
-    <div class="radar-kpis">
-      <div class="kpi-premium"><small>Prêmio da opção</small><b>R$ 0,40</b></div>
-      <div class="kpi-net"><small>Preço líquido</small><b>R$ 9,60</b></div>
-      <div class="kpi-roi"><small>ROI</small><b>4,00%</b><span class="roi-concept roi-excellent">ROI Excelente</span></div>
-      <div class="kpi-discount"><small>Desconto</small><b>11,11%</b></div>
-      <div class="kpi-dte"><small>DTE</small><b>35 dias</b></div>
-    </div>
-  </article>
-
-  <article class="radar-card discarded">
-    <div class="radar-top"><div class="radar-rank">#3</div><div class="radar-status">Descartada pelo ativo</div></div>
-    <div class="radar-asset">ALTO3</div>
-    <div class="radar-option">PUT ALTOQ150</div>
-    <div class="radar-score">--<small>/100</small></div>
-    <p class="radar-reason">Exemplo descartado: mesmo com ROI excelente, ativo ruim não vira boa operação.</p>
-    <div class="radar-kpis">
-      <div class="kpi-premium"><small>Prêmio da opção</small><b>R$ 1,20</b></div>
-      <div class="kpi-net"><small>Preço líquido</small><b>R$ 13,80</b></div>
-      <div class="kpi-roi"><small>ROI</small><b>8,00%</b><span class="roi-concept roi-excellent">ROI Excelente</span></div>
-      <div class="kpi-discount"><small>Desconto</small><b>13,75%</b></div>
-      <div class="kpi-dte"><small>DTE</small><b>35 dias</b></div>
-    </div>
-  </article>
-</div>
-
-<div class="panel radar-table">
-  <h3>📋 Ranking demonstrativo</h3>
-  <table>
-    <thead>
-      <tr><th>#</th><th>Ativo</th><th>Opção</th><th>Prêmio opção</th><th>Status</th><th>Score</th><th>ROI</th><th>Conceito ROI</th><th>Resumo</th></tr>
-    </thead>
-    <tbody id="radarTableBody">
-      <tr><td>1</td><td>BBAS3</td><td>BBASQ270</td><td>R$ 1,10</td><td><span class="pill pill-ok">Exemplo</span></td><td>96</td><td>4,07%</td><td><span class="roi-concept roi-excellent">Excelente</span></td><td>Prévia de oportunidade futura de mercado.</td></tr>
-      <tr><td>2</td><td>ITSA4</td><td>ITSAQ100</td><td>R$ 0,40</td><td><span class="pill pill-watch">Observação</span></td><td>90</td><td>4,00%</td><td><span class="roi-concept roi-excellent">Excelente</span></td><td>Prévia em observação para análise completa.</td></tr>
-      <tr><td>3</td><td>ALTO3</td><td>ALTOQ150</td><td>R$ 1,20</td><td><span class="pill pill-out">Descartada</span></td><td>--</td><td>8,00%</td><td><span class="roi-concept roi-excellent">Excelente</span></td><td>ROI alto não resgata ativo ruim.</td></tr>
-    </tbody>
-  </table>
-</div>
-
-<div class="radar-note" id="radarNote">
-  <b>Importante:</b> esta tela é para oportunidades novas. Operações já abertas devem ficar em <b>Operações Abertas</b>. O scanner real de mercado ainda será conectado; por enquanto, os cards acima são uma prévia demonstrativa.
-</div>
+{% endif %}
 {% endblock %}
