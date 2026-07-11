@@ -3,25 +3,25 @@
 {% block content %}
 <style>
 .radar-hero{display:flex;justify-content:space-between;gap:22px;align-items:flex-start;margin-bottom:24px;padding:26px;border:1px solid rgba(59,130,246,.28);border-radius:24px;background:linear-gradient(135deg,rgba(30,64,175,.28),rgba(15,23,42,.96));box-shadow:0 24px 60px rgba(0,0,0,.32)}
-.radar-hero h1{font-size:34px;margin:0 0 8px}.radar-hero p{color:#d7e4f7;margin:0;max-width:760px}.radar-badge{padding:10px 14px;border-radius:999px;border:1px solid rgba(45,212,191,.45);background:rgba(13,148,136,.16);font-weight:800;color:#dff8ff;white-space:nowrap}.radar-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.radar-card{border:1px solid #24364c;border-radius:22px;background:linear-gradient(180deg,#111b2f,#0c1525);padding:20px;box-shadow:0 18px 42px rgba(0,0,0,.3);color:#eaf2ff}.radar-card.eligible{border-color:rgba(34,197,94,.48)}.radar-card.watchlist{border-color:rgba(250,204,21,.50)}.radar-card.discarded{border-color:rgba(248,113,113,.48);opacity:.92}.radar-card.real{box-shadow:0 18px 42px rgba(14,165,233,.18)}.radar-top{display:flex;justify-content:space-between;gap:12px;align-items:center}.radar-rank{width:38px;height:38px;border-radius:13px;background:#1e88ff;display:grid;place-items:center;font-weight:950;color:#fff}.radar-status{font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.7px;color:#a7f3d0}.watchlist .radar-status{color:#fde68a}.discarded .radar-status{color:#fecaca}.radar-asset{font-size:28px;font-weight:950;margin-top:16px;color:#f8fbff}.radar-option{color:#b8d9ff;font-weight:800;margin-top:2px}.radar-score{font-size:42px;font-weight:950;margin:18px 0 0;color:#f8fbff}.radar-score small{font-size:14px;color:#d8e2f3}.radar-reason{min-height:74px;color:#e7f0ff;margin:14px 0 18px;line-height:1.45}.radar-kpis{display:grid;grid-template-columns:1fr 1fr;gap:8px}.radar-kpis div{border:1px solid rgba(191,219,254,.26);border-radius:14px;padding:10px;background:rgba(8,16,32,.76)}.radar-kpis small{display:block;color:#cbd5e1;font-size:11px;text-transform:uppercase;font-weight:900}.radar-kpis b{display:block;margin-top:5px;color:#ffffff;font-size:16px;font-weight:950;text-shadow:0 0 12px rgba(147,197,253,.22)}.radar-kpis .kpi-roi b{color:#93f6ff}.radar-kpis .kpi-net b{color:#dbeafe}.radar-kpis .kpi-discount b{color:#c4f7c4}.radar-kpis .kpi-dte b{color:#fef3c7}.roi-concept{display:inline-block;margin-top:7px;padding:4px 8px;border-radius:999px;font-size:11px;font-weight:950;text-transform:uppercase;letter-spacing:.4px}.roi-excellent{background:rgba(34,197,94,.18);color:#86efac;border:1px solid rgba(34,197,94,.38)}.roi-good{background:rgba(59,130,246,.18);color:#bfdbfe;border:1px solid rgba(59,130,246,.38)}.roi-bad{background:rgba(248,113,113,.18);color:#fecaca;border:1px solid rgba(248,113,113,.38)}.radar-note{margin-top:18px;border:1px solid rgba(148,163,184,.18);border-radius:18px;padding:16px;background:rgba(15,23,42,.45);color:#e2e8f0}.radar-actions{margin-top:18px;display:flex;gap:10px;flex-wrap:wrap}.radar-actions .button{display:inline-block;margin:0}.radar-table{margin-top:18px}.radar-table th,.radar-table td{font-size:13px}.pill{display:inline-block;padding:5px 9px;border-radius:999px;font-size:12px;font-weight:900}.pill-ok{background:rgba(34,197,94,.14);color:#86efac}.pill-watch{background:rgba(250,204,21,.14);color:#fde68a}.pill-out{background:rgba(248,113,113,.14);color:#fecaca}.source-chip{display:inline-block;margin-top:12px;padding:7px 10px;border-radius:999px;background:rgba(59,130,246,.16);border:1px solid rgba(96,165,250,.28);color:#dbeafe;font-weight:800;font-size:12px}@media(max-width:1100px){.radar-grid{grid-template-columns:1fr}.radar-hero{display:block}.radar-badge{display:inline-block;margin-top:14px}}
+.radar-hero h1{font-size:34px;margin:0 0 8px}.radar-hero p{color:#d7e4f7;margin:0;max-width:760px}.radar-badge{padding:10px 14px;border-radius:999px;border:1px solid rgba(45,212,191,.45);background:rgba(13,148,136,.16);font-weight:800;color:#dff8ff;white-space:nowrap}.radar-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.radar-card{border:1px solid #24364c;border-radius:22px;background:linear-gradient(180deg,#111b2f,#0c1525);padding:20px;box-shadow:0 18px 42px rgba(0,0,0,.3);color:#eaf2ff}.radar-card.eligible{border-color:rgba(34,197,94,.48)}.radar-card.watchlist{border-color:rgba(250,204,21,.50)}.radar-card.discarded{border-color:rgba(248,113,113,.48);opacity:.92}.radar-top{display:flex;justify-content:space-between;gap:12px;align-items:center}.radar-rank{width:38px;height:38px;border-radius:13px;background:#1e88ff;display:grid;place-items:center;font-weight:950;color:#fff}.radar-status{font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.7px;color:#a7f3d0}.watchlist .radar-status{color:#fde68a}.discarded .radar-status{color:#fecaca}.radar-asset{font-size:28px;font-weight:950;margin-top:16px;color:#f8fbff}.radar-option{color:#b8d9ff;font-weight:800;margin-top:2px}.radar-score{font-size:42px;font-weight:950;margin:18px 0 0;color:#f8fbff}.radar-score small{font-size:14px;color:#d8e2f3}.radar-reason{min-height:74px;color:#e7f0ff;margin:14px 0 18px;line-height:1.45}.radar-kpis{display:grid;grid-template-columns:1fr 1fr;gap:8px}.radar-kpis div{border:1px solid rgba(191,219,254,.26);border-radius:14px;padding:10px;background:rgba(8,16,32,.76)}.radar-kpis small{display:block;color:#cbd5e1;font-size:11px;text-transform:uppercase;font-weight:900}.radar-kpis b{display:block;margin-top:5px;color:#ffffff;font-size:16px;font-weight:950;text-shadow:0 0 12px rgba(147,197,253,.22)}.radar-kpis .kpi-roi b{color:#93f6ff}.radar-kpis .kpi-net b{color:#dbeafe}.radar-kpis .kpi-discount b{color:#c4f7c4}.radar-kpis .kpi-dte b{color:#fef3c7}.roi-concept{display:inline-block;margin-top:7px;padding:4px 8px;border-radius:999px;font-size:11px;font-weight:950;text-transform:uppercase;letter-spacing:.4px}.roi-excellent{background:rgba(34,197,94,.18);color:#86efac;border:1px solid rgba(34,197,94,.38)}.roi-good{background:rgba(59,130,246,.18);color:#bfdbfe;border:1px solid rgba(59,130,246,.38)}.roi-bad{background:rgba(248,113,113,.18);color:#fecaca;border:1px solid rgba(248,113,113,.38)}.radar-note{margin-top:18px;border:1px solid rgba(148,163,184,.18);border-radius:18px;padding:16px;background:rgba(15,23,42,.45);color:#e2e8f0}.radar-table{margin-top:18px}.radar-table th,.radar-table td{font-size:13px}.pill{display:inline-block;padding:5px 9px;border-radius:999px;font-size:12px;font-weight:900}.pill-ok{background:rgba(34,197,94,.14);color:#86efac}.pill-watch{background:rgba(250,204,21,.14);color:#fde68a}.pill-out{background:rgba(248,113,113,.14);color:#fecaca}.source-chip{display:inline-block;margin-top:12px;padding:7px 10px;border-radius:999px;background:rgba(59,130,246,.16);border:1px solid rgba(96,165,250,.28);color:#dbeafe;font-weight:800;font-size:12px}@media(max-width:1100px){.radar-grid{grid-template-columns:1fr}.radar-hero{display:block}.radar-badge{display:inline-block;margin-top:14px}}
 </style>
 
 <div class="radar-hero">
   <div>
     <h1>🔥 Radar Premium</h1>
-    <p id="radarIntro">Radar visual do novo motor. Quando existirem PUTs abertas cadastradas, esta tela passa a mostrar as operações reais; se não houver dados suficientes, mantém a prévia demonstrativa.</p>
-    <span class="source-chip" id="radarSource">Fonte: dados demonstrativos</span>
+    <p>Radar de oportunidades futuras de mercado. Esta página não mostra operações já abertas; ela servirá para escanear o mercado de opções e trazer novas PUTs candidatas quando o scanner/provider real for conectado.</p>
+    <span class="source-chip">Fonte: prévia demonstrativa</span>
   </div>
-  <div class="radar-badge" id="radarBadge">Motor IA ativo • Prévia visual</div>
+  <div class="radar-badge">Scanner de mercado • Em preparação</div>
 </div>
 
 <div class="radar-grid" id="radarCards">
   <article class="radar-card eligible">
-    <div class="radar-top"><div class="radar-rank">#1</div><div class="radar-status">Operação elegível</div></div>
+    <div class="radar-top"><div class="radar-rank">#1</div><div class="radar-status">Oportunidade simulada</div></div>
     <div class="radar-asset">BBAS3</div>
     <div class="radar-option">PUT BBASQ270</div>
     <div class="radar-score">96<small>/100</small></div>
-    <p class="radar-reason">Score 96/100. ROI 4,07%, desconto 9,12%. Ativo aprovado para eventual exercício.</p>
+    <p class="radar-reason">Exemplo de oportunidade futura. Preço líquido calculado corretamente como strike menos prêmio por ação.</p>
     <div class="radar-kpis">
       <div class="kpi-net"><small>Preço líquido</small><b>R$ 25,90</b></div>
       <div class="kpi-roi"><small>ROI</small><b>4,07%</b><span class="roi-concept roi-excellent">ROI Excelente</span></div>
@@ -31,11 +31,11 @@
   </article>
 
   <article class="radar-card watchlist">
-    <div class="radar-top"><div class="radar-rank">#2</div><div class="radar-status">Em observação</div></div>
+    <div class="radar-top"><div class="radar-rank">#2</div><div class="radar-status">Oportunidade em observação</div></div>
     <div class="radar-asset">ITSA4</div>
     <div class="radar-option">PUT ITSAQ100</div>
     <div class="radar-score">90<small>/100</small></div>
-    <p class="radar-reason">Score 90/100. Qualidade aceitável, mas ainda abaixo do nível ideal.</p>
+    <p class="radar-reason">Exemplo em observação. O conceito de ROI é separado do conceito completo da operação.</p>
     <div class="radar-kpis">
       <div class="kpi-net"><small>Preço líquido</small><b>R$ 9,60</b></div>
       <div class="kpi-roi"><small>ROI</small><b>4,00%</b><span class="roi-concept roi-excellent">ROI Excelente</span></div>
@@ -45,11 +45,11 @@
   </article>
 
   <article class="radar-card discarded">
-    <div class="radar-top"><div class="radar-rank">#3</div><div class="radar-status">Descartada</div></div>
+    <div class="radar-top"><div class="radar-rank">#3</div><div class="radar-status">Descartada pelo ativo</div></div>
     <div class="radar-asset">ALTO3</div>
     <div class="radar-option">PUT ALTOQ150</div>
     <div class="radar-score">--<small>/100</small></div>
-    <p class="radar-reason">Operação descartada: ativo não aprovado para exercício. ROI alto não resgata ativo ruim.</p>
+    <p class="radar-reason">Exemplo descartado: mesmo com ROI excelente, ativo ruim não vira boa operação.</p>
     <div class="radar-kpis">
       <div class="kpi-net"><small>Preço líquido</small><b>R$ 13,80</b></div>
       <div class="kpi-roi"><small>ROI</small><b>8,00%</b><span class="roi-concept roi-excellent">ROI Excelente</span></div>
@@ -60,122 +60,20 @@
 </div>
 
 <div class="panel radar-table">
-  <h3>📋 Ranking resumido</h3>
+  <h3>📋 Ranking demonstrativo</h3>
   <table>
     <thead>
       <tr><th>#</th><th>Ativo</th><th>Opção</th><th>Status</th><th>Score</th><th>ROI</th><th>Conceito ROI</th><th>Resumo</th></tr>
     </thead>
     <tbody id="radarTableBody">
-      <tr><td>1</td><td>BBAS3</td><td>BBASQ270</td><td><span class="pill pill-ok">Elegível</span></td><td>96</td><td>4,07%</td><td><span class="roi-concept roi-excellent">Excelente</span></td><td>Bom ativo, filtros aprovados e ROI acima da meta de 4%.</td></tr>
-      <tr><td>2</td><td>ITSA4</td><td>ITSAQ100</td><td><span class="pill pill-watch">Observação</span></td><td>90</td><td>4,00%</td><td><span class="roi-concept roi-excellent">Excelente</span></td><td>Operação interessante, mas qualidade do ativo pede atenção.</td></tr>
-      <tr><td>3</td><td>ALTO3</td><td>ALTOQ150</td><td><span class="pill pill-out">Descartada</span></td><td>--</td><td>8,00%</td><td><span class="roi-concept roi-excellent">Excelente</span></td><td>Ativo não aceito para exercício; prêmio alto não salva a operação.</td></tr>
+      <tr><td>1</td><td>BBAS3</td><td>BBASQ270</td><td><span class="pill pill-ok">Exemplo</span></td><td>96</td><td>4,07%</td><td><span class="roi-concept roi-excellent">Excelente</span></td><td>Prévia de oportunidade futura de mercado.</td></tr>
+      <tr><td>2</td><td>ITSA4</td><td>ITSAQ100</td><td><span class="pill pill-watch">Observação</span></td><td>90</td><td>4,00%</td><td><span class="roi-concept roi-excellent">Excelente</span></td><td>Prévia em observação para análise completa.</td></tr>
+      <tr><td>3</td><td>ALTO3</td><td>ALTOQ150</td><td><span class="pill pill-out">Descartada</span></td><td>--</td><td>8,00%</td><td><span class="roi-concept roi-excellent">Excelente</span></td><td>ROI alto não resgata ativo ruim.</td></tr>
     </tbody>
   </table>
 </div>
 
 <div class="radar-note" id="radarNote">
-  <b>Importante:</b> o conceito de ROI é separado do conceito da operação. Um ROI pode ser excelente mesmo quando a operação é descartada por qualidade do ativo, risco ou falta de dados.
+  <b>Importante:</b> esta tela é para oportunidades novas. Operações já abertas devem ficar em <b>Operações Abertas</b>. O scanner real de mercado ainda será conectado; por enquanto, os cards acima são uma prévia demonstrativa.
 </div>
-
-<script>
-(function(){
-  function parsePercent(txt){
-    if(!txt) return 0;
-    return Number(String(txt).replace('%','').replace('.', '').replace(',', '.').trim()) || 0;
-  }
-  function onlyNumber(txt){
-    return Number(String(txt || '').replace('R$','').replace(/\./g,'').replace(',', '.').replace(/[^0-9.-]/g,'')) || 0;
-  }
-  function roiConcept(roi){
-    if(roi >= 3) return {label:'Excelente', cls:'roi-excellent', top:'ROI Excelente'};
-    if(roi >= 1.5) return {label:'Bom', cls:'roi-good', top:'ROI Bom'};
-    if(roi > 0) return {label:'Ruim', cls:'roi-bad', top:'ROI Ruim'};
-    return {label:'Sem ROI', cls:'roi-bad', top:'Sem ROI válido'};
-  }
-  function statusFromRoi(roi){
-    const concept = roiConcept(roi);
-    if(roi >= 3) return {cls:'eligible', label:concept.top, pill:'pill-ok', pillText:concept.label, roi:concept};
-    if(roi >= 1.5) return {cls:'watchlist', label:concept.top, pill:'pill-watch', pillText:concept.label, roi:concept};
-    return {cls:'discarded', label:concept.top, pill:'pill-out', pillText:concept.label, roi:concept};
-  }
-  function scoreFromRoi(roi){
-    if(roi <= 0) return '--';
-    return Math.min(99, Math.round(55 + (roi * 8)));
-  }
-  function reasonFor(op){
-    const concept = roiConcept(op.roi);
-    if(op.roi >= 3){
-      return `Operação real cadastrada. Conceito do ROI: ${concept.label} (${op.roiText}). Avaliar a operação completa separadamente.`;
-    }
-    if(op.roi >= 1.5){
-      return `Operação real cadastrada. Conceito do ROI: ${concept.label} (${op.roiText}). Ainda exige análise do ativo e risco.`;
-    }
-    return `Operação real cadastrada. Conceito do ROI: ${concept.label} (${op.roiText}). Rentabilidade baixa para a meta do sistema.`;
-  }
-  function render(ops){
-    const cards = document.getElementById('radarCards');
-    const body = document.getElementById('radarTableBody');
-    cards.innerHTML = '';
-    body.innerHTML = '';
-    ops.forEach((op, index) => {
-      const st = statusFromRoi(op.roi);
-      const score = scoreFromRoi(op.roi);
-      const reason = reasonFor(op);
-      cards.insertAdjacentHTML('beforeend', `
-        <article class="radar-card real ${st.cls}">
-          <div class="radar-top"><div class="radar-rank">#${index+1}</div><div class="radar-status">${st.label}</div></div>
-          <div class="radar-asset">${op.asset}</div>
-          <div class="radar-option">${op.option}</div>
-          <div class="radar-score">${score}<small>/100</small></div>
-          <p class="radar-reason">${reason}</p>
-          <div class="radar-kpis">
-            <div class="kpi-net"><small>Preço líquido</small><b>${op.netPrice}</b></div>
-            <div class="kpi-roi"><small>ROI</small><b>${op.roiText}</b><span class="roi-concept ${st.roi.cls}">ROI ${st.roi.label}</span></div>
-            <div><small>Capital</small><b>${op.capital}</b></div>
-            <div class="kpi-dte"><small>DTE</small><b>${op.dte} dias</b></div>
-          </div>
-        </article>`);
-      body.insertAdjacentHTML('beforeend', `<tr><td>${index+1}</td><td>${op.asset}</td><td>${op.option}</td><td><span class="pill ${st.pill}">${st.pillText}</span></td><td>${score}</td><td>${op.roiText}</td><td><span class="roi-concept ${st.roi.cls}">${st.roi.label}</span></td><td>${reason}</td></tr>`);
-    });
-    document.getElementById('radarSource').textContent = 'Fonte: operações reais cadastradas';
-    document.getElementById('radarBadge').textContent = 'Radar conectado • Operações reais';
-    document.getElementById('radarIntro').textContent = 'Radar conectado às operações abertas cadastradas no sistema. O conceito exibido aqui é exclusivo do ROI e não substitui a análise completa da operação.';
-    document.getElementById('radarNote').innerHTML = '<b>Importante:</b> conceito de ROI: acima de 3% = Excelente; de 1,5% a 2,99% = Bom; abaixo de 1,5% = Ruim. Isso não altera o conceito final da operação.';
-  }
-  async function carregarReais(){
-    try{
-      const resp = await fetch('/operacoes-abertas', {cache:'no-store'});
-      if(!resp.ok) return;
-      const html = await resp.text();
-      const doc = new DOMParser().parseFromString(html, 'text/html');
-      const rows = Array.from(doc.querySelectorAll('#tabelaOperacoes tbody tr'));
-      const ops = rows.map(row => {
-        const c = row.querySelectorAll('td');
-        if(c.length < 12) return null;
-        const tipo = c[5].innerText.trim().toUpperCase();
-        if(tipo !== 'PUT') return null;
-        const strike = onlyNumber(c[4].innerText);
-        const premio = onlyNumber(c[10].innerText);
-        const netPrice = strike && premio ? `R$ ${(strike - premio).toFixed(2).replace('.', ',')}` : '--';
-        return {
-          asset: c[1].innerText.trim() || '--',
-          option: c[3].innerText.trim() || '--',
-          netPrice,
-          capital: c[9].innerText.trim() || '--',
-          dte: c[8].innerText.trim() || '--',
-          roiText: c[11].innerText.trim() || '0,00%',
-          roi: parsePercent(c[11].innerText)
-        };
-      }).filter(Boolean);
-      if(ops.length){
-        ops.sort((a,b) => b.roi - a.roi);
-        render(ops.slice(0, 6));
-      }
-    }catch(e){
-      // Mantém a prévia demonstrativa se a leitura das operações reais falhar.
-    }
-  }
-  carregarReais();
-})();
-</script>
 {% endblock %}
