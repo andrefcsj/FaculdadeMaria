@@ -14,6 +14,22 @@ REQUIRED_COLUMNS = (
 )
 
 
+def load_cvm_issuer_config(path: str | Path) -> dict[str, dict[str, str]]:
+    source = Path(path)
+    if not source.exists():
+        return {}
+    with source.open("r", encoding="utf-8-sig", newline="") as stream:
+        rows = csv.DictReader(stream)
+        return {
+            str(row.get("ticker", "")).strip().upper(): {
+                "cnpj": str(row.get("cnpj", "")).strip(),
+                "model": str(row.get("quality_model", "company")).strip() or "company",
+            }
+            for row in rows
+            if row.get("ticker") and row.get("cnpj")
+        }
+
+
 def _boolean(value: str) -> bool:
     return str(value).strip().lower() in {"1", "true", "sim", "yes"}
 
