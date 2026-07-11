@@ -35,12 +35,20 @@ Mudanças ainda em branch podem aparecer como `Em revisão`.
 
 ## 2026-07-11 — Dashboard Executivo Premium
 
-Status: `Em revisão`
+Status: `Integrado`
 
 Branch:
 
 ```text
 agent/dashboard-executivo-premium
+```
+
+Pull Request: `#48`
+
+Commit de merge:
+
+```text
+e6a53d8792b86579bb4dd79260fe01f413ca5157
 ```
 
 ### Fixed
