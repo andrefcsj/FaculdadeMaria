@@ -7,11 +7,14 @@
 </style>
 <section class="hero">
   <div><h1>🔥 Radar Premium</h1><p>PUTs das 15 ações monitoradas, avaliadas pelo Decision Engine com ROI alvo de 4%.</p></div>
-  <form method="post" action="{{ url_for('atualizar_radar_b3') }}"><button class="btn" type="submit">Atualizar dados B3</button></form>
+  <div>
+    <form method="post" action="{{ url_for('atualizar_radar_b3') }}"><button class="btn" type="submit">Atualizar dados B3</button></form>
+    <form method="post" action="{{ url_for('atualizar_qualidade_cvm') }}" style="margin-top:8px"><button class="btn" type="submit">Atualizar qualidade CVM</button></form>
+  </div>
 </section>
 {% if message %}<div class="notice">{{ message }}</div>{% endif %}
 {% if not cards %}
-<div class="empty"><h3>Nenhuma oportunidade carregada</h3><p>{% if has_eod %}Os dados foram carregados, mas nenhuma PUT passou pela preparação atual.{% else %}Clique em “Atualizar dados B3” para carregar o último pregão disponível.{% endif %}</p></div>
+<div class="empty"><h3>Nenhuma oportunidade carregada</h3><p>{% if not has_eod %}Atualize os dados B3.{% elif not has_quality %}Atualize a qualidade CVM.{% else %}Nenhuma PUT passou pelos filtros atuais.{% endif %}</p></div>
 {% else %}
 <div class="grid">
 {% for card in cards %}
