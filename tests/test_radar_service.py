@@ -30,12 +30,32 @@ def test_demo_radar_uses_four_percent_target_context():
     assert cards[1].gross_roi_pct == "4,00%"
 
 
-def test_demo_radar_shows_option_premium():
+def test_demo_radar_shows_option_premium_and_strike():
     cards = build_demo_radar(date(2026, 7, 10))
 
     assert cards[0].option_premium == "R$ 1,10"
+    assert cards[0].strike == "R$ 27,00"
     assert cards[1].option_premium == "R$ 0,40"
+    assert cards[1].strike == "R$ 10,00"
     assert cards[2].option_premium == "R$ 1,20"
+    assert cards[2].strike == "R$ 15,00"
+
+
+def test_demo_radar_shows_expiry_date_with_remaining_days():
+    cards = build_demo_radar(date(2026, 7, 10))
+
+    assert cards[0].expiry_date == "14/08/2026"
+    assert cards[0].expiry_display == "14/08/2026 - 35 dias"
+    assert cards[0].dte == 35
+
+
+def test_demo_radar_translates_safety_attention_message():
+    cards = build_demo_radar(date(2026, 7, 10))
+    texts = " ".join(card.reason for card in cards)
+
+    assert "Safety filters require attention" not in texts
+    if "filtros de segurança" in texts.lower():
+        assert "exigem atenção" in texts.lower()
 
 
 def test_demo_radar_classifies_roi_above_three_percent_as_excellent():
@@ -71,8 +91,10 @@ def test_operation_like_rows_calculate_net_price_from_unit_premium():
     assert cards[0].asset == "BBAS3"
     assert cards[0].option_code == "BBASQ270"
     assert cards[0].option_premium == "R$ 1,10"
+    assert cards[0].strike == "R$ 27,00"
     assert cards[0].net_price == "R$ 25,90"
     assert cards[0].gross_roi_pct == "4,07%"
+    assert cards[0].expiry_display == "14/08/2026 - 35 dias"
     assert cards[0].roi_concept == "Excelente"
 
 
