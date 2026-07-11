@@ -33,6 +33,22 @@ Mudanças ainda em branch podem aparecer como `Em revisão`.
 
 ---
 
+## 2026-07-11 — Ajuste do Dashboard ao mockup aprovado
+
+Status: `Em revisão`
+
+Branch: `agent/dashboard-premium-mockup-fiel`
+
+### Changed
+
+- Dashboard aproximado do mockup claro e colorido aprovado;
+- fontes ampliadas;
+- cards superiores com cores semânticas e alto contraste;
+- identidade lateral e cabeçalho refinados;
+- lógica e dados existentes preservados.
+
+---
+
 ## 2026-07-11 — Dashboard Executivo Premium
 
 Status: `Integrado`
