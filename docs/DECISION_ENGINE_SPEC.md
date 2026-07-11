@@ -20,7 +20,18 @@ O Decision Engine é um mecanismo de apoio analítico, explicável, auditável e
 
 ## 2. Estado atual oficial
 
-O produto permanece funcionalmente baseado na aplicação Flask existente.
+O produto permanece funcionalmente baseado na aplicação Flask existente, com `legacy_app.py` preservando o monólito e `app.py` estendendo importação de mercado e Rolagem Inteligente.
+
+Atualização vigente em 11/07/2026:
+
+- as Sprints Funcionais A–I foram integradas;
+- contratos, métricas, normalização, indicadores, segurança, qualidade, estratégia PUT, Score, ranking e explicação estão implementados;
+- o Radar Premium está integrado ao Flask por camada de serviço;
+- providers públicos B3 EOD e CVM estão integrados;
+- a Rolagem Inteligente está disponível;
+- o `motor_ia/` permanece legado isolado.
+
+O inventário reduzido e as limitações descritas abaixo registram a fundação histórica da Sprint 1.1-R. Para o estado atual, prevalece esta atualização e os relatórios das Sprints posteriores.
 
 O novo Decision Engine vive em:
 
@@ -55,7 +66,7 @@ A fundação atual oferece:
 - contrato abstrato de provider;
 - testes de arquitetura e isolamento.
 
-A pipeline atual não implementa:
+A pipeline da fundação histórica não implementava:
 
 - indicadores;
 - qualidade do ativo;
