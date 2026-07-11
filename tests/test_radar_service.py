@@ -38,7 +38,7 @@ def test_demo_radar_classifies_roi_above_three_percent_as_excellent():
     assert cards[1].roi_concept == "Excelente"
 
 
-def test_real_operations_build_radar_cards():
+def test_operation_like_rows_calculate_net_price_from_unit_premium():
     operations = [
         {
             "ID": "1",
@@ -62,11 +62,12 @@ def test_real_operations_build_radar_cards():
     assert cards[0].source == "real"
     assert cards[0].asset == "BBAS3"
     assert cards[0].option_code == "BBASQ270"
+    assert cards[0].net_price == "R$ 25,90"
     assert cards[0].gross_roi_pct == "4,07%"
     assert cards[0].roi_concept == "Excelente"
 
 
-def test_real_operation_roi_below_one_and_half_percent_is_bad_concept_only():
+def test_operation_like_row_roi_below_one_and_half_percent_is_bad_concept_only():
     operations = [
         {
             "ID": "2",
@@ -92,8 +93,24 @@ def test_real_operation_roi_below_one_and_half_percent_is_bad_concept_only():
     assert cards[0].roi_concept_class == "bad"
 
 
-def test_build_radar_falls_back_to_demo_when_real_rows_are_incomplete():
-    cards = build_radar([{"Ativo": "PETRQ300", "Tipo": "PUT", "Status": "Aberta"}], date(2026, 7, 10))
+def test_public_radar_does_not_turn_open_positions_into_market_opportunities():
+    cards = build_radar(
+        [
+            {
+                "Ativo": "BBDCT20",
+                "ticker": "BBDC4",
+                "Tipo": "PUT",
+                "Status": "Aberta",
+                "Contratos": "1",
+                "Strike": "20.00",
+                "Premio_opcao": "0.67",
+                "Vencimento": "2026-08-20",
+                "Cotacao_atual": "21.00",
+            }
+        ],
+        date(2026, 7, 10),
+    )
 
     assert len(cards) == 3
     assert {card.source for card in cards} == {"demo"}
+    assert {card.asset for card in cards} == {"BBAS3", "ITSA4", "ALTO3"}
