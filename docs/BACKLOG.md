@@ -652,9 +652,9 @@ Componentes:
 
 - Prioridade: `P2`
 - Tipo: `UI`
-- Status: `EM REVISÃO`
+- Status: `DONE`
 
-Sprint autorizada em 11/07/2026 para transformação do Dashboard existente no Dashboard Executivo Premium, sem alteração das regras do Decision Engine.
+Concluído e integrado pelo PR #48 em 11/07/2026, sem alteração das regras do Decision Engine.
 
 ### FM-UI-050 — Visão de risco da carteira
 
