@@ -17,10 +17,10 @@
   Qualidade do Ativo            ✅         100%
   Score IA                      ✅         100%
   Ranking                       ✅         100%
-  Radar Premium (visual)        ✅          90%
+  Radar Premium (visual)        ✅          95%
   Operações Abertas             ✅         100%
-  Scanner de Mercado            🚧          0%
-  Provider de Dados             🚧          0%
+  Scanner de Mercado EOD        🚧          70%
+  Provider B3/CVM               ✅         100%
   Importador PDF            📝 Backlog      0%
 
 ------------------------------------------------------------------------
@@ -35,24 +35,27 @@
 -   ✅ Sprint Funcional E
 -   ✅ Sprint Funcional F
 -   ✅ Sprint Funcional G
+-   ✅ Sprint Alinhamento ROI 4% e Documentação
+-   ✅ Sprint Provider B3 EOD + Atualização Manual Intraday
+-   ✅ Sprint Provider CVM + Score Automático de Qualidade
 
 ------------------------------------------------------------------------
 
 # Próximas Prioridades
 
-1.  Scanner real do mercado de opções
-2.  Integração com provider de dados
+1.  Homologação do Radar com dados reais EOD
+2.  Filtros avançados do Radar
 3.  Alertas inteligentes
-4.  Rolagem automática
-5.  Dashboard Premium
-6.  Importador de nota de corretagem (PDF)
+4.  Integração intraday oficial quando disponível
+5.  Rolagem automática
+6.  Dashboard Premium
 
 ------------------------------------------------------------------------
 
 # Meta Atual
 
-Transformar o Radar Premium em um scanner automático de oportunidades
-reais de PUT na B3.
+Homologar o Radar Premium com dados reais EOD da B3, qualidade automática
+da CVM e confirmação manual de preços intraday.
 
 ------------------------------------------------------------------------
 
