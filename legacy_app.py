@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Dict, List, Tuple
 
 from flask import Flask, redirect, request, url_for, jsonify, render_template
+from services.dashboard_service import build_dashboard_view_model
 from decimal import Decimal
 from engine.providers import B3CotahistProvider, CvmFundamentalsProvider, apply_intraday_quote, download_latest_cotahist, download_latest_dfp
 from services.asset_universe_service import load_cvm_issuer_config, load_personal_asset_universe
@@ -533,6 +534,7 @@ def index():
     hist = monthly(ops, fechadas, cfg)
     abertas = [o for o in ops if str(o.get("Status", "")).lower() == "aberta"]
     top = sorted(abertas, key=lambda x: float(x["Premio_liquido"]), reverse=True)[:5]
+    dashboard = build_dashboard_view_model(ops, fechadas, ind, hist, cfg)
     prox = sorted([o for o in abertas if o.get('Vencimento_fmt')], key=lambda x: float(x.get('Dias', 9999)))
     if prox:
         prox_venc = f"{int(float(prox[0].get('Dias',0)))} dias"
@@ -607,6 +609,7 @@ applyTheme();
         hist=hist,
         brl=brl,
         pct=pct
+        ,dashboard=dashboard
     )
 
 def salvar_operacao_pg(row):

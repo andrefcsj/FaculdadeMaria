@@ -1,7 +1,7 @@
 # SPRINT_RADAR_CARDS_PREMIUM_CONTRASTE.md
 
 **Projeto:** FaculdadeMaria  
-**Status:** Concluída — aguardando aprovação para merge  
+**Status:** Concluída e integrada  
 **Data:** 11/07/2026  
 **Branch:** `sprint/radar-cards-premium-contraste`
 
@@ -29,4 +29,4 @@ Corrigir a baixa legibilidade dos cards do Radar e elevar o acabamento visual ao
 
 ## Merge
 
-Nenhum merge foi realizado.
+Integrada na `main` pelo PR #39, commit de merge `eeb0f3270b72c789cc58ccfa302770c412820f1c`.
