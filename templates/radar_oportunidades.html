@@ -2,39 +2,69 @@
 {% block title %}Radar Premium{% endblock %}
 {% block content %}
 <style>
-.hero,.card,.empty{border:1px solid #24364c;border-radius:22px;background:linear-gradient(180deg,#111b2f,#0c1525);padding:20px;box-shadow:0 18px 42px rgba(0,0,0,.3)}
-.hero{display:flex;justify-content:space-between;gap:20px;align-items:center;margin-bottom:20px}.hero h1{margin:0}.hero p{color:#cbd5e1}.notice{margin:12px 0;padding:12px;border-radius:12px;background:#13233b;color:#dbeafe}.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.card.eligible{border-color:#22c55e}.card.watchlist{border-color:#eab308}.card.discarded{border-color:#ef4444}.top{display:flex;justify-content:space-between}.rank{font-weight:900;color:#60a5fa}.asset{font-size:27px;font-weight:950;margin-top:12px}.option{color:#93c5fd}.score{font-size:35px;font-weight:950;margin:12px 0}.kpis{display:grid;grid-template-columns:1fr 1fr;gap:8px}.kpis div{background:#091321;border-radius:11px;padding:9px}.kpis small{display:block;color:#94a3b8}.kpis b{color:#fff}.manual{margin-top:14px;padding-top:12px;border-top:1px solid #334155}.manual input{margin:5px 0}.btn{border:0;border-radius:10px;background:#1677ff;color:white;padding:11px 14px;font-weight:900;cursor:pointer}.source{font-size:12px;color:#94a3b8;margin-top:10px}@media(max-width:1050px){.grid{grid-template-columns:1fr}.hero{display:block}}
+.radar-premium{--ink:#f8fbff;--muted:#c8d7ea;--soft:#9fb3cc;--line:rgba(125,160,205,.28);color:var(--ink)}
+.radar-premium *{box-sizing:border-box}
+.radar-hero,.radar-card,.radar-empty{color:var(--ink);border:1px solid var(--line);border-radius:24px;background:linear-gradient(155deg,rgba(20,34,57,.99),rgba(7,15,28,.99));box-shadow:0 22px 55px rgba(0,0,0,.36),inset 0 1px rgba(255,255,255,.04)}
+.radar-hero{display:flex;justify-content:space-between;gap:28px;align-items:center;margin-bottom:22px;padding:26px 28px;overflow:hidden;position:relative}
+.radar-hero:before{content:"";position:absolute;width:280px;height:280px;right:-90px;top:-145px;border-radius:50%;background:radial-gradient(circle,rgba(37,99,235,.35),transparent 68%);pointer-events:none}
+.radar-hero h1{color:#fff!important;font-size:34px;margin:0 0 8px;font-weight:950;letter-spacing:-.7px}.radar-hero p{color:var(--muted)!important;margin:0;line-height:1.55;max-width:760px}
+.radar-actions{display:flex;flex-direction:column;gap:9px;min-width:220px;position:relative;z-index:1}.radar-actions form{margin:0}
+.radar-notice{margin:12px 0 20px;padding:14px 16px;border:1px solid rgba(96,165,250,.38);border-radius:14px;background:rgba(30,64,175,.25);color:#e7f1ff!important;font-weight:750}
+.radar-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+.radar-card{padding:21px;position:relative;overflow:hidden;transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease}
+.radar-card:hover{transform:translateY(-3px);box-shadow:0 28px 65px rgba(0,0,0,.43),0 0 28px rgba(59,130,246,.10)}
+.radar-card:before{content:"";position:absolute;inset:0 0 auto;height:4px;background:#64748b}
+.radar-card.eligible:before{background:linear-gradient(90deg,#16a34a,#4ade80)}.radar-card.watchlist:before{background:linear-gradient(90deg,#d97706,#facc15)}.radar-card.discarded:before{background:linear-gradient(90deg,#b91c1c,#fb7185)}.radar-card.insufficient_data:before{background:linear-gradient(90deg,#475569,#94a3b8)}
+.radar-top{display:flex;justify-content:space-between;align-items:center;gap:10px}.radar-rank{display:grid;place-items:center;width:42px;height:42px;border:1px solid rgba(96,165,250,.48);border-radius:13px;background:linear-gradient(145deg,#1d4ed8,#172554);color:#fff!important;font-size:15px;font-weight:950}
+.radar-status{padding:6px 10px;border-radius:999px;background:#1e293b;color:#e2e8f0!important;border:1px solid #475569;font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.45px}.eligible .radar-status{color:#bbf7d0!important;border-color:#15803d;background:rgba(21,128,61,.22)}.watchlist .radar-status{color:#fef08a!important;border-color:#a16207;background:rgba(161,98,7,.22)}.discarded .radar-status{color:#fecdd3!important;border-color:#be123c;background:rgba(190,18,60,.20)}
+.radar-asset{color:#fff!important;font-size:30px;font-weight:950;margin-top:17px;letter-spacing:-.5px}.radar-option{color:#a9d2ff!important;font-weight:850;margin-top:2px}.radar-score{color:#fff!important;font-size:43px;font-weight:950;margin:15px 0 8px;line-height:1}.radar-score small{color:#9fb3cc!important;font-size:13px;margin-left:3px}.radar-reason{color:#e5edf8!important;line-height:1.52;min-height:68px;margin:12px 0 17px}
+.radar-kpis{display:grid;grid-template-columns:1fr 1fr;gap:9px}.radar-kpi{border:1px solid rgba(125,160,205,.23);border-radius:14px;padding:11px;background:linear-gradient(145deg,rgba(15,28,48,.94),rgba(7,15,27,.94))}.radar-kpi small{display:block;color:#aebed2!important;font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.7px}.radar-kpi b{display:block;color:#fff!important;font-size:16px;margin-top:5px}.radar-kpi.roi b{color:#67e8f9!important}.radar-kpi.premium b{color:#f0abfc!important}.radar-kpi.net b{color:#bfdbfe!important}.radar-kpi.dte b{color:#fde68a!important}
+.radar-manual{margin-top:17px;padding-top:15px;border-top:1px solid rgba(125,160,205,.24)}.radar-manual label{display:block;color:#f1f5f9!important;font-size:12px;font-weight:900;margin-bottom:7px}.radar-manual input{width:100%;margin:5px 0!important;border:1px solid #3b516d!important;border-radius:11px!important;background:#07111f!important;color:#fff!important;padding:11px 12px!important;box-shadow:inset 0 1px 8px rgba(0,0,0,.22)}.radar-manual input::placeholder{color:#8296af!important;opacity:1}
+.radar-btn{width:100%;border:1px solid #4c9aff;border-radius:11px;background:linear-gradient(180deg,#1686ff,#0754bc);color:#fff!important;padding:11px 14px;font-weight:950;cursor:pointer;box-shadow:0 8px 18px rgba(0,93,220,.25)}.radar-btn:hover{filter:brightness(1.1)}.radar-btn.secondary{border-color:#36d6b2;background:linear-gradient(180deg,#0f9f85,#08705f)}
+.radar-source{font-size:11px;color:#9fb3cc!important;margin-top:12px}.radar-empty{padding:28px}.radar-empty h3{color:#fff!important;margin-top:0}.radar-empty p{color:var(--muted)!important}
+body.light .radar-hero,body.light .radar-card,body.light .radar-empty{background:linear-gradient(155deg,#13213a,#07111f);color:#fff}
+@media(max-width:1100px){.radar-grid{grid-template-columns:1fr 1fr}}@media(max-width:760px){.radar-grid{grid-template-columns:1fr}.radar-hero{display:block}.radar-actions{margin-top:18px}.radar-reason{min-height:0}}
 </style>
-<section class="hero">
+<div class="radar-premium">
+<section class="radar-hero">
   <div><h1>🔥 Radar Premium</h1><p>PUTs das 15 ações monitoradas, avaliadas pelo Decision Engine com ROI alvo de 4%.</p></div>
-  <div>
-    <form method="post" action="{{ url_for('atualizar_radar_b3') }}"><button class="btn" type="submit">Atualizar dados B3</button></form>
-    <form method="post" action="{{ url_for('atualizar_qualidade_cvm') }}" style="margin-top:8px"><button class="btn" type="submit">Atualizar qualidade CVM</button></form>
+  <div class="radar-actions">
+    <form method="post" action="{{ url_for('atualizar_radar_b3') }}"><button class="radar-btn" type="submit">Atualizar dados B3</button></form>
+    <form method="post" action="{{ url_for('atualizar_qualidade_cvm') }}"><button class="radar-btn secondary" type="submit">Atualizar qualidade CVM</button></form>
   </div>
 </section>
-{% if message %}<div class="notice">{{ message }}</div>{% endif %}
+{% if message %}<div class="radar-notice">{{ message }}</div>{% endif %}
 {% if not cards %}
-<div class="empty"><h3>Nenhuma oportunidade carregada</h3><p>{% if not has_eod %}Atualize os dados B3.{% elif not has_quality %}Atualize a qualidade CVM.{% else %}Nenhuma PUT passou pelos filtros atuais.{% endif %}</p></div>
+<div class="radar-empty"><h3>Nenhuma oportunidade carregada</h3><p>{% if not has_eod %}Atualize os dados B3.{% elif not has_quality %}Atualize a qualidade CVM.{% else %}Nenhuma PUT passou pelos filtros atuais.{% endif %}</p></div>
 {% else %}
-<div class="grid">
+<div class="radar-grid">
 {% for card in cards %}
-<article class="card {{ card.status }}">
-  <div class="top"><span class="rank">#{{ card.position }}</span><b>{{ card.status }}</b></div>
-  <div class="asset">{{ card.asset }}</div><div class="option">PUT {{ card.option_code }}</div>
-  <div class="score">{{ card.score if card.score is not none else '--' }}<small>/100</small></div>
-  <p>{{ card.reason }}</p>
-  <div class="kpis"><div><small>Prêmio</small><b>{{ card.option_premium }}</b></div><div><small>ROI</small><b>{{ card.gross_roi_pct }}</b></div><div><small>Preço líquido</small><b>{{ card.net_price }}</b></div><div><small>DTE</small><b>{{ card.dte }} dias</b></div></div>
-  <form class="manual" method="post" action="{{ url_for('atualizar_preco_intraday') }}">
+<article class="radar-card {{ card.status }}">
+  <div class="radar-top">
+    <span class="radar-rank">#{{ card.position }}</span>
+    <span class="radar-status">{% if card.status == 'eligible' %}Elegível{% elif card.status == 'watchlist' %}Observação{% elif card.status == 'discarded' %}Descartada{% else %}Dados insuficientes{% endif %}</span>
+  </div>
+  <div class="radar-asset">{{ card.asset }}</div><div class="radar-option">PUT {{ card.option_code }}</div>
+  <div class="radar-score">{{ card.score if card.score is not none else '--' }}<small>/100</small></div>
+  <p class="radar-reason">{{ card.reason }}</p>
+  <div class="radar-kpis">
+    <div class="radar-kpi premium"><small>Prêmio</small><b>{{ card.option_premium }}</b></div>
+    <div class="radar-kpi roi"><small>ROI</small><b>{{ card.gross_roi_pct }}</b></div>
+    <div class="radar-kpi net"><small>Preço líquido</small><b>{{ card.net_price }}</b></div>
+    <div class="radar-kpi dte"><small>Vencimento</small><b>{{ card.dte }} dias</b></div>
+  </div>
+  <form class="radar-manual" method="post" action="{{ url_for('atualizar_preco_intraday') }}">
     <input type="hidden" name="option_code" value="{{ card.option_code }}">
     <label>Confirmar preço atual no BTG</label>
     <input required name="premium" inputmode="decimal" placeholder="Prêmio atual">
-    <input name="bid" inputmode="decimal" placeholder="Bid opcional">
-    <input name="ask" inputmode="decimal" placeholder="Ask opcional">
-    <button class="btn" type="submit">Recalcular</button>
+    <input name="bid" inputmode="decimal" placeholder="Melhor compra (opcional)">
+    <input name="ask" inputmode="decimal" placeholder="Melhor venda (opcional)">
+    <button class="radar-btn" type="submit">Recalcular oportunidade</button>
   </form>
-  <div class="source">Fonte: {{ card.source }}</div>
+  <div class="radar-source">Fonte: {{ card.source }}</div>
 </article>
 {% endfor %}
 </div>
 {% endif %}
+</div>
 {% endblock %}
