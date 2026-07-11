@@ -1,28 +1,31 @@
-document.addEventListener('DOMContentLoaded',()=>{
- const busca=document.getElementById('buscaAtivo');
- if(!busca) return;
-
- busca.addEventListener('input',()=>{
-   const termo=busca.value.toLowerCase();
-
-   document.querySelectorAll('#tabelaOperacoes tbody tr').forEach(linha=>{
-      linha.style.display =
-         linha.innerText.toLowerCase().includes(termo)
-         ? ''
-         : 'none';
-   });
- });
-});
-
-// Confirma exclusão de operação
-document.addEventListener('click', (e) => {
-  const btn = e.target.closest('.btn-action.delete');
-  if (!btn) return;
-
-  const ok = confirm('Tem certeza que deseja excluir esta operação?');
-
-  if (!ok) {
-    e.preventDefault();
-    e.stopPropagation();
-  }
+document.addEventListener('DOMContentLoaded', () => {
+  const search = document.getElementById('buscaAtivo');
+  const modal = document.getElementById('editOperationModal');
+  const form = document.getElementById('editOperationForm');
+  const errorBox = document.getElementById('editError');
+  const saveButton = document.getElementById('saveOperationButton');
+  const fields = {
+    id: document.getElementById('editId'), underlying: document.getElementById('editUnderlying'),
+    option: document.getElementById('editAtivo'), strike: document.getElementById('editStrike'),
+    contracts: document.getElementById('editContratos'), premium: document.getElementById('editPremio'),
+    expiry: document.getElementById('editVencimento'), spot: document.getElementById('editCotacao'),
+    status: document.getElementById('editStatus'), costs: document.getElementById('editCustos'), irrf: document.getElementById('editIrrf')
+  };
+  const summaryCode=document.getElementById('summaryCode'), summaryDetails=document.getElementById('summaryDetails'), summaryPremium=document.getElementById('summaryPremium'), premiumTotal=document.getElementById('premiumTotal');
+  const parseNumber=v=>{const t=String(v??'').replace('R$','').replace(/\s/g,'');if(!t)return 0;if(t.includes(',')&&t.includes('.'))return Number(t.replace(/\./g,'').replace(',','.'))||0;return Number(t.replace(',','.'))||0};
+  const formatMoney=v=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(Number.isFinite(v)?v:0);
+  const toIsoDate=v=>{const t=String(v??'').trim();if(/^\d{4}-\d{2}-\d{2}$/.test(t))return t;const m=t.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);return m?`${m[3]}-${m[2]}-${m[1]}`:t};
+  const inferUnderlying=c=>{const code=String(c??'').trim().toUpperCase();const m=code.match(/^([A-Z]{4})(\d)/);return m?`${m[1]}${m[2]}`:code.slice(0,5)};
+  const setChecked=(name,value,fallback)=>{const n=String(value||fallback).toUpperCase();const radios=form.querySelectorAll(`input[name="${name}"]`);radios.forEach(r=>r.checked=r.value.toUpperCase()===n);if(![...radios].some(r=>r.checked)&&radios[0])radios[0].checked=true};
+  const updateSummary=()=>{const code=fields.option?.value.trim().toUpperCase()||'Opção';const contracts=Math.max(parseNumber(fields.contracts?.value),0);const premium=Math.max(parseNumber(fields.premium?.value),0);const strike=Math.max(parseNumber(fields.strike?.value),0);const quantity=contracts*100,total=premium*quantity;if(fields.underlying)fields.underlying.value=inferUnderlying(code);if(summaryCode)summaryCode.textContent=code;if(summaryDetails)summaryDetails.textContent=`${quantity||0} ações • Strike ${formatMoney(strike)}`;if(summaryPremium)summaryPremium.textContent=formatMoney(total);if(premiumTotal)premiumTotal.textContent=`Total estimado: ${formatMoney(total)}`};
+  const showError=m=>{if(errorBox){errorBox.textContent=m;errorBox.style.display='block'}};
+  const clearError=()=>{if(errorBox){errorBox.textContent='';errorBox.style.display='none'}};
+  const openModal=()=>{modal.hidden=false;modal.setAttribute('aria-hidden','false');document.body.style.overflow='hidden';setTimeout(()=>fields.option?.focus(),50)};
+  const closeModal=()=>{modal.hidden=true;modal.setAttribute('aria-hidden','true');document.body.style.overflow='';clearError()};
+  const loadOperation=async id=>{clearError();if(saveButton)saveButton.disabled=true;try{const response=await fetch(`/api/operacoes/${encodeURIComponent(id)}`,{headers:{Accept:'application/json'}});const payload=await response.json();if(!response.ok||!payload.ok)throw new Error(payload.error||'Não foi possível carregar a operação.');const o=payload.operation;fields.id.value=o.ID;fields.option.value=o.Ativo||'';fields.strike.value=o.Strike||'0';fields.contracts.value=o.Contratos||'1';fields.premium.value=o.Premio_opcao||'0';fields.expiry.value=toIsoDate(o.Vencimento||'');fields.spot.value=o.Cotacao_atual||'0';fields.status.value=o.Status||'Aberta';fields.costs.value=o.Custos||'0';fields.irrf.value=o.IRRF||'0';setChecked('Tipo',o.Tipo,'PUT');setChecked('Estrategia',o.Estrategia,'Venda');updateSummary();openModal()}catch(e){alert(e.message||'Não foi possível abrir a edição.')}finally{if(saveButton)saveButton.disabled=false}};
+  search?.addEventListener('input',()=>{const term=search.value.toLowerCase();document.querySelectorAll('#tabelaOperacoes tbody tr').forEach(row=>row.style.display=row.innerText.toLowerCase().includes(term)?'':'none')});
+  document.addEventListener('click',e=>{const edit=e.target.closest('[data-edit-id]');if(edit){e.preventDefault();loadOperation(edit.dataset.editId);return}if(e.target.closest('[data-modal-close]')){closeModal();return}const del=e.target.closest('.btn-action.delete');if(del&&!confirm('Tem certeza que deseja excluir esta operação?')){e.preventDefault();e.stopPropagation()}});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&modal&&!modal.hidden)closeModal()});
+  ['input','change'].forEach(evt=>['editAtivo','editStrike','editContratos','editPremio'].forEach(id=>document.getElementById(id)?.addEventListener(evt,updateSummary)));
+  form?.addEventListener('submit',async e=>{e.preventDefault();clearError();if(!form.reportValidity())return;const id=fields.id.value;const payload={Ativo:fields.option.value.trim().toUpperCase(),Tipo:form.querySelector('input[name="Tipo"]:checked')?.value||'PUT',Estrategia:form.querySelector('input[name="Estrategia"]:checked')?.value||'Venda',Status:fields.status.value,Contratos:fields.contracts.value,Strike:fields.strike.value,Premio_opcao:fields.premium.value,Custos:fields.costs.value,IRRF:fields.irrf.value,Vencimento:fields.expiry.value,Cotacao_atual:fields.spot.value};if(saveButton){saveButton.disabled=true;saveButton.textContent='Salvando...'}try{const response=await fetch(`/api/operacoes/${encodeURIComponent(id)}`,{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify(payload)});const result=await response.json();if(!response.ok||!result.ok)throw new Error(result.error||'Não foi possível salvar a operação.');closeModal();window.location.reload()}catch(err){showError(err.message||'Erro inesperado ao salvar.')}finally{if(saveButton){saveButton.disabled=false;saveButton.textContent='Salvar alterações'}}});
 });
