@@ -34,6 +34,7 @@ class RadarCard:
     position: int
     asset: str
     option_code: str
+    option_premium: str
     status: str
     headline: str
     reason: str
@@ -215,6 +216,7 @@ def _card_from_ranked(item: Any, indexed: dict[str, tuple[OptionOpportunity, Any
         position=item.position,
         asset=opportunity.asset,
         option_code=opportunity.option_code,
+        option_premium=_money(opportunity.premium),
         status=item.summary.status,
         headline=item.summary.headline,
         reason=item.summary.reason,

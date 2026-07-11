@@ -30,6 +30,14 @@ def test_demo_radar_uses_four_percent_target_context():
     assert cards[1].gross_roi_pct == "4,00%"
 
 
+def test_demo_radar_shows_option_premium():
+    cards = build_demo_radar(date(2026, 7, 10))
+
+    assert cards[0].option_premium == "R$ 1,10"
+    assert cards[1].option_premium == "R$ 0,40"
+    assert cards[2].option_premium == "R$ 1,20"
+
+
 def test_demo_radar_classifies_roi_above_three_percent_as_excellent():
     cards = build_demo_radar(date(2026, 7, 10))
 
@@ -62,6 +70,7 @@ def test_operation_like_rows_calculate_net_price_from_unit_premium():
     assert cards[0].source == "real"
     assert cards[0].asset == "BBAS3"
     assert cards[0].option_code == "BBASQ270"
+    assert cards[0].option_premium == "R$ 1,10"
     assert cards[0].net_price == "R$ 25,90"
     assert cards[0].gross_roi_pct == "4,07%"
     assert cards[0].roi_concept == "Excelente"
@@ -88,6 +97,7 @@ def test_operation_like_row_roi_below_one_and_half_percent_is_bad_concept_only()
     cards = build_radar_from_operations(operations, date(2026, 7, 10))
 
     assert len(cards) == 1
+    assert cards[0].option_premium == "R$ 0,20"
     assert cards[0].gross_roi_pct == "1,00%"
     assert cards[0].roi_concept == "Ruim"
     assert cards[0].roi_concept_class == "bad"
