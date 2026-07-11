@@ -1,177 +1,104 @@
 {% extends 'base.html' %}
-{% block title %}Dashboard{% endblock %}
+{% from 'components/executive.html' import empty_state, money, percent with context %}
+{% block title %}Dashboard Executivo | FaculdadeMaria{% endblock %}
 {% block content %}
-
-<div class="hero">
-  <div>
-    <h1>Olá, Faculdade Maria! 👋</h1>
-    <p>Aqui está o resumo geral das suas operações.</p>
-    <div class="topbar-info">
-      <span>📅 Hoje</span>
-      <span>🕒 Última atualização</span>
-      <span>📊 Sistema Operacional</span>
+<div class="executive-dashboard">
+  <header class="exec-header">
+    <div>
+      <span class="exec-eyebrow">FACULDADEMARIA · EXECUTIVE</span>
+      <h1>Olá, Faculdade Maria! <span>👋</span></h1>
+      <p>Seu painel executivo de operações com PUTs.</p>
     </div>
-  </div>
-  <div class="hero-tools">
-    <button class="button">🔄 Atualizar Dados</button>
-  </div>
-</div>
-
-
-<div class="premium-cards">
-  <div class="metric blue">
-    <div class="icon">💲</div>
-    <div class="metric-content">
-      <small>PRÊMIOS ACUMULADOS</small>
-      <h2>{{ brl(ind.premios_total) }}</h2>
-      <p>Total recebido em prêmios</p>
+    <div class="exec-header__actions">
+      <div class="exec-status"><i></i><span>Sistema operacional</span></div>
+      <div class="exec-date">{{ ind.mes_atual }}</div>
+      <button type="button" class="exec-button" onclick="window.location.reload()">↻ Atualizar dados</button>
     </div>
-  </div>
+  </header>
 
-  <div class="metric green">
-    <div class="icon">📈</div>
-    <div class="metric-content">
-      <small>ROI ABERTO</small>
-      <h2>{{ pct(ind.roi_medio_abertas) }}</h2>
-      <p>ROI médio das operações abertas</p>
-    </div>
-  </div>
+  <section class="exec-kpis" aria-label="Indicadores principais">
+    <article class="exec-kpi"><span class="exec-kpi__icon">♛</span><small>PRÊMIOS NO MÊS</small><strong>{{ money(dashboard.premiums_month) }}</strong><p>Recebidos no período atual</p></article>
+    <article class="exec-kpi exec-kpi--featured"><span class="exec-kpi__icon">↗</span><small>ROI MÉDIO DA CARTEIRA</small><strong>{{ percent(dashboard.average_roi) }}</strong><p>Meta oficial: 4,00%</p></article>
+    <article class="exec-kpi"><span class="exec-kpi__icon">▥</span><small>CAPITAL ALOCADO</small><strong>{{ money(dashboard.allocated_capital) }}</strong><p>Comprometido em operações</p></article>
+    <article class="exec-kpi"><span class="exec-kpi__icon">P</span><small>PUTS EM ABERTO</small><strong>{{ dashboard.open_puts }}</strong><p>Posições acompanhadas</p></article>
+    <article class="exec-kpi"><span class="exec-kpi__icon">◷</span><small>PRÓXIMO VENCIMENTO</small><strong>{% if dashboard.next_expiry %}{{ dashboard.next_expiry.days }} dias{% else %}—{% endif %}</strong><p>{% if dashboard.next_expiry %}{{ dashboard.next_expiry.option_code }} · {{ dashboard.next_expiry.date }}{% else %}Sem PUT aberta{% endif %}</p></article>
+    <article class="exec-kpi"><span class="exec-kpi__icon">◎</span><small>ROI PROJETADO</small><strong>{{ percent(dashboard.projected_roi) }}</strong><p>Sobre o capital alocado</p></article>
+  </section>
 
-  <div class="metric purple">
-    <div class="icon">🪙</div>
-    <div class="metric-content">
-      <small>CAPITAL NECESSÁRIO</small>
-      <h2>{{ brl(ind.capital_comp) }}</h2>
-      <p>Capital comprometido atualmente</p>
-    </div>
-  </div>
+  <section class="exec-ai exec-ai--{{ dashboard.ai_tone }}">
+    <div class="exec-ai__mark">FM</div>
+    <div><span>RESUMO EXECUTIVO DA IA</span><h2>Leitura operacional da carteira</h2><p>{{ dashboard.ai_summary }}</p></div>
+    <a href="/radar-oportunidades">Abrir Radar Premium →</a>
+  </section>
 
-  <div class="metric gold">
-    <div class="icon">⭐</div>
-    <div class="metric-content">
-      <small>NOTA CORTEX</small>
-      <h2>4,0 / 10</h2>
-      <p>Qualidade média das operações</p>
-    </div>
-  </div>
-
-  <div class="metric emerald">
-    <div class="icon">💰</div>
-    <div class="metric-content">
-      <small>LUCRO DO MÊS</small>
-      <h2>{{ brl(ind.lucro_mes) }}</h2>
-      <p>Resultado das operações no mês atual</p>
-    </div>
-  </div>
-</div>
-
-
-<div class="dashboard-layout">
-  <div class="dashboard-main">
-
-    <div class="dashboard-grid">
-      <div class="panel">
-        <h3>📈 EVOLUÇÃO DO LUCRO (R$)</h3>
-        <canvas id="lucroChart" height="120"></canvas>
+  <div class="exec-grid exec-grid--primary">
+    <section class="exec-panel exec-panel--portfolio">
+      <header class="exec-panel__header"><div><span>◉</span><h2>Composição da carteira</h2></div><a href="/operacoes-abertas">Ver carteira</a></header>
+      {% if dashboard.portfolio %}
+      <div class="portfolio-list">
+        {% for item in dashboard.portfolio %}
+        <div class="portfolio-item"><div><strong>{{ item.asset }}</strong><span>{{ money(item.capital) }}</span></div><div class="progress"><i style="width:{{ item.share|round(1) }}%"></i></div><small>{{ percent(item.share) }} do capital alocado</small></div>
+        {% endfor %}
       </div>
+      {% else %}{{ empty_state('Carteira sem posições', 'Cadastre uma PUT para acompanhar a composição do capital.', '/#nova-operacao', 'Cadastrar operação') }}{% endif %}
+    </section>
 
-      <div class="panel">
-        <h3>📊 PRÊMIOS RECEBIDOS POR MÊS (R$)</h3>
-        <canvas id="premiosChart" height="120"></canvas>
-      </div>
-
-      <div class="panel">
-        <h3>🥧 DISTRIBUIÇÃO DOS PRÊMIOS ATIVOS</h3>
-        <div class="pizza-wrapper">
-          <canvas id="pizzaChart" height="180"></canvas>
-        </div>
-      </div>
-
-      <div class="panel">
-        <h3>🏆 TOP 5 OPERAÇÕES ABERTAS</h3>
-        {% if top5 %}
-        <table>
-          <tr><th>Ativo</th><th>Prêmio</th><th>ROI</th></tr>
-          {% for op in top5 %}
-          <tr><td>{{ op.ativo }}</td><td>{{ op.premio }}</td><td>{{ op.roi }}</td></tr>
-          {% endfor %}
-        </table>
-        {% else %}
-        <div class="empty-state">
-          <div style="font-size:42px;">🏆</div>
-          <div>Nenhuma operação aberta no momento</div>
-          <div>Cadastre uma nova operação ao lado.</div>
-        </div>
-        {% endif %}
-      </div>
-    </div>
-
-    <div class="footer-stats">
-      <div class="foot-card">💼 Capital Total</div>
-      <div class="foot-card">🔒 Capital Utilizado</div>
-      <div class="foot-card">✅ Disponível</div>
-      <div class="foot-card">🕒 Última atualização</div>
-    </div>
-
+    <section class="exec-panel exec-panel--opportunities">
+      <header class="exec-panel__header"><div><span>✦</span><h2>Melhores oportunidades do dia</h2></div><span class="exec-tag">DECISION ENGINE</span></header>
+      {{ empty_state('Consulte o Radar atualizado', 'As oportunidades dependem dos dados B3 e da qualidade CVM disponíveis no Radar. Nenhuma recomendação é inventada no Dashboard.', '/radar-oportunidades', 'Analisar oportunidades') }}
+    </section>
   </div>
 
-  
+  <div class="exec-grid exec-grid--triple">
+    <section class="exec-panel">
+      <header class="exec-panel__header"><div><span>↻</span><h2>PUTs com potencial de rolagem</h2></div><a href="/rolagem-inteligente">Analisar</a></header>
+      {% if dashboard.roll_candidates %}<div class="exec-list">{% for item in dashboard.roll_candidates %}<a href="/rolagem-inteligente"><div><strong>{{ item.option_code }}</strong><span>{{ item.reason }}</span></div><b>{{ item.days }}d</b></a>{% endfor %}</div>{% else %}{{ empty_state('Nenhuma revisão imediata', 'Não existem PUTs abertas próximas do vencimento ou com alerta operacional.') }}{% endif %}
+    </section>
+    <section class="exec-panel exec-panel--attention">
+      <header class="exec-panel__header"><div><span>!</span><h2>Atenção necessária</h2></div><span class="exec-count">{{ dashboard.attention_items|length }}</span></header>
+      {% if dashboard.attention_items %}<div class="exec-list">{% for item in dashboard.attention_items %}<a href="/operacoes-abertas"><div><strong>{{ item.option_code }}</strong><span>{{ item.message }}</span></div><b>→</b></a>{% endfor %}</div>{% else %}{{ empty_state('Tudo sob controle', 'Nenhum alerta operacional foi encontrado nas PUTs abertas.') }}{% endif %}
+    </section>
+    <section class="exec-panel">
+      <header class="exec-panel__header"><div><span>◷</span><h2>Próximos vencimentos</h2></div><a href="/operacoes-abertas">Detalhes</a></header>
+      {% if dashboard.upcoming_expiries %}<div class="expiry-list">{% for item in dashboard.upcoming_expiries %}<div><span class="expiry-day">{{ item.days }}<small>dias</small></span><p><strong>{{ item.option_code }}</strong><small>{{ item.date }}</small></p></div>{% endfor %}</div>{% else %}{{ empty_state('Agenda livre', 'Nenhum vencimento de PUT em aberto.') }}{% endif %}
+    </section>
+  </div>
 
-<aside class="operation-sidebar panel">
-<h3>➕ NOVA OPERAÇÃO</h3>
+  <div class="exec-grid exec-grid--analytics">
+    <section class="exec-panel exec-panel--chart">
+      <header class="exec-panel__header"><div><span>↗</span><h2>Evolução dos prêmios</h2></div><span class="exec-tag">DADOS REAIS</span></header>
+      <div class="exec-chart"><canvas id="executivePremiumChart"></canvas></div>
+    </section>
+    <section class="exec-panel">
+      <header class="exec-panel__header"><div><span>◎</span><h2>Metas do mês</h2></div><span class="exec-tag">ROI 4%</span></header>
+      <div class="goals-list">{% for goal in dashboard.goals %}<div><header><strong>{{ goal.label }}</strong><span>{% if goal.unit == '%' %}{{ percent(goal.value) }}{% else %}{{ money(goal.value) }}{% endif %}</span></header><div class="progress"><i style="width:{{ goal.progress|round(1) }}%"></i></div><small>Meta: {% if goal.unit == '%' %}{{ percent(goal.target) }}{% else %}{{ money(goal.target) }}{% endif %}</small></div>{% endfor %}</div>
+    </section>
+  </div>
 
-<form class="op-form" method="POST" action="/nova">
+  <section class="exec-stats">
+    {% for stat in dashboard.stats %}<div><span>{{ stat.label }}</span><strong>{% if stat.kind == 'money' %}{{ money(stat.value) }}{% else %}{{ stat.value }}{% endif %}</strong></div>{% endfor %}
+    <div><span>Última atualização</span><strong id="lastUpdated">Agora</strong></div>
+  </section>
 
-<label>Estratégia</label>
-<div class="toggle-buy">
-<button type="button" class="active" onclick="document.getElementById('estrategia').value='Venda'">VENDA</button>
-<button type="button" onclick="document.getElementById('estrategia').value='Compra'">COMPRA</button>
-</div>
-<input type="hidden" id="estrategia" name="Estrategia" value="Venda">
-
-<label>Tipo</label>
-<div class="toggle-op">
-<button type="button" class="active" onclick="document.getElementById('tipo').value='PUT'">PUT</button>
-<button type="button" onclick="document.getElementById('tipo').value='CALL'">CALL</button>
-</div>
-<input type="hidden" id="tipo" name="Tipo" value="PUT">
-
-<input id="codigo_opcao" name="Ativo" placeholder="Código da Opção">
-
-<input id="strike" name="Strike" placeholder="Strike">
-
-
-
-<input type="date" name="Vencimento">
-
-<input type="number" id="contratos" name="Contratos" placeholder="Contratos">
-
-<small id="acoesInfo">0 ações</small>
-
-<input id="premio" name="Premio_opcao" placeholder="Prêmio da Opção">
-
-<input id="custos" name="Custos" placeholder="Custos Operacionais">
-
-<input id="irrf" name="IRRF" placeholder="IRRF">
-
-<textarea name="Observacao" placeholder="Observação"></textarea>
-
-<div class="op-summary" id="opSummary">
-  <div><strong>Capital:</strong> <span id="capitalCalc">R$ 0,00</span></div>
-  <div><strong>Prêmio Bruto:</strong> <span id="premioCalc">R$ 0,00</span></div>
-  <div><strong>ROI Estimado:</strong> <span id="roiCalc">0,00%</span></div>
-</div>
-
-
-<button type="submit" class="save-op">💾 Salvar Operação</button>
-
-</form>
-</aside>
-
-
-
+  <section class="exec-panel exec-new-operation" id="nova-operacao">
+    <header class="exec-panel__header"><div><span>＋</span><h2>Cadastrar operação</h2></div><span class="exec-tag">VENDA DE PUT</span></header>
+    <form class="op-form exec-operation-form" method="POST" action="/nova">
+      <input type="hidden" name="Estrategia" value="Venda"><input type="hidden" name="Tipo" value="PUT"><input type="hidden" name="Status" value="Aberta">
+      <label>Código da opção<input id="codigo_opcao" name="Ativo" placeholder="Ex.: PETRT123" required></label>
+      <label>Strike<input id="strike" name="Strike" placeholder="R$ 0,00" required></label>
+      <label>Vencimento<input type="date" name="Vencimento" required></label>
+      <label>Contratos<input type="number" id="contratos" name="Contratos" min="1" value="1" required><small id="acoesInfo">100 ações</small></label>
+      <label>Prêmio por opção<input id="premio" name="Premio_opcao" placeholder="R$ 0,00" required></label>
+      <label>Custos<input id="custos" name="Custos" placeholder="R$ 0,00"></label>
+      <label>IRRF<input id="irrf" name="IRRF" placeholder="R$ 0,00"></label>
+      <label class="exec-operation-form__wide">Observação<textarea name="Observacao" placeholder="Contexto da operação"></textarea></label>
+      <div class="op-summary exec-operation-form__summary"><div><strong>Capital</strong><span id="capitalCalc">R$ 0,00</span></div><div><strong>Prêmio líquido</strong><span id="premioCalc">R$ 0,00</span></div><div><strong>ROI estimado</strong><span id="roiCalc">0,00%</span></div></div>
+      <button type="submit" class="save-op">Salvar operação</button>
+    </form>
+  </section>
 </div>
 
+<script id="executiveDashboardData" type="application/json">{{ {'labels': dashboard.chart_labels, 'premiums': dashboard.chart_premiums}|tojson }}</script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="{{ url_for('static', filename='dashboard.js') }}"></script>
 {% endblock %}
