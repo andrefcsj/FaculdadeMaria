@@ -5,62 +5,28 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>{% block title %}FaculdadeMaria Executive{% endblock %}</title>
 <link rel="stylesheet" href="{{ url_for('static', filename='theme.css', v='20260711.2') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='new_operation.css', v='20260711.1') }}">
 <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}">
+{% block head %}{% endblock %}
 </head>
 <body class="app-shell">
 <div class="layout">
 <aside class="sidebar executive-sidebar">
-  <a class="executive-brand" href="/" aria-label="FaculdadeMaria">
-    <span class="executive-brand__brain">🧠</span>
-    <span class="executive-brand__claro">CLARO</span>
-    <strong>INVEST PRO</strong>
-    <small>v4.0</small>
-  </a>
-
+  <a class="executive-brand" href="/" aria-label="FaculdadeMaria"><span class="executive-brand__brain">🧠</span><span class="executive-brand__claro">CLARO</span><strong>INVEST PRO</strong><small>v4.0</small></a>
   <nav class="executive-nav" aria-label="Menu principal">
-    <div class="nav-group">
-      <span class="nav-group__title">📊 VISÃO GERAL</span>
-      <a href="/" class="{% if request.path=='/' %}active{% endif %}"><span>🏠</span> Dashboard Executivo</a>
-    </div>
-    <div class="nav-group">
-      <span class="nav-group__title">🔍 INTELIGÊNCIA</span>
-      <a href="/radar-oportunidades" class="{% if request.path=='/radar-oportunidades' %}active{% endif %}"><span>◎</span> Radar de Oportunidades</a>
-      <a href="/radar-oportunidades"><span>⌁</span> Scanner Inteligente</a>
-      <a href="/rolagem-inteligente" class="{% if request.path=='/rolagem-inteligente' %}active{% endif %}"><span>↻</span> Rolagem Inteligente</a>
-    </div>
-    <div class="nav-group">
-      <span class="nav-group__title">💼 OPERAÇÕES</span>
-      <a href="/operacoes-abertas" class="{% if request.path=='/operacoes-abertas' %}active{% endif %}"><span>▣</span> Carteira de PUTs</a>
-      <a href="/#nova-operacao"><span>＋</span> Cadastrar Operação</a>
-      <a href="/carteira"><span>⚖</span> Simulador de Exercício</a>
-      <a href="/radar-oportunidades#importar-mercado"><span>⇩</span> Importar Mercado</a>
-    </div>
-    <div class="nav-group">
-      <span class="nav-group__title">📑 GESTÃO</span>
-      <a href="/relatorios" class="{% if request.path=='/relatorios' %}active{% endif %}"><span>▤</span> Relatórios</a>
-      <a href="/historico" class="{% if request.path=='/historico' %}active{% endif %}"><span>◷</span> Histórico</a>
-    </div>
-    <div class="nav-group">
-      <span class="nav-group__title">⚙ SISTEMA</span>
-      <a href="/configuracoes" class="{% if request.path=='/configuracoes' %}active{% endif %}"><span>⚙</span> Configurações</a>
-      <a href="/backup" class="{% if request.path=='/backup' %}active{% endif %}"><span>▱</span> Backup</a>
-      <a href="/sobre" class="{% if request.path=='/sobre' %}active{% endif %}"><span>ⓘ</span> Sobre</a>
-    </div>
+    <div class="nav-group"><span class="nav-group__title">📊 VISÃO GERAL</span><a href="/" class="{% if request.path=='/' %}active{% endif %}"><span>🏠</span> Dashboard Executivo</a></div>
+    <div class="nav-group"><span class="nav-group__title">🔍 INTELIGÊNCIA</span><a href="/radar-oportunidades" class="{% if request.path=='/radar-oportunidades' %}active{% endif %}"><span>◎</span> Radar de Oportunidades</a><a href="/radar-oportunidades"><span>⌁</span> Scanner Inteligente</a><a href="/rolagem-inteligente" class="{% if request.path=='/rolagem-inteligente' %}active{% endif %}"><span>↻</span> Rolagem Inteligente</a></div>
+    <div class="nav-group"><span class="nav-group__title">💼 OPERAÇÕES</span><a href="/operacoes-abertas" class="{% if request.path=='/operacoes-abertas' %}active{% endif %}"><span>▣</span> Carteira de PUTs</a><a href="/operacoes-abertas?nova=1" data-open-new-operation><span>＋</span> Cadastrar Operação</a><a href="/carteira"><span>⚖</span> Simulador de Exercício</a><a href="/radar-oportunidades#importar-mercado"><span>⇩</span> Importar Mercado</a></div>
+    <div class="nav-group"><span class="nav-group__title">📑 GESTÃO</span><a href="/relatorios" class="{% if request.path=='/relatorios' %}active{% endif %}"><span>▤</span> Relatórios</a><a href="/historico" class="{% if request.path=='/historico' %}active{% endif %}"><span>◷</span> Histórico</a></div>
+    <div class="nav-group"><span class="nav-group__title">⚙ SISTEMA</span><a href="/configuracoes" class="{% if request.path=='/configuracoes' %}active{% endif %}"><span>⚙</span> Configurações</a><a href="/backup" class="{% if request.path=='/backup' %}active{% endif %}"><span>▱</span> Backup</a><a href="/sobre" class="{% if request.path=='/sobre' %}active{% endif %}"><span>ⓘ</span> Sobre</a></div>
   </nav>
-
-  <div class="executive-sidebar__footer">
-    <span>AMBIENTE OPERACIONAL</span>
-    <strong><i></i> Sistema ativo</strong>
-    <input type="checkbox" id="themeToggle" hidden>
-    <button type="button" id="themeButton" class="executive-theme" aria-label="Alternar tema">☀︎ <span>Tema</span> ◐</button>
-  </div>
+  <div class="executive-sidebar__footer"><span>AMBIENTE OPERACIONAL</span><strong><i></i> Sistema ativo</strong><input type="checkbox" id="themeToggle" hidden><button type="button" id="themeButton" class="executive-theme" aria-label="Alternar tema">☀︎ <span>Tema</span> ◐</button></div>
 </aside>
-
-<main class="content">
-{% block content %}{% endblock %}
-</main>
+<main class="content">{% block content %}{% endblock %}</main>
 </div>
+{% include 'components/new_operation_modal.html' %}
 <script src="{{ url_for('static', filename='theme.js') }}"></script>
 <script src="{{ url_for('static', filename='search_filters.js') }}"></script>
+<script src="{{ url_for('static', filename='new_operation.js', v='20260711.1') }}"></script>
 </body>
 </html>
