@@ -1,8 +1,8 @@
-"""Radar service for the visual Radar screen.
+"""Radar service for future market opportunity screens.
 
-The service can build Radar cards from controlled demonstration data or from
-already-loaded real operations supplied by the Flask app. It does not fetch
-quotes, access persistence directly, or call external providers.
+The current Radar screen is a market-opportunity preview. It must not replace the
+open-positions page. Until a real options scanner/provider is connected, the
+public Radar view uses controlled demonstration opportunities.
 """
 from __future__ import annotations
 
@@ -277,10 +277,14 @@ def build_demo_radar(as_of: date | None = None) -> tuple[RadarCard, ...]:
 
 
 def build_radar_from_operations(operations: Iterable[dict[str, Any]], as_of: date | None = None) -> tuple[RadarCard, ...]:
-    """Build Radar cards from real operations already loaded by the Flask app.
+    """Evaluate operation-like rows without using them as public Radar market scans.
 
-    Invalid or incomplete rows are ignored instead of crashing the Radar screen.
-    This keeps the UI safe while the real market provider layer is not ready yet.
+    This helper is kept for tests and future internal checks. The public Radar
+    page must not automatically display already-open positions as new market
+    opportunities.
+
+    For PUTs, net acquisition price is always calculated as:
+    strike - option premium per underlying unit.
     """
 
     as_of = as_of or date.today()
@@ -322,7 +326,7 @@ def build_radar_from_operations(operations: Iterable[dict[str, Any]], as_of: dat
             quality_score=Decimal("0.65"),
             data_confidence=Decimal("0.55"),
             warnings=("Qualidade do ativo ainda precisa ser confirmada",),
-            positive_notes=("Operação real cadastrada no sistema",),
+            positive_notes=("Registro interno avaliado sem substituir o scanner de mercado",),
             source="operacao_real_cadastrada",
         )
         assumptions = PutMetricAssumptions(
@@ -344,10 +348,11 @@ def build_radar_from_operations(operations: Iterable[dict[str, Any]], as_of: dat
 
 
 def build_radar(operations: Iterable[dict[str, Any]] | None = None, as_of: date | None = None) -> tuple[RadarCard, ...]:
-    """Build Radar cards from real operations, falling back to demonstration data."""
+    """Build the public Radar view.
 
-    if operations is not None:
-        real_cards = build_radar_from_operations(operations, as_of)
-        if real_cards:
-            return real_cards
+    Open operations are intentionally ignored here. The public Radar is reserved
+    for future market opportunities; until the scanner/provider exists, it uses
+    controlled demonstration opportunities.
+    """
+
     return build_demo_radar(as_of)
