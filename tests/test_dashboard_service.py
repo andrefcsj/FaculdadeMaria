@@ -1,0 +1,46 @@
+import unittest
+
+from services.dashboard_service import build_dashboard_view_model
+
+
+class DashboardServiceTests(unittest.TestCase):
+    def setUp(self):
+        self.operations = [{
+            "Ativo": "PETRT123", "Tipo": "PUT", "Status": "Aberta",
+            "Capital": 3000, "ROI": 4.5, "Dias": 12,
+            "Vencimento_fmt": "23/07/2026", "Alerta": "OK",
+            "Cotacao_n": 31,
+        }]
+        self.indicators = {
+            "lucro_mes": 150, "roi_medio_abertas": 4.5,
+            "capital_comp": 3000, "roi_abertas": 4.5,
+            "capital_total": 10000, "caixa_livre": 7000,
+        }
+        self.history = [{"mes": "Jul/26", "premios": 150}]
+        self.config = {"Meta ROI mensal": 0.04}
+
+    def test_builds_real_dashboard_summary(self):
+        view = build_dashboard_view_model(self.operations, [], self.indicators, self.history, self.config)
+        self.assertEqual(view.open_puts, 1)
+        self.assertEqual(view.next_expiry["option_code"], "PETRT123")
+        self.assertEqual(view.portfolio[0]["asset"], "PETR")
+        self.assertEqual(view.ai_tone, "positive")
+
+    def test_does_not_invent_opportunities_for_empty_portfolio(self):
+        indicators = dict(self.indicators, roi_medio_abertas=0, capital_comp=0, roi_abertas=0)
+        view = build_dashboard_view_model([], [], indicators, [], self.config)
+        self.assertEqual(view.open_puts, 0)
+        self.assertIsNone(view.next_expiry)
+        self.assertEqual(view.roll_candidates, ())
+        self.assertIn("Não há PUTs abertas", view.ai_summary)
+
+    def test_attention_uses_existing_operational_data(self):
+        operation = dict(self.operations[0], Cotacao_n=0, Dias=4, Alerta="PUT dentro do dinheiro")
+        view = build_dashboard_view_model([operation], [], self.indicators, self.history, self.config)
+        self.assertEqual(len(view.attention_items), 1)
+        self.assertIn("cotação não informada", view.attention_items[0]["message"])
+        self.assertEqual(len(view.roll_candidates), 1)
+
+
+if __name__ == "__main__":
+    unittest.main()
