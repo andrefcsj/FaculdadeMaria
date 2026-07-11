@@ -1,0 +1,16 @@
+option_root,ticker,assignment_eligible,long_term_suitable,quality_score,data_confidence,notes,cnpj,quality_model
+PETR,PETR4,sim,sim,,,Candidata aprovada pelo Product Owner para monitoramento,33.000.167/0001-01,company
+VALE,VALE3,sim,sim,,,Candidata aprovada pelo Product Owner para monitoramento,33.592.510/0001-54,company
+ITUB,ITUB4,sim,sim,,,Candidata aprovada pelo Product Owner para monitoramento,60.872.504/0001-23,financial
+BBAS,BBAS3,sim,sim,,,Candidata aprovada pelo Product Owner para monitoramento,00.000.000/0001-91,financial
+BBDC,BBDC4,sim,sim,,,Candidata aprovada pelo Product Owner para monitoramento,60.746.948/0001-12,financial
+ITSA,ITSA4,sim,sim,,,Candidata aprovada pelo Product Owner para monitoramento,61.532.644/0001-15,financial
+B3SA,B3SA3,sim,sim,,,Candidata aprovada pelo Product Owner para monitoramento,09.346.601/0001-25,company
+ABEV,ABEV3,sim,sim,,,Candidata aprovada pelo Product Owner para monitoramento,07.526.557/0001-00,company
+BBSE,BBSE3,sim,sim,,,Candidata aprovada pelo Product Owner para monitoramento,17.344.597/0001-94,financial
+GGBR,GGBR4,sim,sim,,,Candidata aprovada pelo Product Owner para monitoramento,33.611.500/0001-19,company
+SUZB,SUZB3,sim,sim,,,Candidata aprovada pelo Product Owner para monitoramento,16.404.287/0001-55,company
+PRIO,PRIO3,sim,sim,,,Candidata aprovada pelo Product Owner para monitoramento,10.629.105/0001-68,company
+ELET,ELET3,sim,sim,,,Candidata aprovada pelo Product Owner para monitoramento,00.001.180/0001-26,company
+CMIG,CMIG4,sim,sim,,,Candidata aprovada pelo Product Owner para monitoramento,17.155.730/0001-64,company
+CPLE,CPLE6,sim,sim,,,Candidata aprovada pelo Product Owner para monitoramento,76.483.817/0001-20,company

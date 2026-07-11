@@ -1,7 +1,7 @@
 # FaculdadeMaria - Cortex Invest PRO v2.6
 
 ## Alterações da versão 2.6
-- Meta do velocímetro alterada para 5%.
+- Meta do velocímetro alinhada ao ROI alvo oficial de 4%.
 - Atualização da versão no Dashboard e na aba do navegador.
 - Menu lateral:
   - Operações Abertas -> Op. Abertas

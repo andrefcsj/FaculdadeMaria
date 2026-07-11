@@ -9,7 +9,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from decimal import Decimal, InvalidOperation
-from typing import Any, Iterable
+from typing import Any, Iterable, Mapping
 
 from engine import (
     AssetQualityPolicy,
@@ -276,6 +276,44 @@ def build_demo_radar(as_of: date | None = None) -> tuple[RadarCard, ...]:
         for opportunity, profile in _demo_inputs(as_of)
     )
     return _evaluate_inputs(inputs, source="demo")
+
+
+def build_radar_from_market(
+    opportunities: Iterable[OptionOpportunity],
+    quality_profiles: Mapping[str, AssetQualityProfile],
+    as_of: date | None = None,
+) -> tuple[RadarCard, ...]:
+    """Connect normalized provider output to the Decision Engine.
+
+    Assets without an approved quality profile are deliberately blocked. Market
+    premium alone can never make an unknown asset eligible.
+    """
+    as_of = as_of or date.today()
+    inputs = []
+    for opportunity in opportunities:
+        if opportunity.option_type != "PUT" or opportunity.expiry < as_of:
+            continue
+        profile = quality_profiles.get(opportunity.asset)
+        if profile is None:
+            profile = AssetQualityProfile(
+                asset=opportunity.asset,
+                assignment_eligible=False,
+                long_term_suitable=False,
+                data_confidence=Decimal("0.40"),
+                blocking_events=("Ativo ainda não aprovado para eventual exercício",),
+                source="cadastro_qualidade_pendente",
+            )
+        inputs.append((
+            opportunity,
+            profile,
+            PutMetricAssumptions(as_of_date=as_of, contract_size=100, costs_total=Decimal("0")),
+        ))
+    if not inputs:
+        return tuple()
+    try:
+        return _evaluate_inputs(inputs, source="b3_eod")
+    except DecisionEngineError:
+        return tuple()
 
 
 def build_radar_from_operations(operations: Iterable[dict[str, Any]], as_of: date | None = None) -> tuple[RadarCard, ...]:

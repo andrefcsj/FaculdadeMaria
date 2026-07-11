@@ -13,6 +13,10 @@ from pathlib import Path
 from typing import Dict, List, Tuple
 
 from flask import Flask, redirect, request, url_for, jsonify, render_template
+from decimal import Decimal
+from engine.providers import B3CotahistProvider, CvmFundamentalsProvider, apply_intraday_quote, download_latest_cotahist, download_latest_dfp
+from services.asset_universe_service import load_cvm_issuer_config, load_personal_asset_universe
+from services.radar_service import build_radar_from_market
 
 BASE = Path(__file__).resolve().parent
 DATA = BASE / "data"
@@ -20,6 +24,10 @@ OPERACOES = DATA / "operacoes.csv"
 FECHADAS = DATA / "fechadas.csv"
 CONFIG = DATA / "config.csv"
 DB = DATA / "cortex.db"
+RADAR_COTAHIST = DATA / "market" / "cotahist_latest.zip"
+RADAR_ASSETS = DATA / "universo_pessoal_ativos.csv"
+RADAR_QUOTES = DATA / "market" / "manual_quotes.json"
+RADAR_DFP = DATA / "market" / "dfp_latest.zip"
 
 app = Flask(__name__)
 DATABASE_URL = os.getenv("DATABASE_URL")
@@ -161,7 +169,7 @@ def write_csv(path: Path, rows: List[Dict[str, str]], fieldnames: List[str]) -> 
 
 
 def load_config() -> Dict[str, float]:
-    cfg = {"Capital total inicial": 4000.0, "Aliquota IR opcoes": 0.15, "Meta ROI mensal": 0.01, "Tamanho contrato opcoes": 100.0}
+    cfg = {"Capital total inicial": 4000.0, "Aliquota IR opcoes": 0.15, "Meta ROI mensal": 0.04, "Tamanho contrato opcoes": 100.0}
     for row in read_csv(CONFIG):
         cfg[row.get("Parametro", "")] = fnum(row.get("Valor"), cfg.get(row.get("Parametro", ""), 0))
     return cfg
@@ -1303,7 +1311,7 @@ def sobre():
 def salvar_configuracoes():
     rows = [
         {"Parametro":"Capital total inicial","Valor":request.form.get("capital_inicial","4000")},
-        {"Parametro":"Meta ROI mensal","Valor":str(float(request.form.get("meta_roi","5"))/100)},
+        {"Parametro":"Meta ROI mensal","Valor":str(float(request.form.get("meta_roi","4"))/100)},
         {"Parametro":"Aliquota IR opcoes","Valor":str(float(request.form.get("aliquota_ir","15"))/100)},
         {"Parametro":"Tamanho contrato opcoes","Valor":request.form.get("tamanho_contrato","100")},
     ]
@@ -1314,7 +1322,7 @@ def salvar_configuracoes():
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
 
-# TODO v2.7: página Op. Fechadas e velocímetro meta 5%
+# TODO v2.7: página Op. Fechadas e velocímetro meta 4%
 
 
 # v2.9 - arquitetura simplificada
@@ -1339,4 +1347,66 @@ if __name__ == "__main__":
 
 @app.route('/radar-oportunidades')
 def radar_oportunidades():
-    return render_template('radar_oportunidades.html')
+    cards = ()
+    message = request.args.get("message", "")
+    try:
+        roots, profiles = load_personal_asset_universe(RADAR_ASSETS)
+        if RADAR_DFP.exists():
+            issuer_config = load_cvm_issuer_config(RADAR_ASSETS)
+            profiles = CvmFundamentalsProvider(RADAR_DFP, issuer_config).fetch()
+        if RADAR_COTAHIST.exists() and roots:
+            opportunities = list(B3CotahistProvider(RADAR_COTAHIST, roots).fetch())
+            overrides = json.loads(RADAR_QUOTES.read_text(encoding="utf-8")) if RADAR_QUOTES.exists() else {}
+            for index, opportunity in enumerate(opportunities):
+                quote = overrides.get(opportunity.option_code)
+                if quote:
+                    opportunities[index] = apply_intraday_quote(
+                        opportunity,
+                        premium=Decimal(str(quote["premium"])),
+                        bid=Decimal(str(quote["bid"])) if quote.get("bid") not in (None, "") else None,
+                        ask=Decimal(str(quote["ask"])) if quote.get("ask") not in (None, "") else None,
+                    )
+            cards = build_radar_from_market(opportunities, profiles)[:50]
+    except Exception as exc:
+        message = f"Não foi possível processar os dados: {exc}"
+    return render_template('radar_oportunidades.html', cards=cards, message=message, has_eod=RADAR_COTAHIST.exists(), has_quality=RADAR_DFP.exists())
+
+
+@app.route('/radar-oportunidades/atualizar-b3', methods=['POST'])
+def atualizar_radar_b3():
+    try:
+        download_latest_cotahist(RADAR_COTAHIST)
+        message = "Dados oficiais da B3 atualizados com sucesso."
+    except Exception as exc:
+        message = f"Atualização indisponível: {exc}"
+    return redirect(url_for('radar_oportunidades', message=message))
+
+
+@app.route('/radar-oportunidades/atualizar-qualidade', methods=['POST'])
+def atualizar_qualidade_cvm():
+    try:
+        download_latest_dfp(RADAR_DFP)
+        message = "Qualidade dos ativos atualizada com dados oficiais da CVM."
+    except Exception as exc:
+        message = f"Atualização fundamentalista indisponível: {exc}"
+    return redirect(url_for('radar_oportunidades', message=message))
+
+
+@app.route('/radar-oportunidades/preco-intraday', methods=['POST'])
+def atualizar_preco_intraday():
+    option_code = request.form.get("option_code", "").strip().upper()
+    premium = fnum(request.form.get("premium"), -1)
+    bid = request.form.get("bid", "").strip()
+    ask = request.form.get("ask", "").strip()
+    if not option_code or premium < 0:
+        return redirect(url_for('radar_oportunidades', message="Código ou prêmio inválido."))
+    RADAR_QUOTES.parent.mkdir(parents=True, exist_ok=True)
+    quotes = json.loads(RADAR_QUOTES.read_text(encoding="utf-8")) if RADAR_QUOTES.exists() else {}
+    quotes[option_code] = {
+        "premium": premium,
+        "bid": fnum(bid) if bid else None,
+        "ask": fnum(ask) if ask else None,
+        "updated_at": datetime.now().isoformat(),
+    }
+    RADAR_QUOTES.write_text(json.dumps(quotes, ensure_ascii=False, indent=2), encoding="utf-8")
+    return redirect(url_for('radar_oportunidades', message=f"Preço de {option_code} atualizado."))
