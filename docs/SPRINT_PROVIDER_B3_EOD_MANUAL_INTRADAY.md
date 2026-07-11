@@ -1,7 +1,7 @@
 # SPRINT_PROVIDER_B3_EOD_MANUAL_INTRADAY.md
 
 **Projeto:** FaculdadeMaria  
-**Status:** Em andamento  
+**Status:** Concluída — aguardando aprovação para merge  
 **Data:** 11/07/2026  
 **Branch:** `sprint/provider-b3-eod-manual-intraday`
 
@@ -20,18 +20,21 @@ Preparar o Radar para dados públicos EOD da B3, permitindo confirmação manual
 - Universo Pessoal de Ativos Elegíveis para Exercício.
 - Cadastro iniciado vazio, sem recomendações ou aprovações implícitas.
 - Validação de notas e elegibilidade.
+- Universo pessoal preenchido com 15 ações definidas pelo Product Owner.
+- Download automático do último COTAHIST diário disponível.
+- Radar Premium conectado aos dados reais EOD.
+- Formulário de confirmação manual de prêmio, bid e ask.
+- Recálculo do Radar após confirmação do preço intraday.
 
 ## Validação
 
 - 68 testes automatizados aprovados.
+- Validação integrada com arquivo real: 2.189 séries de PUT identificadas em 13 ativos monitorados no pregão analisado.
 - Nenhum ativo foi classificado ou recomendado automaticamente.
 
-## Próximas etapas da Sprint
+## Próxima evolução
 
-- Cadastrar os ativos escolhidos pelo Product Owner.
-- Conectar upload/atualização do arquivo B3 ao Radar Premium.
-- Adicionar formulário de confirmação manual intraday.
-- Validar a experiência completa antes do encerramento.
+- Alimentar notas reais de qualidade dos ativos para substituir o estado conservador de dados insuficientes.
 
 ## Merge
 
