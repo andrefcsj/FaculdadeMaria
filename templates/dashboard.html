@@ -5,24 +5,26 @@
 <div class="executive-dashboard">
   <header class="exec-header">
     <div>
-      <span class="exec-eyebrow">FACULDADEMARIA · EXECUTIVE</span>
       <h1>Olá, Faculdade Maria! <span>👋</span></h1>
-      <p>Seu painel executivo de operações com PUTs.</p>
+      <p>Aqui está o resumo geral das suas operações.</p>
+      <div class="exec-header__pills">
+        <span>📅 Hoje</span>
+        <span>◷ Última atualização: <b id="headerUpdated">agora</b></span>
+        <span>📊 Sistema Operacional <i></i></span>
+      </div>
     </div>
     <div class="exec-header__actions">
-      <div class="exec-status"><i></i><span>Sistema operacional</span></div>
-      <div class="exec-date">{{ ind.mes_atual }}</div>
       <button type="button" class="exec-button" onclick="window.location.reload()">↻ Atualizar dados</button>
     </div>
   </header>
 
   <section class="exec-kpis" aria-label="Indicadores principais">
-    <article class="exec-kpi"><span class="exec-kpi__icon">♛</span><small>PRÊMIOS NO MÊS</small><strong>{{ money(dashboard.premiums_month) }}</strong><p>Recebidos no período atual</p></article>
-    <article class="exec-kpi exec-kpi--featured"><span class="exec-kpi__icon">↗</span><small>ROI MÉDIO DA CARTEIRA</small><strong>{{ percent(dashboard.average_roi) }}</strong><p>Meta oficial: 4,00%</p></article>
-    <article class="exec-kpi"><span class="exec-kpi__icon">▥</span><small>CAPITAL ALOCADO</small><strong>{{ money(dashboard.allocated_capital) }}</strong><p>Comprometido em operações</p></article>
-    <article class="exec-kpi"><span class="exec-kpi__icon">P</span><small>PUTS EM ABERTO</small><strong>{{ dashboard.open_puts }}</strong><p>Posições acompanhadas</p></article>
-    <article class="exec-kpi"><span class="exec-kpi__icon">◷</span><small>PRÓXIMO VENCIMENTO</small><strong>{% if dashboard.next_expiry %}{{ dashboard.next_expiry.days }} dias{% else %}—{% endif %}</strong><p>{% if dashboard.next_expiry %}{{ dashboard.next_expiry.option_code }} · {{ dashboard.next_expiry.date }}{% else %}Sem PUT aberta{% endif %}</p></article>
-    <article class="exec-kpi"><span class="exec-kpi__icon">◎</span><small>ROI PROJETADO</small><strong>{{ percent(dashboard.projected_roi) }}</strong><p>Sobre o capital alocado</p></article>
+    <article class="exec-kpi exec-kpi--green"><span class="exec-kpi__icon">$</span><small>PRÊMIOS NO MÊS</small><strong>{{ money(dashboard.premiums_month) }}</strong><p>Recebidos no período atual</p></article>
+    <article class="exec-kpi exec-kpi--blue"><span class="exec-kpi__icon">↗</span><small>ROI MÉDIO DA CARTEIRA</small><strong>{{ percent(dashboard.average_roi) }}</strong><p>Meta oficial: 4,00%</p></article>
+    <article class="exec-kpi exec-kpi--yellow"><span class="exec-kpi__icon">▥</span><small>CAPITAL ALOCADO</small><strong>{{ money(dashboard.allocated_capital) }}</strong><p>Comprometido em operações</p></article>
+    <article class="exec-kpi exec-kpi--purple"><span class="exec-kpi__icon">P</span><small>PUTS EM ABERTO</small><strong>{{ dashboard.open_puts }}</strong><p>Posições acompanhadas</p></article>
+    <article class="exec-kpi exec-kpi--orange"><span class="exec-kpi__icon">◷</span><small>PRÓXIMO VENCIMENTO</small><strong>{% if dashboard.next_expiry %}{{ dashboard.next_expiry.days }} dias{% else %}—{% endif %}</strong><p>{% if dashboard.next_expiry %}{{ dashboard.next_expiry.option_code }} · {{ dashboard.next_expiry.date }}{% else %}Sem PUT aberta{% endif %}</p></article>
+    <article class="exec-kpi exec-kpi--cyan"><span class="exec-kpi__icon">◎</span><small>ROI PROJETADO</small><strong>{{ percent(dashboard.projected_roi) }}</strong><p>Sobre o capital alocado</p></article>
   </section>
 
   <section class="exec-ai exec-ai--{{ dashboard.ai_tone }}">
