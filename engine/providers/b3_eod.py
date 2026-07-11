@@ -7,6 +7,7 @@ from decimal import Decimal
 from pathlib import Path
 from typing import Iterable, Mapping
 from zipfile import ZipFile
+from urllib.request import Request, urlopen
 
 from ..core.contracts import OptionOpportunity
 from .base import MarketDataProvider, ProviderError
@@ -118,3 +119,31 @@ def apply_intraday_quote(
         opportunity, premium=premium, bid=bid, ask=ask,
         timestamp=datetime.now(timezone.utc), source="manual_intraday", data_confidence=Decimal("0.95"),
     )
+
+
+def download_latest_cotahist(destination: str | Path, *, as_of: date | None = None, lookback_days: int = 7) -> Path:
+    """Download the newest available official daily COTAHIST archive."""
+    target = Path(destination)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    reference = as_of or date.today()
+    errors = []
+    for offset in range(lookback_days):
+        candidate = reference.fromordinal(reference.toordinal() - offset)
+        if candidate.weekday() >= 5:
+            continue
+        filename = f"COTAHIST_D{candidate.strftime('%d%m%Y')}.ZIP"
+        url = f"https://bvmf.bmfbovespa.com.br/InstDados/SerHist/{filename}"
+        try:
+            http_request = Request(url, headers={"User-Agent": "FaculdadeMaria/1.0 (+dados-publicos-B3)"})
+            with urlopen(http_request, timeout=20) as response:
+                payload = response.read()
+            temporary = target.with_suffix(".tmp")
+            temporary.write_bytes(payload)
+            with ZipFile(temporary) as archive:
+                if not any(name.lower().endswith(".txt") for name in archive.namelist()):
+                    raise ValueError("arquivo sem TXT")
+            temporary.replace(target)
+            return target
+        except Exception as exc:
+            errors.append(f"{candidate.isoformat()}: {exc}")
+    raise ProviderError("Nenhum COTAHIST diário disponível", details={"attempts": errors})
