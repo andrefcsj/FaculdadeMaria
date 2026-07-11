@@ -1,0 +1,31 @@
+<div class="new-op-modal" id="newOperationModal" hidden aria-hidden="true">
+  <div class="new-op-modal__backdrop" data-new-op-close></div>
+  <section class="new-op-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="newOperationTitle">
+    <header class="new-op-modal__header">
+      <div class="new-op-title"><span>＋</span><div><h2 id="newOperationTitle">Cadastrar Nova Operação</h2><p>Registre uma nova posição sem sair desta tela</p></div></div>
+      <button type="button" class="new-op-close" data-new-op-close aria-label="Fechar">×</button>
+    </header>
+    <form id="newOperationForm">
+      <div class="new-op-modal__body">
+        <div class="new-op-grid new-op-grid--toggles">
+          <div><label class="new-op-label">Operação</label><div class="new-op-segmented"><input id="newVenda" type="radio" name="Estrategia" value="Venda" checked><label for="newVenda">Venda</label><input id="newCompra" type="radio" name="Estrategia" value="Compra"><label for="newCompra">Compra</label></div></div>
+          <div><label class="new-op-label">Tipo</label><div class="new-op-segmented"><input id="newCall" type="radio" name="Tipo" value="CALL"><label for="newCall">CALL</label><input id="newPut" type="radio" name="Tipo" value="PUT" checked><label for="newPut">PUT</label></div></div>
+        </div>
+        <div class="new-op-grid">
+          <label>Ativo subjacente<input id="newUnderlying" readonly placeholder="Ex.: PETR4"></label>
+          <label>Código da opção<input id="newOptionCode" required autocomplete="off" placeholder="Ex.: PETRT123"><small id="newOptionHint">Digite o código para preencher os dados disponíveis</small></label>
+          <label>Strike<input id="newStrike" class="new-money" required inputmode="decimal" placeholder="R$ 0,00"></label>
+          <label>Quantidade<input id="newContracts" required inputmode="numeric" value="1"><small>Contratos cadastrados</small></label>
+          <label>Prêmio unitário<input id="newPremium" class="new-money" required inputmode="decimal" placeholder="R$ 0,00"></label>
+          <label>Vencimento<input id="newExpiry" type="date" required></label>
+          <label>Cotação atual<input id="newSpot" class="new-money" inputmode="decimal" placeholder="R$ 0,00"></label>
+          <label>Custos<input id="newCosts" class="new-money" inputmode="decimal" value="R$ 0,00"></label>
+          <label>IRRF<input id="newIrrf" class="new-money" inputmode="decimal" value="R$ 0,00"></label>
+        </div>
+        <div class="new-op-summary"><div><strong id="newSummaryCode">Nova operação</strong><span id="newSummaryDetails">Preencha os dados da posição</span></div><div><span>Prêmio bruto estimado</span><b id="newSummaryPremium">R$ 0,00</b></div></div>
+        <div class="new-op-error" id="newOperationError"></div>
+      </div>
+      <footer class="new-op-modal__footer"><small>A operação será adicionada à carteira em aberto.</small><div><button type="button" class="new-op-secondary" data-new-op-close>Cancelar</button><button type="submit" class="new-op-primary" id="newOperationSave">＋ Cadastrar operação</button></div></footer>
+    </form>
+  </section>
+</div>

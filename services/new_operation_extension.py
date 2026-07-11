@@ -1,0 +1,125 @@
+"""Cadastro Premium de novas operações sem sair da tela atual."""
+from __future__ import annotations
+
+from datetime import date
+from decimal import Decimal, InvalidOperation
+
+from flask import jsonify, request
+
+from services.market_import_service import load_market_import
+
+
+def _decimal(value, field: str, *, allow_zero: bool = True) -> Decimal:
+    text = str(value or "").strip().replace("R$", "").replace(" ", "")
+    if "," in text and "." in text:
+        text = text.replace(".", "").replace(",", ".")
+    elif "," in text:
+        text = text.replace(",", ".")
+    try:
+        parsed = Decimal(text or "0")
+    except InvalidOperation as exc:
+        raise ValueError(f"{field} inválido.") from exc
+    if parsed < 0 or (not allow_zero and parsed == 0):
+        raise ValueError(f"{field} deve ser maior que zero.")
+    return parsed
+
+
+def register(app, legacy, market_path):
+    @app.get("/api/opcoes/<option_code>")
+    def lookup_option(option_code: str):
+        code = str(option_code or "").strip().upper()
+        if not code:
+            return jsonify({"ok": False, "error": "Informe o código da opção."}), 400
+        underlying = legacy.infer_acao_from_option(code)
+        result = {
+            "ok": True,
+            "option_code": code,
+            "asset": underlying,
+            "strike": None,
+            "expiry": None,
+            "premium": None,
+            "spot_price": None,
+            "source": "inferência do código",
+        }
+        imported = load_market_import(market_path)
+        if imported:
+            item = next((o for o in imported.opportunities if o.option_code.upper() == code), None)
+            if item:
+                result.update({
+                    "asset": item.asset,
+                    "strike": str(item.strike),
+                    "expiry": item.expiry.isoformat(),
+                    "premium": str(item.premium),
+                    "spot_price": str(item.spot_price),
+                    "source": "mercado importado",
+                })
+                return jsonify(result)
+        for row in legacy.read_operacoes():
+            if str(row.get("Ativo", "")).upper() == code:
+                result.update({
+                    "asset": legacy.infer_acao_from_option(code),
+                    "strike": str(row.get("Strike", "") or "") or None,
+                    "expiry": str(row.get("Vencimento", "") or "") or None,
+                    "premium": str(row.get("Premio_opcao", "") or "") or None,
+                    "spot_price": str(row.get("Cotacao_atual", "") or "") or None,
+                    "source": "operação já cadastrada",
+                })
+                return jsonify(result)
+        quote = legacy.cotacao_yahoo(underlying) if underlying else None
+        if quote:
+            result["spot_price"] = str(quote)
+        return jsonify(result)
+
+    @app.post("/api/operacoes")
+    def create_operation():
+        payload = request.get_json(silent=True) or {}
+        try:
+            option_code = str(payload.get("Ativo", "")).strip().upper()
+            if not option_code:
+                raise ValueError("Código da opção é obrigatório.")
+            option_type = str(payload.get("Tipo", "PUT")).upper()
+            if option_type not in {"PUT", "CALL"}:
+                raise ValueError("Tipo de opção inválido.")
+            strategy = str(payload.get("Estrategia", "Venda")).capitalize()
+            if strategy not in {"Venda", "Compra"}:
+                raise ValueError("Operação inválida.")
+            expiry_text = str(payload.get("Vencimento", "")).strip()
+            expiry = legacy.parse_date(expiry_text)
+            if expiry is None:
+                raise ValueError("Vencimento inválido.")
+            contracts = _decimal(payload.get("Contratos"), "Quantidade", allow_zero=False)
+            strike = _decimal(payload.get("Strike"), "Strike", allow_zero=False)
+            premium = _decimal(payload.get("Premio_opcao"), "Prêmio", allow_zero=False)
+            costs = _decimal(payload.get("Custos"), "Custos")
+            irrf = _decimal(payload.get("IRRF"), "IRRF")
+            spot = _decimal(payload.get("Cotacao_atual"), "Cotação atual")
+            rows = legacy.read_csv(legacy.OPERACOES)
+            next_id = max([int(legacy.fnum(row.get("ID"))) for row in rows] + [0]) + 1
+            row = {
+                "ID": str(next_id),
+                "Data abertura": str(date.today()),
+                "Ativo": option_code,
+                "Tipo": option_type,
+                "Estratégia": strategy,
+                "Status": "Aberta",
+                "Contratos": str(contracts),
+                "Strike": str(strike),
+                "Premio_opcao": str(premium),
+                "Custos": str(costs),
+                "IRRF": str(irrf),
+                "Vencimento": expiry.isoformat(),
+                "Cotacao_atual": str(spot),
+                "Resultado_realizado": "0",
+            }
+            if legacy.USE_POSTGRES:
+                legacy.salvar_operacao_pg(row)
+            else:
+                rows.append(row)
+                legacy.write_csv(legacy.OPERACOES, rows, [
+                    "ID", "Data abertura", "Ativo", "Tipo", "Estratégia", "Status",
+                    "Contratos", "Strike", "Premio_opcao", "Custos", "IRRF",
+                    "Vencimento", "Cotacao_atual", "Resultado_realizado",
+                ])
+            return jsonify({"ok": True, "operation_id": row["ID"], "message": "Operação cadastrada com sucesso."})
+        except Exception as exc:
+            return jsonify({"ok": False, "error": str(exc)}), 400
