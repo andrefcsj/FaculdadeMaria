@@ -50,7 +50,22 @@
 <td class='roi-cor col-roi'>{{ '%.2f'|format(o.ROI)|replace('.', ',') }}%</td>
 <td class="actions">
 <a class="btn-action edit" href="/editar/{{ o.ID }}" title="Editar"><i class="fas fa-pen"></i></a>
-<a class="btn-action close" href="/fechar/{{ o.ID }}" title="Fechar"><i class="fas fa-lock"></i></a>
+<button
+  class="btn-action close js-open-close-modal"
+  type="button"
+  title="Fechar"
+  data-close-url="/fechar/{{ o.ID }}"
+  data-option="{{ o.Ativo }}"
+  data-ticker="{{ o.ticker }}"
+  data-type="{{ o.Tipo }}"
+  data-strategy="{{ o['Estratégia'] }}"
+  data-strike="{{ o.Strike_n }}"
+  data-expiry="{{ o.Vencimento }}"
+  data-expiry-label="{{ o.Vencimento_fmt }}"
+  data-contracts="{{ o.Contratos_n }}"
+  data-contract-size="{{ cfg.get('Tamanho contrato opcoes', 100) }}"
+  data-premium-total="{{ o.Premio_liquido }}"
+><i class="fas fa-lock"></i></button>
 <a class="btn-action delete" href="/excluir/{{ o.ID }}" title="Excluir"><i class="fas fa-trash"></i></a>
 </td>
 </tr>
@@ -68,5 +83,35 @@
 </table>
 </div>
 
-<script src="{{ url_for('static', filename='op_abertas.js') }}"></script>
+<div class="close-modal" id="closeOperationModal" hidden aria-hidden="true">
+  <div class="close-modal__backdrop" data-close-modal></div>
+  <section class="close-dialog" role="dialog" aria-modal="true" aria-labelledby="closeModalTitle">
+    <header class="close-dialog__header">
+      <span class="close-dialog__asset" id="closeAssetLetter">—</span>
+      <div><h2 id="closeModalTitle">Encerrar Opção</h2><p id="closeOperationDescription"></p></div>
+      <button class="close-dialog__x" type="button" data-close-modal aria-label="Fechar">×</button>
+    </header>
+    <form id="closeOperationForm" method="post">
+      <input type="hidden" name="metodo_encerramento" id="closeMethod" value="recompra">
+      <div class="close-methods">
+        <button class="close-method active" type="button" data-method="recompra"><span class="close-method__icon blue">↻</span><i></i><strong>Recompra</strong><small>Encerrar pagando o valor atual da opção (zerar a posição).</small></button>
+        <button class="close-method" type="button" data-method="exercida"><span class="close-method__icon orange">ϟ</span><i></i><strong>Exercida</strong><small>A opção foi exercida — aquisição das ações ao strike.</small></button>
+        <button class="close-method" type="button" data-method="cancelada"><span class="close-method__icon slate">⊗</span><i></i><strong>Cancelar</strong><small>Cancela o registro por lançamento incorreto ou manutenção.</small></button>
+        <button class="close-method" type="button" data-method="virou_po" id="expiredMethod"><span class="close-method__icon gold">✧</span><i></i><strong>Virou pó</strong><small>Expirou sem valor e o prêmio recebido foi mantido.</small></button>
+      </div>
+      <div class="close-fields">
+        <label>DATA<input type="date" name="data_encerramento" id="closeDate" required></label>
+        <label id="repurchaseField">VALOR DE RECOMPRA<input type="number" min="0" step="0.01" name="valor_recompra" id="repurchaseValue" value="0.00" required></label>
+        <label>RESULTADO FINAL<output id="closeResult">—</output></label>
+      </div>
+      <div class="close-error" id="closeError" hidden></div>
+      <footer class="close-dialog__footer">
+        <p id="closeMethodHint">↻ Posição zerada com lucro/prejuízo na recompra.</p>
+        <div><button class="close-cancel" type="button" data-close-modal>Cancelar</button><button class="close-confirm" type="submit">✓ Confirmar encerramento</button></div>
+      </footer>
+    </form>
+  </section>
+</div>
+
+<script src="{{ url_for('static', filename='op_abertas.js', v='20260711.3') }}"></script>
 {% endblock %}
