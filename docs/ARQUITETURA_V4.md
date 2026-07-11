@@ -2,7 +2,24 @@
 
 ## 1. Status do documento
 
-Este documento descreve a arquitetura oficial atual do projeto FaculdadeMaria após a integração da Sprint 1.1-R e da política operacional oficial.
+Este documento descreve a arquitetura oficial atual do projeto FaculdadeMaria.
+
+### Atualização de estado — 11/07/2026
+
+O estado funcional vigente já inclui as Sprints Funcionais A–I e as integrações posteriores:
+
+- contratos, normalização e métricas de PUT;
+- indicadores técnicos e filtros de segurança;
+- qualidade do ativo e estratégia PUT;
+- Score IA explicável, ranking e explicação resumida;
+- serviço e interface do Radar Premium;
+- importação de mercado por CSV;
+- provider público B3 COTAHIST EOD e confirmação manual intraday;
+- qualidade automática por dados públicos da CVM;
+- Rolagem Inteligente;
+- aplicação Flask atual preservada por `legacy_app.py`, com `app.py` como ponto de entrada das extensões recentes.
+
+Descrições anteriores que apresentam o `engine/` apenas como pipeline pass-through representam o estado histórico pós-Sprint 1.1-R e não o estado funcional vigente.
 
 A pasta `docs/` é a única referência oficial de arquitetura e governança do projeto.
 
@@ -191,9 +208,9 @@ A fundação implementada oferece:
 - contrato abstrato de provider;
 - testes de arquitetura e isolamento.
 
-### 4.2 Restrições atuais
+### 4.2 Restrições históricas pós-Sprint 1.1-R
 
-O `engine/` ainda não implementa:
+Naquele marco histórico, o `engine/` ainda não implementava:
 
 - contratos completos de oportunidade;
 - snapshot normalizado de mercado;
