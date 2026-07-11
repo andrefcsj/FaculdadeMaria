@@ -1,15 +1,17 @@
-"""Ponto de entrada do FaculdadeMaria com importação de mercado e rolagem inteligente."""
+"""Ponto de entrada do FaculdadeMaria com extensões funcionais Premium."""
 from __future__ import annotations
 
 import json
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from decimal import Decimal
 
 import legacy_app as legacy
-from flask import redirect, render_template, request, url_for
+from flask import jsonify, redirect, render_template, request, url_for
 
 from engine.providers import apply_intraday_quote
 from engine.roll import RollInput, analyze_put_roll
+from services.exercise_probability_service import estimate_operation_exercise_probability
 from services.market_import_service import (
     MarketImportError,
     load_market_import,
@@ -135,6 +137,148 @@ def rolagem_inteligente():
         except Exception as exc:
             error = str(exc)
     return render_template("rolagem_inteligente.html", operations=operations, analysis=analysis, error=error, selected=selected)
+
+
+def _prepare_open_operation(operation):
+    ticker = legacy.infer_acao_from_option(operation.get("Ativo", ""))
+    expiry = legacy.parse_date(str(operation.get("Vencimento", "")))
+    estimate = estimate_operation_exercise_probability(
+        ticker=ticker,
+        option_type=str(operation.get("Tipo", "PUT")),
+        strike=Decimal(str(legacy.fnum(operation.get("Strike")))),
+        expiry=expiry,
+    )
+    operation["ticker"] = ticker
+    operation["cotacao_atual"] = float(estimate.spot_price) if estimate.spot_price is not None else legacy.fnum(operation.get("Cotacao_atual"), 0) or None
+    operation["logo_url"] = f"https://raw.githubusercontent.com/thefintz/icones-b3/main/icones/{ticker}.png" if ticker else None
+    operation["exercise_probability"] = estimate.percentage
+    operation["exercise_probability_label"] = estimate.label
+    operation["exercise_probability_class"] = (
+        "high" if estimate.probability is not None and estimate.probability >= Decimal("0.65")
+        else "mid" if estimate.probability is not None and estimate.probability >= Decimal("0.35")
+        else "low" if estimate.probability is not None
+        else "unavailable"
+    )
+    volatility_text = f" Volatilidade histórica: {(estimate.annual_volatility * Decimal('100')).quantize(Decimal('0.1'))}%." if estimate.annual_volatility is not None else ""
+    operation["exercise_probability_tooltip"] = f"{estimate.methodology}{volatility_text}"
+    return operation
+
+
+def operacoes_abertas_premium():
+    ops, fechadas, cfg = legacy.load_all()
+    abertas = [operation for operation in ops if str(operation.get("Status", "")).lower() == "aberta"]
+    if abertas:
+        with ThreadPoolExecutor(max_workers=min(6, len(abertas))) as executor:
+            abertas = list(executor.map(_prepare_open_operation, abertas))
+    return render_template(
+        "operacoes_abertas.html",
+        abertas=abertas,
+        ops=ops,
+        fechadas=fechadas,
+        cfg=cfg,
+        ind=legacy.metrics(ops, fechadas, cfg),
+    )
+
+
+app.view_functions["operacoes_abertas"] = operacoes_abertas_premium
+
+
+def _raw_operation(operation_id: str):
+    rows = legacy.read_csv(legacy.OPERACOES)
+    operation = legacy.get_operacao_pg(operation_id) if legacy.USE_POSTGRES else legacy.find_row(rows, operation_id)
+    return rows, operation
+
+
+def _serialize_operation(operation):
+    return {
+        "ID": str(operation.get("ID", "")),
+        "Ativo": str(operation.get("Ativo", "")),
+        "Tipo": str(operation.get("Tipo", "PUT")),
+        "Estrategia": str(operation.get("Estratégia", "Venda")),
+        "Status": str(operation.get("Status", "Aberta")),
+        "Contratos": str(operation.get("Contratos", "1")),
+        "Strike": str(operation.get("Strike", "0")),
+        "Premio_opcao": str(operation.get("Premio_opcao", "0")),
+        "Custos": str(operation.get("Custos", "0")),
+        "IRRF": str(operation.get("IRRF", "0")),
+        "Vencimento": str(operation.get("Vencimento", "")),
+        "Cotacao_atual": str(operation.get("Cotacao_atual", "0")),
+    }
+
+
+def _validated_operation_payload(payload, current):
+    option_type = str(payload.get("Tipo", current.get("Tipo", "PUT"))).upper()
+    if option_type not in {"PUT", "CALL"}:
+        raise ValueError("Tipo de opção inválido.")
+    status = str(payload.get("Status", current.get("Status", "Aberta"))).capitalize()
+    if status not in {"Aberta", "Encerrada"}:
+        raise ValueError("Status inválido.")
+    values = {}
+    for field in ("Contratos", "Strike", "Premio_opcao", "Custos", "IRRF", "Cotacao_atual"):
+        raw = str(payload.get(field, current.get(field, "0"))).strip().replace("R$", "").replace(" ", "")
+        if "," in raw and "." in raw:
+            raw = raw.replace(".", "").replace(",", ".")
+        elif "," in raw:
+            raw = raw.replace(",", ".")
+        parsed = Decimal(raw or "0")
+        if parsed < 0:
+            raise ValueError(f"{field} não pode ser negativo.")
+        values[field] = str(parsed)
+    expiry = str(payload.get("Vencimento", current.get("Vencimento", ""))).strip()
+    if legacy.parse_date(expiry) is None:
+        raise ValueError("Vencimento inválido.")
+    current.update({
+        "Ativo": str(payload.get("Ativo", current.get("Ativo", ""))).strip().upper(),
+        "Tipo": option_type,
+        "Estratégia": str(payload.get("Estrategia", current.get("Estratégia", "Venda"))).strip(),
+        "Status": status,
+        "Vencimento": expiry,
+        **values,
+    })
+    if not current["Ativo"]:
+        raise ValueError("Código da opção é obrigatório.")
+    return current
+
+
+@app.route("/api/operacoes/<operation_id>", methods=["GET", "POST"])
+def api_operacao(operation_id: str):
+    rows, operation = _raw_operation(operation_id)
+    if operation is None:
+        return jsonify({"ok": False, "error": "Operação não encontrada."}), 404
+    if request.method == "GET":
+        return jsonify({"ok": True, "operation": _serialize_operation(operation)})
+    try:
+        updated = _validated_operation_payload(request.get_json(silent=True) or {}, operation)
+        if legacy.USE_POSTGRES:
+            connection = legacy.get_pg_conn()
+            cursor = connection.cursor()
+            cursor.execute(
+                """UPDATE operacoes SET ativo=%s,tipo=%s,estrategia=%s,status=%s,contratos=%s,
+                   strike=%s,premio_opcao=%s,custos=%s,irrf=%s,vencimento=%s,cotacao_atual=%s WHERE id=%s""",
+                (
+                    updated["Ativo"], updated["Tipo"], updated["Estratégia"], updated["Status"],
+                    updated["Contratos"], updated["Strike"], updated["Premio_opcao"], updated["Custos"],
+                    updated["IRRF"], updated["Vencimento"], updated["Cotacao_atual"], operation_id,
+                ),
+            )
+            connection.commit()
+            connection.close()
+        else:
+            legacy.write_csv(
+                legacy.OPERACOES,
+                rows,
+                ["ID", "Data abertura", "Ativo", "Tipo", "Estratégia", "Status", "Contratos", "Strike", "Premio_opcao", "Custos", "IRRF", "Vencimento", "Cotacao_atual", "Resultado_realizado"],
+            )
+        return jsonify({"ok": True, "operation": _serialize_operation(updated)})
+    except Exception as exc:
+        return jsonify({"ok": False, "error": str(exc)}), 400
+
+
+def editar_descontinuado(oid: str):
+    return redirect(url_for("operacoes_abertas"))
+
+
+app.view_functions["editar"] = editar_descontinuado
 
 
 if __name__ == "__main__":
