@@ -33,6 +33,26 @@ Mudanças ainda em branch podem aparecer como `Em revisão`.
 
 ---
 
+## 2026-07-11 — Modal de fechamento em Operações Abertas
+
+Status: `Em revisão`
+
+Branch: `agent/modal-fechamento-operacoes`
+
+### Added
+
+- modal Premium de encerramento sem saída da página;
+- Recompra, Exercida, Cancelar e Virou pó;
+- resultado final calculado antes da confirmação;
+- confirmação assíncrona e retorno à lista.
+
+### Fixed
+
+- persistência local do fechamento em CSV;
+- atualização PostgreSQL limitada às colunas existentes.
+
+---
+
 ## 2026-07-11 — Ajuste do Dashboard ao mockup aprovado
 
 Status: `Integrado`
