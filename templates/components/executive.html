@@ -1,0 +1,21 @@
+{% macro panel(title, icon='', class_name='') -%}
+<section class="exec-panel {{ class_name }}">
+  <header class="exec-panel__header">
+    <div><span class="exec-panel__icon">{{ icon }}</span><h2>{{ title }}</h2></div>
+    {{ caller() if caller else '' }}
+  </header>
+  <div class="exec-panel__body">{{ kwargs.get('body', '') }}</div>
+</section>
+{%- endmacro %}
+
+{% macro empty_state(title, message, action_url='', action_label='') -%}
+<div class="exec-empty">
+  <span class="exec-empty__mark">◇</span>
+  <strong>{{ title }}</strong>
+  <p>{{ message }}</p>
+  {% if action_url %}<a href="{{ action_url }}" class="exec-link">{{ action_label }} →</a>{% endif %}
+</div>
+{%- endmacro %}
+
+{% macro money(value) -%}{{ brl(value) }}{%- endmacro %}
+{% macro percent(value) -%}{{ '%.2f'|format(value)|replace('.', ',') }}%{%- endmacro %}
