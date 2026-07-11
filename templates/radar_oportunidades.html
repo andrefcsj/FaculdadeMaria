@@ -8,7 +8,8 @@
 .radar-hero{display:flex;justify-content:space-between;gap:28px;align-items:center;margin-bottom:22px;padding:26px 28px;overflow:hidden;position:relative}
 .radar-hero:before{content:"";position:absolute;width:280px;height:280px;right:-90px;top:-145px;border-radius:50%;background:radial-gradient(circle,rgba(37,99,235,.35),transparent 68%);pointer-events:none}
 .radar-hero h1{color:#fff!important;font-size:34px;margin:0 0 8px;font-weight:950;letter-spacing:-.7px}.radar-hero p{color:var(--muted)!important;margin:0;line-height:1.55;max-width:760px}
-.radar-actions{display:flex;flex-direction:column;gap:9px;min-width:220px;position:relative;z-index:1}.radar-actions form{margin:0}
+.radar-actions{display:flex;flex-direction:column;gap:9px;min-width:250px;position:relative;z-index:1}.radar-actions form{margin:0}
+.radar-upload{padding:11px;border:1px solid rgba(96,165,250,.42);border-radius:14px;background:rgba(30,64,175,.20)}.radar-upload label{display:block;color:#fff!important;font-size:12px;font-weight:900;margin:0 0 7px}.radar-upload input[type=file]{width:100%;color:#dbeafe!important;font-size:11px;margin-bottom:8px}.radar-update{display:inline-block;margin-top:10px;color:#bfdbfe!important;font-size:12px;font-weight:800}
 .radar-notice{margin:12px 0 20px;padding:14px 16px;border:1px solid rgba(96,165,250,.38);border-radius:14px;background:rgba(30,64,175,.25);color:#e7f1ff!important;font-weight:750}
 .radar-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
 .radar-card{padding:21px;position:relative;overflow:hidden;transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease}
@@ -20,22 +21,31 @@
 .radar-asset{color:#fff!important;font-size:30px;font-weight:950;margin-top:17px;letter-spacing:-.5px}.radar-option{color:#a9d2ff!important;font-weight:850;margin-top:2px}.radar-score{color:#fff!important;font-size:43px;font-weight:950;margin:15px 0 8px;line-height:1}.radar-score small{color:#9fb3cc!important;font-size:13px;margin-left:3px}.radar-reason{color:#e5edf8!important;line-height:1.52;min-height:68px;margin:12px 0 17px}
 .radar-kpis{display:grid;grid-template-columns:1fr 1fr;gap:9px}.radar-kpi{border:1px solid rgba(125,160,205,.23);border-radius:14px;padding:11px;background:linear-gradient(145deg,rgba(15,28,48,.94),rgba(7,15,27,.94))}.radar-kpi small{display:block;color:#aebed2!important;font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.7px}.radar-kpi b{display:block;color:#fff!important;font-size:16px;margin-top:5px}.radar-kpi.roi b{color:#67e8f9!important}.radar-kpi.premium b{color:#f0abfc!important}.radar-kpi.net b{color:#bfdbfe!important}.radar-kpi.strike b{color:#c4b5fd!important}.radar-kpi.dte{grid-column:1/-1}.radar-kpi.dte b{color:#fde68a!important}
 .radar-manual{margin-top:17px;padding-top:15px;border-top:1px solid rgba(125,160,205,.24)}.radar-manual label{display:block;color:#f1f5f9!important;font-size:12px;font-weight:900;margin-bottom:7px}.radar-manual input{width:100%;margin:5px 0!important;border:1px solid #3b516d!important;border-radius:11px!important;background:#07111f!important;color:#fff!important;padding:11px 12px!important;box-shadow:inset 0 1px 8px rgba(0,0,0,.22)}.radar-manual input::placeholder{color:#8296af!important;opacity:1}
-.radar-btn{width:100%;border:1px solid #4c9aff;border-radius:11px;background:linear-gradient(180deg,#1686ff,#0754bc);color:#fff!important;padding:11px 14px;font-weight:950;cursor:pointer;box-shadow:0 8px 18px rgba(0,93,220,.25)}.radar-btn:hover{filter:brightness(1.1)}.radar-btn.secondary{border-color:#36d6b2;background:linear-gradient(180deg,#0f9f85,#08705f)}
+.radar-btn{width:100%;border:1px solid #4c9aff;border-radius:11px;background:linear-gradient(180deg,#1686ff,#0754bc);color:#fff!important;padding:11px 14px;font-weight:950;cursor:pointer;box-shadow:0 8px 18px rgba(0,93,220,.25)}.radar-btn:hover{filter:brightness(1.1)}.radar-btn.secondary{border-color:#36d6b2;background:linear-gradient(180deg,#0f9f85,#08705f)}.radar-btn.import{border-color:#c084fc;background:linear-gradient(180deg,#9333ea,#6b21a8)}
 .radar-source{font-size:11px;color:#9fb3cc!important;margin-top:12px}.radar-empty{padding:28px}.radar-empty h3{color:#fff!important;margin-top:0}.radar-empty p{color:var(--muted)!important}
 body.light .radar-hero,body.light .radar-card,body.light .radar-empty{background:linear-gradient(155deg,#13213a,#07111f);color:#fff}
 @media(max-width:1100px){.radar-grid{grid-template-columns:1fr 1fr}}@media(max-width:760px){.radar-grid{grid-template-columns:1fr}.radar-hero{display:block}.radar-actions{margin-top:18px}.radar-reason{min-height:0}}
 </style>
 <div class="radar-premium">
 <section class="radar-hero">
-  <div><h1>🔥 Radar Premium</h1><p>PUTs das 15 ações monitoradas, avaliadas pelo Decision Engine com ROI alvo de 4%.</p></div>
+  <div>
+    <h1>🔥 Radar Premium</h1>
+    <p>PUTs avaliadas pelo Decision Engine com ROI alvo de 4%. Importe uma cadeia de opções em CSV para trabalhar sem API paga.</p>
+    {% if last_import_at %}<span class="radar-update">Última importação: {{ last_import_at }}{% if imported_rows %} • {{ imported_rows }} PUTs{% endif %}</span>{% endif %}
+  </div>
   <div class="radar-actions">
+    <form class="radar-upload" method="post" enctype="multipart/form-data" action="{{ url_for('importar_mercado') }}">
+      <label for="market_file">📥 Importar Mercado</label>
+      <input id="market_file" required type="file" name="market_file" accept=".csv,text/csv">
+      <button class="radar-btn import" type="submit">Enviar CSV e atualizar Radar</button>
+    </form>
     <form method="post" action="{{ url_for('atualizar_radar_b3') }}"><button class="radar-btn" type="submit">Atualizar dados B3</button></form>
     <form method="post" action="{{ url_for('atualizar_qualidade_cvm') }}"><button class="radar-btn secondary" type="submit">Atualizar qualidade CVM</button></form>
   </div>
 </section>
 {% if message %}<div class="radar-notice">{{ message }}</div>{% endif %}
 {% if not cards %}
-<div class="radar-empty"><h3>Nenhuma oportunidade carregada</h3><p>{% if not has_eod %}Atualize os dados B3.{% elif not has_quality %}Atualize a qualidade CVM.{% else %}Nenhuma PUT passou pelos filtros atuais.{% endif %}</p></div>
+<div class="radar-empty"><h3>Nenhuma oportunidade carregada</h3><p>{% if not has_eod %}Importe um CSV ou atualize os dados B3.{% elif not has_quality %}Atualize a qualidade CVM.{% else %}Nenhuma PUT passou pelos filtros atuais.{% endif %}</p></div>
 {% else %}
 <div class="radar-grid">
 {% for card in cards %}
