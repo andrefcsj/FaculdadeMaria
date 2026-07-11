@@ -44,43 +44,83 @@ def register(app, legacy):
         return rows, operation
 
     def serialize(operation):
-        return {"ID":str(operation.get("ID","")),"Ativo":str(operation.get("Ativo","")),"Tipo":str(operation.get("Tipo","PUT")),"Estrategia":str(operation.get("Estratégia","Venda")),"Status":str(operation.get("Status","Aberta")),"Contratos":str(operation.get("Contratos","1")),"Strike":str(operation.get("Strike","0")),"Premio_opcao":str(operation.get("Premio_opcao","0")),"Custos":str(operation.get("Custos","0")),"IRRF":str(operation.get("IRRF","0")),"Vencimento":str(operation.get("Vencimento","")),"Cotacao_atual":str(operation.get("Cotacao_atual","0"))}
+        option_code = str(operation.get("Ativo", ""))
+        underlying = legacy.infer_acao_from_option(option_code)
+        return {
+            "ID": str(operation.get("ID", "")),
+            "Ativo": option_code,
+            "Ativo_subjacente": underlying,
+            "Logo_subjacente": f"https://raw.githubusercontent.com/thefintz/icones-b3/main/icones/{underlying}.png" if underlying else "",
+            "Tipo": str(operation.get("Tipo", "PUT")),
+            "Estrategia": str(operation.get("Estratégia", "Venda")),
+            "Status": str(operation.get("Status", "Aberta")),
+            "Contratos": str(operation.get("Contratos", "1")),
+            "Strike": str(operation.get("Strike", "0")),
+            "Premio_opcao": str(operation.get("Premio_opcao", "0")),
+            "Custos": str(operation.get("Custos", "0")),
+            "IRRF": str(operation.get("IRRF", "0")),
+            "Vencimento": str(operation.get("Vencimento", "")),
+            "Cotacao_atual": str(operation.get("Cotacao_atual", "0")),
+        }
 
     def validate(payload, current):
         option_type = str(payload.get("Tipo", current.get("Tipo", "PUT"))).upper()
-        if option_type not in {"PUT","CALL"}: raise ValueError("Tipo de opção inválido.")
+        if option_type not in {"PUT", "CALL"}:
+            raise ValueError("Tipo de opção inválido.")
         status = str(payload.get("Status", current.get("Status", "Aberta"))).capitalize()
-        if status not in {"Aberta","Encerrada"}: raise ValueError("Status inválido.")
+        if status not in {"Aberta", "Encerrada"}:
+            raise ValueError("Status inválido.")
         values = {}
-        for field in ("Contratos","Strike","Premio_opcao","Custos","IRRF","Cotacao_atual"):
-            raw = str(payload.get(field,current.get(field,"0"))).strip().replace("R$","").replace(" ","")
-            if "," in raw and "." in raw: raw = raw.replace(".","").replace(",", ".")
-            elif "," in raw: raw = raw.replace(",", ".")
+        for field in ("Contratos", "Strike", "Premio_opcao", "Custos", "IRRF", "Cotacao_atual"):
+            raw = str(payload.get(field, current.get(field, "0"))).strip().replace("R$", "").replace(" ", "")
+            if "," in raw and "." in raw:
+                raw = raw.replace(".", "").replace(",", ".")
+            elif "," in raw:
+                raw = raw.replace(",", ".")
             parsed = Decimal(raw or "0")
-            if parsed < 0: raise ValueError(f"{field} não pode ser negativo.")
+            if parsed < 0:
+                raise ValueError(f"{field} não pode ser negativo.")
             values[field] = str(parsed)
         expiry = str(payload.get("Vencimento", current.get("Vencimento", ""))).strip()
-        if legacy.parse_date(expiry) is None: raise ValueError("Vencimento inválido.")
-        current.update({"Ativo":str(payload.get("Ativo",current.get("Ativo",""))).strip().upper(),"Tipo":option_type,"Estratégia":str(payload.get("Estrategia",current.get("Estratégia","Venda"))).strip(),"Status":status,"Vencimento":expiry,**values})
-        if not current["Ativo"]: raise ValueError("Código da opção é obrigatório.")
+        if legacy.parse_date(expiry) is None:
+            raise ValueError("Vencimento inválido.")
+        current.update({
+            "Ativo": str(payload.get("Ativo", current.get("Ativo", ""))).strip().upper(),
+            "Tipo": option_type,
+            "Estratégia": str(payload.get("Estrategia", current.get("Estratégia", "Venda"))).strip(),
+            "Status": status,
+            "Vencimento": expiry,
+            **values,
+        })
+        if not current["Ativo"]:
+            raise ValueError("Código da opção é obrigatório.")
         return current
 
-    @app.route("/api/operacoes/<operation_id>", methods=["GET","POST"])
+    @app.route("/api/operacoes/<operation_id>", methods=["GET", "POST"])
     def api_operacao(operation_id):
         rows, operation = raw_operation(operation_id)
-        if operation is None: return jsonify({"ok":False,"error":"Operação não encontrada."}),404
-        if request.method == "GET": return jsonify({"ok":True,"operation":serialize(operation)})
+        if operation is None:
+            return jsonify({"ok": False, "error": "Operação não encontrada."}), 404
+        if request.method == "GET":
+            return jsonify({"ok": True, "operation": serialize(operation)})
         try:
             updated = validate(request.get_json(silent=True) or {}, operation)
             if legacy.USE_POSTGRES:
-                connection=legacy.get_pg_conn(); cursor=connection.cursor()
-                cursor.execute("""UPDATE operacoes SET ativo=%s,tipo=%s,estrategia=%s,status=%s,contratos=%s,strike=%s,premio_opcao=%s,custos=%s,irrf=%s,vencimento=%s,cotacao_atual=%s WHERE id=%s""",(updated["Ativo"],updated["Tipo"],updated["Estratégia"],updated["Status"],updated["Contratos"],updated["Strike"],updated["Premio_opcao"],updated["Custos"],updated["IRRF"],updated["Vencimento"],updated["Cotacao_atual"],operation_id)); connection.commit(); connection.close()
+                connection = legacy.get_pg_conn()
+                cursor = connection.cursor()
+                cursor.execute(
+                    """UPDATE operacoes SET ativo=%s,tipo=%s,estrategia=%s,status=%s,contratos=%s,strike=%s,premio_opcao=%s,custos=%s,irrf=%s,vencimento=%s,cotacao_atual=%s WHERE id=%s""",
+                    (updated["Ativo"], updated["Tipo"], updated["Estratégia"], updated["Status"], updated["Contratos"], updated["Strike"], updated["Premio_opcao"], updated["Custos"], updated["IRRF"], updated["Vencimento"], updated["Cotacao_atual"], operation_id),
+                )
+                connection.commit()
+                connection.close()
             else:
-                legacy.write_csv(legacy.OPERACOES, rows, ["ID","Data abertura","Ativo","Tipo","Estratégia","Status","Contratos","Strike","Premio_opcao","Custos","IRRF","Vencimento","Cotacao_atual","Resultado_realizado"])
-            return jsonify({"ok":True,"operation":serialize(updated)})
+                legacy.write_csv(legacy.OPERACOES, rows, ["ID", "Data abertura", "Ativo", "Tipo", "Estratégia", "Status", "Contratos", "Strike", "Premio_opcao", "Custos", "IRRF", "Vencimento", "Cotacao_atual", "Resultado_realizado"])
+            return jsonify({"ok": True, "operation": serialize(updated)})
         except Exception as exc:
-            return jsonify({"ok":False,"error":str(exc)}),400
+            return jsonify({"ok": False, "error": str(exc)}), 400
 
     def editar_descontinuado(oid):
         return redirect(url_for("operacoes_abertas"))
+
     app.view_functions["editar"] = editar_descontinuado
