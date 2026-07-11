@@ -33,6 +33,38 @@ Mudanças ainda em branch podem aparecer como `Em revisão`.
 
 ---
 
+## 2026-07-11 — Dashboard Executivo Premium
+
+Status: `Em revisão`
+
+Branch:
+
+```text
+agent/dashboard-executivo-premium
+```
+
+### Fixed
+
+- reconciliado o estado oficial da arquitetura com as Sprints A–I já integradas;
+- corrigido o status de merge dos providers B3/CVM e dos cards Premium do Radar.
+
+### Changed
+
+- Dashboard reorganizado no padrão Executive aprovado pelo Product Owner;
+- menu lateral reorganizado por Visão Geral, Inteligência, Operações, Gestão e Sistema;
+- dados existentes apresentados em componentes reutilizáveis, sem métricas fictícias;
+- estados vazios explícitos para oportunidades que dependem do Radar atualizado.
+
+### Added
+
+- adaptador de apresentação do Dashboard;
+- Resumo Executivo da IA;
+- composição da carteira;
+- visão de rolagem, atenção, vencimentos, metas e estatísticas rápidas;
+- testes do novo adaptador.
+
+---
+
 ## 2026-07-10 — Reconciliação da especificação e roadmap do Decision Engine
 
 Status: `Integrado`
