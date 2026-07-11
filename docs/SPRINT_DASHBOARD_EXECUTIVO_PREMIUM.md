@@ -1,7 +1,7 @@
 # Sprint — Dashboard Executivo Premium
 
 **Projeto:** FaculdadeMaria  
-**Status:** Concluída — aguardando aprovação para merge  
+**Status:** Concluída e integrada  
 **Data:** 11/07/2026  
 **Branch:** `agent/dashboard-executivo-premium`
 
@@ -68,4 +68,12 @@ A inspeção visual automatizada no navegador integrado não pôde ser executada
 
 ## Merge
 
-Nenhum merge foi realizado. Aguardando autorização explícita do Product Owner.
+Integrada na `main` pelo PR #48.
+
+Commit oficial de merge:
+
+```text
+e6a53d8792b86579bb4dd79260fe01f413ca5157
+```
+
+Publicação no Render validada com HTTP 200 e marcadores do Dashboard Executivo presentes.
