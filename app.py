@@ -14,8 +14,8 @@ from typing import Dict, List, Tuple
 
 from flask import Flask, redirect, request, url_for, jsonify, render_template
 from decimal import Decimal
-from engine.providers import B3CotahistProvider, apply_intraday_quote, download_latest_cotahist
-from services.asset_universe_service import load_personal_asset_universe
+from engine.providers import B3CotahistProvider, CvmFundamentalsProvider, apply_intraday_quote, download_latest_cotahist, download_latest_dfp
+from services.asset_universe_service import load_cvm_issuer_config, load_personal_asset_universe
 from services.radar_service import build_radar_from_market
 
 BASE = Path(__file__).resolve().parent
@@ -27,6 +27,7 @@ DB = DATA / "cortex.db"
 RADAR_COTAHIST = DATA / "market" / "cotahist_latest.zip"
 RADAR_ASSETS = DATA / "universo_pessoal_ativos.csv"
 RADAR_QUOTES = DATA / "market" / "manual_quotes.json"
+RADAR_DFP = DATA / "market" / "dfp_latest.zip"
 
 app = Flask(__name__)
 DATABASE_URL = os.getenv("DATABASE_URL")
@@ -1350,6 +1351,9 @@ def radar_oportunidades():
     message = request.args.get("message", "")
     try:
         roots, profiles = load_personal_asset_universe(RADAR_ASSETS)
+        if RADAR_DFP.exists():
+            issuer_config = load_cvm_issuer_config(RADAR_ASSETS)
+            profiles = CvmFundamentalsProvider(RADAR_DFP, issuer_config).fetch()
         if RADAR_COTAHIST.exists() and roots:
             opportunities = list(B3CotahistProvider(RADAR_COTAHIST, roots).fetch())
             overrides = json.loads(RADAR_QUOTES.read_text(encoding="utf-8")) if RADAR_QUOTES.exists() else {}
@@ -1365,7 +1369,7 @@ def radar_oportunidades():
             cards = build_radar_from_market(opportunities, profiles)[:50]
     except Exception as exc:
         message = f"Não foi possível processar os dados: {exc}"
-    return render_template('radar_oportunidades.html', cards=cards, message=message, has_eod=RADAR_COTAHIST.exists())
+    return render_template('radar_oportunidades.html', cards=cards, message=message, has_eod=RADAR_COTAHIST.exists(), has_quality=RADAR_DFP.exists())
 
 
 @app.route('/radar-oportunidades/atualizar-b3', methods=['POST'])
@@ -1375,6 +1379,16 @@ def atualizar_radar_b3():
         message = "Dados oficiais da B3 atualizados com sucesso."
     except Exception as exc:
         message = f"Atualização indisponível: {exc}"
+    return redirect(url_for('radar_oportunidades', message=message))
+
+
+@app.route('/radar-oportunidades/atualizar-qualidade', methods=['POST'])
+def atualizar_qualidade_cvm():
+    try:
+        download_latest_dfp(RADAR_DFP)
+        message = "Qualidade dos ativos atualizada com dados oficiais da CVM."
+    except Exception as exc:
+        message = f"Atualização fundamentalista indisponível: {exc}"
     return redirect(url_for('radar_oportunidades', message=message))
 
 
