@@ -1,7 +1,7 @@
 # SPRINT_PROVIDER_CVM_SCORE_QUALIDADE.md
 
 **Projeto:** FaculdadeMaria  
-**Status:** Concluída — aguardando aprovação para merge  
+**Status:** Concluída e integrada  
 **Data:** 11/07/2026  
 **Branch:** `sprint/provider-cvm-score-qualidade`
 
@@ -49,4 +49,4 @@ Automatizar a qualidade dos ativos com dados públicos oficiais, sem exigir leit
 
 ## Merge
 
-Nenhum merge foi realizado.
+Integrada na `main` pelo PR #37, commit de merge `37a4a2a9dfa21aacf01e68052cbb88b8f9546cf9`.
