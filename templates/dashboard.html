@@ -27,7 +27,7 @@
       {% if dashboard.portfolio %}
       <div class="portfolio-list">
         {% for item in dashboard.portfolio %}
-        <div class="portfolio-item"><div><strong>{{ item.asset }}</strong><span>{{ money(item.capital) }}</span></div><div class="progress"><i style="width:{{ item.share|round(1) }}%"></i></div><small>{{ percent(item.share) }} do capital alocado</small></div>
+        <div class="portfolio-item portfolio-item--{{ item.risk }}"><div><strong>{{ item.asset }}</strong><span>{{ money(item.capital) }}</span></div><div class="progress"><i style="width:{{ item.capital_share|round(1) }}%"></i></div><small>{{ percent(item.capital_share) }} do capital total · {% if item.risk == 'high' %}concentração alta{% elif item.risk == 'attention' %}atenção ao limite{% else %}dentro da política{% endif %}</small></div>
         {% endfor %}
       </div>
       {% else %}{{ empty_state('Carteira sem posições', 'Cadastre uma PUT para acompanhar a composição do capital.', '/#nova-operacao', 'Cadastrar operação') }}{% endif %}
