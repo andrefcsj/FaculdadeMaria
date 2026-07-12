@@ -17,8 +17,9 @@ class RadarGuidedFlowTests(unittest.TestCase):
 
     def test_radar_keeps_csv_as_manual_alternative(self):
         html = app.test_client().get("/radar-oportunidades").get_data(as_text=True)
-        self.assertIn("Já tenho um CSV? Usar alternativa manual", html)
+        self.assertIn("Ou envie seu arquivo manualmente:", html)
         self.assertIn('action="/radar-oportunidades/importar-mercado"', html)
+        self.assertNotIn("<details", html)
 
 
 if __name__ == "__main__":
