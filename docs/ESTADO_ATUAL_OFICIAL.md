@@ -36,7 +36,7 @@ O FaculdadeMaria possui atualmente:
 - não existe integração automática com a corretora;
 - não existe envio de ordens;
 - notas BTG/Necton são importadas, mas outros layouts de corretora não são suportados;
-- CI automatizada ainda não foi implantada.
+- CI automatizada executa sintaxe e suíte completa no GitHub.
 
 ## Última Sprint integrada
 
@@ -46,7 +46,7 @@ Upload de PDF no cadastro, extração, conferência humana obrigatória, preven�
 
 ## Próxima recomendação
 
-`FM-ARCH-050 — CI automatizada em Pull Requests`.
+`FM-TAX-010 — Histórico de DARFs pagos`.
 
 ## Governança
 
