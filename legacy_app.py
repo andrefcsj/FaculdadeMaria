@@ -14,6 +14,7 @@ from typing import Dict, List, Tuple
 
 from flask import Flask, redirect, request, url_for, jsonify, render_template
 from services.dashboard_service import build_dashboard_view_model
+from services.operation_close_service import calculate_operation_close
 from decimal import Decimal
 from engine.providers import B3CotahistProvider, CvmFundamentalsProvider, apply_intraday_quote, download_latest_cotahist, download_latest_dfp
 from services.asset_universe_service import load_cvm_issuer_config, load_personal_asset_universe
@@ -849,37 +850,54 @@ def fechar(oid: str):
             premio=premio
         )
 
-    valor_recompra = float(
-        request.form.get('valor_recompra', '0').replace(',', '.')
-    )
+    try:
+        metodo = request.form.get('metodo_encerramento', 'recompra')
+        data_encerramento = parse_date(request.form.get('data_encerramento', '')) or date.today()
+        vencimento = parse_date(str(r.get('Vencimento', '')))
+        valor_recompra = Decimal(request.form.get('valor_recompra', '0').replace('R$', '').replace(' ', '').replace(',', '.'))
+        cfg = load_config()
+        contratos = Decimal(str(fnum(r.get('Contratos'), 1)))
+        tamanho = Decimal(str(cfg.get('Tamanho contrato opcoes', 100)))
+        premio_total = (
+            Decimal(str(fnum(r.get('Premio_opcao')))) * contratos * tamanho
+            - Decimal(str(fnum(r.get('Custos'))))
+            - Decimal(str(fnum(r.get('IRRF'))))
+        )
+        fechamento = calculate_operation_close(
+            method=metodo,
+            close_date=data_encerramento,
+            expiry=vencimento,
+            premium_received=premio_total,
+            repurchase_per_unit=valor_recompra,
+            contracts=contratos,
+            contract_size=tamanho,
+        )
+    except (ValueError, ArithmeticError) as exc:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'ok': False, 'message': str(exc)}), 400
+        return redirect(url_for('operacoes_abertas', erro_fechamento=str(exc)))
 
     if USE_POSTGRES:
         conn = get_pg_conn()
         cur = conn.cursor()
-
-        try:
-            cur.execute(
-                '''
-                UPDATE operacoes
-                   SET status='Encerrada',
-                       valor_recompra=%s
-                 WHERE id=%s
-                ''',
-                (str(valor_recompra), oid)
-            )
-        except Exception:
-            cur.execute(
-                "UPDATE operacoes SET status='Encerrada' WHERE id=%s",
-                (oid,)
-            )
-
+        cur.execute(
+            "UPDATE operacoes SET status=%s, resultado_realizado=%s WHERE id=%s",
+            (fechamento.status, str(fechamento.result), oid)
+        )
         conn.commit()
         conn.close()
 
     else:
-        r['Status'] = 'Encerrada'
-        r['Valor_recompra'] = str(valor_recompra)
+        r['Status'] = fechamento.status
+        r['Resultado_realizado'] = str(fechamento.result)
+        write_csv(OPERACOES, rows, list(rows[0].keys()))
 
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return jsonify({
+            'ok': True,
+            'redirect': url_for('operacoes_abertas', encerrada=1),
+            'resultado': float(fechamento.result),
+        })
     return redirect(url_for('operacoes_abertas'))
 
 
