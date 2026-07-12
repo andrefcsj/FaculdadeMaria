@@ -656,6 +656,17 @@ Componentes:
 
 Concluído e integrado pelo PR #48 em 11/07/2026, sem alteração das regras do Decision Engine.
 
+### FM-UI-070 — Scanner Inteligente exploratório
+
+- Prioridade: `P1`
+- Tipo: `UI`
+- Status: `EM REVISÃO`
+- Dependências: `FM-SVC-010`, providers de mercado disponíveis
+
+Objetivo:
+
+Separar a exploração completa do universo carregado do ranking curado apresentado pelo Radar de Oportunidades.
+
 ### FM-UI-050 — Visão de risco da carteira
 
 - Prioridade: `P2`

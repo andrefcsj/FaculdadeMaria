@@ -87,6 +87,49 @@ def importar_mercado():
     return redirect(url_for("radar_oportunidades", message=message))
 
 
+@app.route("/scanner-inteligente")
+def scanner_inteligente():
+    """Explora o universo carregado sem substituir o ranking curado do Radar."""
+    cards = ()
+    source = "Nenhum mercado carregado"
+    updated_at = "—"
+    error = ""
+    try:
+        roots, profiles = _load_profiles()
+        imported = load_market_import(RADAR_IMPORTED)
+        if imported is not None:
+            opportunities = list(imported.opportunities)
+            source = "Mercado importado por CSV"
+            updated_at = imported.imported_at.strftime("%d/%m/%Y às %H:%M")
+        elif legacy.RADAR_COTAHIST.exists() and roots:
+            opportunities = list(legacy.B3CotahistProvider(legacy.RADAR_COTAHIST, roots).fetch())
+            source = "B3 COTAHIST EOD"
+            updated_at = datetime.fromtimestamp(legacy.RADAR_COTAHIST.stat().st_mtime).strftime("%d/%m/%Y às %H:%M")
+        else:
+            opportunities = []
+        overrides = json.loads(legacy.RADAR_QUOTES.read_text(encoding="utf-8")) if legacy.RADAR_QUOTES.exists() else {}
+        for index, opportunity in enumerate(opportunities):
+            quote = overrides.get(opportunity.option_code)
+            if quote:
+                opportunities[index] = apply_intraday_quote(
+                    opportunity,
+                    premium=Decimal(str(quote["premium"])),
+                    bid=Decimal(str(quote["bid"])) if quote.get("bid") not in (None, "") else None,
+                    ask=Decimal(str(quote["ask"])) if quote.get("ask") not in (None, "") else None,
+                )
+        if opportunities:
+            cards = build_radar_from_market(opportunities, profiles)[:250]
+    except Exception as exc:
+        error = f"Não foi possível concluir o scanner: {exc}"
+    stats = {
+        "total": len(cards),
+        "eligible": sum(card.status == "eligible" for card in cards),
+        "watchlist": sum(card.status == "watchlist" for card in cards),
+        "discarded": sum(card.status == "discarded" for card in cards),
+    }
+    return render_template("scanner_inteligente.html", cards=cards, stats=stats, source=source, updated_at=updated_at, error=error)
+
+
 def _open_puts():
     rows = legacy.read_operacoes()
     return [row for row in rows if str(row.get("Status", "")).lower() == "aberta" and str(row.get("Tipo", "PUT")).upper() == "PUT"]

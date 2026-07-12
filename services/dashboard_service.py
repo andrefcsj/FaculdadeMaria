@@ -90,17 +90,42 @@ def build_dashboard_view_model(
 
     attention = []
     for operation in open_puts:
-        reasons = []
-        if str(operation.get("Alerta", "OK")) != "OK":
+        reasons: list[str] = []
+        severity = "info"
+        days = _number(operation.get("Dias"), 9999)
+        spot = _number(operation.get("Cotacao_n"))
+        strike = _number(operation.get("Strike_n"))
+        if spot > 0 and strike > 0:
+            distance = (spot - strike) / spot * 100
+            if spot <= strike:
+                reasons.append("PUT dentro do dinheiro — avaliar exercício ou rolagem")
+                severity = "critical"
+            elif distance <= 2:
+                reasons.append(f"Preço a {distance:.1f}% do strike — acompanhar e avaliar rolagem")
+                severity = "high"
+            elif distance <= 5:
+                reasons.append(f"Preço próximo ao strike ({distance:.1f}% de distância)")
+                severity = "medium"
+        if days <= 7:
+            reasons.append(f"Vence em {int(days)} dia(s) — ação necessária")
+            severity = "critical"
+        elif days <= 15:
+            reasons.append(f"Vencimento em {int(days)} dias — avaliar rolagem")
+            if severity not in {"critical", "high"}:
+                severity = "high"
+        if str(operation.get("Alerta", "OK")) != "OK" and not reasons:
             reasons.append(str(operation.get("Alerta")))
-        if operation.get("Vencimento_fmt") and _number(operation.get("Dias")) <= 7:
-            reasons.append("vence em até 7 dias")
-        if _number(operation.get("Cotacao_n")) <= 0:
-            reasons.append("cotação não informada")
+            severity = "medium"
+        if spot <= 0:
+            reasons.append("Cotação não informada — atualize antes de decidir")
+            if severity == "info":
+                severity = "medium"
         if reasons:
             attention.append({
                 "option_code": operation.get("Ativo", "N/D"),
                 "message": " • ".join(dict.fromkeys(reasons)),
+                "severity": severity,
+                "label": {"critical": "Crítico", "high": "Ação", "medium": "Observar", "info": "Informação"}[severity],
             })
 
     target_roi = _number(config.get("Meta ROI mensal"), 0.04) * 100

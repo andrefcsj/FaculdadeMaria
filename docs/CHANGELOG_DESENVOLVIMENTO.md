@@ -33,6 +33,27 @@ Mudanças ainda em branch podem aparecer como `Em revisão`.
 
 ---
 
+## 2026-07-12 — Navegação Premium, Scanner e alertas
+
+Status: `Em revisão`
+
+Branch: `agent/navegacao-premium-scanner-alertas`
+
+### Added
+
+- Scanner Inteligente independente do Radar;
+- barra superior global Premium;
+- alertas operacionais com gravidade;
+- gráficos decorativos nos cards.
+
+### Changed
+
+- menu lateral com ícones vetoriais, fonte regular e maior;
+- tipografia do Dashboard ampliada;
+- Radar preservado como ranking curado.
+
+---
+
 ## 2026-07-11 — Modal de fechamento em Operações Abertas
 
 Status: `Em revisão`

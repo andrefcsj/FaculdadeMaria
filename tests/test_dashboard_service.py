@@ -1,4 +1,5 @@
 import unittest
+from decimal import Decimal
 
 from services.dashboard_service import build_dashboard_view_model
 
@@ -38,8 +39,15 @@ class DashboardServiceTests(unittest.TestCase):
         operation = dict(self.operations[0], Cotacao_n=0, Dias=4, Alerta="PUT dentro do dinheiro")
         view = build_dashboard_view_model([operation], [], self.indicators, self.history, self.config)
         self.assertEqual(len(view.attention_items), 1)
-        self.assertIn("cotação não informada", view.attention_items[0]["message"])
+        self.assertIn("cotação não informada", view.attention_items[0]["message"].lower())
         self.assertEqual(len(view.roll_candidates), 1)
+        self.assertEqual(view.attention_items[0]["severity"], "critical")
+
+    def test_attention_warns_when_put_is_close_to_strike(self):
+        operation = dict(self.operations[0], Cotacao_n=Decimal("19.10"), Strike_n=Decimal("18.81"), Dias=22, Alerta="OK")
+        view = build_dashboard_view_model([operation], [], self.indicators, self.history, self.config)
+        self.assertEqual(view.attention_items[0]["severity"], "high")
+        self.assertIn("avaliar rolagem", view.attention_items[0]["message"])
 
 
 if __name__ == "__main__":
