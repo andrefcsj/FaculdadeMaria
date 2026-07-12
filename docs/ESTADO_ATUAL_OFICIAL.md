@@ -26,6 +26,7 @@ O FaculdadeMaria possui atualmente:
 - análise de rolagem com manter, fechar ou rolar;
 - Dashboard Executivo Premium;
 - alertas operacionais por gravidade;
+- alertas contextuais separados em exercício, vencimento, concentração e dados;
 - cadastro, edição e fechamento de operações sem saída da página;
 - central executiva de operações fechadas com filtros, edição, exclusão e reabertura;
 - suporte explícito a exercício como parte da estratégia.
@@ -46,9 +47,9 @@ O FaculdadeMaria possui atualmente:
 
 ## Última Sprint concluída
 
-`FM-RISK-040 — Controle de concentração por ativo`
+`FM-UX-090 — Alertas contextuais e importação automática de strike`
 
-O Radar passou a projetar a concentração de cada oportunidade e o Dashboard alerta exposições próximas ou acima do limite por ativo.
+O painel Atenção Necessária passou a explicar separadamente cada motivo, e a importação de nota consulta strike e vencimento imediatamente.
 
 ## Próxima recomendação
 
