@@ -55,7 +55,7 @@ class OperationCloseServiceTests(unittest.TestCase):
             with path.open("w", newline="", encoding="utf-8") as handle:
                 writer = csv.DictWriter(handle, fieldnames=fields)
                 writer.writeheader(); writer.writerow(row)
-            with patch.object(legacy_app, "OPERACOES", path), patch.object(legacy_app, "USE_POSTGRES", False):
+            with patch.object(legacy_app, "DATA", Path(directory)), patch.object(legacy_app, "OPERACOES", path), patch.object(legacy_app, "USE_POSTGRES", False):
                 response = legacy_app.app.test_client().post(
                     "/fechar/99",
                     data={"metodo_encerramento": "recompra", "data_encerramento": "2026-07-11", "valor_recompra": "0.40"},
@@ -66,6 +66,7 @@ class OperationCloseServiceTests(unittest.TestCase):
             saved = list(csv.DictReader(path.open(encoding="utf-8")))[0]
             self.assertEqual(saved["Status"], "Encerrada")
             self.assertEqual(Decimal(saved["Resultado_realizado"]), Decimal("60.0"))
+            self.assertTrue((Path(directory) / "operation_closures.json").exists())
 
 
 if __name__ == "__main__":
