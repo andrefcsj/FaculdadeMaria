@@ -726,11 +726,52 @@ Entregas:
 
 - Prioridade: `P1`
 - Tipo: `OPS`
-- Status: `DISCOVERY`
+- Status: `DONE`
 
 Objetivo:
 
 Executar testes automaticamente em PRs.
+
+Entregas:
+
+- GitHub Actions em Pull Requests e pushes na `main`;
+- Python 3.12;
+- cache de dependências;
+- validação de sintaxe;
+- suíte completa com bloqueio por falha;
+- execução manual disponível.
+
+### FM-TAX-010 — Histórico de DARFs pagos
+
+- Prioridade: `P1`
+- Tipo: `OPS`
+- Status: `READY`
+- Dependências: importação segura de PDF e persistência estruturada
+
+Objetivo:
+
+Criar uma central Premium para armazenar e consultar comprovantes de DARFs efetivamente pagos.
+
+Escopo solicitado:
+
+- menu lateral `DARFs Pagos`;
+- upload de PDFs de DARF e/ou comprovantes de pagamento;
+- extração assistida de período de apuração, código da receita, valor, vencimento e data de pagamento;
+- conferência humana obrigatória antes de salvar;
+- prevenção de documentos duplicados;
+- consulta por mês e por ano;
+- total mensal e anual pago;
+- gráfico de evolução dos valores pagos;
+- separação explícita entre DARF estimado e DARF efetivamente pago;
+- política de armazenamento baseada em tamanho, privacidade e persistência disponível.
+
+Critérios obrigatórios:
+
+- nenhum PDF altera operações ou apuração automaticamente;
+- valor pago nunca é inferido quando ausente;
+- documento deve ser associado ao período de apuração correto;
+- dados pessoais não devem aparecer desnecessariamente na interface;
+- suporte inicial validado com documentos reais anonimizados do Product Owner.
 
 ---
 
@@ -912,7 +953,7 @@ Mostrar visualmente como qualidade, risco, liquidez, preço líquido e retorno c
 
 ## 14. Sequência recomendada de próximas Sprints
 
-1. `FM-ARCH-050` — executar testes automaticamente em Pull Requests;
+1. `FM-TAX-010` — histórico e gráficos de DARFs pagos;
 2. `FM-EXPLAIN-040` — separar visualmente confiança do dado e qualidade da oportunidade;
 3. `FM-RISK-040` — controlar concentração por ativo;
 4. `FM-UI-030` — comparar oportunidades lado a lado.
