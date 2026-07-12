@@ -32,7 +32,7 @@ def register(app, legacy):
         try:
             scope, period = valid_scope(request.get_json(silent=True) or {})
             preview = preview_cleanup(legacy,scope=scope,period=period)
-            return jsonify({"ok":True,"preview":{"operations":preview.operations,"notes":preview.imported_notes,"closures":preview.closures,"legacy":preview.legacy_closed,"total":preview.total},"confirmation":expected_confirmation(scope,period),"enabled":bool(os.getenv("ADMIN_RESET_PIN"))})
+            return jsonify({"ok":True,"preview":{"operations":preview.operations,"notes":preview.imported_notes,"closures":preview.closures,"legacy":preview.legacy_closed,"cash_events":preview.cash_events,"paid_darfs":preview.paid_darfs,"total":preview.total},"confirmation":expected_confirmation(scope,period),"enabled":bool(os.getenv("ADMIN_RESET_PIN"))})
         except Exception as exc:
             return jsonify({"ok":False,"error":str(exc)}),400
 
@@ -45,6 +45,6 @@ def register(app, legacy):
             if not hmac.compare_digest(str(payload.get("pin","")),configured): raise ValueError("Senha administrativa incorreta.")
             if str(payload.get("confirmation","")) != expected_confirmation(scope,period): raise ValueError("Texto de confirmação incorreto.")
             result=execute_cleanup(legacy,scope=scope,period=period)
-            return jsonify({"ok":True,"deleted":{"operations":result.operations,"notes":result.imported_notes,"closures":result.closures,"legacy":result.legacy_closed},"message":"Dados operacionais excluídos e indicadores recalculados."})
+            return jsonify({"ok":True,"deleted":{"operations":result.operations,"notes":result.imported_notes,"closures":result.closures,"legacy":result.legacy_closed,"cash_events":result.cash_events,"paid_darfs":result.paid_darfs},"message":"Dados operacionais excluídos e indicadores recalculados."})
         except Exception as exc:
             return jsonify({"ok":False,"error":str(exc)}),400
