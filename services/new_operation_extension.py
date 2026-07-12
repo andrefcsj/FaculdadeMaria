@@ -7,6 +7,7 @@ from decimal import Decimal, InvalidOperation
 from flask import jsonify, request
 
 from services.market_import_service import load_market_import
+from services.brokerage_note_service import imported_note_exists, save_imported_note
 
 
 def _decimal(value, field: str, *, allow_zero: bool = True) -> Decimal:
@@ -93,11 +94,13 @@ def register(app, legacy, market_path):
             costs = _decimal(payload.get("Custos"), "Custos")
             irrf = _decimal(payload.get("IRRF"), "IRRF")
             spot = _decimal(payload.get("Cotacao_atual"), "Cotação atual")
+            if isinstance(payload.get("Nota_corretagem"), dict) and imported_note_exists(legacy, payload["Nota_corretagem"]):
+                raise ValueError("Esta negociação da nota já foi importada.")
             rows = legacy.read_csv(legacy.OPERACOES)
             next_id = max([int(legacy.fnum(row.get("ID"))) for row in rows] + [0]) + 1
             row = {
                 "ID": str(next_id),
-                "Data abertura": str(date.today()),
+                "Data abertura": (legacy.parse_date(str(payload.get("Data_abertura", ""))) or date.today()).isoformat(),
                 "Ativo": option_code,
                 "Tipo": option_type,
                 "Estratégia": strategy,
@@ -120,6 +123,9 @@ def register(app, legacy, market_path):
                     "Contratos", "Strike", "Premio_opcao", "Custos", "IRRF",
                     "Vencimento", "Cotacao_atual", "Resultado_realizado",
                 ])
-            return jsonify({"ok": True, "operation_id": row["ID"], "message": "Operação cadastrada com sucesso."})
+            note_saved = False
+            if isinstance(payload.get("Nota_corretagem"), dict):
+                note_saved = save_imported_note(legacy, payload["Nota_corretagem"], row["ID"])
+            return jsonify({"ok": True, "operation_id": row["ID"], "note_saved": note_saved, "message": "Operação cadastrada com sucesso."})
         except Exception as exc:
             return jsonify({"ok": False, "error": str(exc)}), 400
