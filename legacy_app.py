@@ -892,6 +892,15 @@ def fechar(oid: str):
         r['Resultado_realizado'] = str(fechamento.result)
         write_csv(OPERACOES, rows, list(rows[0].keys()))
 
+    from services.closed_operations_service import save_closure_metadata
+    save_closure_metadata(
+        __import__(__name__), oid,
+        close_date=data_encerramento,
+        method=metodo,
+        repurchase_value=valor_recompra,
+        result=fechamento.result,
+    )
+
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         return jsonify({
             'ok': True,
