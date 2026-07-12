@@ -17,7 +17,7 @@
   Qualidade do Ativo            ✅         100%
   Score IA                      ✅         100%
   Ranking                       ✅         100%
-  Radar Premium (visual)        ✅          95%
+  Radar Premium (visual)        ✅         100%
   Operações Abertas             ✅         100%
   Scanner de Mercado EOD        🚧          70%
   Provider B3/CVM               ✅         100%
@@ -43,12 +43,10 @@
 
 # Próximas Prioridades
 
-1.  Homologação do Radar com dados reais EOD
-2.  Filtros avançados do Radar
-3.  Alertas inteligentes
+1.  Controle de concentração por ativo
+2.  Comparador visual de oportunidades
+3.  Homologação contínua do Radar com dados reais EOD
 4.  Integração intraday oficial quando disponível
-5.  Rolagem automática
-6.  Dashboard Premium
 
 ------------------------------------------------------------------------
 
