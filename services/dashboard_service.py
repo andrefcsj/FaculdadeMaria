@@ -23,6 +23,13 @@ def _asset_from_option(option_code: object) -> str:
     return letters[:4] if letters else "N/D"
 
 
+def _attention_item(option_code: object, categories: list[dict[str, str]]) -> dict[str, object]:
+    rank = {"info": 0, "medium": 1, "high": 2, "critical": 3}
+    severity = max((category["severity"] for category in categories), key=lambda value: rank[value])
+    labels = {"critical": "Crítico", "high": "Acompanhar", "medium": "Observar", "info": "Informação"}
+    return {"option_code": option_code, "categories": tuple(categories), "message": " • ".join(category["message"] for category in categories), "severity": severity, "label": labels[severity]}
+
+
 @dataclass(frozen=True)
 class DashboardViewModel:
     premiums_month: float
@@ -95,47 +102,30 @@ def build_dashboard_view_model(
     attention = []
     for item in portfolio:
         if item["risk"] == "high":
-            attention.append({"option_code": item["asset"], "message": f"Concentração de {item['capital_share']:.1f}% do capital total — acima do limite de 35% por ativo", "severity": "high", "label": "Concentração"})
+            attention.append(_attention_item(item["asset"], [{"kind": "Concentração", "message": f"{item['capital_share']:.1f}% do capital total — acima do limite de 35% por ativo", "severity": "high"}]))
         elif item["risk"] == "attention":
-            attention.append({"option_code": item["asset"], "message": f"Concentração de {item['capital_share']:.1f}% do capital total — próxima do limite de 35%", "severity": "medium", "label": "Observar"})
+            attention.append(_attention_item(item["asset"], [{"kind": "Concentração", "message": f"{item['capital_share']:.1f}% do capital total — próxima do limite de 35%", "severity": "medium"}]))
     for operation in open_puts:
-        reasons: list[str] = []
-        severity = "info"
+        categories: list[dict[str, str]] = []
         days = _number(operation.get("Dias"), 9999)
         spot = _number(operation.get("Cotacao_n"))
         strike = _number(operation.get("Strike_n"))
         if spot > 0 and strike > 0:
             distance = (spot - strike) / spot * 100
             if spot <= strike:
-                reasons.append("PUT dentro do dinheiro — avaliar exercício ou rolagem")
-                severity = "critical"
+                categories.append({"kind": "Exercício", "message": "PUT dentro do dinheiro — avaliar exercício ou rolagem", "severity": "critical"})
             elif distance <= 2:
-                reasons.append(f"Preço a {distance:.1f}% do strike — acompanhar e avaliar rolagem")
-                severity = "high"
+                categories.append({"kind": "Exercício", "message": f"Cotação {distance:.1f}% acima do strike — risco elevado se houver queda", "severity": "high"})
             elif distance <= 5:
-                reasons.append(f"Preço próximo ao strike ({distance:.1f}% de distância)")
-                severity = "medium"
+                categories.append({"kind": "Exercício", "message": f"Cotação {distance:.1f}% acima do strike — PUT ainda fora do dinheiro", "severity": "medium"})
         if days <= 7:
-            reasons.append(f"Vence em {int(days)} dia(s) — ação necessária")
-            severity = "critical"
+            categories.append({"kind": "Vencimento", "message": f"Vence em {int(days)} dia(s) — acompanhar de perto", "severity": "high"})
         elif days <= 15:
-            reasons.append(f"Vencimento em {int(days)} dias — avaliar rolagem")
-            if severity not in {"critical", "high"}:
-                severity = "high"
-        if str(operation.get("Alerta", "OK")) != "OK" and not reasons:
-            reasons.append(str(operation.get("Alerta")))
-            severity = "medium"
+            categories.append({"kind": "Vencimento", "message": f"Vence em {int(days)} dias — planejar manutenção, fechamento ou rolagem", "severity": "medium"})
         if spot <= 0:
-            reasons.append("Cotação não informada — atualize antes de decidir")
-            if severity == "info":
-                severity = "medium"
-        if reasons:
-            attention.append({
-                "option_code": operation.get("Ativo", "N/D"),
-                "message": " • ".join(dict.fromkeys(reasons)),
-                "severity": severity,
-                "label": {"critical": "Crítico", "high": "Ação", "medium": "Observar", "info": "Informação"}[severity],
-            })
+            categories.append({"kind": "Dados", "message": "Cotação não informada — atualize antes de avaliar exercício", "severity": "medium"})
+        if categories:
+            attention.append(_attention_item(operation.get("Ativo", "N/D"), categories))
 
     target_roi = _number(config.get("Meta ROI mensal"), 0.04) * 100
     average_roi = _number(indicators.get("roi_medio_abertas"))
