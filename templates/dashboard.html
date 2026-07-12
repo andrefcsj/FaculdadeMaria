@@ -46,7 +46,7 @@
     </section>
     <section class="exec-panel exec-panel--attention">
       <header class="exec-panel__header"><div><span>!</span><h2>Atenção necessária</h2></div><span class="exec-count">{{ dashboard.attention_items|length }}</span></header>
-      {% if dashboard.attention_items %}<div class="attention-list">{% for item in dashboard.attention_items %}<a class="attention-alert attention-alert--{{ item.severity }}" href="/operacoes-abertas"><i></i><div><strong>{{ item.option_code }}</strong><span>{{ item.message }}</span></div><b>{{ item.label }}</b></a>{% endfor %}</div>{% else %}{{ empty_state('Tudo sob controle', 'Nenhum alerta operacional foi encontrado nas PUTs abertas.') }}{% endif %}
+      {% if dashboard.attention_items %}<div class="attention-list">{% for item in dashboard.attention_items %}<a class="attention-alert attention-alert--{{ item.severity }}" href="/operacoes-abertas"><i></i><div><strong>{{ item.option_code }}</strong><span class="attention-categories">{% for category in item.categories %}<em class="attention-category attention-category--{{ category.severity }}"><small>{{ category.kind }}</small>{{ category.message }}</em>{% endfor %}</span></div><b>{{ item.label }}</b></a>{% endfor %}</div>{% else %}{{ empty_state('Tudo sob controle', 'Nenhum alerta operacional foi encontrado nas PUTs abertas.') }}{% endif %}
     </section>
     <section class="exec-panel">
       <header class="exec-panel__header"><div><span>◷</span><h2>Próximos vencimentos</h2></div><a href="/operacoes-abertas">Detalhes</a></header>
