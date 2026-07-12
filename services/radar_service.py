@@ -7,7 +7,7 @@ opportunities remain available for validation.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal, InvalidOperation
 from typing import Any, Iterable, Mapping
 
@@ -50,6 +50,16 @@ class RadarCard:
     roi_concept: str
     roi_concept_class: str
     source: str = "demo"
+    source_label: str = "Fonte não identificada"
+    data_mode: str = "Modalidade não informada"
+    data_timestamp: str = "Não informado"
+    data_age: str = "Idade desconhecida"
+    freshness_status: str = "unknown"
+    freshness_label: str = "Atualização não confirmada"
+    confidence_pct: str = "—"
+    confidence_label: str = "Não informada"
+    confidence_class: str = "unknown"
+    data_warning: str = "Confirme o preço e a data antes de decidir."
 
 
 def _money(value: Decimal) -> str:
@@ -191,10 +201,67 @@ def _demo_inputs(as_of: date) -> tuple[tuple[OptionOpportunity, AssetQualityProf
     )
 
 
-def _card_from_ranked(item: Any, indexed: dict[str, tuple[OptionOpportunity, Any]], *, source: str) -> RadarCard:
+def _data_quality(opportunity: OptionOpportunity, as_of: date) -> dict[str, str]:
+    raw_source = str(opportunity.source or "").lower()
+    if "manual_intraday" in raw_source:
+        source_label, mode, fresh_limit, warning_limit = "BTG / preço confirmado", "Intraday manual", 0, 1
+    elif "b3" in raw_source or "cotahist" in raw_source:
+        source_label, mode, fresh_limit, warning_limit = "B3 COTAHIST", "Fechamento EOD", 1, 3
+    elif "csv" in raw_source:
+        source_label, mode, fresh_limit, warning_limit = "CSV importado", "Arquivo manual", 1, 3
+    elif "demo" in raw_source:
+        source_label, mode, fresh_limit, warning_limit = "Demonstração controlada", "Dados de demonstração", 0, 0
+    elif "operacao_real" in raw_source:
+        source_label, mode, fresh_limit, warning_limit = "Cadastro interno", "Registro manual", 0, 1
+    else:
+        source_label, mode, fresh_limit, warning_limit = "Fonte não identificada", "Modalidade não informada", 0, 1
+
+    timestamp = opportunity.timestamp
+    if timestamp is None:
+        freshness_status, freshness_label = "unknown", "Atualização não confirmada"
+        data_timestamp, data_age = "Não informado", "Idade desconhecida"
+        warning = "A data de referência não foi informada. Confirme o preço no BTG antes de decidir."
+    else:
+        if timestamp.tzinfo is None:
+            timestamp = timestamp.replace(tzinfo=timezone.utc)
+        age_days = max((as_of - timestamp.date()).days, 0)
+        data_timestamp = timestamp.strftime("%d/%m/%Y às %H:%M") if timestamp.time() != datetime.min.time() else timestamp.strftime("%d/%m/%Y")
+        data_age = "Hoje" if age_days == 0 else ("1 dia" if age_days == 1 else f"{age_days} dias")
+        if age_days <= fresh_limit:
+            freshness_status, freshness_label = "fresh", "Dados atuais"
+            warning = "Dados dentro da janela esperada para esta modalidade."
+        elif age_days <= warning_limit:
+            freshness_status, freshness_label = "warning", "Atenção à atualização"
+            warning = "Os dados podem estar defasados. Confirme o preço no BTG antes de decidir."
+        else:
+            freshness_status, freshness_label = "stale", "Dados defasados"
+            warning = "Não tome decisão com estes valores sem atualizar o mercado e confirmar o preço no BTG."
+
+    confidence = opportunity.data_confidence
+    if confidence is None:
+        confidence_pct, confidence_label, confidence_class = "—", "Não informada", "unknown"
+    else:
+        confidence_pct = f"{(confidence * Decimal('100')).quantize(Decimal('1'))}%"
+        if confidence >= Decimal("0.85"):
+            confidence_label, confidence_class = "Alta", "high"
+        elif confidence >= Decimal("0.65"):
+            confidence_label, confidence_class = "Média", "medium"
+        else:
+            confidence_label, confidence_class = "Baixa", "low"
+            warning = "Confiança baixa nos dados. Atualize as fontes e confirme o preço no BTG antes de decidir."
+    return {
+        "source_label": source_label, "data_mode": mode, "data_timestamp": data_timestamp,
+        "data_age": data_age, "freshness_status": freshness_status, "freshness_label": freshness_label,
+        "confidence_pct": confidence_pct, "confidence_label": confidence_label,
+        "confidence_class": confidence_class, "data_warning": warning,
+    }
+
+
+def _card_from_ranked(item: Any, indexed: dict[str, tuple[OptionOpportunity, Any]], *, source: str, as_of: date) -> RadarCard:
     opportunity, metrics = indexed[item.opportunity_id]
     roi_label, roi_class = _roi_concept(metrics.gross_roi)
     expiry_date, expiry_display = _format_expiry(opportunity.expiry, metrics.days_to_expiry)
+    quality = _data_quality(opportunity, as_of)
     return RadarCard(
         position=item.position,
         asset=opportunity.asset,
@@ -215,6 +282,7 @@ def _card_from_ranked(item: Any, indexed: dict[str, tuple[OptionOpportunity, Any
         roi_concept=roi_label,
         roi_concept_class=roi_class,
         source=source,
+        **quality,
     )
 
 
@@ -222,6 +290,7 @@ def _evaluate_inputs(
     inputs: Iterable[tuple[OptionOpportunity, AssetQualityProfile, PutMetricAssumptions]],
     *,
     source: str,
+    as_of: date,
 ) -> tuple[RadarCard, ...]:
     safety_config = SafetyFilterConfig(
         min_liquidity=Decimal("10000"), max_spread_pct=Decimal("0.25"),
@@ -243,7 +312,7 @@ def _evaluate_inputs(
         ranking_items.append((opportunity.option_code, strategy, score))
         indexed[opportunity.option_code] = (opportunity, metrics)
     ranked = rank_put_opportunities(ranking_items, RankingConfig(include_blocked=True))
-    return tuple(_card_from_ranked(item, indexed, source=source) for item in ranked)
+    return tuple(_card_from_ranked(item, indexed, source=source, as_of=as_of) for item in ranked)
 
 
 def build_demo_radar(as_of: date | None = None) -> tuple[RadarCard, ...]:
@@ -252,7 +321,7 @@ def build_demo_radar(as_of: date | None = None) -> tuple[RadarCard, ...]:
         (opportunity, profile, PutMetricAssumptions(as_of_date=as_of, contract_size=100, costs_total=Decimal("0")))
         for opportunity, profile in _demo_inputs(as_of)
     )
-    return _evaluate_inputs(inputs, source="demo")
+    return _evaluate_inputs(inputs, source="demo", as_of=as_of)
 
 
 def build_radar_from_market(
@@ -281,7 +350,7 @@ def build_radar_from_market(
     if not inputs:
         return tuple()
     try:
-        return _evaluate_inputs(inputs, source="b3_eod")
+        return _evaluate_inputs(inputs, source="b3_eod", as_of=as_of)
     except DecisionEngineError:
         return tuple()
 
@@ -327,7 +396,7 @@ def build_radar_from_operations(operations: Iterable[dict[str, Any]], as_of: dat
     if not inputs:
         return tuple()
     try:
-        return _evaluate_inputs(inputs, source="real")
+        return _evaluate_inputs(inputs, source="real", as_of=as_of)
     except DecisionEngineError:
         return tuple()
 
