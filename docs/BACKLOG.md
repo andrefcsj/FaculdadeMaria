@@ -612,7 +612,7 @@ Mostrar por que uma operação é melhor que outra.
 
 - Prioridade: `P0`
 - Tipo: `EXPLAIN`
-- Status: `DISCOVERY`
+- Status: `DONE`
 
 Objetivo:
 
@@ -987,9 +987,8 @@ Mostrar visualmente como qualidade, risco, liquidez, preço líquido e retorno c
 
 ## 14. Sequência recomendada de próximas Sprints
 
-1. `FM-EXPLAIN-040` — separar visualmente confiança do dado e qualidade da oportunidade;
-2. `FM-RISK-040` — controlar concentração por ativo;
-3. `FM-UI-030` — comparar oportunidades lado a lado.
+1. `FM-RISK-040` — controlar concentração por ativo;
+2. `FM-UI-030` — comparar oportunidades lado a lado.
 
 As Sprints Funcionais A–J, o Radar, o Scanner e o Dashboard Executivo já foram integrados e não constituem trabalho futuro.
 
