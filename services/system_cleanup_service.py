@@ -10,6 +10,8 @@ from typing import Any
 
 from services.brokerage_note_service import load_imported_notes
 from services.closed_operations_service import load_closure_metadata
+from services.cash_ledger_service import load_cash_events
+from services.paid_darf_service import load_paid_darfs
 
 
 @dataclass(frozen=True)
@@ -19,10 +21,12 @@ class CleanupPreview:
     imported_notes: int
     closures: int
     legacy_closed: int
+    cash_events: int
+    paid_darfs: int
 
     @property
     def total(self) -> int:
-        return self.operations + self.imported_notes + self.closures + self.legacy_closed
+        return self.operations + self.imported_notes + self.closures + self.legacy_closed + self.cash_events + self.paid_darfs
 
 
 def _matches(value: Any, scope: str, period: str, parse_date) -> bool:
@@ -61,12 +65,16 @@ def preview_cleanup(legacy, *, scope: str, period: str) -> CleanupPreview:
     notes = load_imported_notes(legacy)
     closures = load_closure_metadata(legacy)
     legacy_closed = _legacy_closed_rows(legacy)
+    cash_events = load_cash_events(legacy)
+    paid_darfs = load_paid_darfs(legacy)
     return CleanupPreview(
         operation_ids=ids,
         operations=len(ids),
         imported_notes=sum(1 for row in notes if scope == "all" or str(row.get("operation_id")) in id_set),
         closures=sum(1 for key in closures if scope == "all" or key in id_set),
         legacy_closed=sum(1 for row in legacy_closed if _legacy_month_matches(row.get("Mes", ""), scope, period)),
+        cash_events=sum(1 for row in cash_events if _matches(row.get("date"), scope, period, legacy.parse_date)),
+        paid_darfs=sum(1 for row in paid_darfs if scope == "all" or (scope == "month" and row.get("competence") == period) or (scope == "year" and str(row.get("competence", "")).startswith(period))),
     )
 
 
@@ -82,19 +90,26 @@ def execute_cleanup(legacy, *, scope: str, period: str) -> CleanupPreview:
     ids = set(preview.operation_ids)
     if legacy.USE_POSTGRES:
         # Garante que as tabelas auxiliares existam antes da transação destrutiva.
-        load_imported_notes(legacy); load_closure_metadata(legacy)
+        load_imported_notes(legacy); load_closure_metadata(legacy); load_cash_events(legacy); load_paid_darfs(legacy)
         conn = legacy.get_pg_conn()
         try:
             cur = conn.cursor()
             if scope == "all":
                 cur.execute("DELETE FROM brokerage_notes")
                 cur.execute("DELETE FROM operation_closure_metadata")
+                cur.execute("DELETE FROM cash_ledger")
+                cur.execute("DELETE FROM paid_darfs")
                 cur.execute("DELETE FROM operacoes")
             elif ids:
                 values = list(ids)
                 cur.execute("DELETE FROM brokerage_notes WHERE payload->>'operation_id' = ANY(%s)", (values,))
                 cur.execute("DELETE FROM operation_closure_metadata WHERE operation_id = ANY(%s)", (values,))
                 cur.execute("DELETE FROM operacoes WHERE id::text = ANY(%s)", (values,))
+            if scope != "all":
+                if scope == "month":
+                    cur.execute("DELETE FROM cash_ledger WHERE TO_CHAR(event_date,'YYYY-MM')=%s", (period,));cur.execute("DELETE FROM paid_darfs WHERE competence=%s", (period,))
+                else:
+                    cur.execute("DELETE FROM cash_ledger WHERE EXTRACT(YEAR FROM event_date)::text=%s", (period,));cur.execute("DELETE FROM paid_darfs WHERE LEFT(competence,4)=%s", (period,))
             conn.commit()
         except Exception:
             conn.rollback()
@@ -110,6 +125,8 @@ def execute_cleanup(legacy, *, scope: str, period: str) -> CleanupPreview:
         closures = load_closure_metadata(legacy)
         kept_closures = {} if scope == "all" else {key: row for key, row in closures.items() if key not in ids}
         _write_json(legacy.DATA / "operation_closures.json", kept_closures)
+        cash_events=load_cash_events(legacy);_write_json(legacy.DATA / "cash_ledger.json", [] if scope=="all" else [row for row in cash_events if not _matches(row.get("date"),scope,period,legacy.parse_date)])
+        paid_darfs=load_paid_darfs(legacy);_write_json(legacy.DATA / "paid_darfs.json", [] if scope=="all" else [row for row in paid_darfs if not ((scope=="month" and row.get("competence")==period) or (scope=="year" and str(row.get("competence","")).startswith(period)))])
     legacy_rows = _legacy_closed_rows(legacy)
     legacy.write_csv(legacy.FECHADAS, [row for row in legacy_rows if not _legacy_month_matches(row.get("Mes", ""), scope, period)], list(legacy_rows[0].keys()) if legacy_rows else ["Mes"])
     return preview
