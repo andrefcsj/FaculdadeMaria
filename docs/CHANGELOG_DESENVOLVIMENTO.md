@@ -33,6 +33,27 @@ Mudanças ainda em branch podem aparecer como `Em revisão`.
 
 ---
 
+## 2026-07-12 — Operações Fechadas Executivas
+
+Status: `Integrado`
+
+### Added
+
+- página Premium de operações fechadas;
+- filtros por mês e ano;
+- cards de resultado realizado;
+- edição em popup;
+- exclusão e reabertura com confirmação;
+- metadados de encerramento.
+
+### Fixed
+
+- Operações Fechadas restaurada no menu;
+- Carteira de PUTs renomeada para Operações Abertas;
+- reabertura passa a zerar resultado e recalcular os indicadores.
+
+---
+
 ## 2026-07-12 — Importação de notas BTG/Necton
 
 Status: `Integrado`
