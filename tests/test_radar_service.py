@@ -1,6 +1,8 @@
-from datetime import date
+from datetime import date, datetime, timezone
+from decimal import Decimal
 
-from services.radar_service import build_demo_radar, build_radar, build_radar_from_operations
+from engine import AssetQualityProfile, OptionOpportunity
+from services.radar_service import build_demo_radar, build_radar, build_radar_from_market, build_radar_from_operations
 
 
 def test_demo_radar_returns_ranked_cards():
@@ -146,3 +148,33 @@ def test_public_radar_does_not_turn_open_positions_into_market_opportunities():
     assert len(cards) == 3
     assert {card.source for card in cards} == {"demo"}
     assert {card.asset for card in cards} == {"BBAS3", "ITSA4", "ALTO3"}
+
+
+def test_radar_exposes_freshness_source_and_confidence_separately_from_score():
+    opportunity = OptionOpportunity(
+        asset="BBAS3", option_code="BBASQ270", option_type="PUT", expiry=date(2026, 8, 14),
+        spot_price=Decimal("28.50"), strike=Decimal("27"), premium=Decimal("1.10"),
+        bid=Decimal("1.05"), ask=Decimal("1.15"), liquidity=Decimal("32000"),
+        timestamp=datetime(2026, 7, 11, tzinfo=timezone.utc), data_confidence=Decimal("0.80"),
+        source="b3_cotahist_eod",
+    )
+    profile = AssetQualityProfile(
+        asset="BBAS3", assignment_eligible=True, long_term_suitable=True,
+        quality_score=Decimal("0.88"), data_confidence=Decimal("0.90"), source="cvm",
+    )
+
+    card = build_radar_from_market([opportunity], {"BBAS3": profile}, date(2026, 7, 12))[0]
+
+    assert card.source_label == "B3 COTAHIST"
+    assert card.data_mode == "Fechamento EOD"
+    assert card.data_timestamp == "11/07/2026"
+    assert card.data_age == "1 dia"
+    assert card.freshness_status == "fresh"
+    assert card.confidence_label == "Média"
+    assert card.confidence_pct == "80%"
+
+
+def test_radar_warns_when_reference_timestamp_is_unknown():
+    card = build_demo_radar(date(2026, 7, 12))[0]
+    assert card.freshness_status == "unknown"
+    assert "Confirme o preço" in card.data_warning

@@ -20,6 +20,7 @@ O FaculdadeMaria possui atualmente:
 - confirmação manual de preços intraday;
 - importação de cadeia de opções por CSV;
 - Radar de Oportunidades Premium;
+- confiança dos dados separada da nota da oportunidade, com fonte, idade, frescor e alertas;
 - Scanner Inteligente separado do Radar;
 - análise de rolagem com manter, fechar ou rolar;
 - Dashboard Executivo Premium;
@@ -27,6 +28,7 @@ O FaculdadeMaria possui atualmente:
 - cadastro, edição e fechamento de operações sem saída da página;
 - central executiva de operações fechadas com filtros, edição, exclusão e reabertura;
 - suporte explícito a exercício como parte da estratégia.
+- datas visíveis padronizadas em `DD/MM/AAAA`, preservando ISO internamente.
 
 ## Limitações vigentes
 
@@ -41,15 +43,15 @@ O FaculdadeMaria possui atualmente:
 - livro-caixa registra aportes, retiradas e saldo contábil da corretora;
 - DARFs pagos possuem cadastro manual, filtros e gráfico evolutivo.
 
-## Última Sprint integrada
+## Última Sprint concluída
 
-`FM-OPS-010 — Importação de notas de corretagem BTG/Necton`
+`FM-EXPLAIN-040 — Confiança separada de qualidade e datas brasileiras`
 
-Upload de PDF no cadastro, extração, conferência humana obrigatória, prevenção de duplicidade e central financeira de notas.
+O Radar passou a mostrar confiabilidade, fonte, modalidade, referência e idade dos dados sem misturar esses elementos à qualidade da oportunidade.
 
 ## Próxima recomendação
 
-`FM-TAX-010 — Histórico de DARFs pagos`.
+`FM-RISK-040 — Controle de concentração por ativo`.
 
 ## Governança
 

@@ -24,8 +24,12 @@ from services.closed_operations_extension import register as register_closed_ope
 from services.system_cleanup_extension import register as register_system_cleanup
 from services.cash_management_extension import register as register_cash_management
 from services.paid_darf_extension import register as register_paid_darfs
+from services.date_format_service import format_date_br, format_datetime_br, format_month_br
 
 app = legacy.app
+app.jinja_env.filters["date_br"] = format_date_br
+app.jinja_env.filters["datetime_br"] = format_datetime_br
+app.jinja_env.filters["month_br"] = format_month_br
 RADAR_IMPORTED = legacy.DATA / "market" / "imported_options.json"
 _original_radar_view = app.view_functions["radar_oportunidades"]
 

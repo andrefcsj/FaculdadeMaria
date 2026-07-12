@@ -13,7 +13,7 @@
 <h2>Simular rolagem</h2>
 {% if operations %}
 <form method="post" class="roll-form">
-<div class="full"><label>PUT aberta</label><select required name="operation_id"><option value="">Selecione</option>{% for op in operations %}<option value="{{ op.ID }}" {% if selected and selected.ID == op.ID %}selected{% endif %}>{{ op.Ativo }} • Strike R$ {{ op.Strike }} • Venc. {{ op.Vencimento }}</option>{% endfor %}</select></div>
+<div class="full"><label>PUT aberta</label><select required name="operation_id"><option value="">Selecione</option>{% for op in operations %}<option value="{{ op.ID }}" {% if selected and selected.ID == op.ID %}selected{% endif %}>{{ op.Ativo }} • Strike R$ {{ op.Strike }} • Venc. {{ op.Vencimento|date_br }}</option>{% endfor %}</select></div>
 <div><label>Preço para recomprar a PUT atual</label><input required name="buyback_price" inputmode="decimal" placeholder="Ex.: 0,35"></div>
 <div><label>Cotação atual do ativo</label><input required name="spot_price" inputmode="decimal" placeholder="Ex.: 37,20"></div>
 <div><label>Nova opção</label><input required name="new_option_code" placeholder="Ex.: PETRU380"></div>
