@@ -43,10 +43,9 @@
 
 # Próximas Prioridades
 
-1.  Controle de concentração por ativo
-2.  Comparador visual de oportunidades
-3.  Homologação contínua do Radar com dados reais EOD
-4.  Integração intraday oficial quando disponível
+1.  Comparador visual de oportunidades
+2.  Homologação contínua do Radar com dados reais EOD
+3.  Integração intraday oficial quando disponível
 
 ------------------------------------------------------------------------
 

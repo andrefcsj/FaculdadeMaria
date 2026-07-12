@@ -6,7 +6,7 @@ opportunities remain available for validation.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal, InvalidOperation
 from typing import Any, Iterable, Mapping
@@ -27,6 +27,7 @@ from engine import (
     rank_put_opportunities,
 )
 from engine.errors import DecisionEngineError
+from services.concentration_service import MAX_ASSET_CONCENTRATION, PortfolioConcentration, concentration_reading
 
 
 @dataclass(frozen=True, slots=True)
@@ -60,6 +61,10 @@ class RadarCard:
     confidence_label: str = "Não informada"
     confidence_class: str = "unknown"
     data_warning: str = "Confirme o preço e a data antes de decidir."
+    concentration_pct: str = "—"
+    concentration_label: str = "Não calculada"
+    concentration_class: str = "unknown"
+    concentration_message: str = "Carteira não informada."
 
 
 def _money(value: Decimal) -> str:
@@ -85,6 +90,7 @@ def _translate_explanation(text: str) -> str:
         "Insufficient data": "Dados insuficientes",
         "Operation is eligible": "A operação é elegível",
         "Operation is ineligible": "A operação não é elegível",
+        "Asset concentration above maximum": "Concentração do ativo acima do limite",
     }
     translated = text
     for source, target in replacements.items():
@@ -291,6 +297,7 @@ def _evaluate_inputs(
     *,
     source: str,
     as_of: date,
+    portfolio: PortfolioConcentration | None = None,
 ) -> tuple[RadarCard, ...]:
     safety_config = SafetyFilterConfig(
         min_liquidity=Decimal("10000"), max_spread_pct=Decimal("0.25"),
@@ -299,12 +306,18 @@ def _evaluate_inputs(
     asset_policy = AssetQualityPolicy(
         min_quality_score=Decimal("0.60"), attention_quality_score=Decimal("0.75"),
         min_data_confidence=Decimal("0.50"),
+        max_concentration_pct=MAX_ASSET_CONCENTRATION if portfolio else None,
     )
     score_config = ExplainableScoreConfig(target_gross_roi=Decimal("0.04"))
     ranking_items: list[tuple[str, Any, Any]] = []
     indexed: dict[str, tuple[OptionOpportunity, Any]] = {}
+    concentration_by_option: dict[str, Decimal | None] = {}
     for opportunity, profile, assumptions in inputs:
         metrics = calculate_put_metrics(opportunity, assumptions)
+        projected = portfolio.projected_share(opportunity.asset, metrics.nominal_committed_capital) if portfolio else None
+        concentration_by_option[opportunity.option_code] = projected
+        if portfolio:
+            profile = replace(profile, concentration_pct=projected)
         safety = evaluate_put_safety(opportunity, metrics, safety_config)
         quality = assess_asset_quality(profile, asset_policy)
         strategy = evaluate_put_strategy(opportunity, metrics, safety, quality)
@@ -312,7 +325,19 @@ def _evaluate_inputs(
         ranking_items.append((opportunity.option_code, strategy, score))
         indexed[opportunity.option_code] = (opportunity, metrics)
     ranked = rank_put_opportunities(ranking_items, RankingConfig(include_blocked=True))
-    return tuple(_card_from_ranked(item, indexed, source=source, as_of=as_of) for item in ranked)
+    cards = []
+    for item in ranked:
+        card = _card_from_ranked(item, indexed, source=source, as_of=as_of)
+        projected = concentration_by_option.get(item.opportunity_id)
+        status, label, message = concentration_reading(projected)
+        cards.append(replace(
+            card,
+            concentration_pct=_pct(projected) if projected is not None else "—",
+            concentration_label=label,
+            concentration_class=status,
+            concentration_message=message,
+        ))
+    return tuple(cards)
 
 
 def build_demo_radar(as_of: date | None = None) -> tuple[RadarCard, ...]:
@@ -328,6 +353,7 @@ def build_radar_from_market(
     opportunities: Iterable[OptionOpportunity],
     quality_profiles: Mapping[str, AssetQualityProfile],
     as_of: date | None = None,
+    portfolio: PortfolioConcentration | None = None,
 ) -> tuple[RadarCard, ...]:
     as_of = as_of or date.today()
     inputs: list[tuple[OptionOpportunity, AssetQualityProfile, PutMetricAssumptions]] = []
@@ -350,7 +376,7 @@ def build_radar_from_market(
     if not inputs:
         return tuple()
     try:
-        return _evaluate_inputs(inputs, source="b3_eod", as_of=as_of)
+        return _evaluate_inputs(inputs, source="b3_eod", as_of=as_of, portfolio=portfolio)
     except DecisionEngineError:
         return tuple()
 

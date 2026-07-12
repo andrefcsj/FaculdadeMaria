@@ -499,7 +499,7 @@ Evitar classificar como boa uma opção com prêmio teórico interessante e exec
 
 - Prioridade: `P1`
 - Tipo: `RISK`
-- Status: `DISCOVERY`
+- Status: `DONE`
 
 Objetivo:
 
@@ -987,8 +987,7 @@ Mostrar visualmente como qualidade, risco, liquidez, preço líquido e retorno c
 
 ## 14. Sequência recomendada de próximas Sprints
 
-1. `FM-RISK-040` — controlar concentração por ativo;
-2. `FM-UI-030` — comparar oportunidades lado a lado.
+1. `FM-UI-030` — comparar oportunidades lado a lado.
 
 As Sprints Funcionais A–J, o Radar, o Scanner e o Dashboard Executivo já foram integrados e não constituem trabalho futuro.
 

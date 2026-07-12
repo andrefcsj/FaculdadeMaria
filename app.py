@@ -25,6 +25,7 @@ from services.system_cleanup_extension import register as register_system_cleanu
 from services.cash_management_extension import register as register_cash_management
 from services.paid_darf_extension import register as register_paid_darfs
 from services.date_format_service import format_date_br, format_datetime_br, format_month_br
+from services.concentration_service import build_portfolio_concentration
 
 app = legacy.app
 app.jinja_env.filters["date_br"] = format_date_br
@@ -40,6 +41,12 @@ def _load_profiles():
         issuer_config = legacy.load_cvm_issuer_config(legacy.RADAR_ASSETS)
         profiles = legacy.CvmFundamentalsProvider(legacy.RADAR_DFP, issuer_config).fetch()
     return roots, profiles
+
+
+def _portfolio_context():
+    operations, closed, config = legacy.load_all()
+    indicators = legacy.metrics(operations, closed, config)
+    return build_portfolio_concentration(operations, indicators.get("capital_total", 0))
 
 
 def radar_oportunidades_importado():
@@ -61,7 +68,7 @@ def radar_oportunidades_importado():
                     bid=Decimal(str(quote["bid"])) if quote.get("bid") not in (None, "") else None,
                     ask=Decimal(str(quote["ask"])) if quote.get("ask") not in (None, "") else None,
                 )
-        cards = build_radar_from_market(opportunities, profiles)[:50]
+        cards = build_radar_from_market(opportunities, profiles, portfolio=_portfolio_context())[:50]
     except Exception as exc:
         message = f"Não foi possível processar o mercado importado: {exc}"
     return render_template(
@@ -142,7 +149,7 @@ def scanner_inteligente():
                     ask=Decimal(str(quote["ask"])) if quote.get("ask") not in (None, "") else None,
                 )
         if opportunities:
-            cards = build_radar_from_market(opportunities, profiles)[:250]
+            cards = build_radar_from_market(opportunities, profiles, portfolio=_portfolio_context())[:250]
     except Exception as exc:
         error = f"Não foi possível concluir o scanner: {exc}"
     stats = {

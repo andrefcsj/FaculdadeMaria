@@ -15,6 +15,22 @@ Seu objetivo é oferecer uma visão cronológica e legível da evolução oficia
 
 ---
 
+## 2026-07-12 — Controle de concentração por ativo
+
+Status: `Em revisão`
+
+### Added
+
+- concentração atual e projetada por ativo;
+- alertas no Dashboard e leitura executiva da exposição;
+- bloqueio no Radar acima do limite auditável de 35%.
+
+### Changed
+
+- composição da carteira agora usa o capital total como denominador de risco.
+
+---
+
 ## 2026-07-12 — Confiança dos dados e datas brasileiras
 
 Status: `Em revisão`
