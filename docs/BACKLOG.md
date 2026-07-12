@@ -667,6 +667,19 @@ Objetivo:
 
 Separar a exploração completa do universo carregado do ranking curado apresentado pelo Radar de Oportunidades.
 
+### FM-UI-080 — Operações Fechadas Executivas
+
+- Prioridade: `P0`
+- Tipo: `UI`
+- Status: `DONE`
+
+Entregas:
+
+- histórico executivo filtrável;
+- resultado e ROI realizados;
+- edição, exclusão e reabertura seguras;
+- metadados rastreáveis do encerramento.
+
 ### FM-UI-050 — Visão de risco da carteira
 
 - Prioridade: `P2`
