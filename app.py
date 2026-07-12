@@ -6,7 +6,7 @@ from datetime import datetime
 from decimal import Decimal
 
 import legacy_app as legacy
-from flask import redirect, render_template, request, url_for
+from flask import jsonify, redirect, render_template, request, url_for
 
 from engine.providers import apply_intraday_quote
 from engine.roll import RollInput, analyze_put_roll
@@ -64,6 +64,21 @@ def radar_oportunidades_importado():
 
 
 app.view_functions["radar_oportunidades"] = radar_oportunidades_importado
+
+
+@app.route("/api/alertas-operacionais")
+def alertas_operacionais():
+    """Retorna somente alertas derivados das posições reais do usuário."""
+    operations, closed, config = legacy.load_all()
+    indicators = legacy.metrics(operations, closed, config)
+    history = legacy.monthly(operations, closed, config)
+    dashboard = legacy.build_dashboard_view_model(
+        operations, closed, indicators, history, config
+    )
+    return jsonify({
+        "count": len(dashboard.attention_items),
+        "items": list(dashboard.attention_items),
+    })
 
 
 @app.route("/radar-oportunidades/importar-mercado", methods=["POST"])
