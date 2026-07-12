@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>{% block title %}FaculdadeMaria{% endblock %}</title>
-<link rel="stylesheet" href="{{ url_for('static', filename='theme.css', v='20260712.1') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='theme.css', v='20260712.2') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='new_operation.css', v='20260711.1') }}">
 <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}">{% block head %}{% endblock %}
 </head>
@@ -19,9 +19,9 @@
   </nav>
 </aside>
 <section class="app-stage">
-  <header class="premium-topbar"><button class="sidebar-toggle" type="button" id="sidebarToggle" aria-label="Alternar menu"><span></span><span></span><span></span></button><div class="premium-topbar__title"><svg viewBox="0 0 24 24"><path d="M3 20V10M8 20V5M13 20v-7M18 20V8M2 20h20"/><path d="m3 8 5-5 5 5 6-6"/></svg><div><h1>{% block page_title %}FaculdadeMaria{% endblock %}</h1><p>{% block page_subtitle %}Gestão inteligente de opções{% endblock %}</p></div></div><div class="premium-topbar__actions"><div class="topbar-date"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></svg><span><strong id="topbarDate">Hoje</strong><small id="topbarTime">Agora</small></span></div><button class="topbar-bell" type="button" aria-label="Alertas"><svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg><b>!</b></button>{% block page_actions %}<button class="topbar-refresh" type="button" onclick="window.location.reload()"><span>↻</span> Atualizar Dados</button>{% endblock %}</div></header>
+  <header class="premium-topbar"><button class="sidebar-toggle" type="button" id="sidebarToggle" aria-label="Alternar menu"><span></span><span></span><span></span></button><div class="premium-topbar__title"><svg viewBox="0 0 24 24"><path d="M3 20V10M8 20V5M13 20v-7M18 20V8M2 20h20"/><path d="m3 8 5-5 5 5 6-6"/></svg><div><h1>{% block page_title %}FaculdadeMaria{% endblock %}</h1><p>{% block page_subtitle %}Gestão inteligente de opções{% endblock %}</p></div></div><div class="premium-topbar__actions"><div class="topbar-date"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></svg><span><strong id="topbarDate">Hoje</strong><small id="topbarTime">Agora</small></span></div><div class="notification-center"><button class="topbar-bell" id="notificationBell" type="button" aria-label="Abrir alertas" aria-expanded="false"><svg viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg><b id="notificationCount" hidden>0</b></button><section class="notification-popover" id="notificationPopover" hidden aria-label="Notificações"><header><div><strong>Atenção necessária</strong><small>Alertas das suas PUTs abertas</small></div><button type="button" id="notificationClose" aria-label="Fechar">×</button></header><div class="notification-list" id="notificationList"><p class="notification-loading">Carregando alertas...</p></div><a class="notification-footer" href="/operacoes-abertas">Ver todas as operações →</a></section></div>{% block page_actions %}<button class="topbar-refresh" type="button" onclick="window.location.reload()"><span>↻</span> Atualizar Dados</button>{% endblock %}</div></header>
   <main class="content">{% block content %}{% endblock %}</main>
 </section></div>
 {% include 'components/new_operation_modal.html' %}<input type="checkbox" id="themeToggle" hidden>
-<script src="{{ url_for('static', filename='theme.js', v='20260712.1') }}"></script><script src="{{ url_for('static', filename='search_filters.js') }}"></script><script src="{{ url_for('static', filename='new_operation.js', v='20260711.1') }}"></script>
+<script src="{{ url_for('static', filename='theme.js', v='20260712.2') }}"></script><script src="{{ url_for('static', filename='search_filters.js') }}"></script><script src="{{ url_for('static', filename='new_operation.js', v='20260711.1') }}"></script>
 </body></html>
