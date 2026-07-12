@@ -33,9 +33,22 @@ Mudanças ainda em branch podem aparecer como `Em revisão`.
 
 ---
 
+## 2026-07-12 — Reconciliação do estado oficial
+
+Status: `Integrado`
+
+### Docs
+
+- backlog confrontado com código e testes existentes;
+- caminho crítico do primeiro Radar atualizado para `DONE`;
+- providers B3/CVM, Scanner, rolagem e interfaces Premium reconhecidos como integrados;
+- importação de notas de corretagem registrada como próxima Sprint `READY`.
+
+---
+
 ## 2026-07-12 — Navegação Premium, Scanner e alertas
 
-Status: `Em revisão`
+Status: `Integrado`
 
 Branch: `agent/navegacao-premium-scanner-alertas`
 
@@ -56,7 +69,7 @@ Branch: `agent/navegacao-premium-scanner-alertas`
 
 ## 2026-07-11 — Modal de fechamento em Operações Abertas
 
-Status: `Em revisão`
+Status: `Integrado`
 
 Branch: `agent/modal-fechamento-operacoes`
 
