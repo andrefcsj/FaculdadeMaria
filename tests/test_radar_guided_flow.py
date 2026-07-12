@@ -21,6 +21,12 @@ class RadarGuidedFlowTests(unittest.TestCase):
         self.assertIn('action="/radar-oportunidades/importar-mercado"', html)
         self.assertNotIn("<details", html)
 
+    def test_radar_explains_data_reliability(self):
+        html = app.test_client().get("/radar-oportunidades").get_data(as_text=True)
+        self.assertIn("Confiabilidade dos dados", html)
+        self.assertIn("Confiança informada", html)
+        self.assertIn("independente da nota da oportunidade", html)
+
 
 if __name__ == "__main__":
     unittest.main()
