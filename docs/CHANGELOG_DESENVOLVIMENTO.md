@@ -33,6 +33,23 @@ Mudanças ainda em branch podem aparecer como `Em revisão`.
 
 ---
 
+## 2026-07-12 — CI e testes automáticos
+
+Status: `Integrado`
+
+### Added
+
+- GitHub Actions para PRs e `main`;
+- validação de sintaxe e suíte completa;
+- dependências de desenvolvimento reproduzíveis;
+- item oficial para histórico de DARFs pagos.
+
+### Fixed
+
+- `pypdf` incluído nas dependências de produção.
+
+---
+
 ## 2026-07-12 — Operações Fechadas Executivas
 
 Status: `Integrado`
