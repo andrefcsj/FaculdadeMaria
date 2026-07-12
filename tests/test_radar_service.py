@@ -3,6 +3,7 @@ from decimal import Decimal
 
 from engine import AssetQualityProfile, OptionOpportunity
 from services.radar_service import build_demo_radar, build_radar, build_radar_from_market, build_radar_from_operations
+from services.concentration_service import build_portfolio_concentration
 
 
 def test_demo_radar_returns_ranked_cards():
@@ -178,3 +179,24 @@ def test_radar_warns_when_reference_timestamp_is_unknown():
     card = build_demo_radar(date(2026, 7, 12))[0]
     assert card.freshness_status == "unknown"
     assert "Confirme o preço" in card.data_warning
+
+
+def test_radar_projects_candidate_concentration_and_blocks_above_policy():
+    opportunity = OptionOpportunity(
+        asset="BBAS3", option_code="BBASQ270", option_type="PUT", expiry=date(2026, 8, 14),
+        spot_price=Decimal("28.50"), strike=Decimal("27"), premium=Decimal("1.10"),
+        bid=Decimal("1.05"), ask=Decimal("1.15"), liquidity=Decimal("32000"),
+        data_confidence=Decimal("0.90"), source="b3_cotahist_eod",
+    )
+    profile = AssetQualityProfile(
+        asset="BBAS3", assignment_eligible=True, long_term_suitable=True,
+        quality_score=Decimal("0.88"), data_confidence=Decimal("0.90"), source="cvm",
+    )
+    portfolio = build_portfolio_concentration([], Decimal("4000"))
+
+    card = build_radar_from_market([opportunity], {"BBAS3": profile}, date(2026, 7, 12), portfolio)[0]
+
+    assert card.concentration_pct == "67,50%"
+    assert card.concentration_class == "high"
+    assert card.status == "discarded"
+    assert "35%" in card.concentration_message
