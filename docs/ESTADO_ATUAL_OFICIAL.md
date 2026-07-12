@@ -37,6 +37,7 @@ O FaculdadeMaria possui atualmente:
 - não existe envio de ordens;
 - notas BTG/Necton são importadas, mas outros layouts de corretora não são suportados;
 - CI automatizada executa sintaxe e suíte completa no GitHub.
+- Configurações possui limpeza protegida por mês, ano ou reset operacional completo.
 
 ## Última Sprint integrada
 
