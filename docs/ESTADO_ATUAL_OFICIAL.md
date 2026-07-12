@@ -21,6 +21,7 @@ O FaculdadeMaria possui atualmente:
 - importação de cadeia de opções por CSV;
 - Radar de Oportunidades Premium;
 - confiança dos dados separada da nota da oportunidade, com fonte, idade, frescor e alertas;
+- controle de concentração por ativo conectado à carteira real, com atenção em 25% e limite em 35%;
 - Scanner Inteligente separado do Radar;
 - análise de rolagem com manter, fechar ou rolar;
 - Dashboard Executivo Premium;
@@ -45,13 +46,13 @@ O FaculdadeMaria possui atualmente:
 
 ## Última Sprint concluída
 
-`FM-EXPLAIN-040 — Confiança separada de qualidade e datas brasileiras`
+`FM-RISK-040 — Controle de concentração por ativo`
 
-O Radar passou a mostrar confiabilidade, fonte, modalidade, referência e idade dos dados sem misturar esses elementos à qualidade da oportunidade.
+O Radar passou a projetar a concentração de cada oportunidade e o Dashboard alerta exposições próximas ou acima do limite por ativo.
 
 ## Próxima recomendação
 
-`FM-RISK-040 — Controle de concentração por ativo`.
+`FM-UI-030 — Comparador visual de oportunidades`.
 
 ## Governança
 
