@@ -15,6 +15,24 @@ Seu objetivo é oferecer uma visão cronológica e legível da evolução oficia
 
 ---
 
+## 2026-07-12 — Confiança dos dados e datas brasileiras
+
+Status: `Em revisão`
+
+### Added
+
+- fonte, modalidade, referência, idade e confiança dos dados em cada oportunidade;
+- alertas visuais para dados defasados, desconhecidos ou de baixa confiança;
+- filtros reutilizáveis de data brasileira.
+
+### Changed
+
+- datas visíveis do sistema padronizadas em `DD/MM/AAAA`;
+- gráficos de caixa e DARFs com rótulos brasileiros;
+- qualidade da oportunidade e confiança dos dados agora são conceitos visuais separados.
+
+---
+
 ## 2. Convenções
 
 Categorias utilizadas:
