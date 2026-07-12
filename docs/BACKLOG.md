@@ -741,6 +741,21 @@ Entregas:
 - suíte completa com bloqueio por falha;
 - execução manual disponível.
 
+### FM-OPS-020 — Limpeza segura do histórico operacional
+
+- Prioridade: `P0`
+- Tipo: `OPS`
+- Status: `DONE`
+
+Entregas:
+
+- exclusão por mês e ano;
+- reset operacional completo;
+- prévia, senha administrativa e confirmação forte;
+- preservação de configurações e estrutura do sistema;
+- recálculo automático;
+- compatibilidade CSV e PostgreSQL.
+
 ### FM-TAX-010 — Histórico de DARFs pagos
 
 - Prioridade: `P1`

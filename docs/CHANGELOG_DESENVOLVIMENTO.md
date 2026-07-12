@@ -33,6 +33,26 @@ Mudanças ainda em branch podem aparecer como `Em revisão`.
 
 ---
 
+## 2026-07-12 — Limpeza segura em Configurações
+
+Status: `Integrado`
+
+### Added
+
+- Central de Configurações Premium;
+- exclusão mensal e anual;
+- reset operacional completo;
+- prévia de impacto;
+- senha administrativa e confirmação escrita.
+
+### Security
+
+- limpeza bloqueada sem `ADMIN_RESET_PIN`;
+- transação PostgreSQL com rollback;
+- parâmetros e estrutura do sistema sempre preservados.
+
+---
+
 ## 2026-07-12 — CI e testes automáticos
 
 Status: `Integrado`

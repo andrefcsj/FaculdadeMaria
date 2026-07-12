@@ -1,36 +1,19 @@
 {% extends 'base.html' %}
-{% block title %}Configurações{% endblock %}
+{% block title %}Configurações | FaculdadeMaria{% endblock %}
+{% block page_title %}CONFIGURAÇÕES{% endblock %}
+{% block page_subtitle %}Parâmetros, segurança e manutenção do ambiente operacional{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ url_for('static', filename='settings_premium.css', v='20260712.1') }}">{% endblock %}
 {% block content %}
-<h1 style="font-size:52px;font-weight:800;">⚙️ CONFIGURAÇÕES</h1>
-<p>Parâmetros principais do sistema.</p>
-
-<div class="panel">
-<form class="form labeled" method="post" action="/configuracoes/salvar">
-
-<div>
-<span>Capital Inicial</span>
-<input type="number" step="0.01" name="capital_inicial" value="{{ cfg['Capital total inicial'] }}">
+<div class="settings-page" data-cleanup-enabled="{{ 'true' if cleanup_enabled else 'false' }}">
+  <section class="settings-hero"><div><span>AMBIENTE OPERACIONAL</span><h1>Central de configurações</h1><p>Ajuste os parâmetros oficiais e controle seus dados com segurança.</p></div><div><strong>{{ operational_counts.operations }}</strong><small>operações cadastradas</small></div></section>
+  <div class="settings-layout"><section class="settings-panel"><header><span>⚙</span><div><h2>Parâmetros da estratégia</h2><p>Valores utilizados nos cálculos do sistema</p></div></header><form class="settings-form" method="post" action="/configuracoes/salvar"><label>Capital inicial<span>Base disponível para a estratégia</span><input type="number" step="0.01" min="0" name="capital_inicial" value="{{ cfg['Capital total inicial'] }}"></label><label>Meta oficial de ROI (%)<span>Referência mensal do Decision Engine</span><input type="number" step="0.01" min="0" name="meta_roi" value="{{ (cfg['Meta ROI mensal']*100)|round(2) }}"></label><label>Alíquota de IR (%)<span>Parâmetro gerencial, não apuração fiscal definitiva</span><input type="number" step="0.01" min="0" name="aliquota_ir" value="{{ (cfg['Aliquota IR opcoes']*100)|round(2) }}"></label><label>Tamanho do contrato<span>Quantidade padrão de opções por contrato</span><input type="number" min="1" name="tamanho_contrato" value="{{ cfg['Tamanho contrato opcoes'] }}"></label><button type="submit">Salvar configurações</button></form></section>
+  <section class="settings-panel settings-security"><header><span>◈</span><div><h2>Proteção dos dados</h2><p>Antes de qualquer limpeza</p></div></header><div class="security-status {% if cleanup_enabled %}enabled{% else %}disabled{% endif %}"><i></i><div><strong>{% if cleanup_enabled %}Senha administrativa configurada{% else %}Limpeza bloqueada por segurança{% endif %}</strong><span>{% if cleanup_enabled %}Os comandos destrutivos exigirão sua senha e confirmação escrita.{% else %}Adicione ADMIN_RESET_PIN no Render para liberar os botões de exclusão.{% endif %}</span></div></div><a class="backup-button" href="/backup">↓ Baixar backup antes de apagar</a><div class="settings-preserved"><strong>Sempre preservado</strong><span>Configurações, regras, ativos, código, Radar e estrutura do sistema.</span></div></section></div>
+  <section class="cleanup-zone"><header><div><span>ZONA DE MANUTENÇÃO</span><h2>Limpeza do histórico operacional</h2><p>As exclusões recalculam automaticamente Dashboard, operações, resultados e indicadores.</p></div><b>IRREVERSÍVEL</b></header><div class="cleanup-options">
+    <article><span class="cleanup-icon blue">M</span><h3>Apagar determinado mês</h3><p>Remove operações abertas naquele mês e todos os registros vinculados.</p><label>Mês<input id="cleanupMonth" type="month" value="{{ now_month if now_month is defined else '' }}"></label><button type="button" data-cleanup-scope="month">Revisar exclusão mensal</button></article>
+    <article><span class="cleanup-icon orange">A</span><h3>Apagar um ano inteiro</h3><p>Remove todas as operações abertas no ano escolhido e seus vínculos.</p><label>Ano<input id="cleanupYear" type="number" min="2000" max="2100" value="2026"></label><button type="button" data-cleanup-scope="year">Revisar exclusão anual</button></article>
+    <article class="danger"><span class="cleanup-icon red">!</span><h3>Zerar ambiente operacional</h3><p>Apaga operações abertas, fechadas, notas importadas e históricos operacionais.</p><div class="danger-note">Use somente para começar do zero.</div><button type="button" data-cleanup-scope="all">Revisar reset completo</button></article>
+  </div></section>
 </div>
-
-<div>
-<span>Meta de ROI (%)</span>
-<input type="number" step="0.01" name="meta_roi" value="{{ (cfg['Meta ROI mensal']*100)|round(2) }}">
-</div>
-
-<div>
-<span>Alíquota de IR (%)</span>
-<input type="number" step="0.01" name="aliquota_ir" value="{{ (cfg['Aliquota IR opcoes']*100)|round(2) }}">
-</div>
-
-<div>
-<span>Tamanho do Contrato</span>
-<input type="number" name="tamanho_contrato" value="{{ cfg['Tamanho contrato opcoes'] }}">
-</div>
-
-<p style="margin-top:20px;">
-<button type="submit">💾 Salvar Configurações</button>
-</p>
-
-</form>
-</div>
+<div class="cleanup-modal" id="cleanupModal" hidden><div class="cleanup-modal__backdrop" data-cleanup-close></div><section role="dialog" aria-modal="true"><header><span>!</span><div><h2>Confirmar limpeza</h2><p id="cleanupModalSubtitle">Revise tudo antes de continuar</p></div><button type="button" data-cleanup-close>×</button></header><div class="cleanup-modal__body"><div class="cleanup-preview" id="cleanupPreview">Calculando registros afetados...</div><label>Senha administrativa<input id="cleanupPin" type="password" autocomplete="off" placeholder="ADMIN_RESET_PIN"></label><label>Digite exatamente <b id="cleanupExpected"></b><input id="cleanupConfirmation" autocomplete="off"></label><div class="cleanup-error" id="cleanupError" hidden></div></div><footer><button type="button" data-cleanup-close>Cancelar</button><button type="button" id="cleanupExecute">Excluir dados selecionados</button></footer></section></div>
+<script src="{{ url_for('static', filename='settings_cleanup.js', v='20260712.1') }}"></script>
 {% endblock %}

@@ -21,6 +21,7 @@ from services.open_operations_extension import register as register_open_operati
 from services.new_operation_extension import register as register_new_operation
 from services.brokerage_note_extension import register as register_brokerage_notes
 from services.closed_operations_extension import register as register_closed_operations
+from services.system_cleanup_extension import register as register_system_cleanup
 
 app = legacy.app
 RADAR_IMPORTED = legacy.DATA / "market" / "imported_options.json"
@@ -203,6 +204,7 @@ register_open_operations(app, legacy)
 register_new_operation(app, legacy, RADAR_IMPORTED)
 register_brokerage_notes(app, legacy)
 register_closed_operations(app, legacy)
+register_system_cleanup(app, legacy)
 
 
 if __name__ == "__main__":
