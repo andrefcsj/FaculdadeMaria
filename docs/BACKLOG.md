@@ -119,7 +119,7 @@ Esta seção define a sequência preferencial para chegar ao primeiro resultado 
 
 - Prioridade: `P0`
 - Tipo: `ENGINE`
-- Status: `READY`
+- Status: `DONE`
 - Dependências: `FM-ENG-001`
 
 Objetivo:
@@ -157,7 +157,7 @@ Critérios de aceite:
 
 - Prioridade: `P0`
 - Tipo: `PUT`
-- Status: `BLOCKED`
+- Status: `DONE`
 - Dependências: `FM-ENG-010`
 
 Objetivo:
@@ -189,7 +189,7 @@ Regras:
 
 - Prioridade: `P0`
 - Tipo: `DATA`
-- Status: `BLOCKED`
+- Status: `DONE`
 - Dependências: `FM-ENG-010`
 
 Objetivo:
@@ -209,7 +209,7 @@ Capacidades:
 
 - Prioridade: `P1`
 - Tipo: `ENGINE`
-- Status: `BLOCKED`
+- Status: `DONE`
 - Dependências: `FM-DATA-010`
 
 Indicadores iniciais:
@@ -233,7 +233,7 @@ Critérios:
 
 - Prioridade: `P0`
 - Tipo: `RISK`
-- Status: `DISCOVERY`
+- Status: `DONE`
 - Dependências: `FM-ENG-010`
 
 Objetivo:
@@ -260,7 +260,7 @@ Definir quais critérios podem ser objetivos com dados disponíveis e quais deve
 
 - Prioridade: `P0`
 - Tipo: `RISK`
-- Status: `BLOCKED`
+- Status: `DONE`
 - Dependências: `FM-PUT-010`, `FM-DATA-010`, `FM-ASSET-010`
 
 Filtros candidatos:
@@ -284,7 +284,7 @@ Todo descarte deve possuir motivo explicável.
 
 - Prioridade: `P0`
 - Tipo: `PUT`
-- Status: `BLOCKED`
+- Status: `DONE`
 - Dependências: `FM-PUT-010`, `FM-RISK-010`, `FM-ENG-020`
 
 Objetivo:
@@ -306,7 +306,7 @@ Saída esperada:
 
 - Prioridade: `P0`
 - Tipo: `ENGINE`
-- Status: `BLOCKED`
+- Status: `DONE`
 - Dependências: `FM-PUT-020`
 
 Objetivo:
@@ -331,7 +331,7 @@ A ordem antiga de ranking deve ser revista para aderir à estratégia oficial, g
 
 - Prioridade: `P1`
 - Tipo: `ENGINE`
-- Status: `BLOCKED`
+- Status: `DONE`
 - Dependências: `FM-SCORE-010`
 
 Critérios candidatos:
@@ -351,7 +351,7 @@ Critérios candidatos:
 
 - Prioridade: `P0`
 - Tipo: `EXPLAIN`
-- Status: `BLOCKED`
+- Status: `DONE`
 - Dependências: `FM-SCORE-010`
 
 Toda oportunidade deve apresentar:
@@ -368,7 +368,7 @@ Toda oportunidade deve apresentar:
 
 - Prioridade: `P0`
 - Tipo: `ARCH`
-- Status: `BLOCKED`
+- Status: `DONE`
 - Dependências: `FM-RANK-010`, `FM-EXPLAIN-010`
 
 Objetivo:
@@ -386,7 +386,7 @@ Regras:
 
 - Prioridade: `P0`
 - Tipo: `UI`
-- Status: `BLOCKED`
+- Status: `DONE`
 - Dependências: `FM-SVC-010`
 
 Objetivo:
@@ -432,7 +432,7 @@ Direção visual:
 
 - Prioridade: `P1`
 - Tipo: `DATA`
-- Status: `DISCOVERY`
+- Status: `DONE`
 - Dependências: `FM-DATA-010`
 
 Objetivo:
@@ -463,7 +463,7 @@ Reduzir indisponibilidade por falha externa.
 
 - Prioridade: `P1`
 - Tipo: `DATA`
-- Status: `BLOCKED`
+- Status: `DONE`
 - Dependências: `FM-DATA-010`
 
 Saída:
@@ -482,7 +482,7 @@ Saída:
 
 - Prioridade: `P1`
 - Tipo: `RISK`
-- Status: `DISCOVERY`
+- Status: `DONE`
 
 Objetivo:
 
@@ -515,7 +515,7 @@ Penalizar novas operações que aumentem concentração excessiva.
 
 - Prioridade: `P0`
 - Tipo: `RISK`
-- Status: `BLOCKED`
+- Status: `DONE`
 - Dependências: `FM-PUT-010`
 
 Objetivo:
@@ -546,20 +546,20 @@ Só usar quando houver margem real ou premissa explicitamente identificada.
 
 - Prioridade: `P1`
 - Tipo: `ROLL`
-- Status: `DISCOVERY`
+- Status: `DONE`
 
 ### FM-ROLL-020 — Lucro capturado e prêmio restante
 
 - Prioridade: `P1`
 - Tipo: `ROLL`
-- Status: `BLOCKED`
+- Status: `DONE`
 - Dependências: `FM-ROLL-010`
 
 ### FM-ROLL-030 — Comparador de rolagem
 
 - Prioridade: `P1`
 - Tipo: `ROLL`
-- Status: `BLOCKED`
+- Status: `DONE`
 - Dependências: `FM-ROLL-020`, `FM-RANK-010`
 
 Comparar:
@@ -579,7 +579,7 @@ Comparar:
 
 - Prioridade: `P1`
 - Tipo: `ROLL`
-- Status: `BLOCKED`
+- Status: `DONE`
 - Dependências: `FM-ROLL-030`, `FM-EXPLAIN-010`
 
 Regra obrigatória:
@@ -626,7 +626,7 @@ Evitar confundir oportunidade boa com análise baseada em dado incompleto.
 
 - Prioridade: `P1`
 - Tipo: `UI`
-- Status: `DISCOVERY`
+- Status: `DONE`
 
 Componentes:
 
@@ -660,7 +660,7 @@ Concluído e integrado pelo PR #48 em 11/07/2026, sem alteração das regras do 
 
 - Prioridade: `P1`
 - Tipo: `UI`
-- Status: `EM REVISÃO`
+- Status: `DONE`
 - Dependências: `FM-SVC-010`, providers de mercado disponíveis
 
 Objetivo:
@@ -677,7 +677,7 @@ Separar a exploração completa do universo carregado do ranking curado apresent
 
 - Prioridade: `P1`
 - Tipo: `UI`
-- Status: `BLOCKED`
+- Status: `DONE`
 - Dependências: `FM-ROLL-040`
 
 ---
@@ -688,7 +688,7 @@ Separar a exploração completa do universo carregado do ranking curado apresent
 
 - Prioridade: `P0`
 - Tipo: `ARCH`
-- Status: `BLOCKED`
+- Status: `DONE`
 - Dependências: `FM-SVC-010`
 
 ### FM-ARCH-020 — Contratos de repositório
@@ -721,7 +721,41 @@ Executar testes automaticamente em PRs.
 
 ---
 
-## 11. Backlog de aprendizado futuro
+## 11. Backlog operacional imediato
+
+### FM-OPS-010 — Importação de notas de corretagem
+
+- Prioridade: `P0`
+- Tipo: `OPS`
+- Status: `READY`
+- Dependências: contratos de operação e persistência existentes
+
+Objetivo:
+
+Permitir o envio de notas de corretagem para reduzir digitação manual e registrar operações com rastreabilidade.
+
+Escopo inicial proposto:
+
+- upload de PDF original;
+- armazenamento seguro ou descarte explícito após processamento;
+- extração de data, ativo, opção, compra/venda, quantidade, preço, custos e IRRF;
+- tela de conferência obrigatória antes de salvar;
+- prevenção de duplicidade;
+- indicação de campos não reconhecidos;
+- compatibilidade inicial com notas BTG/Necton;
+- nenhuma operação criada silenciosamente.
+
+Critérios obrigatórios:
+
+- valores extraídos nunca tratados como corretos sem confirmação do usuário;
+- documento não enviado a terceiros sem autorização explícita;
+- testes com documentos anonimizados;
+- falha de leitura não pode alterar a carteira;
+- trilha de origem da informação preservada.
+
+---
+
+## 12. Backlog de aprendizado futuro
 
 ### FM-LEARN-010 — Histórico de decisões
 
@@ -764,7 +798,7 @@ Somente após base histórica suficiente, critérios validados e aprovação exp
 
 ---
 
-## 12. Ideias registradas automaticamente pela política operacional
+## 13. Ideias registradas automaticamente pela política operacional
 
 ### FM-IDEA-001 — Qualidade do ativo antes do prêmio
 
@@ -863,67 +897,19 @@ Mostrar visualmente como qualidade, risco, liquidez, preço líquido e retorno c
 
 ---
 
-## 13. Sequência recomendada de Sprints após organização
+## 14. Sequência recomendada de próximas Sprints
 
-A sequência abaixo é recomendada, mas cada Sprint depende de autorização específica.
+1. `FM-OPS-010` — importar e conferir notas de corretagem BTG/Necton;
+2. `FM-ARCH-050` — executar testes automaticamente em Pull Requests;
+3. `FM-EXPLAIN-040` — separar visualmente confiança do dado e qualidade da oportunidade;
+4. `FM-RISK-040` — controlar concentração por ativo;
+5. `FM-UI-030` — comparar oportunidades lado a lado.
 
-### Sprint Funcional A — Contratos e métricas de PUT
-
-Itens principais:
-
-- `FM-ENG-010`;
-- `FM-PUT-010`;
-- parte de `FM-DATA-010`.
-
-Resultado visível indireto:
-
-O sistema passa a produzir estruturas confiáveis de oportunidade e cálculos operacionais auditáveis.
-
-### Sprint Funcional B — Indicadores e segurança
-
-Itens principais:
-
-- `FM-ENG-020`;
-- `FM-RISK-010`;
-- `FM-RISK-030`.
-
-### Sprint Funcional C — Qualidade do ativo e estratégia PUT
-
-Itens principais:
-
-- `FM-ASSET-010`;
-- `FM-PUT-020`;
-- `FM-CAP-010`.
-
-### Sprint Funcional D — Score e explicação
-
-Itens principais:
-
-- `FM-SCORE-010`;
-- `FM-EXPLAIN-010`;
-- `FM-EXPLAIN-040`.
-
-### Sprint Funcional E — Ranking e serviço de Radar
-
-Itens principais:
-
-- `FM-RANK-010`;
-- `FM-SVC-010`.
-
-### Sprint Visual F — Radar Premium v1
-
-Itens principais:
-
-- `FM-UI-010`;
-- parte de `FM-UI-020`.
-
-Resultado:
-
-Primeiro grande resultado visual do novo Decision Engine.
+As Sprints Funcionais A–J, o Radar, o Scanner e o Dashboard Executivo já foram integrados e não constituem trabalho futuro.
 
 ---
 
-## 14. Regra de atualização do backlog
+## 15. Regra de atualização do backlog
 
 Ao surgir nova ideia:
 
