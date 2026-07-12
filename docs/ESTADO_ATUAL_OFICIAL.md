@@ -25,6 +25,7 @@ O FaculdadeMaria possui atualmente:
 - Dashboard Executivo Premium;
 - alertas operacionais por gravidade;
 - cadastro, edição e fechamento de operações sem saída da página;
+- central executiva de operações fechadas com filtros, edição, exclusão e reabertura;
 - suporte explícito a exercício como parte da estratégia.
 
 ## Limitações vigentes
