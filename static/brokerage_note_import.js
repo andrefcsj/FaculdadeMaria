@@ -22,6 +22,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     if(type)type.checked=true;
     q('newOptionCode').dispatchEvent(new Event('input',{bubbles:true}));
     q('newPremium').dispatchEvent(new Event('change',{bubbles:true}));
+    document.dispatchEvent(new CustomEvent('brokerage-trade-applied',{detail:{optionCode:selectedTrade.option_code}}));
     footer.textContent=`Nota ${note.note_number} de ${new Date(note.trade_date+'T12:00:00').toLocaleDateString('pt-BR')} será vinculada à operação. Confira strike e vencimento antes de salvar.`;
   }
   input.addEventListener('change',async()=>{

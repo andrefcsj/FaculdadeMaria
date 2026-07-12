@@ -622,6 +622,16 @@ Evitar confundir oportunidade boa com análise baseada em dado incompleto.
 
 ## 9. Backlog de experiência Premium
 
+### FM-UX-090 — Alertas contextuais e importação automática de strike
+
+- Prioridade: `P0`
+- Tipo: `UX/RISK`
+- Status: `DONE`
+
+Objetivo:
+
+Separar risco de exercício, vencimento, concentração e ausência de dados, além de consultar strike e vencimento após importar uma nota BTG/Necton.
+
 ### FM-UI-020 — Design system mínimo
 
 - Prioridade: `P1`
