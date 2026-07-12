@@ -7,6 +7,11 @@
     </header>
     <form id="newOperationForm">
       <div class="new-op-modal__body">
+        <section class="brokerage-import">
+          <div><span class="brokerage-import__icon">PDF</span><div><strong>Importar nota BTG/Necton</strong><small>Preencha operação, prêmio e custos automaticamente</small></div></div>
+          <label class="brokerage-import__button" for="newBrokerageNote">Importar nota<input id="newBrokerageNote" type="file" accept="application/pdf,.pdf" hidden></label>
+        </section>
+        <div class="brokerage-import__result" id="brokerageImportResult" hidden></div>
         <div class="new-op-grid new-op-grid--toggles">
           <div><label class="new-op-label">Operação</label><div class="new-op-segmented"><input id="newVenda" type="radio" name="Estrategia" value="Venda" checked><label for="newVenda">Venda</label><input id="newCompra" type="radio" name="Estrategia" value="Compra"><label for="newCompra">Compra</label></div></div>
           <div><label class="new-op-label">Tipo</label><div class="new-op-segmented"><input id="newCall" type="radio" name="Tipo" value="CALL"><label for="newCall">CALL</label><input id="newPut" type="radio" name="Tipo" value="PUT" checked><label for="newPut">PUT</label></div></div>
@@ -25,7 +30,7 @@
         <div class="new-op-summary"><div><strong id="newSummaryCode">Nova operação</strong><span id="newSummaryDetails">Preencha os dados da posição</span></div><div><span>Prêmio bruto estimado</span><b id="newSummaryPremium">R$ 0,00</b></div></div>
         <div class="new-op-error" id="newOperationError"></div>
       </div>
-      <footer class="new-op-modal__footer"><small>A operação será adicionada à carteira em aberto.</small><div><button type="button" class="new-op-secondary" data-new-op-close>Cancelar</button><button type="submit" class="new-op-primary" id="newOperationSave">＋ Cadastrar operação</button></div></footer>
+      <footer class="new-op-modal__footer"><small id="newOperationFooterHint">A operação será adicionada à carteira em aberto.</small><div><button type="button" class="new-op-secondary" data-new-op-close>Cancelar</button><button type="submit" class="new-op-primary" id="newOperationSave">＋ Cadastrar operação</button></div></footer>
     </form>
   </section>
 </div>

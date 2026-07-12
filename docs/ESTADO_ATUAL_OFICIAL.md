@@ -34,14 +34,18 @@ O FaculdadeMaria possui atualmente:
 - dados importados no filesystem podem ser perdidos em hospedagem efêmera;
 - não existe integração automática com a corretora;
 - não existe envio de ordens;
-- notas de corretagem ainda não são importadas;
+- notas BTG/Necton são importadas, mas outros layouts de corretora não são suportados;
 - CI automatizada ainda não foi implantada.
 
-## Próxima Sprint autorizada
+## Última Sprint integrada
 
-`FM-OPS-010 — Importação de notas de corretagem`
+`FM-OPS-010 — Importação de notas de corretagem BTG/Necton`
 
-Primeira versão direcionada às notas BTG/Necton, com upload de PDF, extração, conferência humana obrigatória e prevenção de duplicidade.
+Upload de PDF no cadastro, extração, conferência humana obrigatória, prevenção de duplicidade e central financeira de notas.
+
+## Próxima recomendação
+
+`FM-ARCH-050 — CI automatizada em Pull Requests`.
 
 ## Governança
 

@@ -19,6 +19,7 @@ from services.market_import_service import (
 from services.radar_service import build_radar_from_market
 from services.open_operations_extension import register as register_open_operations
 from services.new_operation_extension import register as register_new_operation
+from services.brokerage_note_extension import register as register_brokerage_notes
 
 app = legacy.app
 RADAR_IMPORTED = legacy.DATA / "market" / "imported_options.json"
@@ -199,6 +200,7 @@ def rolagem_inteligente():
 
 register_open_operations(app, legacy)
 register_new_operation(app, legacy, RADAR_IMPORTED)
+register_brokerage_notes(app, legacy)
 
 
 if __name__ == "__main__":

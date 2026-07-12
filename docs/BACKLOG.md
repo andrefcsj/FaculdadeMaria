@@ -727,7 +727,7 @@ Executar testes automaticamente em PRs.
 
 - Prioridade: `P0`
 - Tipo: `OPS`
-- Status: `READY`
+- Status: `DONE`
 - Dependências: contratos de operação e persistência existentes
 
 Objetivo:
@@ -899,11 +899,10 @@ Mostrar visualmente como qualidade, risco, liquidez, preço líquido e retorno c
 
 ## 14. Sequência recomendada de próximas Sprints
 
-1. `FM-OPS-010` — importar e conferir notas de corretagem BTG/Necton;
-2. `FM-ARCH-050` — executar testes automaticamente em Pull Requests;
-3. `FM-EXPLAIN-040` — separar visualmente confiança do dado e qualidade da oportunidade;
-4. `FM-RISK-040` — controlar concentração por ativo;
-5. `FM-UI-030` — comparar oportunidades lado a lado.
+1. `FM-ARCH-050` — executar testes automaticamente em Pull Requests;
+2. `FM-EXPLAIN-040` — separar visualmente confiança do dado e qualidade da oportunidade;
+3. `FM-RISK-040` — controlar concentração por ativo;
+4. `FM-UI-030` — comparar oportunidades lado a lado.
 
 As Sprints Funcionais A–J, o Radar, o Scanner e o Dashboard Executivo já foram integrados e não constituem trabalho futuro.
 
