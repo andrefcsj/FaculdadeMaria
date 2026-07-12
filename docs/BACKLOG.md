@@ -760,7 +760,7 @@ Entregas:
 
 - Prioridade: `P1`
 - Tipo: `OPS`
-- Status: `READY`
+- Status: `DONE`
 - Dependências: importação segura de PDF e persistência estruturada
 
 Objetivo:
@@ -786,7 +786,26 @@ Critérios obrigatórios:
 - valor pago nunca é inferido quando ausente;
 - documento deve ser associado ao período de apuração correto;
 - dados pessoais não devem aparecer desnecessariamente na interface;
-- suporte inicial validado com documentos reais anonimizados do Product Owner.
+- extração automática somente poderá ser ativada após validação com documentos reais anonimizados do Product Owner.
+
+Observação de entrega:
+
+A página e o cadastro manual estão integrados. A extração automática permanece adiada até existir um PDF real para validação.
+
+### FM-CASH-010 — Livro-caixa e saldo da corretora
+
+- Prioridade: `P0`
+- Tipo: `OPS`
+- Status: `DONE`
+
+Entregas:
+
+- aportes e retiradas;
+- extrato evolutivo;
+- saldo contábil no Dashboard;
+- notas e operações sem dupla contagem;
+- persistência estruturada;
+- conciliação explícita com o BTG.
 
 ---
 
@@ -968,10 +987,9 @@ Mostrar visualmente como qualidade, risco, liquidez, preço líquido e retorno c
 
 ## 14. Sequência recomendada de próximas Sprints
 
-1. `FM-TAX-010` — histórico e gráficos de DARFs pagos;
-2. `FM-EXPLAIN-040` — separar visualmente confiança do dado e qualidade da oportunidade;
-3. `FM-RISK-040` — controlar concentração por ativo;
-4. `FM-UI-030` — comparar oportunidades lado a lado.
+1. `FM-EXPLAIN-040` — separar visualmente confiança do dado e qualidade da oportunidade;
+2. `FM-RISK-040` — controlar concentração por ativo;
+3. `FM-UI-030` — comparar oportunidades lado a lado.
 
 As Sprints Funcionais A–J, o Radar, o Scanner e o Dashboard Executivo já foram integrados e não constituem trabalho futuro.
 

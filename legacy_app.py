@@ -300,7 +300,10 @@ def load_all() -> Tuple[List[Dict[str, object]], List[Dict[str, str]], Dict[str,
 
 def metrics(ops: List[Dict[str, object]], fechadas: List[Dict[str, str]], cfg: Dict[str, float]) -> Dict[str, float | str | int]:
     abertas = [o for o in ops if str(o.get("Status", "")).lower() == "aberta"]
-    capital_total = cfg.get("Capital total inicial", 4000.0)
+    from services.cash_ledger_service import load_cash_events, money
+    eventos_caixa = load_cash_events(__import__(__name__))
+    aportes_liquidos = sum((money(e.get("amount")) if e.get("kind") in {"aporte", "ajuste_credito"} else -money(e.get("amount")) for e in eventos_caixa), Decimal("0"))
+    capital_total = cfg.get("Capital total inicial", 4000.0) + float(aportes_liquidos)
     capital_comp = sum(float(o["Capital"]) for o in abertas)
     premios_ativos = sum(float(o["Premio_liquido"]) for o in abertas)
     mes_atual = current_month_label()
@@ -532,6 +535,8 @@ def rows_html(rows: List[Dict[str, object]], limit: int | None = None) -> str:
 def index():
     ops, fechadas, cfg = load_all()
     ind = metrics(ops, fechadas, cfg)
+    from services.cash_ledger_service import calculate_broker_balance
+    ind["broker_cash_balance"] = float(calculate_broker_balance(__import__(__name__))["balance"])
     hist = monthly(ops, fechadas, cfg)
     abertas = [o for o in ops if str(o.get("Status", "")).lower() == "aberta"]
     top = sorted(abertas, key=lambda x: float(x["Premio_liquido"]), reverse=True)[:5]

@@ -33,6 +33,25 @@ Mudanças ainda em branch podem aparecer como `Em revisão`.
 
 ---
 
+## 2026-07-12 — Caixa da corretora e DARFs pagos
+
+Status: `Integrado`
+
+### Added
+
+- Novos Aportes e retiradas;
+- livro-caixa evolutivo;
+- card Saldo na Corretora;
+- página DARFs Pagos;
+- gráfico e filtros fiscais;
+- cadastro manual com PDF opcional.
+
+### Changed
+
+- Cadastrar Operação reposicionado acima de Operações Abertas.
+
+---
+
 ## 2026-07-12 — Limpeza segura em Configurações
 
 Status: `Integrado`

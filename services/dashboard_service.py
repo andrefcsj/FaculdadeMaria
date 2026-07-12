@@ -30,6 +30,7 @@ class DashboardViewModel:
     open_puts: int
     next_expiry: Mapping[str, object] | None
     projected_roi: float
+    broker_cash_balance: float
     ai_summary: str
     ai_tone: str
     portfolio: tuple[Mapping[str, object], ...]
@@ -159,6 +160,7 @@ def build_dashboard_view_model(
             "days": int(_number(expiries[0].get("Dias"))),
         } if expiries else None),
         projected_roi=projected_roi,
+        broker_cash_balance=_number(indicators.get("broker_cash_balance")),
         ai_summary=summary,
         ai_tone=tone,
         portfolio=portfolio,

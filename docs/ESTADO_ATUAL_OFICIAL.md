@@ -38,6 +38,8 @@ O FaculdadeMaria possui atualmente:
 - notas BTG/Necton são importadas, mas outros layouts de corretora não são suportados;
 - CI automatizada executa sintaxe e suíte completa no GitHub.
 - Configurações possui limpeza protegida por mês, ano ou reset operacional completo.
+- livro-caixa registra aportes, retiradas e saldo contábil da corretora;
+- DARFs pagos possuem cadastro manual, filtros e gráfico evolutivo.
 
 ## Última Sprint integrada
 
