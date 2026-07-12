@@ -14,6 +14,7 @@ from typing import Dict, List, Tuple
 
 from flask import Flask, redirect, request, url_for, jsonify, render_template
 from services.dashboard_service import build_dashboard_view_model
+from services.concentration_service import build_portfolio_concentration
 from services.operation_close_service import calculate_operation_close
 from decimal import Decimal
 from engine.providers import B3CotahistProvider, CvmFundamentalsProvider, apply_intraday_quote, download_latest_cotahist, download_latest_dfp
@@ -1401,7 +1402,10 @@ def radar_oportunidades():
                         bid=Decimal(str(quote["bid"])) if quote.get("bid") not in (None, "") else None,
                         ask=Decimal(str(quote["ask"])) if quote.get("ask") not in (None, "") else None,
                     )
-            cards = build_radar_from_market(opportunities, profiles)[:50]
+            current_ops, current_closed, current_config = load_all()
+            current_indicators = metrics(current_ops, current_closed, current_config)
+            portfolio = build_portfolio_concentration(current_ops, current_indicators.get("capital_total", 0))
+            cards = build_radar_from_market(opportunities, profiles, portfolio=portfolio)[:50]
     except Exception as exc:
         message = f"Não foi possível processar os dados: {exc}"
     return render_template('radar_oportunidades.html', cards=cards, message=message, has_eod=RADAR_COTAHIST.exists(), has_quality=RADAR_DFP.exists())
