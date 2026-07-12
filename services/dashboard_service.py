@@ -8,6 +8,7 @@ from __future__ import annotations
 from collections import defaultdict
 from dataclasses import dataclass
 from typing import Mapping, Sequence
+from services.concentration_service import ATTENTION_ASSET_CONCENTRATION, MAX_ASSET_CONCENTRATION
 
 
 def _number(value: object, default: float = 0.0) -> float:
@@ -73,6 +74,8 @@ def build_dashboard_view_model(
             "asset": asset,
             "capital": capital,
             "share": capital / allocated_total * 100 if allocated_total else 0.0,
+            "capital_share": capital / _number(indicators.get("capital_total")) * 100 if _number(indicators.get("capital_total")) else 0.0,
+            "risk": "high" if _number(indicators.get("capital_total")) and capital / _number(indicators.get("capital_total")) > float(MAX_ASSET_CONCENTRATION) else ("attention" if _number(indicators.get("capital_total")) and capital / _number(indicators.get("capital_total")) >= float(ATTENTION_ASSET_CONCENTRATION) else "balanced"),
         }
         for asset, capital in sorted(allocated_by_asset.items(), key=lambda item: item[1], reverse=True)
     )
@@ -90,6 +93,11 @@ def build_dashboard_view_model(
     )[:5]
 
     attention = []
+    for item in portfolio:
+        if item["risk"] == "high":
+            attention.append({"option_code": item["asset"], "message": f"Concentração de {item['capital_share']:.1f}% do capital total — acima do limite de 35% por ativo", "severity": "high", "label": "Concentração"})
+        elif item["risk"] == "attention":
+            attention.append({"option_code": item["asset"], "message": f"Concentração de {item['capital_share']:.1f}% do capital total — próxima do limite de 35%", "severity": "medium", "label": "Observar"})
     for operation in open_puts:
         reasons: list[str] = []
         severity = "info"
@@ -144,6 +152,11 @@ def build_dashboard_view_model(
         tone = "positive"
     else:
         summary = f"A carteira possui {len(open_puts)} PUT(s) aberta(s) e ROI médio de {average_roi:.2f}%, abaixo da meta oficial de {target_roi:.2f}%. Não aumente risco apenas para buscar retorno."
+        tone = "attention"
+    concentrated = [item for item in portfolio if item["risk"] == "high"]
+    if concentrated:
+        assets = ", ".join(str(item["asset"]) for item in concentrated)
+        summary += f" Atenção: {assets} ultrapassa(m) o limite de 35% do capital total por ativo."
         tone = "attention"
 
     goal_progress = min(max(average_roi / target_roi * 100, 0), 100) if target_roi else 0
