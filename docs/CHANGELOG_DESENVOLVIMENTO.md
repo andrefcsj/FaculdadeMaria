@@ -33,6 +33,26 @@ Mudanças ainda em branch podem aparecer como `Em revisão`.
 
 ---
 
+## 2026-07-12 — Importação de notas BTG/Necton
+
+Status: `Integrado`
+
+### Added
+
+- importação de PDF no modal de nova operação;
+- central Notas Importadas;
+- consolidação de créditos, custos e débitos;
+- gráficos mensais de custos e créditos;
+- persistência estruturada e prevenção de duplicidade.
+
+### Security
+
+- PDF original descartado após leitura;
+- conferência humana obrigatória;
+- possível DARF tratado como acompanhamento gerencial, sem invenção de lucro realizado.
+
+---
+
 ## 2026-07-12 — Reconciliação do estado oficial
 
 Status: `Integrado`
@@ -42,7 +62,7 @@ Status: `Integrado`
 - backlog confrontado com código e testes existentes;
 - caminho crítico do primeiro Radar atualizado para `DONE`;
 - providers B3/CVM, Scanner, rolagem e interfaces Premium reconhecidos como integrados;
-- importação de notas de corretagem registrada como próxima Sprint `READY`.
+- importação de notas de corretagem registrada e posteriormente integrada como `DONE`.
 
 ---
 
