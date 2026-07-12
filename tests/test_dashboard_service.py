@@ -38,16 +38,26 @@ class DashboardServiceTests(unittest.TestCase):
     def test_attention_uses_existing_operational_data(self):
         operation = dict(self.operations[0], Cotacao_n=0, Dias=4, Alerta="PUT dentro do dinheiro")
         view = build_dashboard_view_model([operation], [], self.indicators, self.history, self.config)
-        self.assertEqual(len(view.attention_items), 1)
-        self.assertIn("cotação não informada", view.attention_items[0]["message"].lower())
+        operational = next(item for item in view.attention_items if item["option_code"] == "PETRT123")
+        self.assertIn("cotação não informada", operational["message"].lower())
         self.assertEqual(len(view.roll_candidates), 1)
-        self.assertEqual(view.attention_items[0]["severity"], "critical")
+        self.assertEqual(operational["severity"], "critical")
 
     def test_attention_warns_when_put_is_close_to_strike(self):
         operation = dict(self.operations[0], Cotacao_n=Decimal("19.10"), Strike_n=Decimal("18.81"), Dias=22, Alerta="OK")
         view = build_dashboard_view_model([operation], [], self.indicators, self.history, self.config)
-        self.assertEqual(view.attention_items[0]["severity"], "high")
-        self.assertIn("avaliar rolagem", view.attention_items[0]["message"])
+        operational = next(item for item in view.attention_items if item["option_code"] == "PETRT123")
+        self.assertEqual(operational["severity"], "high")
+        self.assertIn("avaliar rolagem", operational["message"])
+
+    def test_dashboard_warns_about_asset_concentration_using_total_capital(self):
+        operation = dict(self.operations[0], Capital=4000, Cotacao_n=35, Strike_n=30, Dias=40)
+        indicators = dict(self.indicators, capital_comp=4000)
+        view = build_dashboard_view_model([operation], [], indicators, self.history, self.config)
+
+        self.assertEqual(view.portfolio[0]["capital_share"], 40)
+        self.assertEqual(view.portfolio[0]["risk"], "high")
+        self.assertTrue(any("Concentração" in item["message"] for item in view.attention_items))
 
 
 if __name__ == "__main__":
