@@ -15,6 +15,22 @@ Seu objetivo é oferecer uma visão cronológica e legível da evolução oficia
 
 ---
 
+## 2026-07-12 — Alertas contextuais e importação de strike
+
+Status: `Em revisão`
+
+### Added
+
+- motivos separados de exercício, vencimento, concentração e dados;
+- consulta imediata de strike e vencimento após importar nota BTG/Necton.
+
+### Changed
+
+- vencimento em até 7 dias passa a exigir acompanhamento, mas não torna sozinho a operação crítica;
+- criticidade fica reservada à PUT no strike ou dentro do dinheiro.
+
+---
+
 ## 2026-07-12 — Controle de concentração por ativo
 
 Status: `Em revisão`
