@@ -63,6 +63,23 @@ class CashAndDarfTests(unittest.TestCase):
             self.assertEqual(opening[0]["signed"],Decimal("31.92"))
             self.assertEqual(dashboard["balance"],Decimal("31.92"))
 
+    def test_closing_purchase_note_replaces_manual_repurchase_debit(self):
+        directory,root,patches=self.environment()
+        with directory,patches[0],patches[1],patches[2],patches[3]:
+            (root/"operacoes.csv").write_text("ID,Data abertura,Ativo,Tipo,Estratégia,Status,Contratos,Strike,Premio_opcao,Custos,IRRF,Vencimento,Cotacao_atual,Resultado_realizado\n1,2026-07-01,CPLES15,PUT,Venda,Encerrada,1,10,0.33,0,0,2026-08-21,11,26.5\n",encoding="utf-8")
+            notes=[
+                {"key":"open:0","operation_id":"1","trade_date":"2026-07-01","cash_direction":"C","net_cash":"33","trade":{"option_code":"CPLES15","side":"Venda"}},
+                {"key":"close:0","operation_id":"1","trade_date":"2026-07-02","cash_direction":"D","net_cash":"6.50","trade":{"option_code":"CPLES15","side":"Compra"}},
+            ]
+            (root/"brokerage_notes.json").write_text(json.dumps(notes),encoding="utf-8")
+            (root/"operation_closures.json").write_text(json.dumps({"1":{"close_date":"2026-07-02","method":"recompra","repurchase_value":"0.06"}}),encoding="utf-8")
+
+            summary=calculate_broker_balance(legacy_app)
+            dashboard=build_cash_dashboard(legacy_app)
+
+            self.assertEqual(summary["balance"],Decimal("26.50"))
+            self.assertFalse(any(row["id"]=="close-1" for row in dashboard["ledger_rows"]))
+
     def test_paid_darf_pdf_is_not_stored_and_duplicate_is_blocked(self):
         directory,root,patches=self.environment();pdf=b"%PDF-1.4\nfixture"
         with directory,patches[0],patches[1],patches[2],patches[3]:

@@ -5,3 +5,4 @@
 .brokerage-import__result{margin:-4px 0 14px;padding:12px 14px;border:1px solid #bbebcd;border-radius:13px;background:#f1fbf5;color:#286340;font-size:12px;line-height:1.5}.brokerage-import__result strong{color:#126c3b}.brokerage-import__result select{width:100%;height:38px;margin-top:8px;border:1px solid #bdd8c8;border-radius:9px;background:#fff;padding:0 9px;color:#234a34}
 .new-op-modal__dialog{max-height:96vh;overflow:auto}
 @media(max-width:600px){.brokerage-import{align-items:stretch;flex-direction:column}.brokerage-import__button{text-align:center}}
+.notes-delete{border:1px solid #fecdd3;border-radius:8px;background:#fff1f2;color:#b42335;padding:7px 10px;font-size:11px;font-weight:700;cursor:pointer}.notes-delete:hover{background:#ffe4e6}.notes-delete:disabled{opacity:.55;cursor:wait}

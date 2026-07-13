@@ -8,6 +8,8 @@ from flask import jsonify, request
 
 from services.market_import_service import load_market_import
 from services.brokerage_note_service import imported_note_exists, save_imported_note
+from services.operation_close_service import calculate_operation_close
+from services.closed_operations_service import save_closure_metadata
 
 
 def _decimal(value, field: str, *, allow_zero: bool = True) -> Decimal:
@@ -26,6 +28,41 @@ def _decimal(value, field: str, *, allow_zero: bool = True) -> Decimal:
 
 
 def register(app, legacy, market_path):
+    def close_from_note(operation_id: str, note_payload: dict, option_code: str):
+        trade = note_payload.get("trade", {})
+        if str(trade.get("side", "")).lower() != "compra":
+            raise ValueError("A nota não representa uma recompra.")
+        rows = legacy.read_csv(legacy.OPERACOES)
+        operation = legacy.get_operacao_pg(operation_id) if legacy.USE_POSTGRES else legacy.find_row(rows, operation_id)
+        if not operation or str(operation.get("Status", "")).lower() != "aberta":
+            raise ValueError("A operação aberta para encerramento não foi encontrada.")
+        if str(operation.get("Ativo", "")).upper() != option_code or str(operation.get("Estratégia", "")).lower() != "venda":
+            raise ValueError("A recompra não corresponde à operação aberta.")
+        config = legacy.load_config()
+        contracts = Decimal(str(legacy.fnum(operation.get("Contratos"), 0)))
+        contract_size = Decimal(str(config.get("Tamanho contrato opcoes", 100)))
+        open_quantity = int(contracts * contract_size)
+        if int(trade.get("quantity", 0)) != open_quantity:
+            raise ValueError("Encerramento parcial ou quantidade incompatível exige conferência manual.")
+        close_date = legacy.parse_date(str(note_payload.get("trade_date", ""))) or date.today()
+        repurchase = _decimal(trade.get("unit_price"), "Valor de recompra")
+        premium_total = Decimal(str(legacy.fnum(operation.get("Premio_opcao")))) * contracts * contract_size - Decimal(str(legacy.fnum(operation.get("Custos")))) - Decimal(str(legacy.fnum(operation.get("IRRF"))) )
+        closure = calculate_operation_close(method="recompra", close_date=close_date, expiry=legacy.parse_date(str(operation.get("Vencimento", ""))), premium_received=premium_total, repurchase_per_unit=repurchase, contracts=contracts, contract_size=contract_size)
+        closing_costs = _decimal(trade.get("allocated_costs"), "Custos") + _decimal(trade.get("allocated_irrf"), "IRRF")
+        realized = closure.result - closing_costs
+        if legacy.USE_POSTGRES:
+            conn = legacy.get_pg_conn()
+            try:
+                cur = conn.cursor();cur.execute("UPDATE operacoes SET status=%s, resultado_realizado=%s WHERE id=%s", ("Encerrada", str(realized), operation_id));conn.commit()
+            finally:conn.close()
+        else:
+            operation["Status"] = "Encerrada";operation["Resultado_realizado"] = str(realized)
+            legacy.write_csv(legacy.OPERACOES, rows, list(rows[0].keys()))
+        if not save_imported_note(legacy, note_payload, operation_id):
+            raise ValueError("Esta negociação da nota já foi importada.")
+        save_closure_metadata(legacy, operation_id, close_date=close_date, method="recompra", repurchase_value=repurchase, result=realized)
+        return jsonify({"ok": True, "operation_id": operation_id, "note_saved": True, "closed": True, "redirect": "/operacoes-abertas", "message": "Recompra identificada e operação encerrada."})
+
     @app.get("/api/opcoes/<option_code>")
     def lookup_option(option_code: str):
         code = str(option_code or "").strip().upper()
@@ -78,6 +115,13 @@ def register(app, legacy, market_path):
             option_code = str(payload.get("Ativo", "")).strip().upper()
             if not option_code:
                 raise ValueError("Código da opção é obrigatório.")
+            note_payload = payload.get("Nota_corretagem") if isinstance(payload.get("Nota_corretagem"), dict) else None
+            if note_payload and imported_note_exists(legacy, note_payload):
+                raise ValueError("Esta negociação da nota já foi importada.")
+            if payload.get("Encerrar_operacao_id"):
+                if not note_payload:
+                    raise ValueError("A nota de recompra é obrigatória para o encerramento automático.")
+                return close_from_note(str(payload["Encerrar_operacao_id"]), note_payload, option_code)
             option_type = str(payload.get("Tipo", "PUT")).upper()
             if option_type not in {"PUT", "CALL"}:
                 raise ValueError("Tipo de opção inválido.")
@@ -94,8 +138,6 @@ def register(app, legacy, market_path):
             costs = _decimal(payload.get("Custos"), "Custos")
             irrf = _decimal(payload.get("IRRF"), "IRRF")
             spot = _decimal(payload.get("Cotacao_atual"), "Cotação atual")
-            if isinstance(payload.get("Nota_corretagem"), dict) and imported_note_exists(legacy, payload["Nota_corretagem"]):
-                raise ValueError("Esta negociação da nota já foi importada.")
             rows = legacy.read_csv(legacy.OPERACOES)
             next_id = max([int(legacy.fnum(row.get("ID"))) for row in rows] + [0]) + 1
             row = {

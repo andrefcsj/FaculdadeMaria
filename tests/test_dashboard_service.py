@@ -21,11 +21,13 @@ class DashboardServiceTests(unittest.TestCase):
         self.config = {"Meta ROI mensal": 0.04}
 
     def test_builds_real_dashboard_summary(self):
+        self.operations[0]["Premio_liquido"] = 150
         view = build_dashboard_view_model(self.operations, [], self.indicators, self.history, self.config)
         self.assertEqual(view.open_puts, 1)
         self.assertEqual(view.next_expiry["option_code"], "PETRT123")
         self.assertEqual(view.portfolio[0]["asset"], "PETR")
         self.assertEqual(view.ai_tone, "positive")
+        self.assertEqual(view.premiums_total, 150)
 
     def test_does_not_invent_opportunities_for_empty_portfolio(self):
         indicators = dict(self.indicators, roi_medio_abertas=0, capital_comp=0, roi_abertas=0)
