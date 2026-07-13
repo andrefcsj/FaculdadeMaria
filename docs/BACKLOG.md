@@ -622,6 +622,16 @@ Evitar confundir oportunidade boa com análise baseada em dado incompleto.
 
 ## 9. Backlog de experiência Premium
 
+### FM-OPS-030 — Cards, gestão de notas e encerramento assistido
+
+- Prioridade: `P0`
+- Tipo: `OPS/FIN/UX`
+- Status: `DONE`
+
+Objetivo:
+
+Reorganizar os indicadores executivos, permitir exclusão segura de notas e identificar recompra integral de uma posição por código e quantidade.
+
 ### FM-FIN-020 — Integridade do caixa e percentual da recompra
 
 - Prioridade: `P0`
