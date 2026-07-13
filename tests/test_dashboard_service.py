@@ -60,11 +60,14 @@ class DashboardServiceTests(unittest.TestCase):
         self.assertEqual([category["kind"] for category in operational["categories"]], ["Vencimento"])
         self.assertNotIn("dentro do dinheiro", operational["message"])
 
-    def test_put_at_or_below_strike_remains_critical_for_exercise_risk(self):
+    def test_put_at_or_below_strike_only_becomes_critical_with_ten_days_or_less(self):
         operation = dict(self.operations[0], Cotacao_n=Decimal("18"), Strike_n=Decimal("18"), Dias=30, Alerta="OK")
         view = build_dashboard_view_model([operation], [], self.indicators, self.history, self.config)
-        operational = next(item for item in view.attention_items if item["option_code"] == "PETRT123")
+        self.assertFalse(any(item["option_code"] == "PETRT123" for item in view.attention_items))
 
+        near_expiry = dict(operation, Dias=10)
+        view = build_dashboard_view_model([near_expiry], [], self.indicators, self.history, self.config)
+        operational = next(item for item in view.attention_items if item["option_code"] == "PETRT123")
         self.assertEqual(operational["severity"], "critical")
         self.assertEqual(operational["categories"][0]["kind"], "Exercício")
 
@@ -75,7 +78,20 @@ class DashboardServiceTests(unittest.TestCase):
 
         self.assertEqual(view.portfolio[0]["capital_share"], 40)
         self.assertEqual(view.portfolio[0]["risk"], "high")
-        self.assertTrue(any(category["kind"] == "Concentração" for item in view.attention_items for category in item["categories"]))
+        self.assertFalse(any(category["kind"] == "Concentração" for item in view.attention_items for category in item["categories"]))
+
+    def test_today_scenario_uses_nearest_expiry_and_real_option_quote(self):
+        later = dict(self.operations[0], Ativo="VALEQ100", Dias=25, Premio_opcao_n=Decimal("0.80"), Cotacao_n=Decimal("70"), Strike_n=Decimal("65"))
+        sooner = dict(self.operations[0], Ativo="PETRT123", Dias=4, Premio_opcao_n=Decimal("1.10"), Cotacao_n=Decimal("28"), Strike_n=Decimal("30"))
+        quotes = {"PETRT123": {"price": 1.45, "source": "B3 COTAHIST EOD"}}
+
+        view = build_dashboard_view_model([later, sooner], [], self.indicators, self.history, self.config, quotes)
+
+        self.assertEqual(view.today_scenario[0]["option_code"], "PETRT123")
+        self.assertEqual(view.today_scenario[0]["own_value"], 1.10)
+        self.assertEqual(view.today_scenario[0]["current_value"], 1.45)
+        self.assertEqual(view.today_scenario[0]["situation"], "Seria exercida")
+        self.assertIsNone(view.today_scenario[1]["current_value"])
 
 
 if __name__ == "__main__":
