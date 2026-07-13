@@ -622,6 +622,16 @@ Evitar confundir oportunidade boa com análise baseada em dado incompleto.
 
 ## 9. Backlog de experiência Premium
 
+### FM-FIN-020 — Integridade do caixa e percentual da recompra
+
+- Prioridade: `P0`
+- Tipo: `FIN/UX`
+- Status: `DONE`
+
+Objetivo:
+
+Impedir dupla contabilização de notas e operações e mostrar a porcentagem do prêmio preservada na recompra.
+
 ### FM-UI-095 — Card “Se Fosse Hoje”
 
 - Prioridade: `P0`
