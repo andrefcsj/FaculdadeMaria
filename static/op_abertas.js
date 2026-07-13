@@ -120,6 +120,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   const repurchase=document.getElementById('repurchaseValue');
   const repurchaseField=document.getElementById('repurchaseField');
   const resultOutput=document.getElementById('closeResult');
+  const profitPercentOutput=document.getElementById('closeProfitPercent');
   const errorBox=document.getElementById('closeError');
   const hint=document.getElementById('closeMethodHint');
   const expiredMethod=document.getElementById('expiredMethod');
@@ -139,10 +140,17 @@ document.addEventListener('DOMContentLoaded',()=>{
     const premium=Number(operation.premiumTotal||0);
     const buyback=Number(repurchase.value||0)*Number(operation.contracts||0)*Number(operation.contractSize||0);
     const result=method==='recompra'?premium-buyback:method==='cancelada'?0:premium;
+    const premiumUnit=Number(operation.premiumUnit||0);
+    const retainedPct=method==='recompra'&&premiumUnit>0?((premiumUnit-Number(repurchase.value||0))/premiumUnit)*100:null;
     resultOutput.value=brl(result);
     resultOutput.textContent=brl(result);
     resultOutput.classList.toggle('close-result--positive',result>0);
     resultOutput.classList.toggle('close-result--negative',result<0);
+    const percentText=retainedPct===null?'—':`${retainedPct.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}%`;
+    profitPercentOutput.value=percentText;
+    profitPercentOutput.textContent=percentText;
+    profitPercentOutput.classList.toggle('close-result--positive',retainedPct!==null&&retainedPct>=0);
+    profitPercentOutput.classList.toggle('close-result--negative',retainedPct!==null&&retainedPct<0);
   }
 
   function updateExpiredAvailability(){
@@ -177,7 +185,8 @@ document.addEventListener('DOMContentLoaded',()=>{
       expiryLabel:button.dataset.expiryLabel,
       contracts:Number(button.dataset.contracts||0),
       contractSize:Number(button.dataset.contractSize||100),
-      premiumTotal:Number(button.dataset.premiumTotal||0)
+      premiumTotal:Number(button.dataset.premiumTotal||0),
+      premiumUnit:Number(button.dataset.premiumUnit||0)
     };
     form.action=operation.closeUrl;
     document.getElementById('closeAssetLetter').textContent=(operation.ticker||operation.option||'?').slice(0,1);

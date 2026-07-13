@@ -8,7 +8,7 @@ from unittest.mock import patch
 
 from app import app
 import legacy_app
-from services.cash_ledger_service import calculate_broker_balance,save_cash_event
+from services.cash_ledger_service import build_cash_dashboard,calculate_broker_balance,save_cash_event
 from services.paid_darf_service import build_darf_dashboard,save_paid_darf
 
 
@@ -44,6 +44,24 @@ class CashAndDarfTests(unittest.TestCase):
             (root/"operation_closures.json").write_text(json.dumps({"1":{"close_date":"2026-07-10","method":"recompra","repurchase_value":"0.10"}}),encoding="utf-8")
             summary=calculate_broker_balance(legacy_app)
             self.assertEqual(summary["balance"],Decimal("21.92"))
+            dashboard=build_cash_dashboard(legacy_app)
+            opening=[row for row in dashboard["ledger_rows"] if row["id"].startswith(("note-","op-"))]
+            self.assertEqual(len(opening),1)
+            self.assertEqual(opening[0]["label"],"Crédito de nota")
+
+    def test_note_matches_operation_by_option_code_when_legacy_id_differs(self):
+        directory,root,patches=self.environment()
+        with directory,patches[0],patches[1],patches[2],patches[3]:
+            (root/"operacoes.csv").write_text("ID,Data abertura,Ativo,Tipo,Estratégia,Status,Contratos,Strike,Premio_opcao,Custos,IRRF,Vencimento,Cotacao_atual,Resultado_realizado\n7,2026-06-10,BBDCS167,PUT,Venda,Aberta,1,16.89,0.33,1.08,0,2026-07-17,18,0\n",encoding="utf-8")
+            duplicate={"key":"hash:0","operation_id":"1","trade_date":"2026-06-10","cash_direction":"C","net_cash":"31.92","note_number":"32451438","trade":{"trade_index":0,"option_code":"BBDCS167"}}
+            (root/"brokerage_notes.json").write_text(json.dumps([duplicate,duplicate]),encoding="utf-8")
+
+            dashboard=build_cash_dashboard(legacy_app)
+            opening=[row for row in dashboard["ledger_rows"] if row["id"].startswith(("note-","op-"))]
+
+            self.assertEqual(len(opening),1)
+            self.assertEqual(opening[0]["signed"],Decimal("31.92"))
+            self.assertEqual(dashboard["balance"],Decimal("31.92"))
 
     def test_paid_darf_pdf_is_not_stored_and_duplicate_is_blocked(self):
         directory,root,patches=self.environment();pdf=b"%PDF-1.4\nfixture"
