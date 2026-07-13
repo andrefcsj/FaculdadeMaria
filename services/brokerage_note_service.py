@@ -264,6 +264,31 @@ def imported_note_exists(legacy, payload: dict[str, Any]) -> bool:
     return any(row.get("key") == key for row in load_imported_notes(legacy))
 
 
+def delete_imported_note(legacy, note_key: str) -> bool:
+    key = str(note_key or "").strip()
+    if not key:
+        return False
+    if getattr(legacy, "USE_POSTGRES", False):
+        conn = legacy.get_pg_conn()
+        try:
+            cur = conn.cursor()
+            cur.execute("DELETE FROM brokerage_notes WHERE note_key=%s", (key,))
+            deleted = cur.rowcount > 0
+            conn.commit()
+            return deleted
+        finally:
+            conn.close()
+    rows = load_imported_notes(legacy)
+    kept = [row for row in rows if str(row.get("key", "")) != key]
+    if len(kept) == len(rows):
+        return False
+    path = _storage_path(legacy)
+    temporary = path.with_suffix(".tmp")
+    temporary.write_text(json.dumps(kept, ensure_ascii=False, indent=2), encoding="utf-8")
+    temporary.replace(path)
+    return True
+
+
 def last_business_day_next_month(year: int, month: int) -> date:
     next_year, next_month = (year + 1, 1) if month == 12 else (year, month + 1)
     candidate = date(next_year, next_month, calendar.monthrange(next_year, next_month)[1])
