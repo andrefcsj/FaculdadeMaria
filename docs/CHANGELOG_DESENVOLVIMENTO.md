@@ -15,6 +15,22 @@ Seu objetivo é oferecer uma visão cronológica e legível da evolução oficia
 
 ---
 
+## 2026-07-12 — Integridade do caixa e percentual da recompra
+
+Status: `Em revisão`
+
+### Added
+
+- percentual do prêmio preservado no modal de recompra.
+
+### Fixed
+
+- lançamento duplicado de operação no extrato;
+- dupla contabilização entre nota importada e operação manual;
+- vínculos legados recuperados pelo código da opção.
+
+---
+
 ## 2026-07-12 — Card “Se Fosse Hoje”
 
 Status: `Em revisão`
