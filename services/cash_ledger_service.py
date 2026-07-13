@@ -62,8 +62,27 @@ def delete_cash_event(legacy,event_id:str)->bool:
     path=_path(legacy);path.parent.mkdir(parents=True,exist_ok=True);path.write_text(json.dumps(kept,ensure_ascii=False,indent=2),encoding="utf-8");return True
 
 
+def _unique_notes(notes:list[dict[str,Any]])->list[dict[str,Any]]:
+    unique:dict[str,dict[str,Any]]={}
+    for note in notes:
+        trade=note.get("trade",{}) if isinstance(note.get("trade"),dict) else {}
+        identity=str(note.get("key") or f"{note.get('document_hash','')}:{trade.get('trade_index',0)}:{trade.get('option_code','')}")
+        if identity not in unique:unique[identity]=note
+    return list(unique.values())
+
+
+def _note_links(notes:list[dict[str,Any]])->tuple[set[str],set[str]]:
+    ids={str(note.get("operation_id")) for note in notes if note.get("operation_id") not in (None,"")}
+    codes={str(note.get("trade",{}).get("option_code","")).upper() for note in notes if isinstance(note.get("trade"),dict)}
+    return ids,{code for code in codes if code}
+
+
+def _operation_has_note(operation:dict[str,Any],linked_ids:set[str],linked_codes:set[str])->bool:
+    return str(operation.get("ID")) in linked_ids or str(operation.get("Ativo","")).upper() in linked_codes
+
+
 def calculate_broker_balance(legacy)->dict[str,Any]:
-    events=load_cash_events(legacy);notes=load_imported_notes(legacy);linked={str(note.get("operation_id")) for note in notes};closures=load_closure_metadata(legacy);operations=legacy.read_operacoes();size=money(legacy.load_config().get("Tamanho contrato opcoes",100))
+    events=load_cash_events(legacy);notes=_unique_notes(load_imported_notes(legacy));linked_ids,linked_codes=_note_links(notes);closures=load_closure_metadata(legacy);operations=legacy.read_operacoes();size=money(legacy.load_config().get("Tamanho contrato opcoes",100))
     contributions=sum((money(row["amount"]) for row in events if row.get("kind") in {"aporte","ajuste_credito"}),Decimal("0"))
     withdrawals=sum((money(row["amount"]) for row in events if row.get("kind") in {"retirada","ajuste_debito"}),Decimal("0"))
     note_cash=sum((money(note.get("net_cash"))*(Decimal("1") if str(note.get("cash_direction","C")).upper()=="C" else Decimal("-1")) for note in notes),Decimal("0"))
@@ -71,7 +90,7 @@ def calculate_broker_balance(legacy)->dict[str,Any]:
     for op in operations:
         oid=str(op.get("ID"));
         contracts=money(op.get("Contratos",1));premium=money(op.get("Premio_opcao"));costs=money(op.get("Custos"))+money(op.get("IRRF"));side=str(op.get("Estratégia","Venda")).lower()
-        if oid not in linked:manual_cash+=(premium*contracts*size-costs)*(Decimal("1") if side=="venda" else Decimal("-1"))
+        if not _operation_has_note(op,linked_ids,linked_codes):manual_cash+=(premium*contracts*size-costs)*(Decimal("1") if side=="venda" else Decimal("-1"))
         meta=closures.get(oid,{})
         if str(op.get("Status","")).lower()=="encerrada":
             method=str(meta.get("method",""));buyback=money(meta.get("repurchase_value"))
@@ -86,14 +105,14 @@ def build_cash_dashboard(legacy)->dict[str,Any]:
     labels={"aporte":"Aporte","retirada":"Retirada","ajuste_credito":"Crédito manual","ajuste_debito":"Débito manual"}
     for event in summary["events"]:
         amount=money(event["amount"]);signed=amount if event["kind"] in {"aporte","ajuste_credito"} else -amount;entries.append({**event,"label":labels[event["kind"]],"source":"Movimentação manual","signed":signed,"deletable":True})
-    notes=load_imported_notes(legacy);linked={str(note.get("operation_id")) for note in notes}
+    notes=_unique_notes(load_imported_notes(legacy));linked_ids,linked_codes=_note_links(notes)
     for note in notes:
         signed=money(note.get("net_cash"))*(Decimal("1") if str(note.get("cash_direction","C")).upper()=="C" else Decimal("-1"));entries.append({"id":"note-"+str(note.get("key","")),"date":str(note.get("trade_date","")),"label":"Crédito de nota" if signed>=0 else "Débito de nota","description":f"Nota {note.get('note_number','')} • {note.get('trade',{}).get('option_code','')}","source":"BTG/Necton","signed":signed,"deletable":False})
     closures=load_closure_metadata(legacy);size=money(legacy.load_config().get("Tamanho contrato opcoes",100))
     for op in legacy.read_operacoes():
         oid=str(op.get("ID"));
-        contracts=money(op.get("Contratos",1));premium=money(op.get("Premio_opcao"));costs=money(op.get("Custos"))+money(op.get("IRRF"));signed=(premium*contracts*size-costs)*(Decimal("1") if str(op.get("Estratégia","Venda")).lower()=="venda" else Decimal("-1"));entries.append({"id":"op-"+oid,"date":str(op.get("Data abertura","")),"label":"Prêmio de operação" if signed>=0 else "Compra de opção","description":str(op.get("Ativo","")),"source":"Operação cadastrada","signed":signed,"deletable":False})
-        if oid not in linked:entries.append({"id":"op-"+oid,"date":str(op.get("Data abertura","")),"label":"Prêmio de operação" if signed>=0 else "Compra de opção","description":str(op.get("Ativo","")),"source":"Operação cadastrada","signed":signed,"deletable":False})
+        contracts=money(op.get("Contratos",1));premium=money(op.get("Premio_opcao"));costs=money(op.get("Custos"))+money(op.get("IRRF"));signed=(premium*contracts*size-costs)*(Decimal("1") if str(op.get("Estratégia","Venda")).lower()=="venda" else Decimal("-1"))
+        if not _operation_has_note(op,linked_ids,linked_codes):entries.append({"id":"op-"+oid,"date":str(op.get("Data abertura","")),"label":"Prêmio de operação" if signed>=0 else "Compra de opção","description":str(op.get("Ativo","")),"source":"Operação cadastrada","signed":signed,"deletable":False})
         meta=closures.get(oid,{})
         if str(op.get("Status","")).lower()=="encerrada" and meta:
             method=str(meta.get("method",""));debit=Decimal("0")
