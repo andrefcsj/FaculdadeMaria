@@ -6,6 +6,7 @@ from unittest.mock import patch
 import legacy_app
 from services.brokerage_note_service import (
     build_notes_dashboard,
+    delete_imported_note,
     note_to_api,
     parse_btg_necton_pdf,
     save_imported_note,
@@ -53,6 +54,8 @@ class BrokerageNoteServiceTests(unittest.TestCase):
             self.assertTrue(save_imported_note(Legacy, payload, "9"))
             self.assertFalse(save_imported_note(Legacy, payload, "9"))
             self.assertFalse(any(path.suffix == ".pdf" for path in Path(directory).iterdir()))
+            self.assertTrue(delete_imported_note(Legacy, f"{payload['document_hash']}:0"))
+            self.assertFalse(delete_imported_note(Legacy, "inexistente"))
 
     def test_dashboard_cost_chart_excludes_trade_purchase_debits(self):
         notes = [{"trade_date":"2026-07-10","cash_direction":"D","net_cash":"1001.08","operational_costs":"1.08","irrf":"0"}]
