@@ -28,6 +28,8 @@ O FaculdadeMaria possui atualmente:
 - alertas operacionais por gravidade;
 - alertas contextuais separados em exercício, vencimento e dados;
 - card “Se Fosse Hoje” com opções abertas próximas do vencimento, prêmio cadastrado, cotação atual e situação de exercício;
+- encerramento assistido quando uma nota de compra corresponde integralmente a uma venda aberta;
+- exclusão confirmada de notas importadas com recálculo automático;
 - cadastro, edição e fechamento de operações sem saída da página;
 - central executiva de operações fechadas com filtros, edição, exclusão e reabertura;
 - suporte explícito a exercício como parte da estratégia.
@@ -49,9 +51,9 @@ O FaculdadeMaria possui atualmente:
 
 ## Última Sprint concluída
 
-`FM-FIN-020 — Integridade do caixa e percentual da recompra`
+`FM-OPS-030 — Cards, gestão de notas e encerramento assistido`
 
-O caixa passou a contabilizar cada nota ou operação uma única vez, e o encerramento por recompra exibe o percentual do prêmio preservado.
+O Dashboard foi reorganizado, notas podem ser excluídas com recálculo e recompras integrais podem encerrar posições após confirmação.
 
 ## Próxima recomendação
 
