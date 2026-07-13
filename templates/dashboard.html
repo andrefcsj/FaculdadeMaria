@@ -39,7 +39,7 @@
     </section>
   </div>
 
-  <div class="exec-grid exec-grid--triple">
+  <div class="exec-grid exec-grid--quad">
     <section class="exec-panel">
       <header class="exec-panel__header"><div><span>↻</span><h2>PUTs com potencial de rolagem</h2></div><a href="/rolagem-inteligente">Analisar</a></header>
       {% if dashboard.roll_candidates %}<div class="exec-list">{% for item in dashboard.roll_candidates %}<a href="/rolagem-inteligente"><div><strong>{{ item.option_code }}</strong><span>{{ item.reason }}</span></div><b>{{ item.days }}d</b></a>{% endfor %}</div>{% else %}{{ empty_state('Nenhuma revisão imediata', 'Não existem PUTs abertas próximas do vencimento ou com alerta operacional.') }}{% endif %}
@@ -47,6 +47,10 @@
     <section class="exec-panel exec-panel--attention">
       <header class="exec-panel__header"><div><span>!</span><h2>Atenção necessária</h2></div><span class="exec-count">{{ dashboard.attention_items|length }}</span></header>
       {% if dashboard.attention_items %}<div class="attention-list">{% for item in dashboard.attention_items %}<a class="attention-alert attention-alert--{{ item.severity }}" href="/operacoes-abertas"><i></i><div><strong>{{ item.option_code }}</strong><span class="attention-categories">{% for category in item.categories %}<em class="attention-category attention-category--{{ category.severity }}"><small>{{ category.kind }}</small>{{ category.message }}</em>{% endfor %}</span></div><b>{{ item.label }}</b></a>{% endfor %}</div>{% else %}{{ empty_state('Tudo sob controle', 'Nenhum alerta operacional foi encontrado nas PUTs abertas.') }}{% endif %}
+    </section>
+    <section class="exec-panel exec-panel--today">
+      <header class="exec-panel__header"><div><span>◇</span><h2>Se fosse hoje</h2></div><span class="exec-tag">CENÁRIO ATUAL</span></header>
+      {% if dashboard.today_scenario %}<div class="today-table"><div class="today-table__head"><span>Opção</span><span>Dias</span><span>Seu valor</span><span>Valor atual</span><span>Situação</span></div>{% for item in dashboard.today_scenario %}<a href="/operacoes-abertas" class="today-table__row"><strong>{{ item.option_code }}</strong><span>{{ item.days }}d</span><span>{{ money(item.own_value) }}</span><span title="{{ item.quote_source }}">{% if item.current_value is not none %}{{ money(item.current_value) }}{% else %}Indisponível{% endif %}</span><b class="today-status today-status--{{ item.situation_class }}">{{ item.situation }}</b></a>{% endfor %}</div><p class="today-note">Situação calculada pela cotação da ação contra o strike. O valor atual é a cotação unitária da opção disponível no mercado carregado.</p>{% else %}{{ empty_state('Sem operações abertas', 'Cadastre uma opção para simular como estaria a posição hoje.') }}{% endif %}
     </section>
     <section class="exec-panel">
       <header class="exec-panel__header"><div><span>◷</span><h2>Próximos vencimentos</h2></div><a href="/operacoes-abertas">Detalhes</a></header>
