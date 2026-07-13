@@ -26,7 +26,8 @@ O FaculdadeMaria possui atualmente:
 - análise de rolagem com manter, fechar ou rolar;
 - Dashboard Executivo Premium;
 - alertas operacionais por gravidade;
-- alertas contextuais separados em exercício, vencimento, concentração e dados;
+- alertas contextuais separados em exercício, vencimento e dados;
+- card “Se Fosse Hoje” com opções abertas próximas do vencimento, prêmio cadastrado, cotação atual e situação de exercício;
 - cadastro, edição e fechamento de operações sem saída da página;
 - central executiva de operações fechadas com filtros, edição, exclusão e reabertura;
 - suporte explícito a exercício como parte da estratégia.
@@ -47,9 +48,9 @@ O FaculdadeMaria possui atualmente:
 
 ## Última Sprint concluída
 
-`FM-UX-090 — Alertas contextuais e importação automática de strike`
+`FM-UI-095 — Card “Se Fosse Hoje”`
 
-O painel Atenção Necessária passou a explicar separadamente cada motivo, e a importação de nota consulta strike e vencimento imediatamente.
+O Dashboard passou a mostrar o cenário atual das opções próximas do vencimento sem inventar cotações, e a criticidade de exercício foi limitada aos últimos 10 dias.
 
 ## Próxima recomendação
 
