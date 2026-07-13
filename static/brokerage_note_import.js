@@ -5,10 +5,12 @@ document.addEventListener('DOMContentLoaded',()=>{
   if(!input||!result)return;
   let note=null;
   let selectedTrade=null;
+  let confirmedClosureId=null;
   const q=id=>document.getElementById(id);
   const brl=value=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(Number(value)||0);
   function applyTrade(index){
     selectedTrade=note.trades[Number(index)];
+    confirmedClosureId=null;
     if(!selectedTrade)return;
     q('newOptionCode').value=selectedTrade.option_code;
     q('newContracts').value=selectedTrade.contracts;
@@ -23,7 +25,12 @@ document.addEventListener('DOMContentLoaded',()=>{
     q('newOptionCode').dispatchEvent(new Event('input',{bubbles:true}));
     q('newPremium').dispatchEvent(new Event('change',{bubbles:true}));
     document.dispatchEvent(new CustomEvent('brokerage-trade-applied',{detail:{optionCode:selectedTrade.option_code}}));
-    footer.textContent=`Nota ${note.note_number} de ${new Date(note.trade_date+'T12:00:00').toLocaleDateString('pt-BR')} será vinculada à operação. Confira strike e vencimento antes de salvar.`;
+    const candidate=selectedTrade.closure_candidate;
+    if(candidate?.match_type==='total'){
+      const accepted=confirm(`Encerramento identificado: a compra de ${candidate.note_quantity} opções ${candidate.option_code} corresponde à posição aberta. Deseja encerrar esta operação?`);
+      if(accepted)confirmedClosureId=candidate.operation_id;
+    }
+    footer.textContent=confirmedClosureId?`Encerramento confirmado para ${selectedTrade.option_code}. Ao salvar, a posição será fechada e os cálculos serão refeitos.`:candidate?`Possível encerramento ${candidate.match_type}. Confira as quantidades antes de continuar.`:`Nota ${note.note_number} de ${new Date(note.trade_date+'T12:00:00').toLocaleDateString('pt-BR')} será vinculada à operação. Confira strike e vencimento antes de salvar.`;
   }
   input.addEventListener('change',async()=>{
     const file=input.files?.[0];if(!file)return;
@@ -48,6 +55,7 @@ document.addEventListener('DOMContentLoaded',()=>{
         const payload=JSON.parse(options.body);
         payload.Data_abertura=note.trade_date;
         payload.Nota_corretagem={...note,trade:selectedTrade};
+        if(confirmedClosureId)payload.Encerrar_operacao_id=confirmedClosureId;
         options={...options,body:JSON.stringify(payload)};
       }catch(_error){}
     }
