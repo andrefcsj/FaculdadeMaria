@@ -44,6 +44,7 @@ class DashboardViewModel:
     portfolio: tuple[Mapping[str, object], ...]
     roll_candidates: tuple[Mapping[str, object], ...]
     attention_items: tuple[Mapping[str, object], ...]
+    today_scenario: tuple[Mapping[str, object], ...]
     upcoming_expiries: tuple[Mapping[str, object], ...]
     goals: tuple[Mapping[str, object], ...]
     stats: tuple[Mapping[str, object], ...]
@@ -57,11 +58,16 @@ def build_dashboard_view_model(
     indicators: Mapping[str, object],
     history: Sequence[Mapping[str, object]],
     config: Mapping[str, object],
+    option_quotes: Mapping[str, Mapping[str, object]] | None = None,
 ) -> DashboardViewModel:
     """Organiza dados existentes para o Dashboard sem recalcular o domínio."""
     open_operations = [
         operation for operation in operations
         if str(operation.get("Status", "")).lower() == "aberta"
+    ]
+    open_options = [
+        operation for operation in open_operations
+        if str(operation.get("Tipo", "PUT")).upper() in {"PUT", "CALL"}
     ]
     open_puts = [
         operation for operation in open_operations
@@ -100,23 +106,20 @@ def build_dashboard_view_model(
     )[:5]
 
     attention = []
-    for item in portfolio:
-        if item["risk"] == "high":
-            attention.append(_attention_item(item["asset"], [{"kind": "Concentração", "message": f"{item['capital_share']:.1f}% do capital total — acima do limite de 35% por ativo", "severity": "high"}]))
-        elif item["risk"] == "attention":
-            attention.append(_attention_item(item["asset"], [{"kind": "Concentração", "message": f"{item['capital_share']:.1f}% do capital total — próxima do limite de 35%", "severity": "medium"}]))
-    for operation in open_puts:
+    for operation in open_options:
         categories: list[dict[str, str]] = []
         days = _number(operation.get("Dias"), 9999)
         spot = _number(operation.get("Cotacao_n"))
         strike = _number(operation.get("Strike_n"))
+        option_type = str(operation.get("Tipo", "PUT")).upper()
         if spot > 0 and strike > 0:
             distance = (spot - strike) / spot * 100
-            if spot <= strike:
-                categories.append({"kind": "Exercício", "message": "PUT dentro do dinheiro — avaliar exercício ou rolagem", "severity": "critical"})
-            elif distance <= 2:
+            in_the_money = (option_type == "PUT" and spot <= strike) or (option_type == "CALL" and spot >= strike)
+            if in_the_money and days <= 10:
+                categories.append({"kind": "Exercício", "message": f"{option_type} dentro do dinheiro e vence em {int(days)} dia(s) — avaliar exercício ou rolagem", "severity": "critical"})
+            elif option_type == "PUT" and spot > strike and distance <= 2:
                 categories.append({"kind": "Exercício", "message": f"Cotação {distance:.1f}% acima do strike — risco elevado se houver queda", "severity": "high"})
-            elif distance <= 5:
+            elif option_type == "PUT" and spot > strike and distance <= 5:
                 categories.append({"kind": "Exercício", "message": f"Cotação {distance:.1f}% acima do strike — PUT ainda fora do dinheiro", "severity": "medium"})
         if days <= 7:
             categories.append({"kind": "Vencimento", "message": f"Vence em {int(days)} dia(s) — acompanhar de perto", "severity": "high"})
@@ -143,11 +146,27 @@ def build_dashboard_view_model(
     else:
         summary = f"A carteira possui {len(open_puts)} PUT(s) aberta(s) e ROI médio de {average_roi:.2f}%, abaixo da meta oficial de {target_roi:.2f}%. Não aumente risco apenas para buscar retorno."
         tone = "attention"
-    concentrated = [item for item in portfolio if item["risk"] == "high"]
-    if concentrated:
-        assets = ", ".join(str(item["asset"]) for item in concentrated)
-        summary += f" Atenção: {assets} ultrapassa(m) o limite de 35% do capital total por ativo."
-        tone = "attention"
+    quotes = option_quotes or {}
+    today_scenario = []
+    for operation in sorted(open_options, key=lambda item: _number(item.get("Dias"), 999999))[:5]:
+        code = str(operation.get("Ativo", "N/D")).upper()
+        spot, strike = _number(operation.get("Cotacao_n")), _number(operation.get("Strike_n"))
+        option_type = str(operation.get("Tipo", "PUT")).upper()
+        if spot <= 0 or strike <= 0:
+            situation, situation_class = "Não calculada", "unknown"
+        else:
+            exercised = (option_type == "PUT" and spot <= strike) or (option_type == "CALL" and spot >= strike)
+            situation, situation_class = ("Seria exercida", "exercised") if exercised else ("Não seria exercida", "safe")
+        quote = quotes.get(code, {})
+        today_scenario.append({
+            "option_code": code,
+            "days": int(_number(operation.get("Dias"))),
+            "own_value": _number(operation.get("Premio_opcao_n", operation.get("Premio_opcao"))),
+            "current_value": _number(quote.get("price")) if quote.get("price") is not None else None,
+            "quote_source": quote.get("source", "Cotação não disponível"),
+            "situation": situation,
+            "situation_class": situation_class,
+        })
 
     goal_progress = min(max(average_roi / target_roi * 100, 0), 100) if target_roi else 0
     capital_usage = min(max(_number(indicators.get("capital_comp")) / capital_total * 100, 0), 100) if capital_total else 0
@@ -169,6 +188,7 @@ def build_dashboard_view_model(
         portfolio=portfolio,
         roll_candidates=roll_candidates,
         attention_items=tuple(attention[:6]),
+        today_scenario=tuple(today_scenario),
         upcoming_expiries=tuple({
             "option_code": operation.get("Ativo", "N/D"),
             "date": operation.get("Vencimento_fmt", ""),
