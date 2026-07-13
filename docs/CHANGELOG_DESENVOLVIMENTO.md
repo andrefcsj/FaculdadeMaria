@@ -15,6 +15,22 @@ Seu objetivo é oferecer uma visão cronológica e legível da evolução oficia
 
 ---
 
+## 2026-07-12 — Card “Se Fosse Hoje”
+
+Status: `Em revisão`
+
+### Added
+
+- card com opção, dias, prêmio cadastrado, cotação atual e situação de exercício;
+- carregamento de cotação da opção por fonte real disponível.
+
+### Changed
+
+- concentração removida do painel Atenção Necessária;
+- exercício dentro do dinheiro só é crítico a 10 dias ou menos do vencimento.
+
+---
+
 ## 2026-07-12 — Alertas contextuais e importação de strike
 
 Status: `Em revisão`

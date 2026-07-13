@@ -622,6 +622,16 @@ Evitar confundir oportunidade boa com análise baseada em dado incompleto.
 
 ## 9. Backlog de experiência Premium
 
+### FM-UI-095 — Card “Se Fosse Hoje”
+
+- Prioridade: `P0`
+- Tipo: `UI/RISK`
+- Status: `DONE`
+
+Objetivo:
+
+Exibir opções abertas próximas do vencimento, prêmio cadastrado, cotação atual real e situação de exercício no cenário atual.
+
 ### FM-UX-090 — Alertas contextuais e importação automática de strike
 
 - Prioridade: `P0`

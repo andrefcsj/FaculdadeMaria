@@ -541,7 +541,8 @@ def index():
     hist = monthly(ops, fechadas, cfg)
     abertas = [o for o in ops if str(o.get("Status", "")).lower() == "aberta"]
     top = sorted(abertas, key=lambda x: float(x["Premio_liquido"]), reverse=True)[:5]
-    dashboard = build_dashboard_view_model(ops, fechadas, ind, hist, cfg)
+    from services.dashboard_market_service import load_option_quotes
+    dashboard = build_dashboard_view_model(ops, fechadas, ind, hist, cfg, load_option_quotes(__import__(__name__)))
     prox = sorted([o for o in abertas if o.get('Vencimento_fmt')], key=lambda x: float(x.get('Dias', 9999)))
     if prox:
         prox_venc = f"{int(float(prox[0].get('Dias',0)))} dias"
