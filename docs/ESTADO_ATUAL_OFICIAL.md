@@ -44,13 +44,14 @@ O FaculdadeMaria possui atualmente:
 - CI automatizada executa sintaxe e suíte completa no GitHub.
 - Configurações possui limpeza protegida por mês, ano ou reset operacional completo.
 - livro-caixa registra aportes, retiradas e saldo contábil da corretora;
+- livro-caixa deduplica notas e impede dupla contabilização entre nota e operação manual;
 - DARFs pagos possuem cadastro manual, filtros e gráfico evolutivo.
 
 ## Última Sprint concluída
 
-`FM-UI-095 — Card “Se Fosse Hoje”`
+`FM-FIN-020 — Integridade do caixa e percentual da recompra`
 
-O Dashboard passou a mostrar o cenário atual das opções próximas do vencimento sem inventar cotações, e a criticidade de exercício foi limitada aos últimos 10 dias.
+O caixa passou a contabilizar cada nota ou operação uma única vez, e o encerramento por recompra exibe o percentual do prêmio preservado.
 
 ## Próxima recomendação
 
