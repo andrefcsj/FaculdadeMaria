@@ -15,6 +15,28 @@ Seu objetivo é oferecer uma visão cronológica e legível da evolução oficia
 
 ---
 
+## 2026-07-12 — Cards, gestão de notas e encerramento assistido
+
+Status: `Em revisão`
+
+### Added
+
+- card de prêmios líquidos históricos;
+- exclusão confirmada de nota importada;
+- identificação e confirmação de recompra integral pela nota.
+
+### Changed
+
+- Saldo na Corretora passa a abrir os cards executivos;
+- Capital Alocado passa a Capital Comprometido;
+- ROI Projetado é removido.
+
+### Fixed
+
+- recompra registrada por nota não duplica o débito de encerramento no caixa.
+
+---
+
 ## 2026-07-12 — Integridade do caixa e percentual da recompra
 
 Status: `Em revisão`
