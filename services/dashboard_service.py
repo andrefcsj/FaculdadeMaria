@@ -33,6 +33,7 @@ def _attention_item(option_code: object, categories: list[dict[str, str]]) -> di
 @dataclass(frozen=True)
 class DashboardViewModel:
     premiums_month: float
+    premiums_total: float
     average_roi: float
     allocated_capital: float
     open_puts: int
@@ -136,6 +137,11 @@ def build_dashboard_view_model(
     capital_free = _number(indicators.get("caixa_livre"))
     projected_roi = _number(indicators.get("roi_abertas"))
     premiums_month = _number(indicators.get("lucro_mes"))
+    premiums_total = sum(
+        _number(operation.get("Premio_liquido"))
+        for operation in operations
+        if str(operation.get("Estratégia", "Venda")).lower() == "venda"
+    )
 
     if not open_puts:
         summary = "Não há PUTs abertas. O capital está livre para aguardar oportunidades que atendam aos critérios do Radar Premium."
@@ -173,6 +179,7 @@ def build_dashboard_view_model(
 
     return DashboardViewModel(
         premiums_month=premiums_month,
+        premiums_total=premiums_total,
         average_roi=average_roi,
         allocated_capital=_number(indicators.get("capital_comp")),
         open_puts=len(open_puts),
