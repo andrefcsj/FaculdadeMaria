@@ -118,8 +118,22 @@ class BrokerageNoteRoutesTests(unittest.TestCase):
     def test_menu_replaces_market_import_with_notes(self):
         from app import app
         html = app.test_client().get("/").get_data(as_text=True)
-        self.assertIn("Notas Importadas", html)
+        self.assertIn("Importar Notas", html)
+        self.assertNotIn(">Notas Importadas</a>", html)
         self.assertNotIn(">Importar Mercado</a>", html)
+
+    def test_debit_note_has_red_label_in_imported_notes_list(self):
+        from app import app
+        with tempfile.TemporaryDirectory() as directory, patch.object(legacy_app, "DATA", Path(directory)):
+            record = [{
+                "key":"debit:0", "document_hash":"debit", "note_number":"10", "broker":"BTG Pactual / Necton",
+                "trade_date":"2026-06-29", "cash_direction":"D", "gross_operations":"6.00", "net_cash":"6.26",
+                "operational_costs":"0.26", "irrf":"0", "operation_id":"1",
+                "trade":{"option_code":"BBDCS167", "side":"Compra", "quantity":100},
+            }]
+            (Path(directory) / "brokerage_notes.json").write_text(json.dumps(record), encoding="utf-8")
+            html = app.test_client().get("/notas-importadas").get_data(as_text=True)
+        self.assertIn('class="notes-tag debit">Débito</span>', html)
 
     def test_note_import_scopes_side_and_type_to_new_operation_form(self):
         script = (Path(__file__).parents[1] / "static" / "brokerage_note_import.js").read_text(encoding="utf-8")
