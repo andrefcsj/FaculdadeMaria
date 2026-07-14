@@ -143,9 +143,14 @@ def serialize_closed_operation(legacy, operation: dict[str, Any], metadata: dict
     result = _decimal(operation.get("Resultado_realizado"))
     roi = result / capital * Decimal("100") if capital else Decimal("0")
     close_date = metadata.get("close_date") or operation.get("Data fechamento") or ""
+    underlying = legacy.infer_acao_from_option(operation.get("Ativo", ""))
+    underlying_logo = (
+        f"https://raw.githubusercontent.com/thefintz/icones-b3/main/icones/{underlying}.png"
+        if underlying else ""
+    )
     return {
         "ID": str(operation.get("ID", "")), "Ativo": str(operation.get("Ativo", "")),
-        "Ativo_subjacente": legacy.infer_acao_from_option(operation.get("Ativo", "")),
+        "Ativo_subjacente": underlying, "Logo_subjacente": underlying_logo,
         "Tipo": str(operation.get("Tipo", "PUT")), "Estrategia": str(operation.get("Estratégia", "Venda")),
         "Status": str(operation.get("Status", "Encerrada")), "Contratos": str(contracts),
         "Quantidade_acoes": int(contracts * size), "Strike": str(strike), "Premio_opcao": str(premium),
