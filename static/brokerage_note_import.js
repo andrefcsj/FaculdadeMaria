@@ -22,7 +22,10 @@ document.addEventListener('DOMContentLoaded',()=>{
     const typeValue=selectedTrade.market.toLowerCase().includes('venda')?'PUT':'CALL';
     const type=document.querySelector(`input[name="Tipo"][value="${typeValue}"]`);
     if(type)type.checked=true;
-    q('newOptionCode').dispatchEvent(new Event('input',{bubbles:true}));
+    // Atualiza o resumo sem disparar a consulta genérica por código. Essa
+    // consulta usa o prêmio da posição aberta e sobrescreveria o preço real
+    // da negociação importada (por exemplo, uma recompra a R$ 0,06).
+    q('newOptionCode').dispatchEvent(new Event('change',{bubbles:true}));
     q('newPremium').dispatchEvent(new Event('change',{bubbles:true}));
     document.dispatchEvent(new CustomEvent('brokerage-trade-applied',{detail:{optionCode:selectedTrade.option_code}}));
     const candidate=selectedTrade.closure_candidate;
