@@ -76,7 +76,7 @@ document.addEventListener('DOMContentLoaded', () => {
     q('newOptionCode').dispatchEvent(new Event('change', {bubbles: true}));
     q('newPremium').dispatchEvent(new Event('change', {bubbles: true}));
     document.dispatchEvent(new CustomEvent('brokerage-trade-applied', {
-      detail: {optionCode: selectedTrade.option_code, tradeIndex: selectedTrade.trade_index}
+      detail: {optionCode: selectedTrade.option_code, tradeIndex: selectedTrade.trade_index, tradeDate: note.trade_date}
     }));
 
     const candidate = selectedTrade.closure_candidate;
