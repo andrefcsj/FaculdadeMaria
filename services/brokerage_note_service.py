@@ -125,14 +125,35 @@ def parse_btg_necton_pdf(data: bytes) -> ParsedBrokerageNote:
     direction = (settlement.group(2) or raw_trades[0].group(8)).upper() if settlement else raw_trades[0].group(8).upper()
     net = _money(settlement.group(3)) if settlement else gross
     irrf = _extract_amount(text, "I.R.R.F. s/ operações, base R$", after=True) or Decimal("0")
-    effective_costs = abs(gross - net)
+    signed_trades = sum(
+        (_money(match.group(7)) if match.group(8).upper() == "C" else -_money(match.group(7)))
+        for match in raw_trades
+    )
+    signed_net = net if direction == "C" else -net
+    total_deductions = abs(signed_trades - signed_net)
+    effective_costs = max(total_deductions - irrf, Decimal("0"))
     total_trade_value = sum((_money(match.group(7)) for match in raw_trades), Decimal("0")) or Decimal("1")
 
     trades = []
+    allocated_costs_total = Decimal("0")
+    allocated_irrf_total = Decimal("0")
     for index, match in enumerate(raw_trades):
         value = _money(match.group(7))
         share = value / total_trade_value
         quantity = int(match.group(5))
+        is_last = index == len(raw_trades) - 1
+        allocated_costs = (
+            effective_costs - allocated_costs_total
+            if is_last
+            else (effective_costs * share).quantize(Decimal("0.01"))
+        )
+        allocated_irrf = (
+            irrf - allocated_irrf_total
+            if is_last
+            else (irrf * share).quantize(Decimal("0.01"))
+        )
+        allocated_costs_total += allocated_costs
+        allocated_irrf_total += allocated_irrf
         trades.append(ParsedTrade(
             trade_index=index,
             option_code=match.group(4).upper(),
@@ -144,8 +165,8 @@ def parse_btg_necton_pdf(data: bytes) -> ParsedBrokerageNote:
             unit_price=_money(match.group(6)),
             gross_value=value,
             cash_direction=match.group(8).upper(),
-            allocated_costs=(effective_costs * share).quantize(Decimal("0.01")),
-            allocated_irrf=(irrf * share).quantize(Decimal("0.01")),
+            allocated_costs=allocated_costs,
+            allocated_irrf=allocated_irrf,
         ))
 
     return ParsedBrokerageNote(
@@ -213,6 +234,19 @@ def save_imported_note(legacy, payload: dict[str, Any], operation_id: str) -> bo
         raise BrokerageNoteError("Dados da nota incompletos.")
     trade = payload["trade"]
     key = f"{payload['document_hash']}:{int(trade.get('trade_index', 0))}"
+    has_trade_values = trade.get("gross_value") not in (None, "")
+    trade_gross = _money(trade.get("gross_value")) if has_trade_values else _money(payload.get("gross_operations"))
+    trade_costs = _money(trade.get("allocated_costs")) if has_trade_values else _money(payload.get("operational_costs"))
+    trade_irrf = _money(trade.get("allocated_irrf")) if has_trade_values else _money(payload.get("irrf"))
+    trade_direction = str(trade.get("cash_direction") or "").upper()
+    if trade_direction not in {"C", "D"}:
+        trade_side = str(trade.get("side", "")).lower()
+        trade_direction = "C" if trade_side == "venda" else "D" if trade_side == "compra" else str(payload.get("cash_direction", "C")).upper()
+    trade_net = (
+        trade_gross - trade_costs - trade_irrf
+        if trade_direction == "C"
+        else trade_gross + trade_costs + trade_irrf
+    )
     record = {
         "key": key,
         "document_hash": str(payload["document_hash"]),
@@ -220,11 +254,11 @@ def save_imported_note(legacy, payload: dict[str, Any], operation_id: str) -> bo
         "broker": "BTG Pactual / Necton",
         "trade_date": str(payload["trade_date"]),
         "settlement_date": payload.get("settlement_date"),
-        "cash_direction": str(payload.get("cash_direction", "C")),
-        "gross_operations": str(_money(payload.get("gross_operations"))),
-        "net_cash": str(_money(payload.get("net_cash"))),
-        "operational_costs": str(_money(payload.get("operational_costs"))),
-        "irrf": str(_money(payload.get("irrf"))),
+        "cash_direction": trade_direction,
+        "gross_operations": str(trade_gross),
+        "net_cash": str(trade_net),
+        "operational_costs": str(trade_costs),
+        "irrf": str(trade_irrf),
         "trade": trade,
         "operation_id": str(operation_id),
         "imported_at": datetime.now().isoformat(timespec="seconds"),
