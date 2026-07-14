@@ -8,7 +8,7 @@ from unittest.mock import patch
 
 from app import app
 import legacy_app
-from services.closed_operations_service import build_closed_dashboard, save_closure_metadata
+from services.closed_operations_service import build_closed_dashboard, save_closure_metadata, serialize_closed_operation
 
 
 FIELDS = ["ID", "Data abertura", "Ativo", "Tipo", "Estratégia", "Status", "Contratos", "Strike", "Premio_opcao", "Custos", "IRRF", "Vencimento", "Cotacao_atual", "Resultado_realizado"]
@@ -43,6 +43,22 @@ class ClosedOperationsTests(unittest.TestCase):
         self.assertIn("data-closed-edit",script)
         self.assertIn("data-closed-delete",script)
         self.assertIn("data-closed-reopen",script)
+
+    def test_closed_table_has_requested_column_order_without_costs(self):
+        template = Path("templates/operacoes_fechadas.html").read_text(encoding="utf-8")
+        headers = ["Ação", "Código da opção", "Resultado", "ROI", "Abertura e fechamento", "Strike", "Encerramento", "Posição", "Ações"]
+        positions = [template.index(f">{header}</th>") for header in headers]
+        self.assertEqual(positions, sorted(positions))
+        self.assertNotIn(">Custos / IRRF</th>", template)
+        self.assertIn("closed-asset-logo", template)
+
+    def test_serialized_operation_contains_underlying_logo(self):
+        directory, _root, _operations, patches = self.environment()
+        with directory, patches[0], patches[1], patches[2]:
+            operation = legacy_app.read_csv(legacy_app.OPERACOES)[0]
+            serialized = serialize_closed_operation(legacy_app, operation)
+            self.assertEqual(serialized["Ativo_subjacente"], "BBDC4")
+            self.assertEqual(serialized["Logo_subjacente"], "https://raw.githubusercontent.com/thefintz/icones-b3/main/icones/BBDC4.png")
 
     def test_reopen_returns_operation_to_open_list_and_clears_result(self):
         directory, _root, operations, patches = self.environment()
