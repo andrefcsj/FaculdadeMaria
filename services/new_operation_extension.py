@@ -89,6 +89,22 @@ def register(app, legacy, market_path):
             "spot_price": None,
             "source": "inferência do código",
         }
+        trade_date = legacy.parse_date(str(request.args.get("trade_date", "")))
+        if trade_date and underlying:
+            try:
+                item = _lookup_b3_option(code, underlying, trade_date, legacy.DATA)
+                if item:
+                    result.update({
+                        "asset": item.asset,
+                        "strike": str(item.strike),
+                        "expiry": item.expiry.isoformat(),
+                        "premium": str(item.premium),
+                        "spot_price": str(item.spot_price),
+                        "source": f"B3 COTAHIST de {trade_date.strftime('%d/%m/%Y')}",
+                    })
+                    return jsonify(result)
+            except (ProviderError, OSError, ValueError):
+                pass
         imported = load_market_import(market_path)
         if imported:
             item = next((o for o in imported.opportunities if o.option_code.upper() == code), None)
@@ -113,22 +129,6 @@ def register(app, legacy, market_path):
                     "source": "operação já cadastrada",
                 })
                 return jsonify(result)
-        trade_date = legacy.parse_date(str(request.args.get("trade_date", "")))
-        if trade_date and underlying:
-            try:
-                item = _lookup_b3_option(code, underlying, trade_date, legacy.DATA)
-                if item:
-                    result.update({
-                        "asset": item.asset,
-                        "strike": str(item.strike),
-                        "expiry": item.expiry.isoformat(),
-                        "premium": str(item.premium),
-                        "spot_price": str(item.spot_price),
-                        "source": f"B3 COTAHIST de {trade_date.strftime('%d/%m/%Y')}",
-                    })
-                    return jsonify(result)
-            except (ProviderError, OSError, ValueError):
-                pass
         quote = legacy.cotacao_yahoo(underlying) if underlying else None
         if quote:
             result["spot_price"] = str(quote)
