@@ -121,6 +121,30 @@ def apply_intraday_quote(
     )
 
 
+def download_cotahist_for_date(destination: str | Path, trade_date: date) -> Path:
+    """Baixa e valida o COTAHIST oficial de uma data de pregão específica."""
+    target = Path(destination)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    filename = f"COTAHIST_D{trade_date.strftime('%d%m%Y')}.ZIP"
+    url = f"https://bvmf.bmfbovespa.com.br/InstDados/SerHist/{filename}"
+    http_request = Request(url, headers={"User-Agent": "FaculdadeMaria/1.0 (+dados-publicos-B3)"})
+    try:
+        with urlopen(http_request, timeout=20) as response:
+            payload = response.read()
+        temporary = target.with_suffix(".tmp")
+        temporary.write_bytes(payload)
+        with ZipFile(temporary) as archive:
+            if not any(name.lower().endswith(".txt") for name in archive.namelist()):
+                raise ValueError("arquivo sem TXT")
+        temporary.replace(target)
+        return target
+    except Exception as exc:
+        raise ProviderError(
+            "COTAHIST da data da nota indisponível",
+            details={"trade_date": trade_date.isoformat(), "error": str(exc)},
+        ) from exc
+
+
 def download_latest_cotahist(destination: str | Path, *, as_of: date | None = None, lookback_days: int = 7) -> Path:
     """Download the newest available official daily COTAHIST archive."""
     target = Path(destination)
@@ -131,19 +155,8 @@ def download_latest_cotahist(destination: str | Path, *, as_of: date | None = No
         candidate = reference.fromordinal(reference.toordinal() - offset)
         if candidate.weekday() >= 5:
             continue
-        filename = f"COTAHIST_D{candidate.strftime('%d%m%Y')}.ZIP"
-        url = f"https://bvmf.bmfbovespa.com.br/InstDados/SerHist/{filename}"
         try:
-            http_request = Request(url, headers={"User-Agent": "FaculdadeMaria/1.0 (+dados-publicos-B3)"})
-            with urlopen(http_request, timeout=20) as response:
-                payload = response.read()
-            temporary = target.with_suffix(".tmp")
-            temporary.write_bytes(payload)
-            with ZipFile(temporary) as archive:
-                if not any(name.lower().endswith(".txt") for name in archive.namelist()):
-                    raise ValueError("arquivo sem TXT")
-            temporary.replace(target)
-            return target
+            return download_cotahist_for_date(target, candidate)
         except Exception as exc:
             errors.append(f"{candidate.isoformat()}: {exc}")
     raise ProviderError("Nenhum COTAHIST diário disponível", details={"attempts": errors})

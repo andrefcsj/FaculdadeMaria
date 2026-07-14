@@ -8,6 +8,7 @@ from zipfile import ZipFile
 from engine.providers.b3_eod import B3CotahistProvider, apply_intraday_quote
 from engine import AssetQualityProfile
 from services.radar_service import build_radar_from_market
+from services.new_operation_extension import _lookup_b3_option
 
 
 def _line(*, ticker, market, close, bid=0, ask=0, trades=1, quantity=100, strike=0, expiry="00000000", day="20260710"):
@@ -24,6 +25,22 @@ def _line(*, ticker, market, close, bid=0, ask=0, trades=1, quantity=100, strike
 
 
 class B3EodProviderTests(unittest.TestCase):
+  def test_note_lookup_uses_historical_cotahist_for_second_trade_strike(self):
+    rows = [
+        _line(ticker="BBDC4", market="010", close="18.86", day="20260629"),
+        _line(ticker="BBDCS183", market="080", close="0.47", strike="18.39", expiry="20260717", day="20260629"),
+    ]
+    with TemporaryDirectory() as folder:
+        root = Path(folder)
+        path = root / "market" / "cotahist_20260629.zip"
+        path.parent.mkdir(parents=True)
+        with ZipFile(path, "w") as archive:
+            archive.writestr("COTAHIST_D29062026.TXT", "\n".join(rows))
+        option = _lookup_b3_option("BBDCS183", "BBDC4", date(2026, 6, 29), root)
+    self.assertIsNotNone(option)
+    self.assertEqual(option.strike, Decimal("18.39"))
+    self.assertEqual(option.expiry, date(2026, 7, 17))
+
   def test_reads_put_and_underlying_from_official_fixed_width_layout(self):
     rows = [
         _line(ticker="PETR4", market="010", close="32.50"),

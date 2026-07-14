@@ -11,4 +11,6 @@ def test_brokerage_import_triggers_immediate_option_lookup():
     assert "/api/opcoes/" in lookup
     assert "newStrike" in lookup
     assert "newExpiry" in lookup
+    assert "trade_date" in lookup
+    assert "tradeDate: note.trade_date" in importer
     assert "new_operation_note_lookup.js" in base

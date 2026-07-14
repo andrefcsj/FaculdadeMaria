@@ -2,6 +2,7 @@ let brokerageLookupSequence = 0;
 
 document.addEventListener('brokerage-trade-applied', async event => {
   const code = String(event.detail?.optionCode || '').trim().toUpperCase();
+  const tradeDate = String(event.detail?.tradeDate || '').trim();
   if (!code) return;
   const sequence = ++brokerageLookupSequence;
   const q = id => document.getElementById(id);
@@ -21,7 +22,8 @@ document.addEventListener('brokerage-trade-applied', async event => {
   if (hint) hint.textContent = 'Buscando strike e vencimento da opção importada...';
 
   try {
-    const response = await fetch(`/api/opcoes/${encodeURIComponent(code)}`);
+    const query = tradeDate ? `?trade_date=${encodeURIComponent(tradeDate)}` : '';
+    const response = await fetch(`/api/opcoes/${encodeURIComponent(code)}${query}`);
     const data = await response.json();
     if (!response.ok || !data.ok) throw new Error(data.error || 'Consulta indisponível');
     if (sequence !== brokerageLookupSequence || optionCode?.value.trim().toUpperCase() !== code) return;

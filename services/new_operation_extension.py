@@ -6,10 +6,20 @@ from decimal import Decimal, InvalidOperation
 
 from flask import jsonify, request
 
+from engine.providers import B3CotahistProvider, ProviderError, download_cotahist_for_date
 from services.market_import_service import load_market_import
 from services.brokerage_note_service import imported_note_exists, save_imported_note
 from services.operation_close_service import calculate_operation_close
 from services.closed_operations_service import save_closure_metadata
+
+
+def _lookup_b3_option(code: str, underlying: str, trade_date: date, cache_dir):
+    cache_path = cache_dir / "market" / f"cotahist_{trade_date.strftime('%Y%m%d')}.zip"
+    if not cache_path.exists():
+        download_cotahist_for_date(cache_path, trade_date)
+    root = code[:4]
+    opportunities = B3CotahistProvider(cache_path, {root: underlying}).fetch()
+    return next((item for item in opportunities if item.option_code.upper() == code), None)
 
 
 def _decimal(value, field: str, *, allow_zero: bool = True) -> Decimal:
@@ -103,6 +113,22 @@ def register(app, legacy, market_path):
                     "source": "operação já cadastrada",
                 })
                 return jsonify(result)
+        trade_date = legacy.parse_date(str(request.args.get("trade_date", "")))
+        if trade_date and underlying:
+            try:
+                item = _lookup_b3_option(code, underlying, trade_date, legacy.DATA)
+                if item:
+                    result.update({
+                        "asset": item.asset,
+                        "strike": str(item.strike),
+                        "expiry": item.expiry.isoformat(),
+                        "premium": str(item.premium),
+                        "spot_price": str(item.spot_price),
+                        "source": f"B3 COTAHIST de {trade_date.strftime('%d/%m/%Y')}",
+                    })
+                    return jsonify(result)
+            except (ProviderError, OSError, ValueError):
+                pass
         quote = legacy.cotacao_yahoo(underlying) if underlying else None
         if quote:
             result["spot_price"] = str(quote)
