@@ -3,8 +3,11 @@ from decimal import Decimal
 from pathlib import Path
 from tempfile import TemporaryDirectory
 import unittest
+from unittest.mock import patch
 from zipfile import ZipFile
 
+from app import app
+import legacy_app
 from engine.providers.b3_eod import B3CotahistProvider, apply_intraday_quote
 from engine import AssetQualityProfile
 from services.radar_service import build_radar_from_market
@@ -25,6 +28,29 @@ def _line(*, ticker, market, close, bid=0, ask=0, trades=1, quantity=100, strike
 
 
 class B3EodProviderTests(unittest.TestCase):
+  def test_note_route_prefers_historical_b3_over_existing_operation(self):
+    rows = [
+        _line(ticker="BBDC4", market="010", close="18.86", day="20260629"),
+        _line(ticker="BBDCS183", market="080", close="0.47", strike="18.39", expiry="20260717", day="20260629"),
+    ]
+    with TemporaryDirectory() as folder:
+        root = Path(folder)
+        cache = root / "market" / "cotahist_20260629.zip"
+        cache.parent.mkdir(parents=True)
+        with ZipFile(cache, "w") as archive:
+            archive.writestr("COTAHIST_D29062026.TXT", "\n".join(rows))
+        operations = root / "operacoes.csv"
+        operations.write_text(
+            "ID,Data abertura,Ativo,Tipo,Estratégia,Status,Contratos,Strike,Premio_opcao,Custos,IRRF,Vencimento,Cotacao_atual,Resultado_realizado\n"
+            "1,2026-06-29,BBDCS183,PUT,Venda,Aberta,1,18.08,0.44,0,0,2026-07-17,18.51,0\n",
+            encoding="utf-8",
+        )
+        with patch.object(legacy_app, "DATA", root), patch.object(legacy_app, "OPERACOES", operations), patch.object(legacy_app, "USE_POSTGRES", False):
+            response = app.test_client().get("/api/opcoes/BBDCS183?trade_date=2026-06-29")
+    self.assertEqual(response.status_code, 200)
+    self.assertEqual(response.get_json()["strike"], "18.39")
+    self.assertIn("B3 COTAHIST", response.get_json()["source"])
+
   def test_note_lookup_uses_historical_cotahist_for_second_trade_strike(self):
     rows = [
         _line(ticker="BBDC4", market="010", close="18.86", day="20260629"),
