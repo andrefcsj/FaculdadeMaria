@@ -163,6 +163,106 @@ def serialize_closed_operation(legacy, operation: dict[str, Any], metadata: dict
     }
 
 
+def _shift_month(month: str, amount: int) -> str:
+    year, number = (int(part) for part in month.split("-"))
+    absolute = year * 12 + number - 1 + amount
+    return f"{absolute // 12:04d}-{absolute % 12 + 1:02d}"
+
+
+def build_darf_projection(closed_operations: list[dict[str, Any]], *, today: date | None = None) -> dict[str, Any]:
+    """Estimate DARF 6015 by realization month, preserving separate loss buckets."""
+    today = today or date.today()
+    current_month = today.strftime("%Y-%m")
+    target_months = [_shift_month(current_month, offset) for offset in (-1, 0, 1)]
+    relative_labels = ("Mês anterior", "Mês atual", "Mês seguinte")
+    monthly: dict[str, dict[str, Any]] = {}
+
+    for operation in closed_operations:
+        close_date = str(operation.get("Data_fechamento", ""))
+        if len(close_date) < 7:
+            continue
+        month = close_date[:7]
+        bucket = monthly.setdefault(month, {
+            "operations": 0, "common_result": Decimal("0"), "day_result": Decimal("0"),
+            "common_irrf": Decimal("0"), "day_irrf": Decimal("0"), "review_count": 0,
+        })
+        bucket["operations"] += 1
+        method = str(operation.get("Metodo_encerramento", "")).lower()
+        if method == "exercida":
+            bucket["review_count"] += 1
+            continue
+        if method == "cancelada":
+            continue
+        result = _decimal(operation.get("Resultado_realizado"))
+        irrf = _decimal(operation.get("IRRF"))
+        # Resultado_realizado already has the registered IRRF deducted. For the
+        # taxable result it is added back, then treated as a tax credit below.
+        taxable_result = result + irrf
+        is_day_trade = str(operation.get("Data_abertura", ""))[:10] == close_date[:10]
+        result_key = "day_result" if is_day_trade else "common_result"
+        irrf_key = "day_irrf" if is_day_trade else "common_irrf"
+        bucket[result_key] += taxable_result
+        bucket[irrf_key] += irrf
+
+    first_month = min([*monthly.keys(), target_months[0]])
+    month = first_month
+    common_loss = day_loss = Decimal("0")
+    common_irrf_credit = day_irrf_credit = Decimal("0")
+    calculated: dict[str, dict[str, Any]] = {}
+    while month <= target_months[-1]:
+        data = monthly.get(month, {})
+        common_result = data.get("common_result", Decimal("0"))
+        day_result = data.get("day_result", Decimal("0"))
+        common_irrf_credit += data.get("common_irrf", Decimal("0"))
+        day_irrf_credit += data.get("day_irrf", Decimal("0"))
+
+        common_loss_used = min(common_loss, max(common_result, Decimal("0")))
+        day_loss_used = min(day_loss, max(day_result, Decimal("0")))
+        common_base = max(common_result - common_loss_used, Decimal("0"))
+        day_base = max(day_result - day_loss_used, Decimal("0"))
+        common_loss = common_loss - common_loss_used + max(-common_result, Decimal("0"))
+        day_loss = day_loss - day_loss_used + max(-day_result, Decimal("0"))
+
+        common_tax = common_base * Decimal("0.15")
+        day_tax = day_base * Decimal("0.20")
+        common_credit_used = min(common_tax, common_irrf_credit)
+        day_credit_used = min(day_tax, day_irrf_credit)
+        common_irrf_credit -= common_credit_used
+        day_irrf_credit -= day_credit_used
+        estimated_darf = common_tax + day_tax - common_credit_used - day_credit_used
+        calculated[month] = {
+            "operations": data.get("operations", 0),
+            "net_result": common_result + day_result,
+            "loss_compensated": common_loss_used + day_loss_used,
+            "taxable_base": common_base + day_base,
+            "irrf_deducted": common_credit_used + day_credit_used,
+            "estimated_darf": max(estimated_darf, Decimal("0")),
+            "loss_carry": common_loss + day_loss,
+            "review_count": data.get("review_count", 0),
+            "has_day_trade": bool(day_result or data.get("day_irrf", Decimal("0"))),
+        }
+        month = _shift_month(month, 1)
+
+    rows = []
+    for competence, relative_label in zip(target_months, relative_labels):
+        row = {"competence": competence, "relative_label": relative_label, **calculated[competence]}
+        if row["review_count"]:
+            row["status"] = "Revisar exercício"
+            row["status_class"] = "review"
+        elif row["estimated_darf"] > 0:
+            row["status"] = "DARF estimada"
+            row["status_class"] = "due"
+        elif row["loss_carry"] > 0:
+            row["status"] = "Prejuízo a compensar"
+            row["status_class"] = "credit"
+        else:
+            row["status"] = "Sem DARF prevista"
+            row["status_class"] = "clear"
+        row["payment_month"] = _shift_month(competence, 1)
+        rows.append(row)
+    return {"rows": rows, "current_month": current_month, "revenue_code": "6015"}
+
+
 def build_closed_dashboard(legacy, *, scope: str, selected_month: str) -> dict[str, Any]:
     operations, _closed_csv, _config = legacy.load_all()
     metadata = load_closure_metadata(legacy)
@@ -179,4 +279,4 @@ def build_closed_dashboard(legacy, *, scope: str, selected_month: str) -> dict[s
     month_profit = sum((_decimal(item["Resultado_realizado"]) for item in all_closed if item["Data_fechamento"][:7] == current_month), Decimal("0"))
     roi_average = sum((_decimal(item["ROI_realizado"]) for item in filtered), Decimal("0")) / Decimal(len(filtered)) if filtered else Decimal("0")
     months = sorted({item["Data_fechamento"][:7] for item in all_closed if item["Data_fechamento"]})
-    return {"operations": filtered, "all_count": len(all_closed), "selected_count": len(filtered), "month_profit": month_profit, "accumulated_profit": accumulated, "roi_average": roi_average, "scope": scope, "selected_month": month, "available_months": months}
+    return {"operations": filtered, "all_count": len(all_closed), "selected_count": len(filtered), "month_profit": month_profit, "accumulated_profit": accumulated, "roi_average": roi_average, "scope": scope, "selected_month": month, "available_months": months, "darf_projection": build_darf_projection(all_closed)}
