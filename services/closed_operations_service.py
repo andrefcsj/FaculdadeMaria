@@ -208,6 +208,7 @@ def build_darf_projection(closed_operations: list[dict[str, Any]], *, today: dat
     month = first_month
     common_loss = day_loss = Decimal("0")
     common_irrf_credit = day_irrf_credit = Decimal("0")
+    tax_carry = Decimal("0")
     calculated: dict[str, dict[str, Any]] = {}
     while month <= target_months[-1]:
         data = monthly.get(month, {})
@@ -229,14 +230,21 @@ def build_darf_projection(closed_operations: list[dict[str, Any]], *, today: dat
         day_credit_used = min(day_tax, day_irrf_credit)
         common_irrf_credit -= common_credit_used
         day_irrf_credit -= day_credit_used
-        estimated_darf = common_tax + day_tax - common_credit_used - day_credit_used
+        tax_calculated = max(common_tax + day_tax - common_credit_used - day_credit_used, Decimal("0"))
+        tax_carried_in = tax_carry
+        available_tax = tax_carried_in + tax_calculated
+        estimated_darf = available_tax if available_tax >= Decimal("10") else Decimal("0")
+        tax_carry = Decimal("0") if estimated_darf else available_tax
         calculated[month] = {
             "operations": data.get("operations", 0),
             "net_result": common_result + day_result,
             "loss_compensated": common_loss_used + day_loss_used,
             "taxable_base": common_base + day_base,
             "irrf_deducted": common_credit_used + day_credit_used,
-            "estimated_darf": max(estimated_darf, Decimal("0")),
+            "tax_calculated": tax_calculated,
+            "tax_carried_in": tax_carried_in,
+            "estimated_darf": estimated_darf,
+            "tax_carry": tax_carry,
             "loss_carry": common_loss + day_loss,
             "review_count": data.get("review_count", 0),
             "has_day_trade": bool(day_result or data.get("day_irrf", Decimal("0"))),
@@ -252,6 +260,9 @@ def build_darf_projection(closed_operations: list[dict[str, Any]], *, today: dat
         elif row["estimated_darf"] > 0:
             row["status"] = "DARF estimada"
             row["status_class"] = "due"
+        elif row["tax_carry"] > 0:
+            row["status"] = "Abaixo de R$ 10"
+            row["status_class"] = "minimum"
         elif row["loss_carry"] > 0:
             row["status"] = "Prejuízo a compensar"
             row["status_class"] = "credit"
