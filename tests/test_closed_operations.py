@@ -8,7 +8,7 @@ from unittest.mock import patch
 
 from app import app
 import legacy_app
-from services.closed_operations_service import build_closed_dashboard, save_closure_metadata, serialize_closed_operation
+from services.closed_operations_service import build_closed_dashboard, build_darf_projection, save_closure_metadata, serialize_closed_operation
 
 
 FIELDS = ["ID", "Data abertura", "Ativo", "Tipo", "Estratégia", "Status", "Contratos", "Strike", "Premio_opcao", "Custos", "IRRF", "Vencimento", "Cotacao_atual", "Resultado_realizado"]
@@ -59,6 +59,39 @@ class ClosedOperationsTests(unittest.TestCase):
             serialized = serialize_closed_operation(legacy_app, operation)
             self.assertEqual(serialized["Ativo_subjacente"], "BBDC4")
             self.assertEqual(serialized["Logo_subjacente"], "https://raw.githubusercontent.com/thefintz/icones-b3/main/icones/BBDC4.png")
+
+    def test_darf_projection_uses_close_month_not_expiry_month(self):
+        operation = {
+            "Data_abertura": "2026-06-10", "Data_fechamento": "2026-06-25",
+            "Vencimento": "2026-07-17", "Resultado_realizado": "20", "IRRF": "0",
+            "Metodo_encerramento": "recompra",
+        }
+        projection = build_darf_projection([operation], today=date(2026, 7, 14))
+        june, july, august = projection["rows"]
+        self.assertEqual(june["competence"], "2026-06")
+        self.assertEqual(june["operations"], 1)
+        self.assertEqual(june["estimated_darf"], Decimal("3.00"))
+        self.assertEqual(july["operations"], 0)
+        self.assertEqual(august["operations"], 0)
+
+    def test_darf_projection_carries_losses_and_separates_day_trade(self):
+        operations = [
+            {"Data_abertura":"2026-05-01","Data_fechamento":"2026-05-15","Resultado_realizado":"-30","IRRF":"0","Metodo_encerramento":"recompra"},
+            {"Data_abertura":"2026-06-10","Data_fechamento":"2026-06-25","Resultado_realizado":"50","IRRF":"0","Metodo_encerramento":"recompra"},
+            {"Data_abertura":"2026-07-02","Data_fechamento":"2026-07-02","Resultado_realizado":"10","IRRF":"0","Metodo_encerramento":"recompra"},
+        ]
+        projection = build_darf_projection(operations, today=date(2026, 7, 14))
+        june, july, _august = projection["rows"]
+        self.assertEqual(june["loss_compensated"], Decimal("30"))
+        self.assertEqual(june["estimated_darf"], Decimal("3.00"))
+        self.assertEqual(july["estimated_darf"], Decimal("2.00"))
+        self.assertTrue(july["has_day_trade"])
+
+    def test_exercised_options_are_flagged_for_tax_review(self):
+        operation = {"Data_abertura":"2026-06-10","Data_fechamento":"2026-06-25","Resultado_realizado":"33","IRRF":"0","Metodo_encerramento":"exercida"}
+        june = build_darf_projection([operation], today=date(2026, 7, 14))["rows"][0]
+        self.assertEqual(june["estimated_darf"], Decimal("0"))
+        self.assertEqual(june["status"], "Revisar exercício")
 
     def test_reopen_returns_operation_to_open_list_and_clears_result(self):
         directory, _root, operations, patches = self.environment()
