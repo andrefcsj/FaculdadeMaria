@@ -70,7 +70,9 @@ class ClosedOperationsTests(unittest.TestCase):
         june, july, august = projection["rows"]
         self.assertEqual(june["competence"], "2026-06")
         self.assertEqual(june["operations"], 1)
-        self.assertEqual(june["estimated_darf"], Decimal("3.00"))
+        self.assertEqual(june["tax_calculated"], Decimal("3.00"))
+        self.assertEqual(june["estimated_darf"], Decimal("0"))
+        self.assertEqual(june["tax_carry"], Decimal("3.00"))
         self.assertEqual(july["operations"], 0)
         self.assertEqual(august["operations"], 0)
 
@@ -78,13 +80,14 @@ class ClosedOperationsTests(unittest.TestCase):
         operations = [
             {"Data_abertura":"2026-05-01","Data_fechamento":"2026-05-15","Resultado_realizado":"-30","IRRF":"0","Metodo_encerramento":"recompra"},
             {"Data_abertura":"2026-06-10","Data_fechamento":"2026-06-25","Resultado_realizado":"50","IRRF":"0","Metodo_encerramento":"recompra"},
-            {"Data_abertura":"2026-07-02","Data_fechamento":"2026-07-02","Resultado_realizado":"10","IRRF":"0","Metodo_encerramento":"recompra"},
+            {"Data_abertura":"2026-07-02","Data_fechamento":"2026-07-02","Resultado_realizado":"50","IRRF":"0","Metodo_encerramento":"recompra"},
         ]
         projection = build_darf_projection(operations, today=date(2026, 7, 14))
         june, july, _august = projection["rows"]
         self.assertEqual(june["loss_compensated"], Decimal("30"))
-        self.assertEqual(june["estimated_darf"], Decimal("3.00"))
-        self.assertEqual(july["estimated_darf"], Decimal("2.00"))
+        self.assertEqual(june["estimated_darf"], Decimal("0"))
+        self.assertEqual(june["tax_carry"], Decimal("3.00"))
+        self.assertEqual(july["estimated_darf"], Decimal("13.00"))
         self.assertTrue(july["has_day_trade"])
 
     def test_exercised_options_are_flagged_for_tax_review(self):
