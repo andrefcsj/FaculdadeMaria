@@ -42,25 +42,20 @@ class DashboardServiceTests(unittest.TestCase):
         view = build_dashboard_view_model([operation], [], self.indicators, self.history, self.config)
         operational = next(item for item in view.attention_items if item["option_code"] == "PETRT123")
         self.assertIn("cotação não informada", operational["message"].lower())
-        self.assertEqual(len(view.roll_candidates), 1)
-        self.assertEqual(operational["severity"], "high")
-        self.assertEqual({category["kind"] for category in operational["categories"]}, {"Vencimento", "Dados"})
+        self.assertEqual(len(view.roll_candidates), 0)
+        self.assertEqual(operational["severity"], "medium")
+        self.assertEqual({category["kind"] for category in operational["categories"]}, {"Dados"})
 
-    def test_attention_warns_when_put_is_close_to_strike(self):
+    def test_attention_does_not_warn_when_put_is_above_strike(self):
         operation = dict(self.operations[0], Cotacao_n=Decimal("19.10"), Strike_n=Decimal("18.81"), Dias=22, Alerta="OK")
         view = build_dashboard_view_model([operation], [], self.indicators, self.history, self.config)
-        operational = next(item for item in view.attention_items if item["option_code"] == "PETRT123")
-        self.assertEqual(operational["severity"], "high")
-        self.assertIn("risco elevado", operational["message"])
+        self.assertFalse(any(item["option_code"] == "PETRT123" for item in view.attention_items))
 
     def test_put_above_strike_is_not_critical_only_because_expiry_is_close(self):
         operation = dict(self.operations[0], Cotacao_n=Decimal("22"), Strike_n=Decimal("18"), Dias=5, Alerta="OK")
         view = build_dashboard_view_model([operation], [], self.indicators, self.history, self.config)
-        operational = next(item for item in view.attention_items if item["option_code"] == "PETRT123")
-
-        self.assertEqual(operational["severity"], "high")
-        self.assertEqual([category["kind"] for category in operational["categories"]], ["Vencimento"])
-        self.assertNotIn("dentro do dinheiro", operational["message"])
+        self.assertFalse(any(item["option_code"] == "PETRT123" for item in view.attention_items))
+        self.assertEqual(view.roll_candidates, ())
 
     def test_put_at_or_below_strike_only_becomes_critical_with_ten_days_or_less(self):
         operation = dict(self.operations[0], Cotacao_n=Decimal("18"), Strike_n=Decimal("18"), Dias=30, Alerta="OK")
@@ -71,7 +66,23 @@ class DashboardServiceTests(unittest.TestCase):
         view = build_dashboard_view_model([near_expiry], [], self.indicators, self.history, self.config)
         operational = next(item for item in view.attention_items if item["option_code"] == "PETRT123")
         self.assertEqual(operational["severity"], "critical")
-        self.assertEqual(operational["categories"][0]["kind"], "Exercício")
+        self.assertEqual(operational["categories"][0]["kind"], "Rolagem")
+        self.assertEqual(len(view.roll_candidates), 1)
+
+    def test_exercise_interest_changes_alert_action_and_suppresses_roll_candidate(self):
+        operation = dict(self.operations[0], Cotacao_n=Decimal("17.50"), Strike_n=Decimal("18"), Dias=8, Interesse_exercicio=True)
+        view = build_dashboard_view_model([operation], [], self.indicators, self.history, self.config)
+        alert = next(item for item in view.attention_items if item["option_code"] == "PETRT123")
+        self.assertEqual(alert["severity"], "high")
+        self.assertEqual(alert["categories"][0]["kind"], "Exercício")
+        self.assertIn("conforme sua preferência", alert["message"])
+        self.assertEqual(view.roll_candidates, ())
+
+    def test_goau_put_above_strike_does_not_generate_attention(self):
+        operation = dict(self.operations[0], Ativo="GOAUS139", Cotacao_n=Decimal("10.52"), Strike_n=Decimal("10.21"), Dias=5)
+        view = build_dashboard_view_model([operation], [], self.indicators, self.history, self.config)
+        self.assertFalse(any(item["option_code"] == "GOAUS139" for item in view.attention_items))
+        self.assertEqual(view.roll_candidates, ())
 
     def test_dashboard_warns_about_asset_concentration_using_total_capital(self):
         operation = dict(self.operations[0], Capital=4000, Cotacao_n=35, Strike_n=30, Dias=40)
