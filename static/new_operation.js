@@ -133,7 +133,8 @@ document.addEventListener('DOMContentLoaded', () => {
       Vencimento: fields.expiry.value,
       Cotacao_atual: rawMoney(fields.spot.value),
       Custos: rawMoney(fields.costs.value),
-      IRRF: rawMoney(fields.irrf.value)
+      IRRF: rawMoney(fields.irrf.value),
+      Interesse_exercicio: form.querySelector('input[name="Interesse_exercicio"]:checked')?.value === 'true'
     };
     payload = window.brokerageNoteImport?.preparePayload?.(payload) || payload;
     saveButton.disabled = true;
