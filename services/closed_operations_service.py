@@ -123,11 +123,14 @@ def delete_operation(legacy, rows, operation_id: str) -> None:
     if legacy.USE_POSTGRES:
         conn = legacy.get_pg_conn()
         try:
-            cur = conn.cursor(); cur.execute("DELETE FROM operacoes WHERE id=%s", (str(operation_id),)); conn.commit(); return
+            cur = conn.cursor(); cur.execute("DELETE FROM operacoes WHERE id=%s", (str(operation_id),)); conn.commit()
         finally:
             conn.close()
-    remaining = [row for row in rows if str(row.get("ID")) != str(operation_id)]
-    legacy.write_csv(legacy.OPERACOES, remaining, FIELDS)
+    else:
+        remaining = [row for row in rows if str(row.get("ID")) != str(operation_id)]
+        legacy.write_csv(legacy.OPERACOES, remaining, FIELDS)
+    from services.operation_preferences_service import delete_operation_preference
+    delete_operation_preference(legacy, operation_id)
 
 
 def serialize_closed_operation(legacy, operation: dict[str, Any], metadata: dict[str, Any] | None = None) -> dict[str, Any]:

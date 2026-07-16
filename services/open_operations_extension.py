@@ -6,10 +6,12 @@ from decimal import Decimal
 from flask import jsonify, redirect, render_template, request, url_for
 
 from services.exercise_probability_service import estimate_operation_exercise_probability
+from services.dashboard_market_service import load_option_quotes
+from services.operation_preferences_service import load_operation_preferences, normalize_exercise_interest, save_exercise_interest
 
 
 def register(app, legacy):
-    def prepare(operation):
+    def prepare(operation, option_quotes):
         ticker = legacy.infer_acao_from_option(operation.get("Ativo", ""))
         expiry = legacy.parse_date(str(operation.get("Vencimento", "")))
         estimate = estimate_operation_exercise_probability(
@@ -20,6 +22,14 @@ def register(app, legacy):
         )
         operation["ticker"] = ticker
         operation["cotacao_atual"] = float(estimate.spot_price) if estimate.spot_price is not None else legacy.fnum(operation.get("Cotacao_atual"), 0) or None
+        quote = option_quotes.get(str(operation.get("Ativo", "")).upper(), {})
+        operation["preco_venda"] = legacy.fnum(operation.get("Premio_opcao"), 0)
+        operation["preco_atual_opcao"] = float(quote["price"]) if quote.get("price") is not None else None
+        operation["fonte_preco_atual"] = str(quote.get("source", "Cotação da opção indisponível"))
+        strike = legacy.fnum(operation.get("Strike"), 0)
+        spot = operation["cotacao_atual"] or 0
+        operation["distancia_strike"] = ((spot - strike) / strike * 100) if spot and strike else None
+        operation["distancia_strike_class"] = "positive" if operation["distancia_strike"] is not None and operation["distancia_strike"] >= 0 else "negative" if operation["distancia_strike"] is not None else "unavailable"
         operation["logo_url"] = f"https://raw.githubusercontent.com/thefintz/icones-b3/main/icones/{ticker}.png" if ticker else None
         operation["exercise_probability"] = estimate.percentage
         operation["exercise_probability_label"] = estimate.label
@@ -32,8 +42,9 @@ def register(app, legacy):
         ops, fechadas, cfg = legacy.load_all()
         abertas = [o for o in ops if str(o.get("Status", "")).lower() == "aberta"]
         if abertas:
+            option_quotes = load_option_quotes(legacy)
             with ThreadPoolExecutor(max_workers=min(6, len(abertas))) as executor:
-                abertas = list(executor.map(prepare, abertas))
+                abertas = list(executor.map(lambda operation: prepare(operation, option_quotes), abertas))
         return render_template("operacoes_abertas.html", abertas=abertas, ops=ops, fechadas=fechadas, cfg=cfg, ind=legacy.metrics(ops, fechadas, cfg))
 
     app.view_functions["operacoes_abertas"] = view
@@ -46,6 +57,7 @@ def register(app, legacy):
     def serialize(operation):
         option_code = str(operation.get("Ativo", ""))
         underlying = legacy.infer_acao_from_option(option_code)
+        preferences = load_operation_preferences(legacy)
         return {
             "ID": str(operation.get("ID", "")),
             "Ativo": option_code,
@@ -61,6 +73,7 @@ def register(app, legacy):
             "IRRF": str(operation.get("IRRF", "0")),
             "Vencimento": str(operation.get("Vencimento", "")),
             "Cotacao_atual": str(operation.get("Cotacao_atual", "0")),
+            "Interesse_exercicio": preferences.get(str(operation.get("ID", "")), False),
         }
 
     def validate(payload, current):
@@ -104,7 +117,8 @@ def register(app, legacy):
         if request.method == "GET":
             return jsonify({"ok": True, "operation": serialize(operation)})
         try:
-            updated = validate(request.get_json(silent=True) or {}, operation)
+            payload = request.get_json(silent=True) or {}
+            updated = validate(payload, operation)
             if legacy.USE_POSTGRES:
                 connection = legacy.get_pg_conn()
                 cursor = connection.cursor()
@@ -116,6 +130,7 @@ def register(app, legacy):
                 connection.close()
             else:
                 legacy.write_csv(legacy.OPERACOES, rows, ["ID", "Data abertura", "Ativo", "Tipo", "Estratégia", "Status", "Contratos", "Strike", "Premio_opcao", "Custos", "IRRF", "Vencimento", "Cotacao_atual", "Resultado_realizado"])
+            save_exercise_interest(legacy, operation_id, normalize_exercise_interest(payload.get("Interesse_exercicio", False)))
             return jsonify({"ok": True, "operation": serialize(updated)})
         except Exception as exc:
             return jsonify({"ok": False, "error": str(exc)}), 400

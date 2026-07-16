@@ -296,7 +296,9 @@ def read_operacoes():
 
 def load_all() -> Tuple[List[Dict[str, object]], List[Dict[str, str]], Dict[str, float]]:
     cfg = load_config()
-    return enrich_ops(read_operacoes(), cfg), read_csv(FECHADAS), cfg
+    operations = enrich_ops(read_operacoes(), cfg)
+    from services.operation_preferences_service import apply_operation_preferences
+    return apply_operation_preferences(operations, __import__(__name__)), read_csv(FECHADAS), cfg
 
 
 def metrics(ops: List[Dict[str, object]], fechadas: List[Dict[str, str]], cfg: Dict[str, float]) -> Dict[str, float | str | int]:
@@ -539,10 +541,12 @@ def index():
     from services.cash_ledger_service import calculate_broker_balance
     ind["broker_cash_balance"] = float(calculate_broker_balance(__import__(__name__))["balance"])
     hist = monthly(ops, fechadas, cfg)
+    from services.live_spot_service import with_current_underlying_quotes
+    dashboard_ops = with_current_underlying_quotes(__import__(__name__), ops)
     abertas = [o for o in ops if str(o.get("Status", "")).lower() == "aberta"]
     top = sorted(abertas, key=lambda x: float(x["Premio_liquido"]), reverse=True)[:5]
     from services.dashboard_market_service import load_option_quotes
-    dashboard = build_dashboard_view_model(ops, fechadas, ind, hist, cfg, load_option_quotes(__import__(__name__)))
+    dashboard = build_dashboard_view_model(dashboard_ops, fechadas, ind, hist, cfg, load_option_quotes(__import__(__name__)))
     prox = sorted([o for o in abertas if o.get('Vencimento_fmt')], key=lambda x: float(x.get('Dias', 9999)))
     if prox:
         prox_venc = f"{int(float(prox[0].get('Dias',0)))} dias"
@@ -641,6 +645,7 @@ def salvar_operacao_pg(row):
             resultado_realizado
         )
         VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+        RETURNING id
     """, (
         row["Data abertura"],
         row["Ativo"],
@@ -657,8 +662,10 @@ def salvar_operacao_pg(row):
         row["Resultado_realizado"]
     ))
 
+    operation_id = cur.fetchone()[0]
     conn.commit()
     conn.close()
+    return str(operation_id)
 
 @app.route("/nova", methods=["POST"])
 def nova():
@@ -929,6 +936,8 @@ def excluir(oid: str):
         rows = read_csv(OPERACOES)
         rows = [r for r in rows if str(r.get('ID')) != str(oid)]
         write_csv(OPERACOES, rows, ['ID', 'Data abertura', 'Ativo', 'Tipo', 'Estratégia', 'Status', 'Contratos', 'Strike', 'Premio_opcao', 'Custos', 'IRRF', 'Vencimento', 'Cotacao_atual', 'Resultado_realizado'])
+    from services.operation_preferences_service import delete_operation_preference
+    delete_operation_preference(__import__(__name__), oid)
     return redirect(url_for('operacoes_abertas'))
 
 
