@@ -88,8 +88,10 @@ def alertas_operacionais():
     operations, closed, config = legacy.load_all()
     indicators = legacy.metrics(operations, closed, config)
     history = legacy.monthly(operations, closed, config)
+    from services.live_spot_service import with_current_underlying_quotes
+    dashboard_operations = with_current_underlying_quotes(legacy, operations)
     dashboard = legacy.build_dashboard_view_model(
-        operations, closed, indicators, history, config
+        dashboard_operations, closed, indicators, history, config
     )
     return jsonify({
         "count": len(dashboard.attention_items),
