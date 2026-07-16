@@ -108,15 +108,19 @@ class B3CotahistProvider(MarketDataProvider):
 
 
 def apply_intraday_quote(
-    opportunity: OptionOpportunity, *, premium: Decimal, bid: Decimal | None = None, ask: Decimal | None = None
+    opportunity: OptionOpportunity, *, premium: Decimal, bid: Decimal | None = None,
+    ask: Decimal | None = None, strike: Decimal | None = None,
 ) -> OptionOpportunity:
-    """Substitui apenas preços confirmados pelo usuário; dados estruturais permanecem EOD."""
+    """Substitui os preços e o strike confirmados manualmente pelo usuário."""
     if premium < 0 or (bid is not None and bid < 0) or (ask is not None and ask < 0):
         raise ProviderError("Prêmios intraday não podem ser negativos")
+    if strike is not None and strike <= 0:
+        raise ProviderError("Strike confirmado deve ser maior que zero")
     if bid is not None and ask is not None and ask < bid:
         raise ProviderError("Oferta de venda não pode ser menor que a oferta de compra")
     return replace(
         opportunity, premium=premium, bid=bid, ask=ask,
+        strike=strike if strike is not None else opportunity.strike,
         timestamp=datetime.now(timezone.utc), source="manual_intraday", data_confidence=Decimal("0.95"),
     )
 
