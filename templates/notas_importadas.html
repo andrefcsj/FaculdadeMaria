@@ -2,6 +2,7 @@
 {% block title %}Notas Importadas | FaculdadeMaria{% endblock %}
 {% block page_title %}NOTAS IMPORTADAS{% endblock %}
 {% block page_subtitle %}Créditos, custos e acompanhamento fiscal das notas BTG/Necton{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ url_for('static', filename='page_readability.css', v='20260716.1') }}">{% endblock %}
 {% macro brl(value) -%}R$ {{ '%.2f'|format(value|float)|replace('.', ',') }}{%- endmacro %}
 {% block content %}
 <style>
