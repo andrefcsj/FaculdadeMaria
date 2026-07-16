@@ -23,6 +23,18 @@ def _asset_from_option(option_code: object) -> str:
     return letters[:4] if letters else "N/D"
 
 
+def _has_exercise_interest(operation: Mapping[str, object]) -> bool:
+    value = operation.get("Interesse_exercicio", False)
+    return value if isinstance(value, bool) else str(value or "").strip().lower() in {"1", "true", "sim", "yes", "s"}
+
+
+def _is_in_the_money(operation: Mapping[str, object]) -> bool:
+    spot = _number(operation.get("Cotacao_n"))
+    strike = _number(operation.get("Strike_n"))
+    option_type = str(operation.get("Tipo", "PUT")).upper()
+    return bool(spot > 0 and strike > 0 and ((option_type == "PUT" and spot <= strike) or (option_type == "CALL" and spot >= strike)))
+
+
 def _attention_item(option_code: object, categories: list[dict[str, str]]) -> dict[str, object]:
     rank = {"info": 0, "medium": 1, "high": 2, "critical": 3}
     severity = max((category["severity"] for category in categories), key=lambda value: rank[value])
@@ -100,10 +112,10 @@ def build_dashboard_view_model(
             "asset": _asset_from_option(operation.get("Ativo")),
             "days": int(_number(operation.get("Dias"))),
             "roi": _number(operation.get("ROI")),
-            "reason": "Vencimento próximo" if _number(operation.get("Dias")) <= 15 else str(operation.get("Alerta", "Revisar posição")),
+            "reason": f"Risco de exercício em {int(_number(operation.get('Dias')))} dia(s) — avaliar rolagem",
         }
         for operation in expiries
-        if _number(operation.get("Dias")) <= 30 or str(operation.get("Alerta", "OK")) != "OK"
+        if _number(operation.get("Dias")) <= 10 and _is_in_the_money(operation) and not _has_exercise_interest(operation)
     )[:5]
 
     attention = []
@@ -114,20 +126,15 @@ def build_dashboard_view_model(
         strike = _number(operation.get("Strike_n"))
         option_type = str(operation.get("Tipo", "PUT")).upper()
         if spot > 0 and strike > 0:
-            distance = (spot - strike) / spot * 100
             in_the_money = (option_type == "PUT" and spot <= strike) or (option_type == "CALL" and spot >= strike)
             if in_the_money and days <= 10:
-                categories.append({"kind": "Exercício", "message": f"{option_type} dentro do dinheiro e vence em {int(days)} dia(s) — avaliar exercício ou rolagem", "severity": "critical"})
-            elif option_type == "PUT" and spot > strike and distance <= 2:
-                categories.append({"kind": "Exercício", "message": f"Cotação {distance:.1f}% acima do strike — risco elevado se houver queda", "severity": "high"})
-            elif option_type == "PUT" and spot > strike and distance <= 5:
-                categories.append({"kind": "Exercício", "message": f"Cotação {distance:.1f}% acima do strike — PUT ainda fora do dinheiro", "severity": "medium"})
-        if days <= 7:
-            categories.append({"kind": "Vencimento", "message": f"Vence em {int(days)} dia(s) — acompanhar de perto", "severity": "high"})
-        elif days <= 15:
-            categories.append({"kind": "Vencimento", "message": f"Vence em {int(days)} dias — planejar manutenção, fechamento ou rolagem", "severity": "medium"})
-        if spot <= 0:
-            categories.append({"kind": "Dados", "message": "Cotação não informada — atualize antes de avaliar exercício", "severity": "medium"})
+                distance = abs(spot - strike) / strike * 100
+                if _has_exercise_interest(operation):
+                    categories.append({"kind": "Exercício", "message": f"{option_type} dentro do dinheiro ({distance:.1f}% além do strike) e vence em {int(days)} dia(s) — possível exercício conforme sua preferência", "severity": "high"})
+                else:
+                    categories.append({"kind": "Rolagem", "message": f"{option_type} dentro do dinheiro ({distance:.1f}% além do strike) e vence em {int(days)} dia(s) — avaliar rolagem para evitar exercício", "severity": "critical"})
+        if spot <= 0 and days <= 10:
+            categories.append({"kind": "Dados", "message": "Cotação não informada — atualize para confirmar o risco de exercício", "severity": "medium"})
         if categories:
             attention.append(_attention_item(operation.get("Ativo", "N/D"), categories))
 
