@@ -90,7 +90,7 @@ class B3EodProviderTests(unittest.TestCase):
     self.assertEqual(option.source, "b3_cotahist_eod")
 
 
-  def test_manual_quote_preserves_contract_and_replaces_only_market_price(self):
+  def test_manual_quote_replaces_confirmed_market_price_and_strike(self):
     rows = [
         _line(ticker="PETR4", market="010", close="32.50"),
         _line(ticker="PETRQ300", market="080", close="1.20", strike="30", expiry="20260821"),
@@ -99,9 +99,9 @@ class B3EodProviderTests(unittest.TestCase):
         path = Path(folder) / "COTAHIST.TXT"
         path.write_text("\n".join(rows), encoding="latin-1")
         option = B3CotahistProvider(path, {"PETR": "PETR4"}).fetch()[0]
-    updated = apply_intraday_quote(option, premium=Decimal("1.55"), bid=Decimal("1.50"), ask=Decimal("1.60"))
+    updated = apply_intraday_quote(option, premium=Decimal("1.55"), bid=Decimal("1.50"), ask=Decimal("1.60"), strike=Decimal("29.75"))
     self.assertEqual(updated.option_code, option.option_code)
-    self.assertEqual(updated.strike, option.strike)
+    self.assertEqual(updated.strike, Decimal("29.75"))
     self.assertEqual(updated.premium, Decimal("1.55"))
     self.assertEqual(updated.source, "manual_intraday")
 

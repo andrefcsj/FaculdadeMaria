@@ -67,6 +67,7 @@ def radar_oportunidades_importado():
                     premium=Decimal(str(quote["premium"])),
                     bid=Decimal(str(quote["bid"])) if quote.get("bid") not in (None, "") else None,
                     ask=Decimal(str(quote["ask"])) if quote.get("ask") not in (None, "") else None,
+                    strike=Decimal(str(quote["strike"])) if quote.get("strike") not in (None, "") else None,
                 )
         cards = build_radar_from_market(opportunities, profiles, portfolio=_portfolio_context())[:50]
     except Exception as exc:
@@ -149,6 +150,7 @@ def scanner_inteligente():
                     premium=Decimal(str(quote["premium"])),
                     bid=Decimal(str(quote["bid"])) if quote.get("bid") not in (None, "") else None,
                     ask=Decimal(str(quote["ask"])) if quote.get("ask") not in (None, "") else None,
+                    strike=Decimal(str(quote["strike"])) if quote.get("strike") not in (None, "") else None,
                 )
         if opportunities:
             cards = build_radar_from_market(opportunities, profiles, portfolio=_portfolio_context())[:250]

@@ -1,0 +1,26 @@
+/* Tipografia ampliada para páginas financeiras com alta densidade de dados. */
+.closed-page,.finance-page,.notes-page{font-size:15px;line-height:1.5}
+
+/* Operações fechadas */
+.closed-hero span{font-size:13px}.closed-hero h1{font-size:33px}.closed-hero p{font-size:16px;line-height:1.55}.closed-hero a{font-size:14px}
+.closed-card span{font-size:13px}.closed-card strong{font-size:30px}.closed-card small{font-size:13px}
+.closed-filter-buttons a,.closed-filters button{font-size:14px}.closed-filters label{font-size:12px}.closed-filters input{font-size:14px}
+.closed-table-panel h2{font-size:21px}.closed-table-panel p,.closed-table-panel>header>span{font-size:13px}
+.closed-table{min-width:1480px}.closed-table th{font-size:11px;line-height:1.35}.closed-table td{font-size:14px;line-height:1.45}.closed-table td>strong{font-size:15px}.closed-table td>small{font-size:12px}
+.darf-projection__title small,.darf-code small{font-size:11px}.darf-projection h2{font-size:21px}.darf-projection header p{font-size:13px}.darf-code strong{font-size:24px}
+.darf-projection table{min-width:1120px}.darf-projection th{font-size:11px}.darf-projection td{font-size:13px;line-height:1.45}.darf-projection td>strong{font-size:14px}.darf-projection td>small{font-size:12px}.darf-projection .darf-value strong{font-size:17px}.darf-status{font-size:11px}.darf-projection>footer p,.darf-projection>footer a{font-size:12px}
+
+/* Novos aportes e DARFs pagos */
+.finance-hero span{font-size:12px}.finance-hero h1{font-size:33px}.finance-hero p{font-size:15px;line-height:1.6}.finance-hero a{font-size:14px}.finance-hero>b{font-size:12px}
+.finance-cards span{font-size:12px}.finance-cards strong{font-size:28px}.finance-cards small{font-size:12px}
+.finance-panel h2,.finance-table-panel h2{font-size:20px}.finance-panel header p,.finance-table-panel>header span{font-size:13px}
+.finance-form label{font-size:12px}.finance-form input{font-size:14px}.finance-form button,.finance-segmented label{font-size:14px}.pdf-field small,.finance-error{font-size:12px}
+.finance-table-wrap table{min-width:1180px}.finance-table-wrap th{font-size:11px;line-height:1.35}.finance-table-wrap td{font-size:14px;line-height:1.45}.finance-filters a,.finance-filters button{font-size:13px}.finance-filters input{font-size:13px}.finance-disclaimer{font-size:12px}.finance-empty strong{font-size:19px}.finance-empty p{font-size:14px}
+
+/* Importar notas */
+.notes-page .notes-hero h1{font-size:33px}.notes-page .notes-hero p{font-size:16px}.notes-page .notes-hero a{font-size:14px}
+.notes-page .notes-card span{font-size:13px}.notes-page .notes-card strong{font-size:29px}.notes-page .notes-card small{font-size:13px}
+.notes-page .notes-panel h2,.notes-page .darf-box h2{font-size:20px}.notes-page .notes-panel header span{font-size:12px}.notes-page .darf-box strong{font-size:27px}.notes-page .darf-box p{font-size:14px;line-height:1.6}
+.notes-page .notes-table{min-width:1220px}.notes-page .notes-table th{font-size:11px;line-height:1.35}.notes-page .notes-table td{font-size:14px;line-height:1.45}.notes-page .notes-table td small{font-size:12px}.notes-page .notes-tag{font-size:12px}.notes-page .notes-delete{font-size:13px}.notes-page .notes-privacy{font-size:12px}
+
+@media(max-width:760px){.closed-hero h1,.finance-hero h1,.notes-page .notes-hero h1{font-size:29px}}
