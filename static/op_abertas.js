@@ -70,6 +70,7 @@ document.addEventListener('DOMContentLoaded', () => {
       fields.expiry.value = toIsoDate(o.Vencimento || ''); fields.spot.value = formatMoney(parseNumber(o.Cotacao_atual)); fields.status.value = o.Status || 'Aberta';
       fields.costs.value = formatMoney(parseNumber(o.Custos)); fields.irrf.value = formatMoney(parseNumber(o.IRRF));
       setChecked('Tipo', o.Tipo, 'PUT'); setChecked('Estrategia', o.Estrategia, 'Venda');
+      setChecked('EditInteresse_exercicio', String(Boolean(o.Interesse_exercicio)), 'false');
       showAssetLogo(o.Logo_subjacente, fields.underlying.value); updateSummary(); openModal();
     } catch (error) { window.alert(error.message || 'Não foi possível abrir a edição.'); }
     finally { if (saveButton) saveButton.disabled = false; }
@@ -97,7 +98,8 @@ document.addEventListener('DOMContentLoaded', () => {
       Estrategia: form.querySelector('input[name="Estrategia"]:checked')?.value || 'Venda', Status: fields.status.value,
       Contratos: fields.contracts.value, Strike: String(parseNumber(fields.strike.value)), Premio_opcao: String(parseNumber(fields.premium.value)),
       Custos: String(parseNumber(fields.costs.value)), IRRF: String(parseNumber(fields.irrf.value)), Vencimento: fields.expiry.value,
-      Cotacao_atual: String(parseNumber(fields.spot.value))
+      Cotacao_atual: String(parseNumber(fields.spot.value)),
+      Interesse_exercicio: form.querySelector('input[name="EditInteresse_exercicio"]:checked')?.value === 'true'
     };
     if (saveButton) { saveButton.disabled = true; saveButton.textContent = 'Salvando...'; }
     try {
