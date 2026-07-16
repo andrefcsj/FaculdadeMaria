@@ -1411,6 +1411,7 @@ def radar_oportunidades():
                         premium=Decimal(str(quote["premium"])),
                         bid=Decimal(str(quote["bid"])) if quote.get("bid") not in (None, "") else None,
                         ask=Decimal(str(quote["ask"])) if quote.get("ask") not in (None, "") else None,
+                        strike=Decimal(str(quote["strike"])) if quote.get("strike") not in (None, "") else None,
                     )
             current_ops, current_closed, current_config = load_all()
             current_indicators = metrics(current_ops, current_closed, current_config)
@@ -1445,14 +1446,16 @@ def atualizar_qualidade_cvm():
 def atualizar_preco_intraday():
     option_code = request.form.get("option_code", "").strip().upper()
     premium = fnum(request.form.get("premium"), -1)
+    strike = fnum(request.form.get("strike"), -1)
     bid = request.form.get("bid", "").strip()
     ask = request.form.get("ask", "").strip()
-    if not option_code or premium < 0:
-        return redirect(url_for('radar_oportunidades', message="Código ou prêmio inválido."))
+    if not option_code or premium < 0 or strike <= 0:
+        return redirect(url_for('radar_oportunidades', message="Código, prêmio ou strike inválido."))
     RADAR_QUOTES.parent.mkdir(parents=True, exist_ok=True)
     quotes = json.loads(RADAR_QUOTES.read_text(encoding="utf-8")) if RADAR_QUOTES.exists() else {}
     quotes[option_code] = {
         "premium": premium,
+        "strike": strike,
         "bid": fnum(bid) if bid else None,
         "ask": fnum(ask) if ask else None,
         "updated_at": datetime.now().isoformat(),
