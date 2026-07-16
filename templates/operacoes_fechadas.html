@@ -2,7 +2,7 @@
 {% block title %}Operações Fechadas | FaculdadeMaria{% endblock %}
 {% block page_title %}OPERAÇÕES FECHADAS{% endblock %}
 {% block page_subtitle %}Resultados realizados, histórico e gestão das posições encerradas{% endblock %}
-{% block head %}<link rel="stylesheet" href="{{ url_for('static', filename='closed_operations.css', v='20260714.3') }}">{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ url_for('static', filename='closed_operations.css', v='20260716.1') }}"><link rel="stylesheet" href="{{ url_for('static', filename='page_readability.css', v='20260716.1') }}">{% endblock %}
 {% macro brl(value) -%}R$ {{ '%.2f'|format(value|float)|replace('.', ',') }}{%- endmacro %}
 {% macro pct(value) -%}{{ '%.2f'|format(value|float)|replace('.', ',') }}%{%- endmacro %}
 {% block content %}
