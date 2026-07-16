@@ -11,6 +11,7 @@ from services.market_import_service import load_market_import
 from services.brokerage_note_service import imported_note_exists, save_imported_note
 from services.operation_close_service import calculate_operation_close
 from services.closed_operations_service import save_closure_metadata
+from services.operation_preferences_service import normalize_exercise_interest, save_exercise_interest
 
 
 def _lookup_b3_option(code: str, underlying: str, trade_date: date, cache_dir):
@@ -183,7 +184,7 @@ def register(app, legacy, market_path):
                 "Resultado_realizado": "0",
             }
             if legacy.USE_POSTGRES:
-                legacy.salvar_operacao_pg(row)
+                row["ID"] = str(legacy.salvar_operacao_pg(row))
             else:
                 rows.append(row)
                 legacy.write_csv(legacy.OPERACOES, rows, [
@@ -191,6 +192,7 @@ def register(app, legacy, market_path):
                     "Contratos", "Strike", "Premio_opcao", "Custos", "IRRF",
                     "Vencimento", "Cotacao_atual", "Resultado_realizado",
                 ])
+            save_exercise_interest(legacy, row["ID"], normalize_exercise_interest(payload.get("Interesse_exercicio", False)))
             note_saved = False
             if isinstance(payload.get("Nota_corretagem"), dict):
                 note_saved = save_imported_note(legacy, payload["Nota_corretagem"], row["ID"])
