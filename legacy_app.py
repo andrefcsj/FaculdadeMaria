@@ -40,38 +40,25 @@ USE_POSTGRES = bool(DATABASE_URL)
 def get_pg_conn():
     if not DATABASE_URL:
         raise RuntimeError("DATABASE_URL não configurada.")
-    # Uma indisponibilidade momentânea do Neon não pode prender o único
-    # processo web do Render indefinidamente.
-    # O endpoint poolado do Neon aceita o timeout de conexão, mas pode rejeitar
-    # parâmetros de sessão enviados em ``options`` durante o handshake.
-    return psycopg2.connect(DATABASE_URL, connect_timeout=5)
+    return psycopg2.connect(DATABASE_URL)
 
 
 def init_db():
     if USE_POSTGRES:
-        conn = None
-        try:
-            conn = get_pg_conn()
-            cur = conn.cursor()
-            cur.execute("""CREATE TABLE IF NOT EXISTS operacoes (
-                id SERIAL PRIMARY KEY, data_abertura TEXT, ativo TEXT, tipo TEXT,
-                estrategia TEXT, status TEXT, contratos TEXT, strike TEXT,
-                premio_opcao TEXT, custos TEXT, irrf TEXT, vencimento TEXT,
-                cotacao_atual TEXT, resultado_realizado TEXT
-            )""")
-            cur.execute("""CREATE TABLE IF NOT EXISTS config (
-                parametro TEXT PRIMARY KEY, valor TEXT
-            )""")
-            conn.commit()
-            print("✅ Tabelas verificadas no Neon.")
-        except Exception as exc:
-            # As tabelas já existem em produção. Uma oscilação do Neon durante
-            # o boot não deve impedir o Render de iniciar e tentar novamente
-            # quando chegar a primeira requisição.
-            print(f"⚠️ Neon indisponível durante a inicialização: {exc}")
-        finally:
-            if conn is not None:
-                conn.close()
+        conn = get_pg_conn()
+        cur = conn.cursor()
+        cur.execute("""CREATE TABLE IF NOT EXISTS operacoes (
+            id SERIAL PRIMARY KEY, data_abertura TEXT, ativo TEXT, tipo TEXT,
+            estrategia TEXT, status TEXT, contratos TEXT, strike TEXT,
+            premio_opcao TEXT, custos TEXT, irrf TEXT, vencimento TEXT,
+            cotacao_atual TEXT, resultado_realizado TEXT
+        )""")
+        cur.execute("""CREATE TABLE IF NOT EXISTS config (
+            parametro TEXT PRIMARY KEY, valor TEXT
+        )""")
+        conn.commit()
+        conn.close()
+        print("✅ Tabelas verificadas no Neon.")
         return
 
     # fallback para SQLite
