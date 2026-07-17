@@ -4,6 +4,8 @@ from __future__ import annotations
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Sequence
 
+from services.operation_preferences_service import operation_underlying
+
 
 def with_current_underlying_quotes(legacy, operations: Sequence[dict[str, Any]]) -> list[dict[str, Any]]:
     """Retorna cópias das operações usando a cotação atual quando disponível.
@@ -13,7 +15,7 @@ def with_current_underlying_quotes(legacy, operations: Sequence[dict[str, Any]])
     """
     enriched = [dict(operation) for operation in operations]
     tickers = sorted({
-        legacy.infer_acao_from_option(str(operation.get("Ativo", "")))
+        operation_underlying(legacy, operation)
         for operation in enriched
         if str(operation.get("Status", "")).lower() == "aberta"
     } - {""})
@@ -22,7 +24,7 @@ def with_current_underlying_quotes(legacy, operations: Sequence[dict[str, Any]])
     with ThreadPoolExecutor(max_workers=min(6, len(tickers))) as executor:
         prices = dict(zip(tickers, executor.map(legacy.cotacao_yahoo, tickers)))
     for operation in enriched:
-        ticker = legacy.infer_acao_from_option(str(operation.get("Ativo", "")))
+        ticker = operation_underlying(legacy, operation)
         price = prices.get(ticker)
         if price is not None and float(price) > 0:
             operation["Cotacao_n"] = float(price)
