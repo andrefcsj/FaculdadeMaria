@@ -2,10 +2,22 @@
 from __future__ import annotations
 
 import json
+import time
 from datetime import datetime
 from decimal import Decimal
 from pathlib import Path
 from typing import Any
+
+
+_LOTS_CACHE: dict[str, tuple[float, list[dict[str, Any]]]] = {}
+
+
+def _cache_key(legacy) -> str:
+    return str(getattr(legacy, "DATABASE_URL", "") or getattr(legacy, "DATA", "default"))
+
+
+def _invalidate_cache(legacy) -> None:
+    _LOTS_CACHE.pop(_cache_key(legacy), None)
 
 
 def _decimal(value: Any) -> Decimal:
@@ -21,6 +33,9 @@ def _path(legacy) -> Path:
 
 def load_equity_lots(legacy) -> list[dict[str, Any]]:
     if getattr(legacy, "USE_POSTGRES", False):
+        cached = _LOTS_CACHE.get(_cache_key(legacy))
+        if cached and time.time() - cached[0] < 30:
+            return [dict(item) for item in cached[1]]
         conn = legacy.get_pg_conn()
         try:
             cur = conn.cursor()
@@ -30,7 +45,9 @@ def load_equity_lots(legacy) -> list[dict[str, Any]]:
             )""")
             conn.commit()
             cur.execute("SELECT payload FROM equity_lots ORDER BY created_at")
-            return [row[0] if isinstance(row[0], dict) else json.loads(row[0]) for row in cur.fetchall()]
+            values = [row[0] if isinstance(row[0], dict) else json.loads(row[0]) for row in cur.fetchall()]
+            _LOTS_CACHE[_cache_key(legacy)] = (time.time(), values)
+            return [dict(item) for item in values]
         finally:
             conn.close()
     path = _path(legacy)
@@ -62,6 +79,7 @@ def save_equity_lot(legacy, lot: dict[str, Any]) -> bool:
             )
             inserted = cur.rowcount > 0
             conn.commit()
+            _invalidate_cache(legacy)
             return inserted
         finally:
             conn.close()
@@ -110,8 +128,9 @@ def create_put_assignment_lot(legacy, operation: dict[str, Any], note_payload: d
 
 def portfolio(legacy, operations: list[dict[str, Any]] | None = None) -> list[dict[str, Any]]:
     operations = operations if operations is not None else legacy.read_operacoes()
-    from services.operation_preferences_service import apply_operation_preferences
-    operations = apply_operation_preferences(operations, legacy)
+    if operations and not all("Interesse_exercicio" in operation for operation in operations):
+        from services.operation_preferences_service import apply_operation_preferences
+        operations = apply_operation_preferences(operations, legacy)
     grouped: dict[str, dict[str, Any]] = {}
     for lot in load_equity_lots(legacy):
         asset = str(lot.get("asset", "")).upper()
@@ -186,6 +205,7 @@ def exercise_covered_call(legacy, operation: dict[str, Any]) -> Decimal:
             for lot in changed:
                 cur.execute("UPDATE equity_lots SET payload=%s::jsonb WHERE lot_id=%s", (json.dumps(lot, ensure_ascii=False), lot["lot_id"]))
             conn.commit()
+            _invalidate_cache(legacy)
         finally:
             conn.close()
     else:
