@@ -22,6 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const summaryPremium = q('newSummaryPremium');
   const summaryValueLabel = q('newSummaryValueLabel');
   const hint = q('newOptionHint');
+  const coverageHint = q('newCoverageHint');
 
   const num = value => {
     let text = String(value || '').replace('R$', '').replace(/\s/g, '');
@@ -43,8 +44,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const underlying = fields.under.value || infer(code);
     const quantity = Math.max(num(fields.contracts.value), 0) * 100;
     const total = Math.max(num(fields.premium.value), 0) * quantity;
-    const isPurchase = form.querySelector('input[name="Estrategia"]:checked')?.value === 'Compra';
-    fields.under.value = underlying;
+    const strategy = form.querySelector('input[name="Estrategia"]:checked')?.value;
+    const isPurchase = strategy === 'Compra';
+    if (!fields.under.value) fields.under.value = underlying;
     summaryCode.textContent = code || 'Nova operação';
     summaryDetails.textContent = `${underlying || 'Ativo'} • ${quantity || 0} ações • Strike ${brl(num(fields.strike.value))}`;
     summaryValueLabel.textContent = isPurchase ? 'Débito bruto estimado' : 'Prêmio bruto estimado';
@@ -61,14 +63,19 @@ document.addEventListener('DOMContentLoaded', () => {
   ['input', 'change'].forEach(eventName => {
     [fields.code, fields.strike, fields.contracts, fields.premium].forEach(input => input.addEventListener(eventName, updateSummary));
   });
-  form.querySelectorAll('input[name="Estrategia"]').forEach(input => input.addEventListener('change', updateSummary));
+  form.querySelectorAll('input[name="Estrategia"]').forEach(input => input.addEventListener('change', () => {
+    const covered = input.checked && input.value === 'Venda Coberta';
+    if (covered) q('newCall').checked = true;
+    coverageHint.textContent = covered ? 'Somente ações livres da carteira serão aceitas como cobertura.' : 'Na CALL coberta, informe a ação que servirá de cobertura.';
+    updateSummary();
+  }));
 
   let lookupTimer;
   let lookupSequence = 0;
   fields.code.addEventListener('input', () => {
     clearTimeout(lookupTimer);
     const sequence = ++lookupSequence;
-    fields.under.value = infer(fields.code.value);
+    if (form.querySelector('input[name="Estrategia"]:checked')?.value !== 'Venda Coberta' || !fields.under.value) fields.under.value = infer(fields.code.value);
     updateSummary();
     lookupTimer = setTimeout(async () => {
       const code = fields.code.value.trim().toUpperCase();
@@ -114,7 +121,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     if (event.target.closest('[data-new-op-close]')) closeModal();
   });
-  if (location.hash === '#nova-operacao' || new URLSearchParams(location.search).get('nova') === '1') openModal();
+  const params = new URLSearchParams(location.search);
+  if (params.get('estrategia') === 'coberta') {
+    q('newCoveredCall').checked = true;
+    q('newCall').checked = true;
+    fields.under.value = String(params.get('ativo') || '').toUpperCase();
+    q('newCoveredCall').dispatchEvent(new Event('change', {bubbles: true}));
+  }
+  if (location.hash === '#nova-operacao' || params.get('nova') === '1') openModal();
   document.addEventListener('keydown', event => {
     if (event.key === 'Escape' && !modal.hidden) closeModal();
   });
