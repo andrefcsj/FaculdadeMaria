@@ -40,7 +40,7 @@ USE_POSTGRES = bool(DATABASE_URL)
 def get_pg_conn():
     if not DATABASE_URL:
         raise RuntimeError("DATABASE_URL não configurada.")
-    return psycopg2.connect(DATABASE_URL)
+    return psycopg2.connect(DATABASE_URL, connect_timeout=15)
 
 
 def init_db():
