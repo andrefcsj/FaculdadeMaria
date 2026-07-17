@@ -42,12 +42,9 @@ def get_pg_conn():
         raise RuntimeError("DATABASE_URL não configurada.")
     # Uma indisponibilidade momentânea do Neon não pode prender o único
     # processo web do Render indefinidamente.
-    return psycopg2.connect(
-        DATABASE_URL,
-        connect_timeout=5,
-        options="-c statement_timeout=8000",
-        application_name="faculdademaria-web",
-    )
+    # O endpoint poolado do Neon aceita o timeout de conexão, mas pode rejeitar
+    # parâmetros de sessão enviados em ``options`` durante o handshake.
+    return psycopg2.connect(DATABASE_URL, connect_timeout=5)
 
 
 def init_db():
