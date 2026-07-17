@@ -12,6 +12,7 @@ from services.brokerage_note_service import imported_note_exists, save_imported_
 from services.operation_close_service import calculate_operation_close
 from services.closed_operations_service import save_closure_metadata
 from services.operation_preferences_service import normalize_exercise_interest, save_operation_metadata
+from services.equity_position_service import create_put_assignment_lot, save_equity_lot, validate_covered_call
 
 
 def _lookup_b3_option(code: str, underlying: str, trade_date: date, cache_dir):
@@ -43,12 +44,15 @@ def register(app, legacy, market_path):
         trade = note_payload.get("trade", {})
         if str(trade.get("side", "")).lower() != "compra":
             raise ValueError("A nota não representa uma recompra.")
+        is_assignment = str(trade.get("event_type", "")) == "exercise_put_assignment"
         rows = legacy.read_csv(legacy.OPERACOES)
         operation = legacy.get_operacao_pg(operation_id) if legacy.USE_POSTGRES else legacy.find_row(rows, operation_id)
         if not operation or str(operation.get("Status", "")).lower() != "aberta":
             raise ValueError("A operação aberta para encerramento não foi encontrada.")
-        if str(operation.get("Ativo", "")).upper() != option_code or str(operation.get("Estratégia", "")).lower() != "venda":
-            raise ValueError("A recompra não corresponde à operação aberta.")
+        if str(operation.get("Ativo", "")).upper() != option_code or str(operation.get("Estratégia", "")).lower() not in {"venda", "wheel"}:
+            raise ValueError("A negociação não corresponde à operação aberta.")
+        if is_assignment and str(operation.get("Tipo", "PUT")).upper() != "PUT":
+            raise ValueError("A nota de exercício não corresponde a uma PUT vendida.")
         config = legacy.load_config()
         contracts = Decimal(str(legacy.fnum(operation.get("Contratos"), 0)))
         contract_size = Decimal(str(config.get("Tamanho contrato opcoes", 100)))
@@ -56,11 +60,21 @@ def register(app, legacy, market_path):
         if int(trade.get("quantity", 0)) != open_quantity:
             raise ValueError("Encerramento parcial ou quantidade incompatível exige conferência manual.")
         close_date = legacy.parse_date(str(note_payload.get("trade_date", ""))) or date.today()
-        repurchase = _decimal(trade.get("unit_price"), "Valor de recompra")
+        repurchase = Decimal("0") if is_assignment else _decimal(trade.get("unit_price"), "Valor de recompra")
         premium_total = Decimal(str(legacy.fnum(operation.get("Premio_opcao")))) * contracts * contract_size - Decimal(str(legacy.fnum(operation.get("Custos")))) - Decimal(str(legacy.fnum(operation.get("IRRF"))) )
-        closure = calculate_operation_close(method="recompra", close_date=close_date, expiry=legacy.parse_date(str(operation.get("Vencimento", ""))), premium_received=premium_total, repurchase_per_unit=repurchase, contracts=contracts, contract_size=contract_size)
+        method = "exercida" if is_assignment else "recompra"
+        closure = calculate_operation_close(method=method, close_date=close_date, expiry=legacy.parse_date(str(operation.get("Vencimento", ""))), premium_received=premium_total, repurchase_per_unit=repurchase, contracts=contracts, contract_size=contract_size)
         closing_costs = _decimal(trade.get("allocated_costs"), "Custos") + _decimal(trade.get("allocated_irrf"), "IRRF")
-        realized = closure.result - closing_costs
+        # No exercício da PUT o prêmio passa a compor o custo fiscal das ações;
+        # os custos da nota pertencem à aquisição, não a uma recompra da opção.
+        realized = closure.result if is_assignment else closure.result - closing_costs
+        if not save_imported_note(legacy, note_payload, operation_id):
+            raise ValueError("Esta negociação da nota já foi importada.")
+        lot = None
+        if is_assignment:
+            lot = create_put_assignment_lot(legacy, operation, note_payload)
+            if not save_equity_lot(legacy, lot):
+                raise ValueError("O lote de ações deste exercício já foi registrado.")
         if legacy.USE_POSTGRES:
             conn = legacy.get_pg_conn()
             try:
@@ -69,10 +83,9 @@ def register(app, legacy, market_path):
         else:
             operation["Status"] = "Encerrada";operation["Resultado_realizado"] = str(realized)
             legacy.write_csv(legacy.OPERACOES, rows, list(rows[0].keys()))
-        if not save_imported_note(legacy, note_payload, operation_id):
-            raise ValueError("Esta negociação da nota já foi importada.")
-        save_closure_metadata(legacy, operation_id, close_date=close_date, method="recompra", repurchase_value=repurchase, result=realized)
-        return jsonify({"ok": True, "operation_id": operation_id, "note_saved": True, "closed": True, "redirect": "/operacoes-abertas", "message": "Recompra identificada e operação encerrada."})
+        save_closure_metadata(legacy, operation_id, close_date=close_date, method=method, repurchase_value=repurchase, result=realized)
+        message = "Exercício registrado: PUT encerrada e 100 ações incluídas na carteira." if is_assignment else "Recompra identificada e operação encerrada."
+        return jsonify({"ok": True, "operation_id": operation_id, "note_saved": True, "closed": True, "equity_lot": lot, "redirect": "/carteira-acoes" if is_assignment else "/operacoes-abertas", "message": message})
 
     @app.get("/api/opcoes/<option_code>")
     def lookup_option(option_code: str):
@@ -152,8 +165,9 @@ def register(app, legacy, market_path):
             option_type = str(payload.get("Tipo", "PUT")).upper()
             if option_type not in {"PUT", "CALL"}:
                 raise ValueError("Tipo de opção inválido.")
-            strategy = str(payload.get("Estrategia", "Venda")).capitalize()
-            if strategy not in {"Venda", "Compra"}:
+            raw_strategy = str(payload.get("Estrategia", "Venda")).strip().lower()
+            strategy = {"venda": "Venda", "compra": "Compra", "venda coberta": "Venda Coberta", "call coberta": "Venda Coberta"}.get(raw_strategy, "")
+            if strategy not in {"Venda", "Compra", "Venda Coberta"}:
                 raise ValueError("Operação inválida.")
             expiry_text = str(payload.get("Vencimento", "")).strip()
             expiry = legacy.parse_date(expiry_text)
@@ -165,6 +179,11 @@ def register(app, legacy, market_path):
             costs = _decimal(payload.get("Custos"), "Custos")
             irrf = _decimal(payload.get("IRRF"), "IRRF")
             spot = _decimal(payload.get("Cotacao_atual"), "Cotação atual")
+            underlying = str(payload.get("Ativo_subjacente") or legacy.infer_acao_from_option(option_code)).strip().upper()
+            if strategy == "Venda Coberta":
+                if option_type != "CALL":
+                    raise ValueError("Venda coberta deve ser cadastrada como CALL.")
+                validate_covered_call(legacy, underlying, contracts)
             rows = legacy.read_csv(legacy.OPERACOES)
             next_id = max([int(legacy.fnum(row.get("ID"))) for row in rows] + [0]) + 1
             row = {
@@ -195,7 +214,7 @@ def register(app, legacy, market_path):
             save_operation_metadata(
                 legacy, row["ID"],
                 interested=normalize_exercise_interest(payload.get("Interesse_exercicio", False)),
-                underlying_asset=payload.get("Ativo_subjacente", legacy.infer_acao_from_option(option_code)),
+                underlying_asset=underlying,
             )
             note_saved = False
             if isinstance(payload.get("Nota_corretagem"), dict):
