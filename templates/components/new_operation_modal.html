@@ -13,11 +13,11 @@
         </section>
         <div class="brokerage-import__result" id="brokerageImportResult" hidden></div>
         <div class="new-op-grid new-op-grid--toggles">
-          <div><label class="new-op-label">Operação</label><div class="new-op-segmented"><input id="newVenda" type="radio" name="Estrategia" value="Venda" checked><label for="newVenda">Venda</label><input id="newCompra" type="radio" name="Estrategia" value="Compra"><label for="newCompra">Compra</label></div></div>
+          <div><label class="new-op-label">Operação</label><div class="new-op-segmented new-op-segmented--strategy"><input id="newVenda" type="radio" name="Estrategia" value="Venda" checked><label for="newVenda">Venda PUT</label><input id="newCoveredCall" type="radio" name="Estrategia" value="Venda Coberta"><label for="newCoveredCall">CALL Coberta</label><input id="newCompra" type="radio" name="Estrategia" value="Compra"><label for="newCompra">Compra</label></div></div>
           <div><label class="new-op-label">Tipo</label><div class="new-op-segmented"><input id="newCall" type="radio" name="Tipo" value="CALL"><label for="newCall">CALL</label><input id="newPut" type="radio" name="Tipo" value="PUT" checked><label for="newPut">PUT</label></div></div>
         </div>
         <div class="new-op-grid">
-          <label>Ativo subjacente<input id="newUnderlying" readonly placeholder="Ex.: PETR4"></label>
+          <label>Ativo subjacente<input id="newUnderlying" placeholder="Ex.: CPLE3"><small id="newCoverageHint">Na CALL coberta, informe a ação que servirá de cobertura.</small></label>
           <label>Código da opção<input id="newOptionCode" required autocomplete="off" placeholder="Ex.: PETRT123"><small id="newOptionHint">Digite o código para preencher os dados disponíveis</small></label>
           <label>Strike<input id="newStrike" class="new-money" required inputmode="decimal" placeholder="R$ 0,00"></label>
           <label>Quantidade<input id="newContracts" required inputmode="numeric" value="1"><small>Contratos cadastrados</small></label>
