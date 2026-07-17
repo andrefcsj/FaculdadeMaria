@@ -205,10 +205,13 @@ def enrich_ops(rows: List[Dict[str, str]], cfg: Dict[str, float]) -> List[Dict[s
         custos = fnum(r.get("Custos"))
         irrf = fnum(r.get("IRRF"))
         cotacao = fnum(r.get("Cotacao_atual"))
-        capital = contratos * strike * tamanho
+        strategy = str(r.get("Estratégia", "Venda")).strip().lower()
+        capital_nominal = contratos * strike * tamanho
+        capital = 0 if strategy == "compra" else capital_nominal
         premio_bruto = contratos * premio_opcao * tamanho
         premio_liq = premio_bruto - custos - irrf
-        roi = (premio_liq / capital * 100) if capital else 0
+        fluxo_liquido = -(premio_bruto + custos + irrf) if strategy == "compra" else premio_liq
+        roi = (premio_liq / capital_nominal * 100) if capital_nominal else 0
         venc = parse_date(str(r.get("Vencimento", "")))
         dias = max((venc - today).days, 0) if venc else 0
         tipo = str(r.get("Tipo", "PUT")).upper()
@@ -233,7 +236,9 @@ def enrich_ops(rows: List[Dict[str, str]], cfg: Dict[str, float]) -> List[Dict[s
         item.update({
             "Contratos_n": contratos, "Strike_n": strike, "Premio_opcao_n": premio_opcao,
             "Custos_n": custos, "IRRF_n": irrf, "Cotacao_n": cotacao,
-            "Capital": capital, "Premio_bruto": premio_bruto, "Premio_liquido": premio_liq,
+            "Capital": capital, "Capital_nominal": capital_nominal,
+            "Premio_bruto": premio_bruto, "Premio_liquido": premio_liq,
+            "Fluxo_liquido": fluxo_liquido,
             "ROI": roi, "Dias": dias, "Nota": nota, "Alerta": alerta,
             "Vencimento_fmt": venc.strftime("%d/%m/%Y") if venc else "",
             "Data_abertura_fmt": parse_date(str(r.get("Data abertura", ""))).strftime("%d/%m/%Y") if parse_date(str(r.get("Data abertura", ""))) else "",
