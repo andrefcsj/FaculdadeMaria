@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any
 
 from services.market_import_service import load_market_import
+from services.manual_option_quote_service import format_quote_source, load_manual_option_quotes
 
 
 def load_option_quotes(legacy: Any) -> dict[str, dict[str, object]]:
@@ -30,6 +31,16 @@ def load_option_quotes(legacy: Any) -> dict[str, dict[str, object]]:
         overrides = json.loads(legacy.RADAR_QUOTES.read_text(encoding="utf-8")) if legacy.RADAR_QUOTES.exists() else {}
         for code, quote in overrides.items():
             quotes[str(code).upper()] = {"price": float(quote["premium"]), "source": "preço manual confirmado"}
+    except Exception:
+        pass
+    try:
+        for code, quote in load_manual_option_quotes(legacy).items():
+            quotes[str(code).upper()] = {
+                "price": float(quote["price"]),
+                "source": format_quote_source(quote),
+                "manual": True,
+                "quoted_at": quote.get("quoted_at"),
+            }
     except Exception:
         pass
     return quotes

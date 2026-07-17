@@ -1,12 +1,14 @@
 """Integra probabilidade de exercício e edição em modal na tela de operações abertas."""
 from __future__ import annotations
 from concurrent.futures import ThreadPoolExecutor
+from datetime import date
 from decimal import Decimal
 
 from flask import jsonify, redirect, render_template, request, url_for
 
 from services.exercise_probability_service import estimate_operation_exercise_probability
 from services.dashboard_market_service import load_option_quotes
+from services.manual_option_quote_service import save_manual_option_quote
 from services.operation_preferences_service import load_operation_metadata, normalize_exercise_interest, operation_underlying, save_operation_metadata
 
 
@@ -30,6 +32,17 @@ def register(app, legacy):
         spot = operation["cotacao_atual"] or 0
         operation["distancia_strike"] = ((spot - strike) / strike * 100) if spot and strike else None
         operation["distancia_strike_class"] = "positive" if operation["distancia_strike"] is not None and operation["distancia_strike"] >= 0 else "negative" if operation["distancia_strike"] is not None else "unavailable"
+        expiry_status = None
+        expiry_status_class = "waiting"
+        if expiry and expiry <= date.today():
+            if not spot or not strike:
+                expiry_status = "Aguardando fechamento da B3"
+            elif (str(operation.get("Tipo", "PUT")).upper() == "PUT" and spot < strike) or (str(operation.get("Tipo", "PUT")).upper() == "CALL" and spot > strike):
+                expiry_status, expiry_status_class = "Exercício provável", "exercise"
+            else:
+                expiry_status, expiry_status_class = "Expira sem valor", "expires"
+        operation["expiry_status"] = expiry_status
+        operation["expiry_status_class"] = expiry_status_class
         operation["logo_url"] = f"https://raw.githubusercontent.com/thefintz/icones-b3/main/icones/{ticker}.png" if ticker else None
         operation["exercise_probability"] = estimate.percentage
         operation["exercise_probability_label"] = estimate.label
@@ -45,7 +58,14 @@ def register(app, legacy):
             option_quotes = load_option_quotes(legacy)
             with ThreadPoolExecutor(max_workers=min(6, len(abertas))) as executor:
                 abertas = list(executor.map(lambda operation: prepare(operation, option_quotes), abertas))
-        return render_template("operacoes_abertas.html", abertas=abertas, ops=ops, fechadas=fechadas, cfg=cfg, ind=legacy.metrics(ops, fechadas, cfg))
+        total_capital = sum(legacy.fnum(operation.get("Capital"), 0) for operation in abertas)
+        total_result = sum(legacy.fnum(operation.get("Fluxo_liquido"), 0) for operation in abertas)
+        open_totals = {
+            "capital": total_capital,
+            "result": total_result,
+            "roi": total_result / total_capital * 100 if total_capital else 0,
+        }
+        return render_template("operacoes_abertas.html", abertas=abertas, ops=ops, fechadas=fechadas, cfg=cfg, ind=legacy.metrics(ops, fechadas, cfg), open_totals=open_totals)
 
     app.view_functions["operacoes_abertas"] = view
 
@@ -140,6 +160,20 @@ def register(app, legacy):
                 underlying_asset=payload.get("Ativo_subjacente", updated.get("Ativo_subjacente", "")),
             )
             return jsonify({"ok": True, "operation": serialize(updated)})
+        except Exception as exc:
+            return jsonify({"ok": False, "error": str(exc)}), 400
+
+    @app.post("/api/operacoes/<operation_id>/preco-atual")
+    def save_current_option_price(operation_id):
+        _rows, operation = raw_operation(operation_id)
+        if operation is None:
+            return jsonify({"ok": False, "error": "Operação não encontrada."}), 404
+        try:
+            payload = request.get_json(silent=True) or {}
+            record = save_manual_option_quote(
+                legacy, operation.get("Ativo", ""), payload.get("price"), payload.get("quoted_at")
+            )
+            return jsonify({"ok": True, "quote": record, "message": "Preço do ProfitPro atualizado."})
         except Exception as exc:
             return jsonify({"ok": False, "error": str(exc)}), 400
 
