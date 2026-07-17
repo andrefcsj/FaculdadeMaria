@@ -26,6 +26,7 @@ from services.cash_management_extension import register as register_cash_managem
 from services.paid_darf_extension import register as register_paid_darfs
 from services.date_format_service import format_date_br, format_datetime_br, format_month_br
 from services.concentration_service import build_portfolio_concentration
+from services.equity_portfolio_extension import register as register_equity_portfolio
 
 app = legacy.app
 app.jinja_env.filters["date_br"] = format_date_br
@@ -224,6 +225,7 @@ register_closed_operations(app, legacy)
 register_system_cleanup(app, legacy)
 register_cash_management(app, legacy)
 register_paid_darfs(app, legacy)
+register_equity_portfolio(app, legacy)
 
 
 if __name__ == "__main__":
