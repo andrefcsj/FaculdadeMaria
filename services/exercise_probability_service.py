@@ -18,7 +18,7 @@ class ExerciseProbabilityEstimate:
     def percentage(self) -> str:
         return "--" if self.probability is None else f"{(self.probability*Decimal('100')).quantize(Decimal('0.1'))}%".replace('.', ',')
 
-_CACHE={}; _CACHE_SECONDS=1800
+_CACHE={}; _CACHE_SECONDS=1800; _FAILURE_UNTIL={}
 
 def _normal_cdf(value: float)->float: return .5*(1+math.erf(value/math.sqrt(2)))
 
@@ -45,9 +45,14 @@ def estimate_exercise_probability(*,option_type:str,spot_price:Decimal,strike:De
 def _fetch_yahoo_history(ticker:str):
     now=time.time(); cached=_CACHE.get(ticker)
     if cached and now-cached[0]<_CACHE_SECONDS:return cached[1]
+    if _FAILURE_UNTIL.get(ticker,0)>now:raise ValueError('Fonte temporariamente indisponível.')
     symbol=ticker if ticker.endswith('.SA') else f'{ticker}.SA'
     req=urllib.request.Request(f'https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?range=6mo&interval=1d',headers={'User-Agent':'Mozilla/5.0'})
-    with urllib.request.urlopen(req,timeout=4) as response: payload=json.loads(response.read().decode())
+    try:
+        with urllib.request.urlopen(req,timeout=2) as response: payload=json.loads(response.read().decode())
+    except Exception:
+        _FAILURE_UNTIL[ticker]=now+90
+        raise
     results=payload.get('chart',{}).get('result',[])
     if not results: raise ValueError('Histórico indisponível.')
     result=results[0]; meta=result.get('meta',{}); raw=result.get('indicators',{}).get('quote',[{}])[0].get('close',[])
