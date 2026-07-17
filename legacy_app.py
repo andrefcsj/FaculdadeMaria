@@ -207,7 +207,7 @@ def enrich_ops(rows: List[Dict[str, str]], cfg: Dict[str, float]) -> List[Dict[s
         cotacao = fnum(r.get("Cotacao_atual"))
         strategy = str(r.get("Estratégia", "Venda")).strip().lower()
         capital_nominal = contratos * strike * tamanho
-        capital = 0 if strategy == "compra" else capital_nominal
+        capital = 0 if strategy in {"compra", "venda coberta", "call coberta"} else capital_nominal
         premio_bruto = contratos * premio_opcao * tamanho
         premio_liq = premio_bruto - custos - irrf
         fluxo_liquido = -(premio_bruto + custos + irrf) if strategy == "compra" else premio_liq
@@ -312,7 +312,10 @@ def metrics(ops: List[Dict[str, object]], fechadas: List[Dict[str, str]], cfg: D
     eventos_caixa = load_cash_events(__import__(__name__))
     aportes_liquidos = sum((money(e.get("amount")) if e.get("kind") in {"aporte", "ajuste_credito"} else -money(e.get("amount")) for e in eventos_caixa), Decimal("0"))
     capital_total = cfg.get("Capital total inicial", 4000.0) + float(aportes_liquidos)
-    capital_comp = sum(float(o["Capital"]) for o in abertas)
+    capital_opcoes = sum(float(o["Capital"]) for o in abertas)
+    from services.equity_position_service import portfolio as equity_portfolio
+    capital_acoes = sum(float(item.get("cash_cost_total", 0)) for item in equity_portfolio(__import__(__name__), ops))
+    capital_comp = capital_opcoes + capital_acoes
     premios_ativos = sum(float(o["Premio_liquido"]) for o in abertas)
     mes_atual = current_month_label()
     # DARF e lucro do mês vêm apenas das operações fechadas.
@@ -344,7 +347,7 @@ def metrics(ops: List[Dict[str, object]], fechadas: List[Dict[str, str]], cfg: D
     premios_total = premios_fechados_total
     caixa_livre = max(capital_total - capital_comp, 0)
     patrimonio_atual = capital_comp + premios_total
-    return {"capital_total": capital_total, "capital_comp": capital_comp, "caixa": caixa_livre, "caixa_livre": caixa_livre, "premios_ativos": premios_ativos, "premios_total": premios_total, "patrimonio_atual": patrimonio_atual, "lucro_mes": lucro_mes, "darf": darf, "roi_mes": roi_mes, "roi_abertas": roi_abertas, "roi_medio_abertas": roi_medio_abertas, "roi_medio_fechadas": roi_medio_fechadas, "mes_atual": mes_atual, "abertas": len(abertas), "encerradas": len(ops) - len(abertas)}
+    return {"capital_total": capital_total, "capital_comp": capital_comp, "capital_opcoes": capital_opcoes, "capital_acoes": capital_acoes, "caixa": caixa_livre, "caixa_livre": caixa_livre, "premios_ativos": premios_ativos, "premios_total": premios_total, "patrimonio_atual": patrimonio_atual, "lucro_mes": lucro_mes, "darf": darf, "roi_mes": roi_mes, "roi_abertas": roi_abertas, "roi_medio_abertas": roi_medio_abertas, "roi_medio_fechadas": roi_medio_fechadas, "mes_atual": mes_atual, "abertas": len(abertas), "encerradas": len(ops) - len(abertas)}
 
 
 def monthly(ops: List[Dict[str, object]], fechadas: List[Dict[str, str]], cfg: Dict[str, float]) -> List[Dict[str, float | str]]:
@@ -896,6 +899,14 @@ def fechar(oid: str):
             contracts=contratos,
             contract_size=tamanho,
         )
+        if metodo == "exercida" and str(r.get("Tipo", "")).upper() == "CALL" and str(r.get("Estratégia", "")).lower() in {"venda coberta", "call coberta"}:
+            from services.equity_position_service import exercise_covered_call
+            fechamento = fechamento.__class__(
+                method=fechamento.method,
+                status=fechamento.status,
+                result=exercise_covered_call(__import__(__name__), r),
+                repurchase_total=fechamento.repurchase_total,
+            )
     except (ValueError, ArithmeticError) as exc:
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             return jsonify({'ok': False, 'message': str(exc)}), 400
