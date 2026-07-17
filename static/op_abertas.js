@@ -18,6 +18,15 @@ document.addEventListener('DOMContentLoaded', () => {
   const premiumTotal = document.getElementById('premiumTotal');
   const summaryLogo = document.getElementById('summaryLogo');
   const summaryLogoFallback = document.getElementById('summaryLogoFallback');
+  const strategyVenda = document.getElementById('strategyVenda');
+  if (strategyVenda && !document.getElementById('strategyCovered')) {
+    const radio = document.createElement('input'); radio.id = 'strategyCovered'; radio.type = 'radio'; radio.name = 'Estrategia'; radio.value = 'Venda Coberta';
+    const label = document.createElement('label'); label.htmlFor = radio.id; label.textContent = 'CALL Coberta';
+    strategyVenda.parentElement.insertBefore(label, document.getElementById('strategyCompra'));
+    strategyVenda.parentElement.insertBefore(radio, label);
+    strategyVenda.parentElement.style.gridTemplateColumns = '1fr 1fr 1fr';
+  }
+  fields.underlying?.removeAttribute('readonly');
 
   const parseNumber = (value) => {
     const text = String(value ?? '').replace(/R\$/g, '').replace(/\s/g, '');
@@ -214,6 +223,10 @@ document.addEventListener('DOMContentLoaded',()=>{
       premiumTotal:Number(button.dataset.premiumTotal||0),
       premiumUnit:Number(button.dataset.premiumUnit||0)
     };
+    const exercisedText=form.querySelector('[data-method="exercida"] small');
+    const isCoveredCall=operation.type==='CALL' && String(operation.strategy).toLowerCase()==='venda coberta';
+    if(exercisedText) exercisedText.textContent=isCoveredCall?'A CALL foi exercida — entrega das ações ao strike.':'A opção foi exercida — aquisição das ações ao strike.';
+    hints.exercida=isCoveredCall?'ϟ As ações cobertas serão entregues ao strike e o ganho será apurado.':'ϟ Exercício faz parte da estratégia; o prêmio recebido é preservado.';
     form.action=operation.closeUrl;
     document.getElementById('closeAssetLetter').textContent=(operation.ticker||operation.option||'?').slice(0,1);
     document.getElementById('closeOperationDescription').textContent=`${operation.option} · ${operation.strategy} ${operation.type} · strike ${brl(operation.strike)} · venc. ${operation.expiryLabel||'—'}`;
