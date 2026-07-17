@@ -7,6 +7,7 @@ import sqlite3
 import os
 import zipfile
 import io
+import time
 import psycopg2
 from datetime import date, datetime
 from pathlib import Path
@@ -39,7 +40,14 @@ USE_POSTGRES = bool(DATABASE_URL)
 def get_pg_conn():
     if not DATABASE_URL:
         raise RuntimeError("DATABASE_URL não configurada.")
-    return psycopg2.connect(DATABASE_URL)
+    # Uma indisponibilidade momentânea do Neon não pode prender o único
+    # processo web do Render indefinidamente.
+    return psycopg2.connect(
+        DATABASE_URL,
+        connect_timeout=5,
+        options="-c statement_timeout=8000",
+        application_name="faculdademaria-web",
+    )
 
 
 def init_db():
@@ -519,19 +527,29 @@ def infer_acao_from_option(codigo: str) -> str:
     mapa = {"BBDC": "BBDC4", "ITSA": "ITSA4", "GOAU": "GOAU4", "CPLE": "CPLE6", "PETR": "PETR4", "VALE": "VALE3", "BBAS": "BBAS3", "ABEV": "ABEV3"}
     return mapa.get(base, f"{base}4" if base else "")
 
+_QUOTE_CACHE: dict[str, tuple[float, float | None]] = {}
+
+
 def cotacao_yahoo(acao: str) -> float | None:
+    ticker = str(acao or "").upper().strip()
+    cached = _QUOTE_CACHE.get(ticker)
+    if cached and time.time() - cached[0] < (300 if cached[1] is not None else 90):
+        return cached[1]
     try:
         import urllib.request
-        url = f"https://query1.finance.yahoo.com/v8/finance/chart/{acao}.SA?range=1d&interval=1m"
+        url = f"https://query1.finance.yahoo.com/v8/finance/chart/{ticker}.SA?range=1d&interval=1m"
         req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-        with urllib.request.urlopen(req, timeout=4) as resp:
+        with urllib.request.urlopen(req, timeout=2) as resp:
             data = json.loads(resp.read().decode("utf-8"))
         result = data.get("chart", {}).get("result", [])
         if not result:
             return None
         price = result[0].get("meta", {}).get("regularMarketPrice")
-        return float(price) if price else None
+        value = float(price) if price else None
+        _QUOTE_CACHE[ticker] = (time.time(), value)
+        return value
     except Exception:
+        _QUOTE_CACHE[ticker] = (time.time(), None)
         return None
 
 
