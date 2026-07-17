@@ -112,6 +112,29 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
+document.addEventListener('DOMContentLoaded',()=>{
+  const modal=document.getElementById('optionQuoteModal'),form=document.getElementById('optionQuoteForm');
+  if(!modal||!form)return;
+  const id=document.getElementById('quoteOperationId'),price=document.getElementById('quotePrice'),dateTime=document.getElementById('quoteDateTime'),code=document.getElementById('quoteOptionCode'),error=document.getElementById('quoteError');
+  const localNow=()=>{const now=new Date(),offset=now.getTimezoneOffset()*60000;return new Date(now-offset).toISOString().slice(0,16)};
+  const close=()=>{modal.hidden=true;document.body.style.overflow='';error.hidden=true};
+  document.addEventListener('click',event=>{
+    const button=event.target.closest('[data-manual-quote]');
+    if(button){id.value=button.dataset.id;code.textContent=button.dataset.code;price.value=button.dataset.price?Number(button.dataset.price).toFixed(2).replace('.',','):'';dateTime.value=localNow();modal.hidden=false;document.body.style.overflow='hidden';setTimeout(()=>price.focus(),30);return}
+    if(event.target.closest('[data-quote-close]'))close();
+  });
+  form.addEventListener('submit',async event=>{
+    event.preventDefault();error.hidden=true;
+    const submit=form.querySelector('button[type=submit]');submit.disabled=true;
+    try{
+      const response=await fetch(`/api/operacoes/${encodeURIComponent(id.value)}/preco-atual`,{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify({price:price.value,quoted_at:dateTime.value})});
+      const payload=await response.json();
+      if(!response.ok||!payload.ok)throw new Error(payload.error||'Não foi possível salvar a cotação.');
+      location.reload();
+    }catch(err){error.textContent=err.message;error.hidden=false;submit.disabled=false}
+  });
+});
+
 
 document.addEventListener('DOMContentLoaded',()=>{
   const modal=document.getElementById('closeOperationModal');
