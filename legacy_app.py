@@ -52,38 +52,29 @@ def get_pg_conn():
 
 def init_db():
     if USE_POSTGRES:
-        conn = get_pg_conn()
-        cur = conn.cursor()
-
-        cur.execute("""
-        CREATE TABLE IF NOT EXISTS operacoes (
-            id SERIAL PRIMARY KEY,
-            data_abertura TEXT,
-            ativo TEXT,
-            tipo TEXT,
-            estrategia TEXT,
-            status TEXT,
-            contratos TEXT,
-            strike TEXT,
-            premio_opcao TEXT,
-            custos TEXT,
-            irrf TEXT,
-            vencimento TEXT,
-            cotacao_atual TEXT,
-            resultado_realizado TEXT
-        )
-        """)
-
-        cur.execute("""
-        CREATE TABLE IF NOT EXISTS config (
-            parametro TEXT PRIMARY KEY,
-            valor TEXT
-        )
-        """)
-
-        conn.commit()
-        conn.close()
-        print("✅ Tabelas criadas no Neon.")
+        conn = None
+        try:
+            conn = get_pg_conn()
+            cur = conn.cursor()
+            cur.execute("""CREATE TABLE IF NOT EXISTS operacoes (
+                id SERIAL PRIMARY KEY, data_abertura TEXT, ativo TEXT, tipo TEXT,
+                estrategia TEXT, status TEXT, contratos TEXT, strike TEXT,
+                premio_opcao TEXT, custos TEXT, irrf TEXT, vencimento TEXT,
+                cotacao_atual TEXT, resultado_realizado TEXT
+            )""")
+            cur.execute("""CREATE TABLE IF NOT EXISTS config (
+                parametro TEXT PRIMARY KEY, valor TEXT
+            )""")
+            conn.commit()
+            print("✅ Tabelas verificadas no Neon.")
+        except Exception as exc:
+            # As tabelas já existem em produção. Uma oscilação do Neon durante
+            # o boot não deve impedir o Render de iniciar e tentar novamente
+            # quando chegar a primeira requisição.
+            print(f"⚠️ Neon indisponível durante a inicialização: {exc}")
+        finally:
+            if conn is not None:
+                conn.close()
         return
 
     # fallback para SQLite
