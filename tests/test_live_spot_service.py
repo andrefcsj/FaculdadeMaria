@@ -8,7 +8,7 @@ class FakeLegacy:
 
     @staticmethod
     def cotacao_yahoo(ticker):
-        return {"GOAU4": 10.52, "CPLE6": None}[ticker]
+        return {"GOAU4": 10.52, "CPLE3": 14.95, "CPLE6": None}[ticker]
 
 
 def test_live_quotes_override_stale_spot_and_keep_fallback_when_unavailable():
@@ -21,3 +21,12 @@ def test_live_quotes_override_stale_spot_and_keep_fallback_when_unavailable():
     assert enriched[0]["Cotacao_fonte"] == "Yahoo Finance intradiário"
     assert enriched[1]["Cotacao_n"] == 15.21
     assert operations[0]["Cotacao_n"] == 9.59
+
+
+def test_saved_underlying_drives_quote_instead_of_option_root_guess():
+    operations = [
+        {"Ativo": "CPLES15", "Ativo_subjacente": "CPLE3", "Status": "Aberta", "Cotacao_n": 15.60},
+    ]
+    enriched = with_current_underlying_quotes(FakeLegacy, operations)
+    assert enriched[0]["Cotacao_n"] == 14.95
+    assert enriched[0]["Cotacao_fonte"] == "Yahoo Finance intradiário"
