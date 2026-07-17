@@ -62,6 +62,8 @@ class ParsedTrade:
     cash_direction: str
     allocated_costs: Decimal
     allocated_irrf: Decimal
+    event_type: str = "trade"
+    underlying_asset: str = ""
 
 
 @dataclass(frozen=True)
@@ -101,11 +103,49 @@ def parse_btg_necton_pdf(data: bytes) -> ParsedBrokerageNote:
     if "NOTA DE CORRETAGEM" not in normalized or ("BTG PACTUAL" not in normalized and "NECTON" not in normalized):
         raise BrokerageNoteError("Envie uma nota de corretagem BTG/Necton válida.")
 
+    document_hash = hashlib.sha256(data).hexdigest()
     note_match = re.search(r"NOTA DE CORRETAGEM\s+(\d{5,})", text, re.IGNORECASE)
-    date_match = re.search(r"(\d{2}/\d{2}/\d{4})\s+Data pregão", text, re.IGNORECASE)
-    if not note_match or not date_match:
-        raise BrokerageNoteError("Número ou data do pregão não foram reconhecidos.")
+    date_match = re.search(r"(\d{2}/\d{2}/\d{4})[^\n]{0,80}Data pregão", text, re.IGNORECASE)
+    if not date_match:
+        date_match = re.search(r"(\d{2}/\d{2}/\d{4})", text)
+    if not date_match:
+        raise BrokerageNoteError("A data do pregão não foi reconhecida.")
     trade_date = datetime.strptime(date_match.group(1), "%d/%m/%Y").date()
+
+    # Exercício do lançador de PUT. A nota prévia não traz número e o sufixo E
+    # identifica o exercício, não faz parte do código negociado da opção.
+    exercise_match = re.search(
+        r"1-BOVESPA\s+C\s+EOV\s+([A-Z0-9]+)\s+(\d+)\s+([0-9.,]+)\s+([0-9.,]+)\s+D",
+        text, re.IGNORECASE,
+    )
+    if exercise_match:
+        raw_code = exercise_match.group(1).upper()
+        option_code = raw_code[:-1] if raw_code.endswith("E") else raw_code
+        quantity = int(exercise_match.group(2))
+        unit_price = _money(exercise_match.group(3))
+        gross = _money(exercise_match.group(4))
+        liquid = re.search(r"Líquido:\s*D\s*([0-9.,]+)", text, re.IGNORECASE)
+        net = _money(liquid.group(1)) if liquid else gross
+        irrf = _extract_amount(text, "I.R.R.F. s/ operações, base R$", after=True) or Decimal("0")
+        costs = max(net - gross - irrf, Decimal("0"))
+        trade = ParsedTrade(
+            trade_index=0, option_code=option_code, side="Compra",
+            market="Exercício de PUT vendida", expiry_month="",
+            quantity=quantity, contracts=Decimal(quantity) / Decimal("100"),
+            unit_price=unit_price, gross_value=gross, cash_direction="D",
+            allocated_costs=costs, allocated_irrf=irrf,
+            event_type="exercise_put_assignment",
+        )
+        return ParsedBrokerageNote(
+            broker="BTG Pactual / Necton",
+            note_number=note_match.group(1) if note_match else f"EXERCICIO-{trade_date:%Y%m%d}-{document_hash[:8].upper()}",
+            trade_date=trade_date, settlement_date=trade_date,
+            document_hash=document_hash, gross_operations=gross, net_cash=net,
+            operational_costs=costs, irrf=irrf, cash_direction="D", trades=(trade,),
+        )
+
+    if not note_match:
+        raise BrokerageNoteError("O número da nota não foi reconhecido.")
 
     section = text.split("Negócios realizados", 1)[-1].split("Resumo dos Negócios", 1)[0]
     pattern = re.compile(
@@ -174,7 +214,7 @@ def parse_btg_necton_pdf(data: bytes) -> ParsedBrokerageNote:
         note_number=note_match.group(1),
         trade_date=trade_date,
         settlement_date=settlement_date,
-        document_hash=hashlib.sha256(data).hexdigest(),
+        document_hash=document_hash,
         gross_operations=gross,
         net_cash=net,
         operational_costs=effective_costs,

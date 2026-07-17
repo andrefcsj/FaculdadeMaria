@@ -10,6 +10,7 @@ from services.exercise_probability_service import estimate_operation_exercise_pr
 from services.dashboard_market_service import load_option_quotes
 from services.manual_option_quote_service import save_manual_option_quote
 from services.operation_preferences_service import load_operation_metadata, normalize_exercise_interest, operation_underlying, save_operation_metadata
+from services.equity_position_service import portfolio as equity_portfolio, validate_covered_call
 
 
 def register(app, legacy):
@@ -58,12 +59,15 @@ def register(app, legacy):
             option_quotes = load_option_quotes(legacy)
             with ThreadPoolExecutor(max_workers=min(6, len(abertas))) as executor:
                 abertas = list(executor.map(lambda operation: prepare(operation, option_quotes), abertas))
-        total_capital = sum(legacy.fnum(operation.get("Capital"), 0) for operation in abertas)
+        option_capital = sum(legacy.fnum(operation.get("Capital"), 0) for operation in abertas)
+        equity_capital = sum(float(item.get("cash_cost_total", 0)) for item in equity_portfolio(legacy, ops))
+        total_capital = option_capital + equity_capital
         total_result = sum(legacy.fnum(operation.get("Fluxo_liquido"), 0) for operation in abertas)
         open_totals = {
             "capital": total_capital,
             "result": total_result,
             "roi": total_result / total_capital * 100 if total_capital else 0,
+            "equity_capital": equity_capital,
         }
         return render_template("operacoes_abertas.html", abertas=abertas, ops=ops, fechadas=fechadas, cfg=cfg, ind=legacy.metrics(ops, fechadas, cfg), open_totals=open_totals)
 
@@ -121,16 +125,25 @@ def register(app, legacy):
         expiry = str(payload.get("Vencimento", current.get("Vencimento", ""))).strip()
         if legacy.parse_date(expiry) is None:
             raise ValueError("Vencimento inválido.")
+        raw_strategy = str(payload.get("Estrategia", current.get("Estratégia", "Venda"))).strip().lower()
+        strategy = {"venda": "Venda", "compra": "Compra", "venda coberta": "Venda Coberta", "call coberta": "Venda Coberta"}.get(raw_strategy)
+        if not strategy:
+            raise ValueError("Estratégia inválida.")
         current.update({
             "Ativo": str(payload.get("Ativo", current.get("Ativo", ""))).strip().upper(),
             "Tipo": option_type,
-            "Estratégia": str(payload.get("Estrategia", current.get("Estratégia", "Venda"))).strip(),
+            "Estratégia": strategy,
             "Status": status,
             "Vencimento": expiry,
             **values,
         })
         if not current["Ativo"]:
             raise ValueError("Código da opção é obrigatório.")
+        if strategy == "Venda Coberta":
+            if option_type != "CALL":
+                raise ValueError("Venda coberta deve ser uma CALL.")
+            underlying = str(payload.get("Ativo_subjacente") or operation_underlying(legacy, current)).upper()
+            validate_covered_call(legacy, underlying, Decimal(values["Contratos"]), exclude_operation_id=str(current.get("ID", "")))
         return current
 
     @app.route("/api/operacoes/<operation_id>", methods=["GET", "POST"])

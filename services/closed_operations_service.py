@@ -192,7 +192,12 @@ def build_darf_projection(closed_operations: list[dict[str, Any]], *, today: dat
         })
         bucket["operations"] += 1
         method = str(operation.get("Metodo_encerramento", "")).lower()
-        if method == "exercida":
+        is_covered_call_assignment = (
+            method == "exercida"
+            and str(operation.get("Tipo", "")).upper() == "CALL"
+            and str(operation.get("Estrategia", operation.get("Estratégia", ""))).lower() in {"venda coberta", "call coberta"}
+        )
+        if method == "exercida" and not is_covered_call_assignment:
             bucket["review_count"] += 1
             continue
         if method == "cancelada":
