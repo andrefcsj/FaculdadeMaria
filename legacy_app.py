@@ -501,6 +501,11 @@ def metric_card(icon: str, label: str, value: str, sub: str, color: str) -> str:
 
 def infer_acao_from_option(codigo: str) -> str:
     codigo = (codigo or "").upper().strip()
+    # Compatibilidade para posições antigas, anteriores ao armazenamento do
+    # ativo subjacente. Novas operações persistem esse vínculo explicitamente.
+    option_overrides = {"CPLES15": "CPLE3", "CPLES129": "CPLE3"}
+    if codigo in option_overrides:
+        return option_overrides[codigo]
     letters = "".join(ch for ch in codigo if ch.isalpha())
     base = letters[:4] if len(letters) >= 4 else letters
     mapa = {"BBDC": "BBDC4", "ITSA": "ITSA4", "GOAU": "GOAU4", "CPLE": "CPLE6", "PETR": "PETR4", "VALE": "VALE3", "BBAS": "BBAS3", "ABEV": "ABEV3"}
