@@ -16,19 +16,36 @@ def normalize_exercise_interest(value: Any) -> bool:
     return str(value or "").strip().lower() in {"1", "true", "sim", "yes", "s"}
 
 
-def load_operation_preferences(legacy) -> dict[str, bool]:
+def normalize_underlying_asset(value: Any) -> str:
+    ticker = str(value or "").strip().upper()
+    return ticker if 5 <= len(ticker) <= 8 and ticker[-1:].isdigit() and ticker[:-1].isalnum() else ""
+
+
+def _ensure_table(cursor) -> None:
+    cursor.execute("""CREATE TABLE IF NOT EXISTS operation_preferences (
+        operation_id TEXT PRIMARY KEY,
+        exercise_interest BOOLEAN NOT NULL DEFAULT FALSE,
+        underlying_asset TEXT,
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )""")
+    cursor.execute("ALTER TABLE operation_preferences ADD COLUMN IF NOT EXISTS underlying_asset TEXT")
+
+
+def load_operation_metadata(legacy) -> dict[str, dict[str, Any]]:
     if getattr(legacy, "USE_POSTGRES", False):
         connection = legacy.get_pg_conn()
         try:
             cursor = connection.cursor()
-            cursor.execute("""CREATE TABLE IF NOT EXISTS operation_preferences (
-                operation_id TEXT PRIMARY KEY,
-                exercise_interest BOOLEAN NOT NULL DEFAULT FALSE,
-                updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-            )""")
+            _ensure_table(cursor)
             connection.commit()
-            cursor.execute("SELECT operation_id, exercise_interest FROM operation_preferences")
-            return {str(row[0]): bool(row[1]) for row in cursor.fetchall()}
+            cursor.execute("SELECT operation_id, exercise_interest, underlying_asset FROM operation_preferences")
+            return {
+                str(row[0]): {
+                    "exercise_interest": bool(row[1]),
+                    "underlying_asset": normalize_underlying_asset(row[2]),
+                }
+                for row in cursor.fetchall()
+            }
         finally:
             connection.close()
     path = _path(legacy)
@@ -36,36 +53,58 @@ def load_operation_preferences(legacy) -> dict[str, bool]:
         return {}
     try:
         payload = json.loads(path.read_text(encoding="utf-8"))
-        return {str(key): normalize_exercise_interest(value) for key, value in payload.items()} if isinstance(payload, dict) else {}
+        if not isinstance(payload, dict):
+            return {}
+        metadata = {}
+        for key, value in payload.items():
+            record = value if isinstance(value, dict) else {"exercise_interest": value}
+            metadata[str(key)] = {
+                "exercise_interest": normalize_exercise_interest(record.get("exercise_interest", False)),
+                "underlying_asset": normalize_underlying_asset(record.get("underlying_asset", "")),
+            }
+        return metadata
     except Exception:
         return {}
 
 
-def save_exercise_interest(legacy, operation_id: str, interested: Any) -> bool:
+def load_operation_preferences(legacy) -> dict[str, bool]:
+    return {key: value["exercise_interest"] for key, value in load_operation_metadata(legacy).items()}
+
+
+def save_operation_metadata(legacy, operation_id: str, *, interested: Any, underlying_asset: Any = "") -> dict[str, Any]:
     value = normalize_exercise_interest(interested)
+    underlying = normalize_underlying_asset(underlying_asset)
     if getattr(legacy, "USE_POSTGRES", False):
         connection = legacy.get_pg_conn()
         try:
             cursor = connection.cursor()
-            cursor.execute("""CREATE TABLE IF NOT EXISTS operation_preferences (
-                operation_id TEXT PRIMARY KEY,
-                exercise_interest BOOLEAN NOT NULL DEFAULT FALSE,
-                updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-            )""")
-            cursor.execute("""INSERT INTO operation_preferences(operation_id, exercise_interest)
-                VALUES (%s, %s) ON CONFLICT(operation_id) DO UPDATE SET
-                exercise_interest=EXCLUDED.exercise_interest, updated_at=NOW()""", (str(operation_id), value))
+            _ensure_table(cursor)
+            cursor.execute("""INSERT INTO operation_preferences(operation_id, exercise_interest, underlying_asset)
+                VALUES (%s, %s, %s) ON CONFLICT(operation_id) DO UPDATE SET
+                exercise_interest=EXCLUDED.exercise_interest,
+                underlying_asset=COALESCE(NULLIF(EXCLUDED.underlying_asset, ''), operation_preferences.underlying_asset),
+                updated_at=NOW()""", (str(operation_id), value, underlying or None))
             connection.commit()
-            return value
         finally:
             connection.close()
-    rows = load_operation_preferences(legacy)
-    rows[str(operation_id)] = value
-    path = _path(legacy)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    temporary = path.with_suffix(".tmp")
-    temporary.write_text(json.dumps(rows, ensure_ascii=False, indent=2), encoding="utf-8")
-    temporary.replace(path)
+    else:
+        rows = load_operation_metadata(legacy)
+        previous = rows.get(str(operation_id), {})
+        rows[str(operation_id)] = {
+            "exercise_interest": value,
+            "underlying_asset": underlying or previous.get("underlying_asset", ""),
+        }
+        path = _path(legacy)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        temporary = path.with_suffix(".tmp")
+        temporary.write_text(json.dumps(rows, ensure_ascii=False, indent=2), encoding="utf-8")
+        temporary.replace(path)
+    return {"exercise_interest": value, "underlying_asset": underlying}
+
+
+def save_exercise_interest(legacy, operation_id: str, interested: Any) -> bool:
+    value = normalize_exercise_interest(interested)
+    save_operation_metadata(legacy, operation_id, interested=value)
     return value
 
 
@@ -79,7 +118,7 @@ def delete_operation_preference(legacy, operation_id: str) -> None:
             return
         finally:
             connection.close()
-    rows = load_operation_preferences(legacy)
+    rows = load_operation_metadata(legacy)
     rows.pop(str(operation_id), None)
     path = _path(legacy)
     if path.exists():
@@ -87,7 +126,16 @@ def delete_operation_preference(legacy, operation_id: str) -> None:
 
 
 def apply_operation_preferences(operations: list[dict[str, Any]], legacy) -> list[dict[str, Any]]:
-    preferences = load_operation_preferences(legacy)
+    preferences = load_operation_metadata(legacy)
     for operation in operations:
-        operation["Interesse_exercicio"] = preferences.get(str(operation.get("ID", "")), False)
+        metadata = preferences.get(str(operation.get("ID", "")), {})
+        operation["Interesse_exercicio"] = metadata.get("exercise_interest", False)
+        underlying = normalize_underlying_asset(metadata.get("underlying_asset", ""))
+        if underlying:
+            operation["Ativo_subjacente"] = underlying
     return operations
+
+
+def operation_underlying(legacy, operation: dict[str, Any]) -> str:
+    saved = normalize_underlying_asset(operation.get("Ativo_subjacente", ""))
+    return saved or legacy.infer_acao_from_option(str(operation.get("Ativo", "")))
