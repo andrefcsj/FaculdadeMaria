@@ -125,6 +125,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!form.reportValidity()) return;
     let payload = {
       Ativo: fields.code.value.trim().toUpperCase(),
+      Ativo_subjacente: fields.under.value.trim().toUpperCase(),
       Tipo: form.querySelector('input[name="Tipo"]:checked')?.value || 'PUT',
       Estrategia: form.querySelector('input[name="Estrategia"]:checked')?.value || 'Venda',
       Contratos: fields.contracts.value,
