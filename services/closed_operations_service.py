@@ -146,7 +146,8 @@ def serialize_closed_operation(legacy, operation: dict[str, Any], metadata: dict
     result = _decimal(operation.get("Resultado_realizado"))
     roi = result / capital * Decimal("100") if capital else Decimal("0")
     close_date = metadata.get("close_date") or operation.get("Data fechamento") or ""
-    underlying = legacy.infer_acao_from_option(operation.get("Ativo", ""))
+    from services.operation_preferences_service import operation_underlying
+    underlying = operation_underlying(legacy, operation)
     underlying_logo = (
         f"https://raw.githubusercontent.com/thefintz/icones-b3/main/icones/{underlying}.png"
         if underlying else ""

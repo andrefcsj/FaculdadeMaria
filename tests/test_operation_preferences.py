@@ -8,7 +8,9 @@ import legacy_app
 from services.operation_preferences_service import (
     apply_operation_preferences,
     delete_operation_preference,
+    load_operation_metadata,
     load_operation_preferences,
+    save_operation_metadata,
     save_exercise_interest,
 )
 
@@ -32,6 +34,19 @@ def test_exercise_interest_is_saved_applied_and_deleted():
             assert load_operation_preferences(legacy_app) == {}
 
 
+def test_underlying_asset_is_persisted_without_losing_exercise_interest():
+    with tempfile.TemporaryDirectory() as directory:
+        root = Path(directory)
+        with patch.object(legacy_app, "DATA", root), patch.object(legacy_app, "USE_POSTGRES", False):
+            save_operation_metadata(legacy_app, "27", interested=False, underlying_asset="CPLE3")
+            assert load_operation_metadata(legacy_app) == {
+                "27": {"exercise_interest": False, "underlying_asset": "CPLE3"}
+            }
+            operations = [{"ID": "27", "Ativo": "CPLES15"}]
+            apply_operation_preferences(operations, legacy_app)
+            assert operations[0]["Ativo_subjacente"] == "CPLE3"
+
+
 def test_new_operation_api_persists_exercise_interest():
     with tempfile.TemporaryDirectory() as directory:
         root = Path(directory)
@@ -42,9 +57,12 @@ def test_new_operation_api_persists_exercise_interest():
             "Contratos": "1", "Strike": "10.21", "Premio_opcao": "0.30",
             "Custos": "0", "IRRF": "0", "Vencimento": "2026-08-21",
             "Cotacao_atual": "10.52", "Interesse_exercicio": True,
+            "Ativo_subjacente": "GOAU4",
         }
         with patch.object(legacy_app, "DATA", root), patch.object(legacy_app, "OPERACOES", operations), patch.object(legacy_app, "USE_POSTGRES", False):
             response = app.test_client().post("/api/operacoes", json=payload)
             assert response.status_code == 200
             assert response.get_json()["operation_id"] == "1"
-            assert json.loads((root / "operation_preferences.json").read_text(encoding="utf-8")) == {"1": True}
+            assert json.loads((root / "operation_preferences.json").read_text(encoding="utf-8")) == {
+                "1": {"exercise_interest": True, "underlying_asset": "GOAU4"}
+            }

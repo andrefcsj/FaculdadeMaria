@@ -7,12 +7,12 @@ from flask import jsonify, redirect, render_template, request, url_for
 
 from services.exercise_probability_service import estimate_operation_exercise_probability
 from services.dashboard_market_service import load_option_quotes
-from services.operation_preferences_service import load_operation_preferences, normalize_exercise_interest, save_exercise_interest
+from services.operation_preferences_service import load_operation_metadata, normalize_exercise_interest, operation_underlying, save_operation_metadata
 
 
 def register(app, legacy):
     def prepare(operation, option_quotes):
-        ticker = legacy.infer_acao_from_option(operation.get("Ativo", ""))
+        ticker = operation_underlying(legacy, operation)
         expiry = legacy.parse_date(str(operation.get("Vencimento", "")))
         estimate = estimate_operation_exercise_probability(
             ticker=ticker,
@@ -56,8 +56,12 @@ def register(app, legacy):
 
     def serialize(operation):
         option_code = str(operation.get("Ativo", ""))
-        underlying = legacy.infer_acao_from_option(option_code)
-        preferences = load_operation_preferences(legacy)
+        preferences = load_operation_metadata(legacy)
+        metadata = preferences.get(str(operation.get("ID", "")), {})
+        enriched_operation = dict(operation)
+        if metadata.get("underlying_asset"):
+            enriched_operation["Ativo_subjacente"] = metadata["underlying_asset"]
+        underlying = operation_underlying(legacy, enriched_operation)
         return {
             "ID": str(operation.get("ID", "")),
             "Ativo": option_code,
@@ -73,7 +77,7 @@ def register(app, legacy):
             "IRRF": str(operation.get("IRRF", "0")),
             "Vencimento": str(operation.get("Vencimento", "")),
             "Cotacao_atual": str(operation.get("Cotacao_atual", "0")),
-            "Interesse_exercicio": preferences.get(str(operation.get("ID", "")), False),
+            "Interesse_exercicio": metadata.get("exercise_interest", False),
         }
 
     def validate(payload, current):
@@ -130,7 +134,11 @@ def register(app, legacy):
                 connection.close()
             else:
                 legacy.write_csv(legacy.OPERACOES, rows, ["ID", "Data abertura", "Ativo", "Tipo", "Estratégia", "Status", "Contratos", "Strike", "Premio_opcao", "Custos", "IRRF", "Vencimento", "Cotacao_atual", "Resultado_realizado"])
-            save_exercise_interest(legacy, operation_id, normalize_exercise_interest(payload.get("Interesse_exercicio", False)))
+            save_operation_metadata(
+                legacy, operation_id,
+                interested=normalize_exercise_interest(payload.get("Interesse_exercicio", False)),
+                underlying_asset=payload.get("Ativo_subjacente", updated.get("Ativo_subjacente", "")),
+            )
             return jsonify({"ok": True, "operation": serialize(updated)})
         except Exception as exc:
             return jsonify({"ok": False, "error": str(exc)}), 400
