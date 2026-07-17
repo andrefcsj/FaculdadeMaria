@@ -99,6 +99,7 @@ document.addEventListener('DOMContentLoaded', () => {
       Contratos: fields.contracts.value, Strike: String(parseNumber(fields.strike.value)), Premio_opcao: String(parseNumber(fields.premium.value)),
       Custos: String(parseNumber(fields.costs.value)), IRRF: String(parseNumber(fields.irrf.value)), Vencimento: fields.expiry.value,
       Cotacao_atual: String(parseNumber(fields.spot.value)),
+      Ativo_subjacente: fields.underlying.value.trim().toUpperCase(),
       Interesse_exercicio: form.querySelector('input[name="EditInteresse_exercicio"]:checked')?.value === 'true'
     };
     if (saveButton) { saveButton.disabled = true; saveButton.textContent = 'Salvando...'; }
