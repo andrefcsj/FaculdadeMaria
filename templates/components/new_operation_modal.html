@@ -13,7 +13,7 @@
         </section>
         <div class="brokerage-import__result" id="brokerageImportResult" hidden></div>
         <div class="new-op-grid new-op-grid--toggles">
-          <div><label class="new-op-label">Operação</label><div class="new-op-segmented new-op-segmented--strategy"><input id="newVenda" type="radio" name="Estrategia" value="Venda" checked><label for="newVenda">Venda PUT</label><input id="newCoveredCall" type="radio" name="Estrategia" value="Venda Coberta"><label for="newCoveredCall">CALL Coberta</label><input id="newCompra" type="radio" name="Estrategia" value="Compra"><label for="newCompra">Compra</label></div></div>
+          <div><label class="new-op-label">Operação</label><div class="new-op-segmented"><input id="newVenda" type="radio" name="Estrategia" value="Venda" checked><label for="newVenda">Venda</label><input id="newCompra" type="radio" name="Estrategia" value="Compra"><label for="newCompra">Compra</label></div></div>
           <div><label class="new-op-label">Tipo</label><div class="new-op-segmented"><input id="newCall" type="radio" name="Tipo" value="CALL"><label for="newCall">CALL</label><input id="newPut" type="radio" name="Tipo" value="PUT" checked><label for="newPut">PUT</label></div></div>
         </div>
         <div class="new-op-grid">
@@ -27,6 +27,7 @@
           <label>Custos<input id="newCosts" class="new-money" inputmode="decimal" value="R$ 0,00"></label>
           <label>IRRF<input id="newIrrf" class="new-money" inputmode="decimal" value="R$ 0,00"></label>
         </div>
+        <div class="new-average-cost" id="newAverageCostBox" hidden><span>Preço médio final das ações</span><strong id="newAverageCost">R$ 0,00</strong><small>Referência da carteira para avaliar o strike da CALL.</small></div>
         <section class="exercise-interest-box"><div><span>◎</span><div><strong>Tem interesse no exercício?</strong><small>Define se o alerta recomendará exercício ou rolagem quando a opção estiver dentro do dinheiro a 10 dias do vencimento.</small></div></div><div class="exercise-interest-options"><input id="newExerciseYes" type="radio" name="Interesse_exercicio" value="true"><label for="newExerciseYes">Sim</label><input id="newExerciseNo" type="radio" name="Interesse_exercicio" value="false" checked><label for="newExerciseNo">Não</label></div></section>
         <div class="new-op-summary"><div><strong id="newSummaryCode">Nova operação</strong><span id="newSummaryDetails">Preencha os dados da posição</span></div><div><span id="newSummaryValueLabel">Prêmio bruto estimado</span><b id="newSummaryPremium">R$ 0,00</b></div></div>
         <div class="new-op-error" id="newOperationError"></div>
