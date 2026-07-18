@@ -154,34 +154,57 @@ def parse_btg_necton_pdf(data: bytes) -> ParsedBrokerageNote:
         re.IGNORECASE,
     )
     raw_trades = list(pattern.finditer(section))
-    if not raw_trades:
-        raise BrokerageNoteError("Nenhuma operação de opção foi reconhecida na nota.")
+    equity_pattern = re.compile(
+        r"1-BOVESPA\s+([CV])\s+(?:VISTA|FRACIONARIO)\s+([A-Z]{4}\d{1,2})"
+        r"(?:\s+[A-Z0-9.*-]+){0,5}?\s+(\d+)\s+([0-9.,]+)\s+([0-9.,]+)\s+([CD])",
+        re.IGNORECASE,
+    )
+    equity_trades = list(equity_pattern.finditer(section))
+    entries: list[dict[str, Any]] = []
+    for match in raw_trades:
+        entries.append({
+            "code": match.group(4).upper(), "side": "Venda" if match.group(1).upper() == "V" else "Compra",
+            "market": f"Opção de {match.group(2).lower()}", "expiry_month": match.group(3),
+            "quantity": int(match.group(5)), "unit_price": _money(match.group(6)),
+            "value": _money(match.group(7)), "direction": match.group(8).upper(),
+            "event_type": "trade", "underlying": "",
+        })
+    for match in equity_trades:
+        ticker = match.group(2).upper()
+        entries.append({
+            "code": ticker, "side": "Venda" if match.group(1).upper() == "V" else "Compra",
+            "market": "Mercado à vista", "expiry_month": "", "quantity": int(match.group(3)),
+            "unit_price": _money(match.group(4)), "value": _money(match.group(5)),
+            "direction": match.group(6).upper(), "event_type": "equity_purchase" if match.group(1).upper() == "C" else "equity_sale",
+            "underlying": ticker,
+        })
+    if not entries:
+        raise BrokerageNoteError("Nenhuma operação de opção ou ação foi reconhecida na nota.")
 
-    gross = _extract_amount(text, "Valor das operações") or sum((_money(m.group(7)) for m in raw_trades), Decimal("0"))
+    # Preserva a ordem em que as negociações aparecem no PDF.
+    entries.sort(key=lambda entry: section.find(entry["code"]))
+    gross = _extract_amount(text, "Valor das operações") or sum((entry["value"] for entry in entries), Decimal("0"))
     settlement = re.search(r"Líquido para\s+(\d{2}/\d{2}/\d{4})\s+([CD])\s*([0-9.,]+)", text, re.IGNORECASE)
     if not settlement:
         settlement = re.search(r"Líquido para\s+(\d{2}/\d{2}/\d{4})\s*([CD])?\s*([0-9.,]+)", text, re.IGNORECASE)
     settlement_date = datetime.strptime(settlement.group(1), "%d/%m/%Y").date() if settlement else None
-    direction = (settlement.group(2) or raw_trades[0].group(8)).upper() if settlement else raw_trades[0].group(8).upper()
+    direction = (settlement.group(2) or entries[0]["direction"]).upper() if settlement else entries[0]["direction"]
     net = _money(settlement.group(3)) if settlement else gross
     irrf = _extract_amount(text, "I.R.R.F. s/ operações, base R$", after=True) or Decimal("0")
-    signed_trades = sum(
-        (_money(match.group(7)) if match.group(8).upper() == "C" else -_money(match.group(7)))
-        for match in raw_trades
-    )
+    signed_trades = sum((entry["value"] if entry["direction"] == "C" else -entry["value"] for entry in entries), Decimal("0"))
     signed_net = net if direction == "C" else -net
     total_deductions = abs(signed_trades - signed_net)
     effective_costs = max(total_deductions - irrf, Decimal("0"))
-    total_trade_value = sum((_money(match.group(7)) for match in raw_trades), Decimal("0")) or Decimal("1")
+    total_trade_value = sum((entry["value"] for entry in entries), Decimal("0")) or Decimal("1")
 
     trades = []
     allocated_costs_total = Decimal("0")
     allocated_irrf_total = Decimal("0")
-    for index, match in enumerate(raw_trades):
-        value = _money(match.group(7))
+    for index, entry in enumerate(entries):
+        value = entry["value"]
         share = value / total_trade_value
-        quantity = int(match.group(5))
-        is_last = index == len(raw_trades) - 1
+        quantity = entry["quantity"]
+        is_last = index == len(entries) - 1
         allocated_costs = (
             effective_costs - allocated_costs_total
             if is_last
@@ -196,17 +219,19 @@ def parse_btg_necton_pdf(data: bytes) -> ParsedBrokerageNote:
         allocated_irrf_total += allocated_irrf
         trades.append(ParsedTrade(
             trade_index=index,
-            option_code=match.group(4).upper(),
-            side="Venda" if match.group(1).upper() == "V" else "Compra",
-            market=f"Opção de {match.group(2).lower()}",
-            expiry_month=match.group(3),
+            option_code=entry["code"],
+            side=entry["side"],
+            market=entry["market"],
+            expiry_month=entry["expiry_month"],
             quantity=quantity,
             contracts=Decimal(quantity) / Decimal("100"),
-            unit_price=_money(match.group(6)),
+            unit_price=entry["unit_price"],
             gross_value=value,
-            cash_direction=match.group(8).upper(),
+            cash_direction=entry["direction"],
             allocated_costs=allocated_costs,
             allocated_irrf=allocated_irrf,
+            event_type=entry["event_type"],
+            underlying_asset=entry["underlying"],
         ))
 
     return ParsedBrokerageNote(
