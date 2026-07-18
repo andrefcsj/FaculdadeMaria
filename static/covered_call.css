@@ -1,6 +1,4 @@
-.new-op-segmented--strategy{grid-template-columns:1fr 1fr 1fr}
-.new-op-segmented--strategy input[value="Venda"]:checked+label{color:#e11d48;background:#fff1f2}
-.new-op-segmented--strategy input[value="Venda Coberta"]:checked+label{color:#6d28d9;background:#f5f3ff}
+.new-average-cost{display:flex;align-items:center;gap:12px;margin-top:12px;padding:11px 14px;border:1px solid #ddd6fe;border-radius:13px;background:#f5f3ff;color:#5b21b6}.new-average-cost span{font-size:11px;font-weight:850}.new-average-cost strong{margin-left:auto;font-size:18px}.new-average-cost small{color:#7c3aed}
 .strategy-covered-call{background:linear-gradient(90deg,#f5f3ff 0,#fff 16%)!important;box-shadow:inset 4px 0 #7c3aed}
 .strategy-short-put{box-shadow:inset 4px 0 #fb7185}
 .strategy-badge{display:inline-flex;padding:5px 8px;border-radius:999px;font-size:9px;font-weight:900;white-space:nowrap}
