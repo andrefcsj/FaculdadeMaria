@@ -153,6 +153,8 @@ def portfolio(legacy, operations: list[dict[str, Any]] | None = None) -> list[di
         )
         item["covered_quantity"] = covered
         item["available_quantity"] = max(item["quantity"] - covered, 0)
+        item["acquisition_dates"] = sorted({str(source.get("acquisition_date", "")) for source in item["sources"] if source.get("acquisition_date")})
+        item["acquisition_date"] = item["acquisition_dates"][0] if item["acquisition_dates"] else ""
         item["cash_cost_per_share"] = item["cash_cost_total"] / item["quantity"] if item["quantity"] else Decimal("0")
         item["tax_cost_per_share"] = item["tax_cost_total"] / item["quantity"] if item["quantity"] else Decimal("0")
         for key in ("cash_cost_total", "tax_cost_total", "cash_cost_per_share", "tax_cost_per_share"):

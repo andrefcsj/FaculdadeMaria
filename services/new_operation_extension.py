@@ -180,10 +180,9 @@ def register(app, legacy, market_path):
             irrf = _decimal(payload.get("IRRF"), "IRRF")
             spot = _decimal(payload.get("Cotacao_atual"), "Cotação atual")
             underlying = str(payload.get("Ativo_subjacente") or legacy.infer_acao_from_option(option_code)).strip().upper()
-            if strategy == "Venda Coberta":
-                if option_type != "CALL":
-                    raise ValueError("Venda coberta deve ser cadastrada como CALL.")
+            if strategy in {"Venda", "Venda Coberta"} and option_type == "CALL":
                 validate_covered_call(legacy, underlying, contracts)
+                strategy = "Venda Coberta"
             rows = legacy.read_csv(legacy.OPERACOES)
             next_id = max([int(legacy.fnum(row.get("ID"))) for row in rows] + [0]) + 1
             row = {

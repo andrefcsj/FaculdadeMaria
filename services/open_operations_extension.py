@@ -139,11 +139,10 @@ def register(app, legacy):
         })
         if not current["Ativo"]:
             raise ValueError("Código da opção é obrigatório.")
-        if strategy == "Venda Coberta":
-            if option_type != "CALL":
-                raise ValueError("Venda coberta deve ser uma CALL.")
+        if strategy in {"Venda", "Venda Coberta"} and option_type == "CALL":
             underlying = str(payload.get("Ativo_subjacente") or operation_underlying(legacy, current)).upper()
             validate_covered_call(legacy, underlying, Decimal(values["Contratos"]), exclude_operation_id=str(current.get("ID", "")))
+            current["Estratégia"] = "Venda Coberta"
         return current
 
     @app.route("/api/operacoes/<operation_id>", methods=["GET", "POST"])
