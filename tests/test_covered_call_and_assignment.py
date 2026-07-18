@@ -19,6 +19,18 @@ I.R.R.F. s/ operações, base R$ 0,00
 Líquido: D1.529,50
 """
 
+EQUITY_PURCHASE_TEXT = """NOTA DE CORRETAGEM
+33445566
+17/07/2026 Data pregão
+BTG Pactual CTVM S.A. Necton
+Negócios realizados
+1-BOVESPA C VISTA CPLE3 ON NM 100 14,70 1.470,00 D
+Resumo dos Negócios
+1.470,00Valor das operações
+0,00 I.R.R.F. s/ operações, base R$ 0,00
+Líquido para 20/07/2026 D1.471,50
+"""
+
 
 def test_preliminary_put_assignment_is_parsed_without_inventing_note_number():
     with patch("services.brokerage_note_service.extract_pdf_text", return_value=EXERCISE_TEXT):
@@ -30,6 +42,17 @@ def test_preliminary_put_assignment_is_parsed_without_inventing_note_number():
     assert payload["operational_costs"] == "1.50"
     assert trade["option_code"] == "CPLES15"
     assert trade["event_type"] == "exercise_put_assignment"
+
+
+def test_cash_equity_purchase_is_recognized_for_portfolio():
+    with patch("services.brokerage_note_service.extract_pdf_text", return_value=EQUITY_PURCHASE_TEXT):
+        payload = note_to_api(parse_btg_necton_pdf(b"equity-note"))
+    trade = payload["trades"][0]
+    assert trade["event_type"] == "equity_purchase"
+    assert trade["underlying_asset"] == "CPLE3"
+    assert trade["quantity"] == 100
+    assert trade["unit_price"] == "14.70"
+    assert trade["allocated_costs"] == "1.50"
 
 
 def test_covered_call_uses_shares_and_never_adds_strike_capital():
@@ -55,3 +78,10 @@ def test_coverage_validation_blocks_more_calls_than_free_shares():
             assert False, "deveria rejeitar cobertura insuficiente"
         except ValueError as exc:
             assert "Cobertura insuficiente" in str(exc)
+
+
+def test_new_operation_keeps_original_sale_purchase_controls():
+    template = (Path(__file__).parents[1] / "templates" / "components" / "new_operation_modal.html").read_text(encoding="utf-8")
+    assert 'value="Venda" checked><label for="newVenda">Venda</label>' in template
+    assert 'value="Compra"><label for="newCompra">Compra</label>' in template
+    assert 'id="newCoveredCall"' not in template
