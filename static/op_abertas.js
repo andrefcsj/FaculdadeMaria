@@ -18,14 +18,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const premiumTotal = document.getElementById('premiumTotal');
   const summaryLogo = document.getElementById('summaryLogo');
   const summaryLogoFallback = document.getElementById('summaryLogoFallback');
-  const strategyVenda = document.getElementById('strategyVenda');
-  if (strategyVenda && !document.getElementById('strategyCovered')) {
-    const radio = document.createElement('input'); radio.id = 'strategyCovered'; radio.type = 'radio'; radio.name = 'Estrategia'; radio.value = 'Venda Coberta';
-    const label = document.createElement('label'); label.htmlFor = radio.id; label.textContent = 'CALL Coberta';
-    strategyVenda.parentElement.insertBefore(label, document.getElementById('strategyCompra'));
-    strategyVenda.parentElement.insertBefore(radio, label);
-    strategyVenda.parentElement.style.gridTemplateColumns = '1fr 1fr 1fr';
-  }
   fields.underlying?.removeAttribute('readonly');
 
   const parseNumber = (value) => {
