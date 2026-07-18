@@ -63,19 +63,14 @@ document.addEventListener('DOMContentLoaded', () => {
   ['input', 'change'].forEach(eventName => {
     [fields.code, fields.strike, fields.contracts, fields.premium].forEach(input => input.addEventListener(eventName, updateSummary));
   });
-  form.querySelectorAll('input[name="Estrategia"]').forEach(input => input.addEventListener('change', () => {
-    const covered = input.checked && input.value === 'Venda Coberta';
-    if (covered) q('newCall').checked = true;
-    coverageHint.textContent = covered ? 'Somente ações livres da carteira serão aceitas como cobertura.' : 'Na CALL coberta, informe a ação que servirá de cobertura.';
-    updateSummary();
-  }));
+  form.querySelectorAll('input[name="Estrategia"]').forEach(input => input.addEventListener('change', updateSummary));
 
   let lookupTimer;
   let lookupSequence = 0;
   fields.code.addEventListener('input', () => {
     clearTimeout(lookupTimer);
     const sequence = ++lookupSequence;
-    if (form.querySelector('input[name="Estrategia"]:checked')?.value !== 'Venda Coberta' || !fields.under.value) fields.under.value = infer(fields.code.value);
+    if (!fields.under.value) fields.under.value = infer(fields.code.value);
     updateSummary();
     lookupTimer = setTimeout(async () => {
       const code = fields.code.value.trim().toUpperCase();
@@ -123,10 +118,12 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   const params = new URLSearchParams(location.search);
   if (params.get('estrategia') === 'coberta') {
-    q('newCoveredCall').checked = true;
+    q('newVenda').checked = true;
     q('newCall').checked = true;
     fields.under.value = String(params.get('ativo') || '').toUpperCase();
-    q('newCoveredCall').dispatchEvent(new Event('change', {bubbles: true}));
+    coverageHint.textContent = 'A cobertura será validada automaticamente pelas ações livres da carteira.';
+    q('newAverageCostBox').hidden = false;
+    q('newAverageCost').textContent = brl(num(params.get('preco_medio')));
   }
   if (location.hash === '#nova-operacao' || params.get('nova') === '1') openModal();
   document.addEventListener('keydown', event => {
@@ -172,7 +169,7 @@ document.addEventListener('DOMContentLoaded', () => {
       fields.contracts.value = '1';
       fields.costs.value = brl(0);
       fields.irrf.value = brl(0);
-      if (location.pathname === '/operacoes-abertas') location.reload();
+      if (location.pathname === '/operacoes-abertas' || location.pathname === '/carteira-acoes') location.reload();
       else window.dispatchEvent(new CustomEvent('operation-created', {detail: data}));
     } catch (error) {
       errorBox.textContent = error.message;
