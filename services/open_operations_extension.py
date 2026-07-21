@@ -139,10 +139,11 @@ def register(app, legacy):
         })
         if not current["Ativo"]:
             raise ValueError("Código da opção é obrigatório.")
+        underlying = "CPLE3" if current["Ativo"].startswith("CPLE") else str(payload.get("Ativo_subjacente") or operation_underlying(legacy, current)).upper()
         if strategy in {"Venda", "Venda Coberta"} and option_type == "CALL":
-            underlying = str(payload.get("Ativo_subjacente") or operation_underlying(legacy, current)).upper()
             validate_covered_call(legacy, underlying, Decimal(values["Contratos"]), exclude_operation_id=str(current.get("ID", "")))
             current["Estratégia"] = "Venda Coberta"
+        current["Ativo_subjacente"] = underlying
         return current
 
     @app.route("/api/operacoes/<operation_id>", methods=["GET", "POST"])
@@ -169,7 +170,7 @@ def register(app, legacy):
             save_operation_metadata(
                 legacy, operation_id,
                 interested=normalize_exercise_interest(payload.get("Interesse_exercicio", False)),
-                underlying_asset=payload.get("Ativo_subjacente", updated.get("Ativo_subjacente", "")),
+                underlying_asset=updated.get("Ativo_subjacente", payload.get("Ativo_subjacente", "")),
             )
             return jsonify({"ok": True, "operation": serialize(updated)})
         except Exception as exc:
