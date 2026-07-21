@@ -144,6 +144,20 @@ def serialize_closed_operation(legacy, operation: dict[str, Any], metadata: dict
     capital = contracts * size * strike
     gross_premium = contracts * size * premium
     result = _decimal(operation.get("Resultado_realizado"))
+    strategy = str(operation.get("Estratégia", "Venda")).strip().lower()
+    method = str(metadata.get("method", "")).strip().lower()
+    # Corrige também registros históricos criados antes da distinção entre
+    # crédito de venda e débito de compra. Assim, o histórico e a projeção de
+    # DARF deixam de tratar uma opção comprada que virou pó como lucro.
+    if strategy == "compra" and method in {"recompra", "exercida", "virou_po", "cancelada"}:
+        opening_debit = gross_premium + costs + irrf
+        if method == "recompra":
+            closing_credit = _decimal(metadata.get("repurchase_value", "0")) * contracts * size
+            result = closing_credit - opening_debit
+        elif method == "cancelada":
+            result = Decimal("0")
+        else:
+            result = -opening_debit
     roi = result / capital * Decimal("100") if capital else Decimal("0")
     close_date = metadata.get("close_date") or operation.get("Data fechamento") or ""
     from services.operation_preferences_service import operation_underlying

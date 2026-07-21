@@ -116,6 +116,19 @@ class ClosedOperationsTests(unittest.TestCase):
             self.assertEqual(saved["Status"],"Encerrada")
             self.assertEqual(saved["Resultado_realizado"],"21.50")
 
+    def test_historical_purchased_put_expiry_is_repaired_as_debit(self):
+        operation = {
+            "ID":"129", "Data abertura":"2026-06-25", "Ativo":"CPLES129",
+            "Tipo":"PUT", "Estratégia":"Compra", "Status":"Encerrada",
+            "Contratos":"1", "Strike":"12.78", "Premio_opcao":"0.02",
+            "Custos":"1.05", "IRRF":"0", "Vencimento":"2026-07-17",
+            "Cotacao_atual":"14.80", "Resultado_realizado":"0.95",
+        }
+        metadata = {"method":"virou_po", "close_date":"2026-07-17", "repurchase_value":"0"}
+        serialized = serialize_closed_operation(legacy_app, operation, metadata)
+        self.assertEqual(Decimal(serialized["Resultado_realizado"]), Decimal("-3.05"))
+        self.assertEqual(Decimal(serialized["ROI_realizado"]).quantize(Decimal("0.01")), Decimal("-0.24"))
+
     def test_sidebar_contains_open_and_closed_operations(self):
         html=app.test_client().get("/").get_data(as_text=True)
         self.assertIn("Operações Abertas",html)
