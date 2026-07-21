@@ -880,11 +880,11 @@ def fechar(oid: str):
         cfg = load_config()
         contratos = Decimal(str(fnum(r.get('Contratos'), 1)))
         tamanho = Decimal(str(cfg.get('Tamanho contrato opcoes', 100)))
-        premio_total = (
-            Decimal(str(fnum(r.get('Premio_opcao')))) * contratos * tamanho
-            - Decimal(str(fnum(r.get('Custos'))))
-            - Decimal(str(fnum(r.get('IRRF'))))
-        )
+        estrategia = str(r.get('Estratégia', 'Venda')).strip().lower()
+        premio_bruto = Decimal(str(fnum(r.get('Premio_opcao')))) * contratos * tamanho
+        custos_entrada = Decimal(str(fnum(r.get('Custos')))) + Decimal(str(fnum(r.get('IRRF'))))
+        # Venda começa com crédito líquido; compra começa com débito total.
+        premio_total = premio_bruto + custos_entrada if estrategia == 'compra' else premio_bruto - custos_entrada
         fechamento = calculate_operation_close(
             method=metodo,
             close_date=data_encerramento,
@@ -893,6 +893,7 @@ def fechar(oid: str):
             repurchase_per_unit=valor_recompra,
             contracts=contratos,
             contract_size=tamanho,
+            position_side=str(r.get('Estratégia', 'Venda')),
         )
         if metodo == "exercida" and str(r.get("Tipo", "")).upper() == "CALL" and str(r.get("Estratégia", "")).lower() in {"venda coberta", "call coberta"}:
             from services.equity_position_service import exercise_covered_call
