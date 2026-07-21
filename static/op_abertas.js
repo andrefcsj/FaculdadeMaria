@@ -151,6 +151,11 @@ document.addEventListener('DOMContentLoaded',()=>{
   const errorBox=document.getElementById('closeError');
   const hint=document.getElementById('closeMethodHint');
   const expiredMethod=document.getElementById('expiredMethod');
+  const tradeMethodTitle=document.getElementById('closeTradeMethodTitle');
+  const tradeMethodDescription=document.getElementById('closeTradeMethodDescription');
+  const expiredDescription=document.getElementById('closeExpiredDescription');
+  const valueLabel=document.getElementById('closeValueLabel');
+  const profitLabel=document.getElementById('closeProfitLabel');
   let operation={};
 
   const brl=value=>Number(value||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
@@ -164,11 +169,14 @@ document.addEventListener('DOMContentLoaded',()=>{
 
   function calculateResult(){
     const method=methodInput.value;
-    const premium=Number(operation.premiumTotal||0);
-    const buyback=Number(repurchase.value||0)*Number(operation.contracts||0)*Number(operation.contractSize||0);
-    const result=method==='recompra'?premium-buyback:method==='cancelada'?0:premium;
+    const isPurchase=String(operation.strategy||'').toLowerCase()==='compra';
+    const openingAmount=isPurchase?Math.abs(Number(operation.openingCashFlow||0)):Number(operation.premiumTotal||0);
+    const closingTotal=Number(repurchase.value||0)*Number(operation.contracts||0)*Number(operation.contractSize||0);
+    const result=method==='recompra'?(isPurchase?closingTotal-openingAmount:openingAmount-closingTotal):method==='cancelada'?0:isPurchase?-openingAmount:openingAmount;
     const premiumUnit=Number(operation.premiumUnit||0);
-    const retainedPct=method==='recompra'&&premiumUnit>0?((premiumUnit-Number(repurchase.value||0))/premiumUnit)*100:null;
+    const retainedPct=isPurchase
+      ? (openingAmount>0&&method!=='cancelada' ? result/openingAmount*100 : null)
+      : (method==='recompra'&&premiumUnit>0 ? ((premiumUnit-Number(repurchase.value||0))/premiumUnit)*100 : null);
     resultOutput.value=brl(result);
     resultOutput.textContent=brl(result);
     resultOutput.classList.toggle('close-result--positive',result>0);
@@ -195,7 +203,14 @@ document.addEventListener('DOMContentLoaded',()=>{
     repurchaseField.style.opacity=method==='recompra'?'1':'.5';
     repurchase.disabled=method!=='recompra';
     repurchase.required=method==='recompra';
-    hint.textContent=hints[method];
+    const isPurchase=String(operation.strategy||'').toLowerCase()==='compra';
+    const purchaseHints={
+      recompra:'↗ A venda da opção será comparada com o débito total pago na entrada.',
+      exercida:'ϟ O prêmio pago permanece como custo; a movimentação das ações é contabilizada separadamente.',
+      cancelada:hints.cancelada,
+      virou_po:'✧ Opção comprada expirada sem valor; débito integral reconhecido como prejuízo.'
+    };
+    hint.textContent=isPurchase?purchaseHints[method]:hints[method];
     errorBox.hidden=true;
     calculateResult();
   }
@@ -213,12 +228,19 @@ document.addEventListener('DOMContentLoaded',()=>{
       contracts:Number(button.dataset.contracts||0),
       contractSize:Number(button.dataset.contractSize||100),
       premiumTotal:Number(button.dataset.premiumTotal||0),
+      openingCashFlow:Number(button.dataset.openingCashFlow||0),
       premiumUnit:Number(button.dataset.premiumUnit||0)
     };
     const exercisedText=form.querySelector('[data-method="exercida"] small');
     const isCoveredCall=operation.type==='CALL' && String(operation.strategy).toLowerCase()==='venda coberta';
-    if(exercisedText) exercisedText.textContent=isCoveredCall?'A CALL foi exercida — entrega das ações ao strike.':'A opção foi exercida — aquisição das ações ao strike.';
+    const isPurchase=String(operation.strategy).toLowerCase()==='compra';
+    if(exercisedText) exercisedText.textContent=isCoveredCall?'A CALL foi exercida — entrega das ações ao strike.':isPurchase&&operation.type==='PUT'?'A PUT comprada foi exercida — venda das ações ao strike.':'A opção foi exercida — aquisição das ações ao strike.';
     hints.exercida=isCoveredCall?'ϟ As ações cobertas serão entregues ao strike e o ganho será apurado.':'ϟ Exercício faz parte da estratégia; o prêmio recebido é preservado.';
+    tradeMethodTitle.textContent=isPurchase?'Venda para encerrar':'Recompra';
+    tradeMethodDescription.textContent=isPurchase?'Encerrar recebendo o valor atual da opção.':'Encerrar pagando o valor atual da opção.';
+    expiredDescription.textContent=isPurchase?'Expirou sem valor e o débito pago foi perdido.':'Expirou sem valor e o prêmio foi mantido.';
+    valueLabel.textContent=isPurchase?'VALOR DE VENDA':'VALOR DE RECOMPRA';
+    profitLabel.textContent=isPurchase?'RETORNO SOBRE O DÉBITO':'LUCRO SOBRE O PRÊMIO';
     form.action=operation.closeUrl;
     document.getElementById('closeAssetLetter').textContent=(operation.ticker||operation.option||'?').slice(0,1);
     document.getElementById('closeOperationDescription').textContent=`${operation.option} · ${operation.strategy} ${operation.type} · strike ${brl(operation.strike)} · venc. ${operation.expiryLabel||'—'}`;
