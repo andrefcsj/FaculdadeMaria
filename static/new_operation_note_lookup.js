@@ -27,7 +27,7 @@ document.addEventListener('brokerage-trade-applied', async event => {
     const data = await response.json();
     if (!response.ok || !data.ok) throw new Error(data.error || 'Consulta indisponível');
     if (sequence !== brokerageLookupSequence || optionCode?.value.trim().toUpperCase() !== code) return;
-    if (data.asset && under) under.value = data.asset;
+    if (under) under.value = code.startsWith('CPLE') ? 'CPLE3' : (data.asset || under.value);
     if (data.strike && strike) strike.value = brl(data.strike);
     if (data.expiry && expiry) expiry.value = data.expiry;
     if (data.spot_price && spot) spot.value = brl(data.spot_price);
