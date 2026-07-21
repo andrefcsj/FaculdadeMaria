@@ -42,6 +42,20 @@ class OperationCloseServiceTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "data do vencimento"):
             self.close("virou_po", expiry=date(2026, 7, 12))
 
+    def test_purchased_option_expiring_worthless_is_full_debit_loss(self):
+        result = self.close(
+            "virou_po", premium_received=Decimal("3.05"), position_side="Compra"
+        )
+        self.assertEqual(result.result, Decimal("-3.05"))
+
+    def test_purchased_option_sale_subtracts_opening_debit(self):
+        result = self.close(
+            "recompra", premium_received=Decimal("3.05"),
+            repurchase_per_unit=Decimal("0.05"), position_side="Compra",
+        )
+        self.assertEqual(result.repurchase_total, Decimal("5.00"))
+        self.assertEqual(result.result, Decimal("1.95"))
+
     def test_rejects_unknown_method(self):
         with self.assertRaisesRegex(ValueError, "forma válida"):
             self.close("qualquer")
@@ -67,6 +81,25 @@ class OperationCloseServiceTests(unittest.TestCase):
             self.assertEqual(saved["Status"], "Encerrada")
             self.assertEqual(Decimal(saved["Resultado_realizado"]), Decimal("60.0"))
             self.assertTrue((Path(directory) / "operation_closures.json").exists())
+
+    def test_route_records_full_debit_when_purchased_put_expires_worthless(self):
+        fields = ["ID", "Data abertura", "Ativo", "Tipo", "Estratégia", "Status", "Contratos", "Strike", "Premio_opcao", "Custos", "IRRF", "Vencimento", "Cotacao_atual", "Resultado_realizado"]
+        row = dict.fromkeys(fields, "")
+        row.update({"ID":"129", "Ativo":"CPLES129", "Tipo":"PUT", "Estratégia":"Compra", "Status":"Aberta", "Contratos":"1", "Strike":"12.78", "Premio_opcao":"0.02", "Custos":"1.05", "IRRF":"0", "Vencimento":"2026-07-17", "Resultado_realizado":"0"})
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "operacoes.csv"
+            with path.open("w", newline="", encoding="utf-8") as handle:
+                writer = csv.DictWriter(handle, fieldnames=fields)
+                writer.writeheader(); writer.writerow(row)
+            with patch.object(legacy_app, "DATA", Path(directory)), patch.object(legacy_app, "OPERACOES", path), patch.object(legacy_app, "USE_POSTGRES", False):
+                response = legacy_app.app.test_client().post(
+                    "/fechar/129",
+                    data={"metodo_encerramento":"virou_po", "data_encerramento":"2026-07-17", "valor_recompra":"0"},
+                    headers={"X-Requested-With":"XMLHttpRequest"},
+                )
+            self.assertEqual(response.status_code, 200)
+            saved = list(csv.DictReader(path.open(encoding="utf-8")))[0]
+            self.assertEqual(Decimal(saved["Resultado_realizado"]), Decimal("-3.05"))
 
 
 if __name__ == "__main__":
