@@ -31,7 +31,7 @@ def annualized_historical_volatility(closes: Iterable[Decimal])->Decimal|None:
     return Decimal(str(vol)) if math.isfinite(vol) and vol>0 else None
 
 def estimate_exercise_probability(*,option_type:str,spot_price:Decimal,strike:Decimal,days_to_expiry:int,annual_volatility:Decimal)->ExerciseProbabilityEstimate:
-    if spot_price<=0 or strike<=0 or annual_volatility<=0: raise ValueError('Dados inválidos para estimativa.')
+    if spot_price<=0 or strike<=0 or (days_to_expiry>0 and annual_volatility<=0): raise ValueError('Dados inválidos para estimativa.')
     if days_to_expiry<=0:
         p=Decimal('1') if ((option_type.upper()=='PUT' and spot_price<strike) or (option_type.upper()!='PUT' and spot_price>strike)) else Decimal('0') if spot_price!=strike else Decimal('.5')
     else:

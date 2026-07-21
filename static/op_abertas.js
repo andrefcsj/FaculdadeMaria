@@ -28,7 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
   const formatMoney = (value) => new Intl.NumberFormat('pt-BR', {style: 'currency', currency: 'BRL'}).format(Number.isFinite(Number(value)) ? Number(value) : 0);
   const toIsoDate = (value) => { const t = String(value ?? '').trim(); if (/^\d{4}-\d{2}-\d{2}$/.test(t)) return t; const m = t.match(/^(\d{2})\/(\d{2})\/(\d{4})$/); return m ? `${m[3]}-${m[2]}-${m[1]}` : t; };
-  const inferUnderlying = (code) => { const c = String(code ?? '').trim().toUpperCase(); const m = c.match(/^([A-Z]{4})(\d)/); return m ? `${m[1]}${m[2]}` : c.slice(0, 5); };
+  const inferUnderlying = (code) => { const c = String(code ?? '').trim().toUpperCase(); if(c.startsWith('CPLE')) return 'CPLE3'; const m = c.match(/^([A-Z]{4})(\d)/); return m ? `${m[1]}${m[2]}` : c.slice(0, 5); };
   const setChecked = (name, value, fallback) => { const normalized = String(value || fallback).toUpperCase(); const radios = form.querySelectorAll(`input[name="${name}"]`); radios.forEach(r => r.checked = r.value.toUpperCase() === normalized); if (![...radios].some(r => r.checked) && radios[0]) radios[0].checked = true; };
 
   const showAssetLogo = (url, ticker) => {

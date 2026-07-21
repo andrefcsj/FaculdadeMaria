@@ -13,6 +13,7 @@ from services.operation_close_service import calculate_operation_close
 from services.closed_operations_service import save_closure_metadata
 from services.operation_preferences_service import normalize_exercise_interest, save_operation_metadata
 from services.equity_position_service import create_put_assignment_lot, save_equity_lot, validate_covered_call
+from services.exercise_probability_service import estimate_exercise_probability, estimate_operation_exercise_probability
 
 
 def _lookup_b3_option(code: str, underlying: str, trade_date: date, cache_dir):
@@ -37,6 +38,22 @@ def _decimal(value, field: str, *, allow_zero: bool = True) -> Decimal:
     if parsed < 0 or (not allow_zero and parsed == 0):
         raise ValueError(f"{field} deve ser maior que zero.")
     return parsed
+
+
+def _canonical_underlying(legacy, option_code: str, candidate: str = "") -> str:
+    """Keep explicit user choices, except for the system-wide CPLE3 rule."""
+    code = str(option_code or "").strip().upper()
+    if code.startswith("CPLE"):
+        return "CPLE3"
+    return str(candidate or legacy.infer_acao_from_option(code)).strip().upper()
+
+
+def _preview_roi(*, strategy: str, contracts: Decimal, strike: Decimal, premium: Decimal, costs: Decimal, irrf: Decimal, contract_size: Decimal = Decimal("100")) -> Decimal | None:
+    if str(strategy).strip().lower() == "compra" or contracts <= 0 or strike <= 0:
+        return None
+    capital = contracts * strike * contract_size
+    net_premium = contracts * premium * contract_size - costs - irrf
+    return net_premium / capital * Decimal("100") if capital else None
 
 
 def register(app, legacy, market_path):
@@ -92,7 +109,7 @@ def register(app, legacy, market_path):
         code = str(option_code or "").strip().upper()
         if not code:
             return jsonify({"ok": False, "error": "Informe o código da opção."}), 400
-        underlying = legacy.infer_acao_from_option(code)
+        underlying = _canonical_underlying(legacy, code)
         result = {
             "ok": True,
             "option_code": code,
@@ -109,7 +126,7 @@ def register(app, legacy, market_path):
                 item = _lookup_b3_option(code, underlying, trade_date, legacy.DATA)
                 if item:
                     result.update({
-                        "asset": item.asset,
+                        "asset": _canonical_underlying(legacy, code, item.asset),
                         "strike": str(item.strike),
                         "expiry": item.expiry.isoformat(),
                         "premium": str(item.premium),
@@ -124,7 +141,7 @@ def register(app, legacy, market_path):
             item = next((o for o in imported.opportunities if o.option_code.upper() == code), None)
             if item:
                 result.update({
-                    "asset": item.asset,
+                    "asset": _canonical_underlying(legacy, code, item.asset),
                     "strike": str(item.strike),
                     "expiry": item.expiry.isoformat(),
                     "premium": str(item.premium),
@@ -135,7 +152,7 @@ def register(app, legacy, market_path):
         for row in legacy.read_operacoes():
             if str(row.get("Ativo", "")).upper() == code:
                 result.update({
-                    "asset": legacy.infer_acao_from_option(code),
+                    "asset": _canonical_underlying(legacy, code),
                     "strike": str(row.get("Strike", "") or "") or None,
                     "expiry": str(row.get("Vencimento", "") or "") or None,
                     "premium": str(row.get("Premio_opcao", "") or "") or None,
@@ -147,6 +164,55 @@ def register(app, legacy, market_path):
         if quote:
             result["spot_price"] = str(quote)
         return jsonify(result)
+
+    @app.post("/api/operacoes/preview")
+    def preview_operation():
+        payload = request.get_json(silent=True) or {}
+        try:
+            option_code = str(payload.get("Ativo", "")).strip().upper()
+            underlying = _canonical_underlying(legacy, option_code, payload.get("Ativo_subjacente", ""))
+            option_type = str(payload.get("Tipo", "PUT")).upper()
+            if option_type not in {"PUT", "CALL"}:
+                raise ValueError("Tipo de opção inválido.")
+            contracts = _decimal(payload.get("Contratos"), "Quantidade")
+            strike = _decimal(payload.get("Strike"), "Strike")
+            premium = _decimal(payload.get("Premio_opcao"), "Prêmio")
+            costs = _decimal(payload.get("Custos"), "Custos")
+            irrf = _decimal(payload.get("IRRF"), "IRRF")
+            spot = _decimal(payload.get("Cotacao_atual"), "Cotação atual")
+            roi = _preview_roi(
+                strategy=str(payload.get("Estrategia", "Venda")), contracts=contracts,
+                strike=strike, premium=premium, costs=costs, irrf=irrf,
+                contract_size=Decimal(str(legacy.load_config().get("Tamanho contrato opcoes", 100))),
+            )
+            expiry = legacy.parse_date(str(payload.get("Vencimento", "")))
+            estimate = None
+            if underlying and strike > 0 and expiry:
+                days = max((expiry - date.today()).days, 0)
+                if spot > 0 and days == 0:
+                    estimate = estimate_exercise_probability(
+                        option_type=option_type, spot_price=spot, strike=strike,
+                        days_to_expiry=0, annual_volatility=Decimal("0"),
+                    )
+                else:
+                    estimate = estimate_operation_exercise_probability(
+                        ticker=underlying, option_type=option_type, strike=strike, expiry=expiry,
+                    )
+                    if spot > 0 and estimate.annual_volatility is not None:
+                        estimate = estimate_exercise_probability(
+                            option_type=option_type, spot_price=spot, strike=strike,
+                            days_to_expiry=days, annual_volatility=estimate.annual_volatility,
+                        )
+            return jsonify({
+                "ok": True,
+                "underlying": underlying,
+                "roi": str(roi.quantize(Decimal("0.01"))) if roi is not None else None,
+                "exercise_probability": estimate.percentage if estimate else "--",
+                "exercise_label": estimate.label if estimate else "Preencha cotação, strike e vencimento",
+                "exercise_methodology": estimate.methodology if estimate else "Estimativa indisponível até completar os dados.",
+            })
+        except ValueError as exc:
+            return jsonify({"ok": False, "error": str(exc)}), 400
 
     @app.post("/api/operacoes")
     def create_operation():
@@ -179,7 +245,7 @@ def register(app, legacy, market_path):
             costs = _decimal(payload.get("Custos"), "Custos")
             irrf = _decimal(payload.get("IRRF"), "IRRF")
             spot = _decimal(payload.get("Cotacao_atual"), "Cotação atual")
-            underlying = str(payload.get("Ativo_subjacente") or legacy.infer_acao_from_option(option_code)).strip().upper()
+            underlying = _canonical_underlying(legacy, option_code, payload.get("Ativo_subjacente", ""))
             if strategy in {"Venda", "Venda Coberta"} and option_type == "CALL":
                 validate_covered_call(legacy, underlying, contracts)
                 strategy = "Venda Coberta"

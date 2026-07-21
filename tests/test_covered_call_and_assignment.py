@@ -6,6 +6,7 @@ from unittest.mock import patch
 import legacy_app
 from services.brokerage_note_service import note_to_api, parse_btg_necton_pdf
 from services.equity_position_service import portfolio, save_equity_lot, validate_covered_call
+from services.new_operation_extension import _preview_roi
 
 
 EXERCISE_TEXT = """BTG Pactual CTVM S.A. Necton
@@ -85,3 +86,24 @@ def test_new_operation_keeps_original_sale_purchase_controls():
     assert 'value="Venda" checked><label for="newVenda">Venda</label>' in template
     assert 'value="Compra"><label for="newCompra">Compra</label>' in template
     assert 'id="newCoveredCall"' not in template
+
+
+def test_preview_roi_uses_net_premium_and_nominal_strike_capital():
+    roi = _preview_roi(
+        strategy="Venda", contracts=Decimal("1"), strike=Decimal("10"),
+        premium=Decimal("0.25"), costs=Decimal("2"), irrf=Decimal("0"),
+    )
+    assert roi == Decimal("2.3")
+
+
+def test_new_operation_popup_has_live_roi_probability_and_colored_types():
+    root = Path(__file__).parents[1]
+    template = (root / "templates" / "components" / "new_operation_modal.html").read_text(encoding="utf-8")
+    script = (root / "static" / "new_operation.js").read_text(encoding="utf-8")
+    styles = (root / "static" / "new_operation_preview.css").read_text(encoding="utf-8")
+    assert 'id="newPreviewRoi"' in template
+    assert 'id="newPreviewExercise"' in template
+    assert "/api/operacoes/preview" in script
+    assert "roi >= 2 ? 'is-good' : roi >= 1 ? 'is-medium' : 'is-low'" in script
+    assert 'label[for="newCall"]' in styles
+    assert 'label[for="newPut"]' in styles

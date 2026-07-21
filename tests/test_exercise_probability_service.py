@@ -21,5 +21,13 @@ def test_probability_increases_when_put_strike_is_higher():
     assert high.probability > low.probability
 
 
+def test_expiry_day_is_deterministic_without_volatility():
+    result = estimate_exercise_probability(
+        option_type="PUT", spot_price=Decimal("14.70"), strike=Decimal("15.28"),
+        days_to_expiry=0, annual_volatility=Decimal("0"),
+    )
+    assert result.probability == Decimal("1")
+
+
 def test_historical_volatility_requires_enough_data():
     assert annualized_historical_volatility([Decimal("10")] * 10) is None

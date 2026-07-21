@@ -494,12 +494,14 @@ def infer_acao_from_option(codigo: str) -> str:
     codigo = (codigo or "").upper().strip()
     # Compatibilidade para posições antigas, anteriores ao armazenamento do
     # ativo subjacente. Novas operações persistem esse vínculo explicitamente.
-    option_overrides = {"CPLES15": "CPLE3", "CPLES129": "CPLE3"}
-    if codigo in option_overrides:
-        return option_overrides[codigo]
+    # Todas as séries de opções da Copel acompanhadas por este sistema
+    # pertencem à ação ordinária CPLE3. A regra por raiz evita que uma nova
+    # série seja associada por engano à CPLE6.
+    if codigo.startswith("CPLE"):
+        return "CPLE3"
     letters = "".join(ch for ch in codigo if ch.isalpha())
     base = letters[:4] if len(letters) >= 4 else letters
-    mapa = {"BBDC": "BBDC4", "ITSA": "ITSA4", "GOAU": "GOAU4", "CPLE": "CPLE6", "PETR": "PETR4", "VALE": "VALE3", "BBAS": "BBAS3", "ABEV": "ABEV3"}
+    mapa = {"BBDC": "BBDC4", "ITSA": "ITSA4", "GOAU": "GOAU4", "CPLE": "CPLE3", "PETR": "PETR4", "VALE": "VALE3", "BBAS": "BBAS3", "ABEV": "ABEV3"}
     return mapa.get(base, f"{base}4" if base else "")
 
 _QUOTE_CACHE: dict[str, tuple[float, float | None]] = {}
