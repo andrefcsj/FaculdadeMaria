@@ -1,5 +1,6 @@
 from datetime import date
 from unittest.mock import patch
+from pathlib import Path
 
 import legacy_app
 
@@ -19,3 +20,10 @@ def test_purchase_does_not_reserve_strike_capital_and_total_roi_uses_signed_flow
     total_result = sum(row["Fluxo_liquido"] for row in enriched)
     total_capital = sum(row["Capital"] for row in enriched)
     assert round(total_result / total_capital * 100, 2) == 2.67
+
+
+def test_open_operations_labels_purchase_as_debit():
+    template = (Path(__file__).parents[1] / "templates" / "operacoes_abertas.html").read_text(encoding="utf-8")
+    assert "Crédito / débito" in template
+    assert "Débito líquido" in template
+    assert "-o.Fluxo_liquido" in template
