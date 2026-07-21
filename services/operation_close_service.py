@@ -26,6 +26,7 @@ def calculate_operation_close(
     repurchase_per_unit: Decimal,
     contracts: Decimal,
     contract_size: Decimal,
+    position_side: str = "Venda",
 ) -> OperationCloseResult:
     method = str(method or "").strip().lower()
     if method not in VALID_CLOSE_METHODS:
@@ -37,11 +38,19 @@ def calculate_operation_close(
     if method == "virou_po" and expiry and close_date < expiry:
         raise ValueError("A opção só pode ser marcada como virou pó na data do vencimento ou depois.")
 
+    is_purchase = str(position_side or "").strip().lower() == "compra"
+    # O mesmo campo representa a recompra de uma opção vendida ou a venda de
+    # uma opção comprada. Em ambos os casos é o caixa do encerramento.
     repurchase_total = repurchase_per_unit * contracts * contract_size if method == "recompra" else Decimal("0")
     if method == "recompra":
-        result = premium_received - repurchase_total
+        result = repurchase_total - premium_received if is_purchase else premium_received - repurchase_total
     elif method == "cancelada":
         result = Decimal("0")
+    elif is_purchase:
+        # Uma opção comprada que expira sem valor perde integralmente o débito
+        # de entrada. No exercício, o prêmio pago também continua sendo custo;
+        # a movimentação das ações é contabilizada separadamente.
+        result = -premium_received
     else:
         # Exercício faz parte da estratégia e o prêmio recebido permanece realizado.
         result = premium_received
