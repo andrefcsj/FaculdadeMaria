@@ -1,0 +1,72 @@
+.new-op-segmented--type label[for="newCall"] {
+  background: #ecfdf5;
+  color: #15803d;
+}
+.new-op-segmented--type label[for="newPut"] {
+  background: #fff1f2;
+  color: #be123c;
+}
+.new-op-segmented--type input:checked + label[for="newCall"] {
+  background: #d1fae5;
+  color: #047857;
+  box-shadow: 0 3px 12px rgba(5, 150, 105, .18);
+  outline: 1px solid #a7f3d0;
+}
+.new-op-segmented--type input:checked + label[for="newPut"] {
+  background: #ffe4e6;
+  color: #be123c;
+  box-shadow: 0 3px 12px rgba(225, 29, 72, .15);
+  outline: 1px solid #fecdd3;
+}
+.new-op-insights {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 13px;
+}
+.new-op-insight {
+  position: relative;
+  overflow: hidden;
+  padding: 13px 15px;
+  border: 1px solid #dbe5f0;
+  border-radius: 15px;
+  background: #fff;
+}
+.new-op-insight::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: #cbd5e1;
+}
+.new-op-insight > span {
+  display: block;
+  color: #64748b;
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: .45px;
+}
+.new-op-insight strong {
+  display: block;
+  margin-top: 4px;
+  color: #64748b;
+  font-size: 23px;
+  line-height: 1;
+}
+.new-op-insight small {
+  display: block;
+  margin-top: 5px;
+  color: #718096;
+  font-size: 10px;
+}
+.new-op-insight strong.is-good { color: #16a34a; }
+.new-op-insight:has(strong.is-good)::before { background: #22c55e; }
+.new-op-insight strong.is-medium { color: #ea7a13; }
+.new-op-insight:has(strong.is-medium)::before { background: #fb923c; }
+.new-op-insight strong.is-low { color: #dc2626; }
+.new-op-insight:has(strong.is-low)::before { background: #ef4444; }
+.new-op-insight strong.is-unavailable { color: #94a3b8; }
+@media (max-width: 760px) {
+  .new-op-insights { grid-template-columns: 1fr; }
+}
