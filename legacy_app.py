@@ -98,8 +98,14 @@ def current_month_label() -> str:
     d = date.today()
     return f"{MONTH_NAMES[d.month - 1]}/{str(d.year)[-2:]}"
 
-def rolling_months(start: date | None = None, count: int = 12) -> List[str]:
-    d = start or date.today()
+def _shift_month(reference: date, offset: int) -> date:
+    month_index = reference.year * 12 + reference.month - 1 + offset
+    return date(month_index // 12, month_index % 12 + 1, 1)
+
+
+def rolling_months(start: date | None = None, count: int = 13) -> List[str]:
+    # Dashboard: 11 meses anteriores + mês atual + somente o próximo mês.
+    d = start or _shift_month(date.today(), -11)
     labels = []
     y, m = d.year, d.month
     for _ in range(count):
@@ -298,7 +304,10 @@ def metrics(ops: List[Dict[str, object]], fechadas: List[Dict[str, str]], cfg: D
     capital_opcoes = sum(float(o["Capital"]) for o in abertas)
     from services.equity_position_service import portfolio as equity_portfolio
     capital_acoes = sum(float(item.get("cash_cost_total", 0)) for item in equity_portfolio(__import__(__name__), ops))
-    capital_comp = capital_opcoes + capital_acoes
+    # Capital comprometido é exclusivamente o dinheiro reservado para honrar
+    # posições abertas. Ações já existentes na carteira cobrem a CALL, mas não
+    # representam dinheiro bloqueado na corretora.
+    capital_comp = capital_opcoes
     premios_ativos = sum(float(o["Premio_liquido"]) for o in abertas)
     mes_atual = current_month_label()
     # DARF e lucro do mês vêm apenas das operações fechadas.
