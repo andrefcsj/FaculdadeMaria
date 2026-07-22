@@ -48,6 +48,17 @@ def _extract_amount(text: str, label: str, *, after: bool = False) -> Decimal | 
     return _money(match.group(1)) if match else None
 
 
+def _option_market_from_code(code: str) -> str:
+    """Infere CALL/PUT pela letra de vencimento do código B3."""
+    normalized = str(code or "").upper()
+    month_letter = normalized[4:5]
+    if month_letter in "ABCDEFGHIJKL":
+        return "Opção de compra"
+    if month_letter in "MNOPQRSTUVWX":
+        return "Opção de venda"
+    return "Opção"
+
+
 @dataclass(frozen=True)
 class ParsedTrade:
     trade_index: int
@@ -155,6 +166,16 @@ def parse_btg_necton_pdf(data: bytes) -> ParsedBrokerageNote:
         re.IGNORECASE,
     )
     raw_trades = list(pattern.finditer(section))
+    # A nota intradiária/prévia do BTG usa um layout resumido, por exemplo:
+    # ``1-BOVESPA V OPÇÃO PETRT500 100 1,53 153,00 C``. Ela não informa o
+    # subtipo (compra/venda) nem o vencimento textual, mas traz todos os dados
+    # financeiros necessários para cadastrar a negociação como pendente.
+    provisional_option_pattern = re.compile(
+        r"1-BOVESPA\s+([CV])\s+OP(?:Ç|C)[AÃ]O\s+([A-Z0-9]+)"
+        r"\s+(\d+)\s+([0-9.,]+)\s+([0-9.,]+)\s+([CD])",
+        re.IGNORECASE,
+    )
+    provisional_option_trades = list(provisional_option_pattern.finditer(section))
     equity_pattern = re.compile(
         r"1-BOVESPA\s+([CV])\s+(?:VISTA|FRACIONARIO)\s+([A-Z]{4}\d{1,2})"
         r"(?:\s+[A-Z0-9.*-]+){0,5}?\s+(\d+)\s+([0-9.,]+)\s+([0-9.,]+)\s+([CD])",
@@ -168,6 +189,15 @@ def parse_btg_necton_pdf(data: bytes) -> ParsedBrokerageNote:
             "market": f"Opção de {match.group(2).lower()}", "expiry_month": match.group(3),
             "quantity": int(match.group(5)), "unit_price": _money(match.group(6)),
             "value": _money(match.group(7)), "direction": match.group(8).upper(),
+            "event_type": "trade", "underlying": "",
+        })
+    for match in provisional_option_trades:
+        entries.append({
+            "code": match.group(2).upper(),
+            "side": "Venda" if match.group(1).upper() == "V" else "Compra",
+            "market": _option_market_from_code(match.group(2)), "expiry_month": "",
+            "quantity": int(match.group(3)), "unit_price": _money(match.group(4)),
+            "value": _money(match.group(5)), "direction": match.group(6).upper(),
             "event_type": "trade", "underlying": "",
         })
     for match in equity_trades:
@@ -189,8 +219,16 @@ def parse_btg_necton_pdf(data: bytes) -> ParsedBrokerageNote:
     if not settlement:
         settlement = re.search(r"Líquido para\s+(\d{2}/\d{2}/\d{4})\s*([CD])?\s*([0-9.,]+)", text, re.IGNORECASE)
     settlement_date = datetime.strptime(settlement.group(1), "%d/%m/%Y").date() if settlement else None
-    direction = (settlement.group(2) or entries[0]["direction"]).upper() if settlement else entries[0]["direction"]
-    net = _money(settlement.group(3)) if settlement else gross
+    liquid_summary = re.search(r"Líquido:\s*([CD])\s*([0-9.,]+)", text, re.IGNORECASE)
+    direction = (
+        (settlement.group(2) or entries[0]["direction"]).upper()
+        if settlement else
+        liquid_summary.group(1).upper() if liquid_summary else entries[0]["direction"]
+    )
+    net = (
+        _money(settlement.group(3)) if settlement else
+        _money(liquid_summary.group(2)) if liquid_summary else gross
+    )
     irrf = _extract_amount(text, "I.R.R.F. s/ operações, base R$", after=True) or Decimal("0")
     signed_trades = sum((entry["value"] if entry["direction"] == "C" else -entry["value"] for entry in entries), Decimal("0"))
     signed_net = net if direction == "C" else -net

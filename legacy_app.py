@@ -308,7 +308,16 @@ def metrics(ops: List[Dict[str, object]], fechadas: List[Dict[str, str]], cfg: D
     capital_total = cfg.get("Capital total inicial", 4000.0) + float(aportes_liquidos)
     capital_opcoes = sum(float(o["Capital"]) for o in abertas)
     from services.equity_position_service import portfolio as equity_portfolio
-    capital_acoes = sum(float(item.get("cash_cost_total", 0)) for item in equity_portfolio(__import__(__name__), ops))
+    carteira_acoes = equity_portfolio(__import__(__name__), ops)
+    capital_acoes = sum(float(item.get("cash_cost_total", 0)) for item in carteira_acoes)
+    # LFTB11 é aceita pelo usuário como garantia operacional. Consideramos o
+    # valor total alocado (preço médio fiscal x quantidade), sem misturá-lo ao
+    # dinheiro comprometido pelas vendas de PUT.
+    margem_lftb11 = sum(
+        float(item.get("tax_cost_total", 0))
+        for item in carteira_acoes
+        if str(item.get("asset", "")).upper() == "LFTB11"
+    )
     # Capital comprometido é exclusivamente o dinheiro reservado para honrar
     # posições abertas. Ações já existentes na carteira cobrem a CALL, mas não
     # representam dinheiro bloqueado na corretora.
@@ -342,9 +351,9 @@ def metrics(ops: List[Dict[str, object]], fechadas: List[Dict[str, str]], cfg: D
             base_f = fnum(f.get("Lucro_tributavel"), fnum(f.get("Resultado_final"), 0))
         premios_fechados_total += base_f
     premios_total = premios_fechados_total
-    caixa_livre = max(capital_total - capital_comp, 0)
+    caixa_livre = max(capital_total + margem_lftb11 - capital_comp, 0)
     patrimonio_atual = capital_comp + premios_total
-    return {"capital_total": capital_total, "capital_comp": capital_comp, "capital_opcoes": capital_opcoes, "capital_acoes": capital_acoes, "caixa": caixa_livre, "caixa_livre": caixa_livre, "premios_ativos": premios_ativos, "premios_total": premios_total, "patrimonio_atual": patrimonio_atual, "lucro_mes": lucro_mes, "darf": darf, "roi_mes": roi_mes, "roi_abertas": roi_abertas, "roi_medio_abertas": roi_medio_abertas, "roi_medio_fechadas": roi_medio_fechadas, "mes_atual": mes_atual, "abertas": len(abertas), "encerradas": len(ops) - len(abertas)}
+    return {"capital_total": capital_total, "capital_comp": capital_comp, "capital_opcoes": capital_opcoes, "capital_acoes": capital_acoes, "margem_lftb11": margem_lftb11, "caixa": caixa_livre, "caixa_livre": caixa_livre, "premios_ativos": premios_ativos, "premios_total": premios_total, "patrimonio_atual": patrimonio_atual, "lucro_mes": lucro_mes, "darf": darf, "roi_mes": roi_mes, "roi_abertas": roi_abertas, "roi_medio_abertas": roi_medio_abertas, "roi_medio_fechadas": roi_medio_fechadas, "mes_atual": mes_atual, "abertas": len(abertas), "encerradas": len(ops) - len(abertas)}
 
 
 def monthly(ops: List[Dict[str, object]], fechadas: List[Dict[str, str]], cfg: Dict[str, float]) -> List[Dict[str, float | str]]:

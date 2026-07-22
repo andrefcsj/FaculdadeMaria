@@ -44,6 +44,18 @@ Resumo dos Negócios Resumo Financeiro
 Líquido para 30/06/2026 C35,84
 """
 
+PRELIMINARY_OPTIONS_TEXT = """NOTA DE CORRETAGEM PRÉVIA
+BTG Pactual CTVM S.A. necton
+22/07/2026
+Folha  Data pregão
+Q Negociação C/V Tipo Mercado Prazo Especificação do título Obs. (*) Quantidade Preço / Ajuste Valor Operação / Ajuste D / C
+1-BOVESPA V OPÇÃO PETRT500 100 1,53 153,00 C
+Resumo dos Negócios Resumo Financeiro
+153,00Valor das operações
+0,00 I.R.R.F. s/ operações, base R$ 0,00
+Líquido: C151,75
+"""
+
 
 class BrokerageNoteServiceTests(unittest.TestCase):
     def parsed(self):
@@ -102,6 +114,23 @@ class BrokerageNoteServiceTests(unittest.TestCase):
             self.assertEqual([row["net_cash"] for row in saved], ["6.26", "42.10"])
             signed_total = -Decimal(saved[0]["net_cash"]) + Decimal(saved[1]["net_cash"])
             self.assertEqual(signed_total, Decimal("35.84"))
+
+    def test_parses_short_intraday_preliminary_options_layout_as_pending(self):
+        with patch("services.brokerage_note_service.extract_pdf_text", return_value=PRELIMINARY_OPTIONS_TEXT):
+            note = parse_btg_necton_pdf(b"preliminary-options-note")
+
+        self.assertTrue(note.is_provisional)
+        self.assertTrue(note.note_number.startswith("PREVIA-20260722-"))
+        self.assertEqual(note.trade_date.isoformat(), "2026-07-22")
+        self.assertEqual(str(note.net_cash), "151.75")
+        self.assertEqual(str(note.operational_costs), "1.25")
+        self.assertEqual(note.cash_direction, "C")
+        self.assertEqual(len(note.trades), 1)
+        self.assertEqual(note.trades[0].option_code, "PETRT500")
+        self.assertEqual(note.trades[0].side, "Venda")
+        self.assertEqual(note.trades[0].market, "Opção de venda")
+        self.assertEqual(str(note.trades[0].unit_price), "1.53")
+        self.assertEqual(str(note.trades[0].allocated_costs), "1.25")
 
 
 class BrokerageNoteRoutesTests(unittest.TestCase):
