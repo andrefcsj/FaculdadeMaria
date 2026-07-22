@@ -222,7 +222,11 @@ def build_dashboard_view_model(
         premiums_total=premiums_total,
         average_roi=average_roi,
         allocated_capital=_number(indicators.get("capital_comp")),
-        available_to_trade=broker_cash - _number(indicators.get("capital_comp")),
+        available_to_trade=(
+            broker_cash
+            + _number(indicators.get("margem_lftb11"))
+            - _number(indicators.get("capital_comp"))
+        ),
         open_puts=len(open_puts),
         open_operations=len(open_operations),
         next_expiry=({
