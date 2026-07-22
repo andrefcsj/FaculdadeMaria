@@ -156,6 +156,20 @@ class DashboardServiceTests(unittest.TestCase):
         self.assertEqual(view.darf_alert["estimated_darf"], 15)
         self.assertEqual(view.darf_alert["due_date"], "2026-08-31")
 
+    def test_lftb11_margin_increases_available_to_trade_without_changing_commitment(self):
+        indicators = dict(
+            self.indicators,
+            broker_cash_balance=8000,
+            capital_comp=3000,
+            margem_lftb11=2500,
+        )
+        view = build_dashboard_view_model(
+            self.operations, [], indicators, self.history, self.config
+        )
+
+        self.assertEqual(view.allocated_capital, 3000)
+        self.assertEqual(view.available_to_trade, 7500)
+
 
 if __name__ == "__main__":
     unittest.main()
