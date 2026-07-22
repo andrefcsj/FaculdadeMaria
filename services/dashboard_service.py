@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 from dataclasses import dataclass
+from datetime import date, timedelta
 from typing import Mapping, Sequence
 from services.concentration_service import ATTENTION_ASSET_CONCENTRATION, MAX_ASSET_CONCENTRATION
 
@@ -48,7 +49,9 @@ class DashboardViewModel:
     premiums_total: float
     average_roi: float
     allocated_capital: float
+    available_to_trade: float
     open_puts: int
+    open_operations: int
     next_expiry: Mapping[str, object] | None
     projected_roi: float
     broker_cash_balance: float
@@ -63,6 +66,21 @@ class DashboardViewModel:
     stats: tuple[Mapping[str, object], ...]
     chart_labels: tuple[str, ...]
     chart_premiums: tuple[float, ...]
+    darf_alert: Mapping[str, object]
+
+
+def _estimated_darf_due_date(competence: str) -> str:
+    """Último dia útil (segunda a sexta) do mês seguinte, como estimativa."""
+    try:
+        year, month = (int(part) for part in competence.split("-"))
+        next_month = date(year + (month == 12), 1 if month == 12 else month + 1, 1)
+        following = date(next_month.year + (next_month.month == 12), 1 if next_month.month == 12 else next_month.month + 1, 1)
+        due = following - timedelta(days=1)
+        while due.weekday() >= 5:
+            due -= timedelta(days=1)
+        return due.isoformat()
+    except (TypeError, ValueError):
+        return ""
 
 
 def build_dashboard_view_model(
@@ -72,6 +90,7 @@ def build_dashboard_view_model(
     history: Sequence[Mapping[str, object]],
     config: Mapping[str, object],
     option_quotes: Mapping[str, Mapping[str, object]] | None = None,
+    darf_projection: Mapping[str, object] | None = None,
 ) -> DashboardViewModel:
     """Organiza dados existentes para o Dashboard sem recalcular o domínio."""
     open_operations = [
@@ -142,6 +161,7 @@ def build_dashboard_view_model(
     average_roi = _number(indicators.get("roi_medio_abertas"))
     capital_total = _number(indicators.get("capital_total"))
     capital_free = _number(indicators.get("caixa_livre"))
+    broker_cash = _number(indicators.get("broker_cash_balance"))
     projected_roi = _number(indicators.get("roi_abertas"))
     premiums_month = _number(indicators.get("lucro_mes"))
     premiums_total = sum(
@@ -183,20 +203,35 @@ def build_dashboard_view_model(
 
     goal_progress = min(max(average_roi / target_roi * 100, 0), 100) if target_roi else 0
     capital_usage = min(max(_number(indicators.get("capital_comp")) / capital_total * 100, 0), 100) if capital_total else 0
+    projection_rows = tuple((darf_projection or {}).get("rows", ()))
+    current_competence = str((darf_projection or {}).get("current_month", ""))
+    current_tax = next((row for row in projection_rows if str(row.get("competence")) == current_competence), {})
+    estimated_darf = _number(current_tax.get("estimated_darf"))
+    darf_alert = {
+        "competence": current_competence,
+        "premium_base": _number(current_tax.get("net_result")),
+        "taxable_base": _number(current_tax.get("taxable_base")),
+        "estimated_darf": estimated_darf,
+        "due_date": _estimated_darf_due_date(current_competence),
+        "has_due": estimated_darf > 0,
+        "review_count": int(_number(current_tax.get("review_count"))),
+    }
 
     return DashboardViewModel(
         premiums_month=premiums_month,
         premiums_total=premiums_total,
         average_roi=average_roi,
         allocated_capital=_number(indicators.get("capital_comp")),
+        available_to_trade=broker_cash - _number(indicators.get("capital_comp")),
         open_puts=len(open_puts),
+        open_operations=len(open_operations),
         next_expiry=({
             "option_code": expiries[0].get("Ativo", "N/D"),
             "date": expiries[0].get("Vencimento_fmt", ""),
             "days": int(_number(expiries[0].get("Dias"))),
         } if expiries else None),
         projected_roi=projected_roi,
-        broker_cash_balance=_number(indicators.get("broker_cash_balance")),
+        broker_cash_balance=broker_cash,
         ai_summary=summary,
         ai_tone=tone,
         portfolio=portfolio,
@@ -220,4 +255,5 @@ def build_dashboard_view_model(
         ),
         chart_labels=tuple(str(row.get("mes", "")) for row in history),
         chart_premiums=tuple(_number(row.get("patrimonio")) for row in history),
+        darf_alert=darf_alert,
     )

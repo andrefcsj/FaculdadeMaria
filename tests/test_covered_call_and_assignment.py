@@ -5,7 +5,10 @@ from unittest.mock import patch
 
 import legacy_app
 from services.brokerage_note_service import note_to_api, parse_btg_necton_pdf
-from services.equity_position_service import portfolio, save_equity_lot, validate_covered_call
+from services.equity_position_service import (
+    delete_equity_asset, manual_equity_lot, portfolio, replace_equity_asset,
+    save_equity_lot, sell_equity_asset, validate_covered_call,
+)
 from services.new_operation_extension import _preview_roi
 
 
@@ -56,6 +59,15 @@ def test_cash_equity_purchase_is_recognized_for_portfolio():
     assert trade["allocated_costs"] == "1.50"
 
 
+def test_preliminary_regular_note_without_number_is_accepted_and_marked():
+    preliminary = EQUITY_PURCHASE_TEXT.replace("33445566\n", "")
+    with patch("services.brokerage_note_service.extract_pdf_text", return_value=preliminary):
+        payload = note_to_api(parse_btg_necton_pdf(b"preliminary-regular-note"))
+    assert payload["is_provisional"] is True
+    assert payload["note_number"].startswith("PREVIA-20260717-")
+    assert payload["trades"][0]["option_code"] == "CPLE3"
+
+
 def test_covered_call_uses_shares_and_never_adds_strike_capital():
     row = {"ID":"1", "Data abertura":"2026-07-17", "Ativo":"CPLEH160", "Tipo":"CALL", "Estratégia":"Venda Coberta", "Status":"Aberta", "Contratos":"1", "Strike":"16", "Premio_opcao":"0.30", "Custos":"1", "IRRF":"0", "Vencimento":"2026-08-21", "Cotacao_atual":"14.80", "Resultado_realizado":"0"}
     enriched = legacy_app.enrich_ops([row], legacy_app.load_config())[0]
@@ -79,6 +91,26 @@ def test_coverage_validation_blocks_more_calls_than_free_shares():
             assert False, "deveria rejeitar cobertura insuficiente"
         except ValueError as exc:
             assert "Cobertura insuficiente" in str(exc)
+
+
+def test_manual_portfolio_actions_recalculate_quantity_and_cost():
+    with TemporaryDirectory() as directory:
+        class Legacy:
+            DATA = Path(directory)
+            USE_POSTGRES = False
+            read_operacoes = staticmethod(lambda: [])
+            load_config = staticmethod(lambda: {"Tamanho contrato opcoes": 100})
+            infer_acao_from_option = staticmethod(lambda code: code[:4])
+        lot = manual_equity_lot(asset="LFTB11", quantity=200, average_price=Decimal("10"), acquisition_date="2026-07-22")
+        assert save_equity_lot(Legacy, lot)
+        assert portfolio(Legacy)[0]["tax_cost_total"] == 2000
+        replace_equity_asset(Legacy, asset="LFTB11", quantity=150, average_price=Decimal("11"), acquisition_date="2026-07-22")
+        assert portfolio(Legacy)[0]["tax_cost_total"] == 1650
+        consumed = sell_equity_asset(Legacy, asset="LFTB11", quantity=50)
+        assert consumed == 550
+        assert portfolio(Legacy)[0]["quantity"] == 100
+        assert delete_equity_asset(Legacy, "LFTB11") is True
+        assert portfolio(Legacy) == []
 
 
 def test_new_operation_keeps_original_sale_purchase_controls():

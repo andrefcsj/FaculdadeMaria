@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import time
+import uuid
 from datetime import datetime
 from decimal import Decimal
 from pathlib import Path
@@ -93,6 +94,107 @@ def save_equity_lot(legacy, lot: dict[str, Any]) -> bool:
     return True
 
 
+def _persist_lots(legacy, lots: list[dict[str, Any]]) -> None:
+    if getattr(legacy, "USE_POSTGRES", False):
+        conn = legacy.get_pg_conn()
+        try:
+            cur = conn.cursor()
+            cur.execute("""CREATE TABLE IF NOT EXISTS equity_lots (
+                lot_id TEXT PRIMARY KEY, payload JSONB NOT NULL,
+                created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            )""")
+            cur.execute("DELETE FROM equity_lots")
+            for lot in lots:
+                cur.execute(
+                    "INSERT INTO equity_lots (lot_id,payload) VALUES (%s,%s::jsonb)",
+                    (lot["lot_id"], json.dumps(lot, ensure_ascii=False)),
+                )
+            conn.commit()
+            _invalidate_cache(legacy)
+        finally:
+            conn.close()
+        return
+    path = _path(legacy)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(lots, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+def manual_equity_lot(*, asset: str, quantity: int, average_price: Decimal, acquisition_date: str) -> dict[str, Any]:
+    if quantity <= 0 or average_price <= 0:
+        raise ValueError("Quantidade e preço médio devem ser maiores que zero.")
+    ticker = str(asset or "").strip().upper()
+    if not ticker:
+        raise ValueError("Informe o código da ação.")
+    total = average_price * Decimal(quantity)
+    return {
+        "lot_id": f"manual:{uuid.uuid4().hex}", "asset": ticker,
+        "quantity": quantity, "available_quantity": quantity,
+        "acquisition_date": acquisition_date, "exercise_price": str(average_price),
+        "exercise_total": str(total), "exercise_costs": "0",
+        "cash_cost_total": str(total), "option_premium_gross": "0",
+        "option_opening_costs": "0", "tax_cost_total": str(total),
+        "tax_cost_per_share": str(average_price), "source": "Inclusão manual para simulação",
+        "source_operation_id": "", "source_option": "", "source_note_key": "",
+    }
+
+
+def replace_equity_asset(legacy, *, asset: str, quantity: int, average_price: Decimal, acquisition_date: str) -> dict[str, Any]:
+    ticker = str(asset or "").strip().upper()
+    current = next((item for item in portfolio(legacy) if item["asset"] == ticker), None)
+    if current is None:
+        raise ValueError("Ação não encontrada na carteira.")
+    if quantity < int(current.get("covered_quantity", 0)):
+        raise ValueError("A quantidade não pode ficar abaixo das ações cobertas por CALL.")
+    lots = [lot for lot in load_equity_lots(legacy) if str(lot.get("asset", "")).upper() != ticker]
+    lot = manual_equity_lot(asset=ticker, quantity=quantity, average_price=average_price, acquisition_date=acquisition_date)
+    lot["source"] = "Posição consolidada por edição manual"
+    lots.append(lot)
+    _persist_lots(legacy, lots)
+    return lot
+
+
+def delete_equity_asset(legacy, asset: str) -> bool:
+    ticker = str(asset or "").strip().upper()
+    current = next((item for item in portfolio(legacy) if item["asset"] == ticker), None)
+    if current and int(current.get("covered_quantity", 0)):
+        raise ValueError("Encerre a CALL coberta antes de excluir estas ações.")
+    lots = load_equity_lots(legacy)
+    kept = [lot for lot in lots if str(lot.get("asset", "")).upper() != ticker]
+    if len(kept) == len(lots):
+        return False
+    _persist_lots(legacy, kept)
+    return True
+
+
+def sell_equity_asset(legacy, *, asset: str, quantity: int) -> Decimal:
+    ticker = str(asset or "").strip().upper()
+    if quantity <= 0:
+        raise ValueError("A quantidade vendida deve ser maior que zero.")
+    current = next((item for item in portfolio(legacy) if item["asset"] == ticker), None)
+    if current is None or quantity > int(current.get("available_quantity", 0)):
+        raise ValueError("A venda só pode usar ações livres, sem cobertura ativa.")
+    lots = load_equity_lots(legacy)
+    remaining = quantity
+    consumed_cost = Decimal("0")
+    for lot in lots:
+        if remaining <= 0 or str(lot.get("asset", "")).upper() != ticker:
+            continue
+        available = int(lot.get("available_quantity", lot.get("quantity", 0)) or 0)
+        take = min(available, remaining)
+        if not take:
+            continue
+        unit_cash = _decimal(lot.get("cash_cost_total")) / Decimal(max(int(lot.get("quantity", 0)), 1))
+        unit_tax = _decimal(lot.get("tax_cost_per_share"))
+        lot["available_quantity"] = available - take
+        lot["quantity"] = max(int(lot.get("quantity", available)) - take, 0)
+        lot["cash_cost_total"] = str(max(_decimal(lot.get("cash_cost_total")) - unit_cash * take, Decimal("0")))
+        lot["tax_cost_total"] = str(max(_decimal(lot.get("tax_cost_total")) - unit_tax * take, Decimal("0")))
+        consumed_cost += unit_tax * take
+        remaining -= take
+    _persist_lots(legacy, [lot for lot in lots if int(lot.get("quantity", 0) or 0) > 0])
+    return consumed_cost
+
+
 def create_put_assignment_lot(legacy, operation: dict[str, Any], note_payload: dict[str, Any]) -> dict[str, Any]:
     trade = note_payload.get("trade", {})
     quantity = int(trade.get("quantity") or 0)
@@ -123,6 +225,7 @@ def create_put_assignment_lot(legacy, operation: dict[str, Any], note_payload: d
         "source_operation_id": str(operation.get("ID", "")),
         "source_option": str(operation.get("Ativo", "")).upper(),
         "source_note_key": f"{note_payload.get('document_hash')}:{int(trade.get('trade_index', 0))}",
+        "note_pending": bool(note_payload.get("is_provisional", False)),
     }
 
 
@@ -155,6 +258,7 @@ def portfolio(legacy, operations: list[dict[str, Any]] | None = None) -> list[di
         item["available_quantity"] = max(item["quantity"] - covered, 0)
         item["acquisition_dates"] = sorted({str(source.get("acquisition_date", "")) for source in item["sources"] if source.get("acquisition_date")})
         item["acquisition_date"] = item["acquisition_dates"][0] if item["acquisition_dates"] else ""
+        item["note_pending"] = any(bool(source.get("note_pending")) for source in item["sources"])
         item["cash_cost_per_share"] = item["cash_cost_total"] / item["quantity"] if item["quantity"] else Decimal("0")
         item["tax_cost_per_share"] = item["tax_cost_total"] / item["quantity"] if item["quantity"] else Decimal("0")
         for key in ("cash_cost_total", "tax_cost_total", "cash_cost_per_share", "tax_cost_per_share"):

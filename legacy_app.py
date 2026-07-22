@@ -299,7 +299,12 @@ def metrics(ops: List[Dict[str, object]], fechadas: List[Dict[str, str]], cfg: D
     abertas = [o for o in ops if str(o.get("Status", "")).lower() == "aberta"]
     from services.cash_ledger_service import load_cash_events, money
     eventos_caixa = load_cash_events(__import__(__name__))
-    aportes_liquidos = sum((money(e.get("amount")) if e.get("kind") in {"aporte", "ajuste_credito"} else -money(e.get("amount")) for e in eventos_caixa), Decimal("0"))
+    aportes_liquidos = sum((
+        money(e.get("amount")) if e.get("kind") in {"aporte", "ajuste_credito"}
+        else -money(e.get("amount")) if e.get("kind") in {"retirada", "ajuste_debito"}
+        else Decimal("0")
+        for e in eventos_caixa
+    ), Decimal("0"))
     capital_total = cfg.get("Capital total inicial", 4000.0) + float(aportes_liquidos)
     capital_opcoes = sum(float(o["Capital"]) for o in abertas)
     from services.equity_position_service import portfolio as equity_portfolio
@@ -563,7 +568,9 @@ def index():
     abertas = [o for o in ops if str(o.get("Status", "")).lower() == "aberta"]
     top = sorted(abertas, key=lambda x: float(x["Premio_liquido"]), reverse=True)[:5]
     from services.dashboard_market_service import load_option_quotes
-    dashboard = build_dashboard_view_model(dashboard_ops, fechadas, ind, hist, cfg, load_option_quotes(__import__(__name__)))
+    from services.closed_operations_service import build_closed_dashboard
+    darf_projection = build_closed_dashboard(__import__(__name__), scope="all", selected_month="")["darf_projection"]
+    dashboard = build_dashboard_view_model(dashboard_ops, fechadas, ind, hist, cfg, load_option_quotes(__import__(__name__)), darf_projection)
     prox = sorted([o for o in abertas if o.get('Vencimento_fmt')], key=lambda x: float(x.get('Dias', 9999)))
     if prox:
         prox_venc = f"{int(float(prox[0].get('Dias',0)))} dias"

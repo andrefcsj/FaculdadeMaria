@@ -79,6 +79,7 @@ class ParsedBrokerageNote:
     irrf: Decimal
     cash_direction: str
     trades: tuple[ParsedTrade, ...]
+    is_provisional: bool = False
 
 
 def extract_pdf_text(data: bytes) -> str:
@@ -142,10 +143,10 @@ def parse_btg_necton_pdf(data: bytes) -> ParsedBrokerageNote:
             trade_date=trade_date, settlement_date=trade_date,
             document_hash=document_hash, gross_operations=gross, net_cash=net,
             operational_costs=costs, irrf=irrf, cash_direction="D", trades=(trade,),
+            is_provisional=note_match is None,
         )
 
-    if not note_match:
-        raise BrokerageNoteError("O número da nota não foi reconhecido.")
+    provisional_number = f"PREVIA-{trade_date:%Y%m%d}-{document_hash[:8].upper()}"
 
     section = text.split("Negócios realizados", 1)[-1].split("Resumo dos Negócios", 1)[0]
     pattern = re.compile(
@@ -236,7 +237,7 @@ def parse_btg_necton_pdf(data: bytes) -> ParsedBrokerageNote:
 
     return ParsedBrokerageNote(
         broker="BTG Pactual / Necton",
-        note_number=note_match.group(1),
+        note_number=note_match.group(1) if note_match else provisional_number,
         trade_date=trade_date,
         settlement_date=settlement_date,
         document_hash=document_hash,
@@ -245,7 +246,7 @@ def parse_btg_necton_pdf(data: bytes) -> ParsedBrokerageNote:
         operational_costs=effective_costs,
         irrf=irrf,
         cash_direction=direction,
-        trades=tuple(trades),
+        trades=tuple(trades), is_provisional=note_match is None,
     )
 
 
@@ -261,6 +262,7 @@ def note_to_api(note: ParsedBrokerageNote) -> dict[str, Any]:
         "operational_costs": str(note.operational_costs),
         "irrf": str(note.irrf),
         "cash_direction": note.cash_direction,
+        "is_provisional": note.is_provisional,
         "trades": [{**asdict(trade), "contracts": str(trade.contracts), "unit_price": str(trade.unit_price), "gross_value": str(trade.gross_value), "allocated_costs": str(trade.allocated_costs), "allocated_irrf": str(trade.allocated_irrf)} for trade in note.trades],
     }
 
@@ -316,6 +318,7 @@ def save_imported_note(legacy, payload: dict[str, Any], operation_id: str) -> bo
         "key": key,
         "document_hash": str(payload["document_hash"]),
         "note_number": str(payload["note_number"]),
+        "is_provisional": bool(payload.get("is_provisional", False)),
         "broker": "BTG Pactual / Necton",
         "trade_date": str(payload["trade_date"]),
         "settlement_date": payload.get("settlement_date"),

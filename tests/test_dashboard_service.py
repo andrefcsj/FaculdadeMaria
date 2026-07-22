@@ -139,6 +139,23 @@ class DashboardServiceTests(unittest.TestCase):
         self.assertEqual(view.chart_labels, ("jun/26", "jul/26"))
         self.assertEqual(view.chart_premiums, (1500, 1540))
 
+    def test_dashboard_exposes_available_cash_all_open_operations_and_next_darf(self):
+        covered_call = dict(self.operations[0], Ativo="CPLEH15", Tipo="CALL", Capital=0)
+        indicators = dict(self.indicators, broker_cash_balance=8000, capital_comp=3000)
+        projection = {"current_month": "2026-07", "rows": [{
+            "competence": "2026-07", "net_result": Decimal("100"),
+            "taxable_base": Decimal("100"), "estimated_darf": Decimal("15"),
+            "review_count": 0,
+        }]}
+        view = build_dashboard_view_model(
+            [self.operations[0], covered_call], [], indicators, self.history,
+            self.config, darf_projection=projection,
+        )
+        self.assertEqual(view.available_to_trade, 5000)
+        self.assertEqual(view.open_operations, 2)
+        self.assertEqual(view.darf_alert["estimated_darf"], 15)
+        self.assertEqual(view.darf_alert["due_date"], "2026-08-31")
+
 
 if __name__ == "__main__":
     unittest.main()

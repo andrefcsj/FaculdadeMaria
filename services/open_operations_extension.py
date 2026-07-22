@@ -11,6 +11,7 @@ from services.dashboard_market_service import load_option_quotes
 from services.manual_option_quote_service import save_manual_option_quote
 from services.operation_preferences_service import load_operation_metadata, normalize_exercise_interest, operation_underlying, save_operation_metadata
 from services.equity_position_service import portfolio as equity_portfolio, validate_covered_call
+from services.brokerage_note_service import load_imported_notes
 
 
 def register(app, legacy):
@@ -55,13 +56,21 @@ def register(app, legacy):
     def view():
         ops, fechadas, cfg = legacy.load_all()
         abertas = [o for o in ops if str(o.get("Status", "")).lower() == "aberta"]
+        provisional_operation_ids = {
+            str(note.get("operation_id")) for note in load_imported_notes(legacy)
+            if note.get("is_provisional")
+        }
+        for operation in abertas:
+            operation["note_pending"] = str(operation.get("ID")) in provisional_operation_ids
         if abertas:
             option_quotes = load_option_quotes(legacy)
             with ThreadPoolExecutor(max_workers=min(6, len(abertas))) as executor:
                 abertas = list(executor.map(lambda operation: prepare(operation, option_quotes), abertas))
         option_capital = sum(legacy.fnum(operation.get("Capital"), 0) for operation in abertas)
         equity_capital = sum(float(item.get("cash_cost_total", 0)) for item in equity_portfolio(legacy, ops))
-        total_capital = option_capital + equity_capital
+        # Ações usadas como cobertura já pertencem à carteira e não são
+        # dinheiro reservado para honrar as opções abertas.
+        total_capital = option_capital
         total_result = sum(legacy.fnum(operation.get("Fluxo_liquido"), 0) for operation in abertas)
         open_totals = {
             "capital": total_capital,

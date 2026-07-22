@@ -109,7 +109,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const multipleHint = note.trades.length > 1
         ? `<small>A nota possui ${note.trades.length} negociações. Salve cada uma; a próxima será carregada automaticamente.</small>`
         : '<small>O PDF não será armazenado. Confira os campos antes de cadastrar.</small>';
-      result.innerHTML = `<strong>Nota ${note.note_number} reconhecida</strong><br>Crédito/débito líquido: ${brl(note.net_cash)} • Custos efetivos: ${brl(note.operational_costs)}<select id="brokerageTradeSelect" aria-label="Selecione a operação da nota">${options}</select>${multipleHint}`;
+      const noteTitle = note.is_provisional ? 'Nota prévia reconhecida — definitiva pendente' : `Nota ${note.note_number} reconhecida`;
+      result.innerHTML = `<strong>${noteTitle}</strong><br>Crédito/débito líquido: ${brl(note.net_cash)} • Custos efetivos: ${brl(note.operational_costs)}<select id="brokerageTradeSelect" aria-label="Selecione a operação da nota">${options}</select>${multipleHint}`;
       q('brokerageTradeSelect').addEventListener('change', event => applyTrade(event.target.value));
       applyTrade(0);
     } catch (error) {
