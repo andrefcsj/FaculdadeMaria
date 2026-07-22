@@ -87,7 +87,7 @@ def build_dashboard_view_model(
         if str(operation.get("Tipo", "PUT")).upper() == "PUT"
     ]
     expiries = sorted(
-        (operation for operation in open_puts if operation.get("Vencimento_fmt")),
+        (operation for operation in open_options if operation.get("Vencimento_fmt")),
         key=lambda operation: _number(operation.get("Dias"), 999999),
     )
 
@@ -219,5 +219,5 @@ def build_dashboard_view_model(
             {"label": "Itens de atenção", "value": len(attention), "kind": "number"},
         ),
         chart_labels=tuple(str(row.get("mes", "")) for row in history),
-        chart_premiums=tuple(_number(row.get("premios")) for row in history),
+        chart_premiums=tuple(_number(row.get("patrimonio")) for row in history),
     )
