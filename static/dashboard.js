@@ -302,7 +302,7 @@ document.addEventListener('DOMContentLoaded',()=>{
       data:{
         labels:data.labels || [],
         datasets:[{
-          label:'Prêmios',
+          label:'Patrimônio',
           data:data.premiums || [],
           borderColor:'#0b2b59',
           backgroundColor:'rgba(197,139,24,.12)',

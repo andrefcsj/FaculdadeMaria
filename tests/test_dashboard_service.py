@@ -106,6 +106,39 @@ class DashboardServiceTests(unittest.TestCase):
         self.assertEqual(view.today_scenario[0]["situation"], "Seria exercida")
         self.assertIsNone(view.today_scenario[1]["current_value"])
 
+    def test_upcoming_expiries_include_covered_calls(self):
+        covered_call = dict(
+            self.operations[0],
+            Ativo="CPLEH15",
+            Tipo="CALL",
+            Estratégia="Venda coberta",
+            Capital=0,
+            Dias=8,
+            Vencimento_fmt="21/08/2026",
+        )
+
+        view = build_dashboard_view_model(
+            [self.operations[0], covered_call], [], self.indicators, self.history, self.config
+        )
+
+        self.assertEqual(view.next_expiry["option_code"], "CPLEH15")
+        self.assertEqual(
+            [item["option_code"] for item in view.upcoming_expiries],
+            ["CPLEH15", "PETRT123"],
+        )
+
+    def test_patrimonial_chart_uses_history_patrimony(self):
+        history = [
+            {"mes": "jun/26", "premios": 25, "patrimonio": 1500},
+            {"mes": "jul/26", "premios": 40, "patrimonio": 1540},
+        ]
+        view = build_dashboard_view_model(
+            self.operations, [], self.indicators, history, self.config
+        )
+
+        self.assertEqual(view.chart_labels, ("jun/26", "jul/26"))
+        self.assertEqual(view.chart_premiums, (1500, 1540))
+
 
 if __name__ == "__main__":
     unittest.main()
