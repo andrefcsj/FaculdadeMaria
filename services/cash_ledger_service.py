@@ -39,7 +39,7 @@ def load_cash_events(legacy)->list[dict[str,Any]]:
 
 
 def save_cash_event(legacy,*,kind:str,amount:Decimal,event_date:date,description:str)->dict[str,Any]:
-    if kind not in {"aporte","retirada","ajuste_credito","ajuste_debito"}:raise ValueError("Tipo de movimentação inválido.")
+    if kind not in {"aporte","retirada","ajuste_credito","ajuste_debito","venda_acoes"}:raise ValueError("Tipo de movimentação inválido.")
     if amount<=0:raise ValueError("O valor deve ser maior que zero.")
     record={"id":uuid.uuid4().hex,"kind":kind,"amount":str(amount),"date":event_date.isoformat(),"description":str(description or "").strip()[:180],"created_at":datetime.now().isoformat(timespec="seconds")}
     if getattr(legacy,"USE_POSTGRES",False):
@@ -88,6 +88,7 @@ def _closing_note_codes(notes:list[dict[str,Any]])->set[str]:
 def calculate_broker_balance(legacy)->dict[str,Any]:
     events=load_cash_events(legacy);notes=_unique_notes(load_imported_notes(legacy));closing_codes=_closing_note_codes(notes);closures=load_closure_metadata(legacy);operations=legacy.read_operacoes();size=money(legacy.load_config().get("Tamanho contrato opcoes",100))
     contributions=sum((money(row["amount"]) for row in events if row.get("kind") in {"aporte","ajuste_credito"}),Decimal("0"))
+    equity_sales=sum((money(row["amount"]) for row in events if row.get("kind")=="venda_acoes"),Decimal("0"))
     withdrawals=sum((money(row["amount"]) for row in events if row.get("kind") in {"retirada","ajuste_debito"}),Decimal("0"))
     note_cash=sum((money(note.get("net_cash"))*(Decimal("1") if str(note.get("cash_direction","C")).upper()=="C" else Decimal("-1")) for note in notes),Decimal("0"))
     manual_cash=Decimal("0")
@@ -100,15 +101,15 @@ def calculate_broker_balance(legacy)->dict[str,Any]:
             method=str(meta.get("method",""));buyback=money(meta.get("repurchase_value"))
             if method=="recompra":manual_cash-=buyback*contracts*size
             elif method=="exercida" and str(op.get("Tipo","PUT")).upper()=="PUT":manual_cash-=money(op.get("Strike"))*contracts*size
-    balance=contributions-withdrawals+note_cash+manual_cash
-    return {"balance":balance,"contributions":contributions,"withdrawals":withdrawals,"brokerage_cash":note_cash,"manual_operations_cash":manual_cash,"events":events}
+    balance=contributions+equity_sales-withdrawals+note_cash+manual_cash
+    return {"balance":balance,"contributions":contributions,"equity_sales":equity_sales,"withdrawals":withdrawals,"brokerage_cash":note_cash,"manual_operations_cash":manual_cash,"events":events}
 
 
 def build_cash_dashboard(legacy)->dict[str,Any]:
     summary=calculate_broker_balance(legacy);running=Decimal("0");entries=[]
-    labels={"aporte":"Aporte","retirada":"Retirada","ajuste_credito":"Crédito manual","ajuste_debito":"Débito manual"}
+    labels={"aporte":"Aporte","retirada":"Retirada","ajuste_credito":"Crédito manual","ajuste_debito":"Débito manual","venda_acoes":"Venda de ações"}
     for event in summary["events"]:
-        amount=money(event["amount"]);signed=amount if event["kind"] in {"aporte","ajuste_credito"} else -amount;entries.append({**event,"label":labels[event["kind"]],"source":"Movimentação manual","signed":signed,"deletable":True})
+        amount=money(event["amount"]);signed=amount if event["kind"] in {"aporte","ajuste_credito","venda_acoes"} else -amount;entries.append({**event,"label":labels[event["kind"]],"source":"Carteira" if event["kind"]=="venda_acoes" else "Movimentação manual","signed":signed,"deletable":True})
     notes=_unique_notes(load_imported_notes(legacy));closing_codes=_closing_note_codes(notes)
     for note in notes:
         signed=money(note.get("net_cash"))*(Decimal("1") if str(note.get("cash_direction","C")).upper()=="C" else Decimal("-1"));entries.append({"id":"note-"+str(note.get("key","")),"date":str(note.get("trade_date","")),"label":"Crédito de nota" if signed>=0 else "Débito de nota","description":f"Nota {note.get('note_number','')} • {note.get('trade',{}).get('option_code','')}","source":"BTG/Necton","signed":signed,"deletable":False})
