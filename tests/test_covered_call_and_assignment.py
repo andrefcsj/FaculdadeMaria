@@ -7,7 +7,8 @@ import legacy_app
 from services.brokerage_note_service import note_to_api, parse_btg_necton_pdf
 from services.equity_position_service import (
     delete_equity_asset, manual_equity_lot, portfolio, replace_equity_asset,
-    save_equity_lot, sell_equity_asset, validate_covered_call,
+    replace_equity_lot_from_note, save_equity_lot, sell_equity_asset,
+    validate_covered_call,
 )
 from services.new_operation_extension import _preview_roi
 
@@ -111,6 +112,37 @@ def test_manual_portfolio_actions_recalculate_quantity_and_cost():
         assert portfolio(Legacy)[0]["quantity"] == 100
         assert delete_equity_asset(Legacy, "LFTB11") is True
         assert portfolio(Legacy) == []
+
+
+def test_definitive_note_replaces_equity_lot_without_duplicating_quantity():
+    with TemporaryDirectory() as directory:
+        class Legacy:
+            DATA = Path(directory)
+            USE_POSTGRES = False
+            read_operacoes = staticmethod(lambda: [])
+            load_config = staticmethod(lambda: {"Tamanho contrato opcoes": 100})
+            infer_acao_from_option = staticmethod(lambda code: code[:4])
+
+        preview = {
+            "lot_id": "purchase:preview:0", "asset": "PETR4",
+            "quantity": 100, "available_quantity": 100,
+            "cash_cost_total": "3000", "tax_cost_total": "3000",
+            "source_note_key": "preview:0", "note_pending": True,
+        }
+        definitive = {
+            "lot_id": "purchase:final:0", "asset": "PETR4",
+            "quantity": 100, "available_quantity": 100,
+            "cash_cost_total": "3010", "tax_cost_total": "3010",
+            "source_note_key": "final:0", "note_pending": False,
+        }
+        assert save_equity_lot(Legacy, preview)
+        assert replace_equity_lot_from_note(Legacy, "preview:0", definitive)
+        holdings = portfolio(Legacy)
+        assert len(holdings) == 1
+        assert holdings[0]["quantity"] == 100
+        assert holdings[0]["available_quantity"] == 100
+        assert holdings[0]["tax_cost_total"] == 3010
+        assert holdings[0]["note_pending"] is False
 
 
 def test_new_operation_keeps_original_sale_purchase_controls():
