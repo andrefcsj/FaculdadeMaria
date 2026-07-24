@@ -333,10 +333,30 @@ def load_imported_notes(legacy) -> list[dict[str, Any]]:
         return []
 
 
-def save_imported_note(legacy, payload: dict[str, Any], operation_id: str) -> bool:
-    required = {"document_hash", "note_number", "trade_date", "broker", "trade"}
-    if not required.issubset(payload):
-        raise BrokerageNoteError("Dados da nota incompletos.")
+def _trade_identity(payload: dict[str, Any]) -> tuple[str, ...]:
+    trade = payload.get("trade", {}) if isinstance(payload, dict) else {}
+    return (
+        str(payload.get("trade_date", ""))[:10],
+        str(trade.get("event_type", "trade")).strip().lower(),
+        str(trade.get("underlying_asset") or trade.get("option_code") or "").strip().upper(),
+        str(trade.get("side", "")).strip().lower(),
+        str(int(trade.get("quantity", 0) or 0)),
+    )
+
+
+def find_matching_provisional_note(legacy, payload: dict[str, Any]) -> dict[str, Any] | None:
+    """Devolve apenas uma prévia inequivocamente correspondente à definitiva."""
+    if bool(payload.get("is_provisional", False)):
+        return None
+    identity = _trade_identity(payload)
+    candidates = [
+        row for row in load_imported_notes(legacy)
+        if bool(row.get("is_provisional", False)) and _trade_identity(row) == identity
+    ]
+    return candidates[0] if len(candidates) == 1 else None
+
+
+def _build_note_record(payload: dict[str, Any], operation_id: str) -> dict[str, Any]:
     trade = payload["trade"]
     key = f"{payload['document_hash']}:{int(trade.get('trade_index', 0))}"
     has_trade_values = trade.get("gross_value") not in (None, "")
@@ -347,28 +367,66 @@ def save_imported_note(legacy, payload: dict[str, Any], operation_id: str) -> bo
     if trade_direction not in {"C", "D"}:
         trade_side = str(trade.get("side", "")).lower()
         trade_direction = "C" if trade_side == "venda" else "D" if trade_side == "compra" else str(payload.get("cash_direction", "C")).upper()
-    trade_net = (
-        trade_gross - trade_costs - trade_irrf
-        if trade_direction == "C"
-        else trade_gross + trade_costs + trade_irrf
-    )
-    record = {
-        "key": key,
-        "document_hash": str(payload["document_hash"]),
+    trade_net = trade_gross - trade_costs - trade_irrf if trade_direction == "C" else trade_gross + trade_costs + trade_irrf
+    return {
+        "key": key, "document_hash": str(payload["document_hash"]),
         "note_number": str(payload["note_number"]),
         "is_provisional": bool(payload.get("is_provisional", False)),
-        "broker": "BTG Pactual / Necton",
-        "trade_date": str(payload["trade_date"]),
+        "broker": "BTG Pactual / Necton", "trade_date": str(payload["trade_date"]),
         "settlement_date": payload.get("settlement_date"),
-        "cash_direction": trade_direction,
-        "gross_operations": str(trade_gross),
-        "net_cash": str(trade_net),
-        "operational_costs": str(trade_costs),
-        "irrf": str(trade_irrf),
-        "trade": trade,
+        "cash_direction": trade_direction, "gross_operations": str(trade_gross),
+        "net_cash": str(trade_net), "operational_costs": str(trade_costs),
+        "irrf": str(trade_irrf), "trade": trade,
         "operation_id": str(operation_id),
         "imported_at": datetime.now().isoformat(timespec="seconds"),
     }
+
+
+def replace_provisional_note(legacy, provisional_key: str, payload: dict[str, Any], operation_id: str) -> bool:
+    """Substitui uma prévia pela definitiva, sem manter os dois lançamentos."""
+    record = _build_note_record(payload, operation_id)
+    new_key = record["key"]
+    if getattr(legacy, "USE_POSTGRES", False):
+        conn = legacy.get_pg_conn()
+        try:
+            cur = conn.cursor()
+            cur.execute("""CREATE TABLE IF NOT EXISTS brokerage_notes (
+                note_key TEXT PRIMARY KEY, payload JSONB NOT NULL, imported_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+            )""")
+            cur.execute("SELECT 1 FROM brokerage_notes WHERE note_key=%s", (new_key,))
+            if cur.fetchone():
+                return False
+            cur.execute("DELETE FROM brokerage_notes WHERE note_key=%s", (str(provisional_key),))
+            if cur.rowcount != 1:
+                conn.rollback()
+                return False
+            cur.execute(
+                "INSERT INTO brokerage_notes (note_key,payload) VALUES (%s,%s::jsonb)",
+                (new_key, json.dumps(record, ensure_ascii=False)),
+            )
+            conn.commit()
+            return True
+        finally:
+            conn.close()
+    rows = load_imported_notes(legacy)
+    index = next((i for i, row in enumerate(rows) if str(row.get("key")) == str(provisional_key)), None)
+    if index is None or any(str(row.get("key")) == new_key for row in rows):
+        return False
+    rows[index] = record
+    path = _storage_path(legacy)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_suffix(".tmp")
+    temporary.write_text(json.dumps(rows, ensure_ascii=False, indent=2), encoding="utf-8")
+    temporary.replace(path)
+    return True
+
+
+def save_imported_note(legacy, payload: dict[str, Any], operation_id: str) -> bool:
+    required = {"document_hash", "note_number", "trade_date", "broker", "trade"}
+    if not required.issubset(payload):
+        raise BrokerageNoteError("Dados da nota incompletos.")
+    record = _build_note_record(payload, operation_id)
+    key = record["key"]
     if getattr(legacy, "USE_POSTGRES", False):
         conn = legacy.get_pg_conn()
         try:
