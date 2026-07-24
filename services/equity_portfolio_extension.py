@@ -2,11 +2,14 @@
 from datetime import date
 from decimal import Decimal
 from flask import jsonify, redirect, render_template, request, url_for
-from services.brokerage_note_service import BrokerageNoteError, note_to_api, parse_btg_necton_pdf, save_imported_note
+from services.brokerage_note_service import (
+    BrokerageNoteError, find_matching_provisional_note, note_to_api,
+    parse_btg_necton_pdf, replace_provisional_note, save_imported_note,
+)
 from services.cash_ledger_service import money, save_cash_event
 from services.equity_position_service import (
     delete_equity_asset, manual_equity_lot, portfolio, replace_equity_asset,
-    save_equity_lot, sell_equity_asset,
+    replace_equity_lot_from_note, save_equity_lot, sell_equity_asset,
 )
 
 
@@ -55,6 +58,7 @@ def register(app, legacy):
             imported = []
             for trade in purchases:
                 trade_payload = {**payload, "trade": trade}
+                provisional = find_matching_provisional_note(legacy, trade_payload)
                 lot_id = f"purchase:{payload['document_hash']}:{trade['trade_index']}"
                 gross = Decimal(str(trade["gross_value"]))
                 costs = Decimal(str(trade["allocated_costs"])) + Decimal(str(trade["allocated_irrf"]))
@@ -71,12 +75,19 @@ def register(app, legacy):
                     "source_option": "", "source_note_key": f"{payload['document_hash']}:{trade['trade_index']}",
                     "note_pending": bool(payload.get("is_provisional", False)),
                 }
-                if not save_imported_note(legacy, trade_payload, f"equity:{trade['underlying_asset']}"):
-                    raise BrokerageNoteError(f"A compra de {trade['underlying_asset']} desta nota já foi importada.")
-                if not save_equity_lot(legacy, lot):
-                    raise BrokerageNoteError(f"O lote de {trade['underlying_asset']} já foi cadastrado.")
+                if provisional:
+                    operation_id = str(provisional.get("operation_id") or f"equity:{trade['underlying_asset']}")
+                    if not replace_equity_lot_from_note(legacy, str(provisional["key"]), lot):
+                        raise BrokerageNoteError("O lote provisório correspondente não foi encontrado com segurança.")
+                    if not replace_provisional_note(legacy, str(provisional["key"]), trade_payload, operation_id):
+                        raise BrokerageNoteError("Não foi possível substituir a nota prévia pela definitiva.")
+                else:
+                    if not save_imported_note(legacy, trade_payload, f"equity:{trade['underlying_asset']}"):
+                        raise BrokerageNoteError(f"A compra de {trade['underlying_asset']} desta nota já foi importada.")
+                    if not save_equity_lot(legacy, lot):
+                        raise BrokerageNoteError(f"O lote de {trade['underlying_asset']} já foi cadastrado.")
                 imported.append(trade["underlying_asset"])
-            return jsonify({"ok": True, "imported": imported, "message": "Ações incluídas na Carteira com custo médio recalculado."})
+            return jsonify({"ok": True, "imported": imported, "message": "Nota conciliada e carteira recalculada sem duplicar a posição."})
         except BrokerageNoteError as exc:
             return jsonify({"ok": False, "error": str(exc)}), 400
 
