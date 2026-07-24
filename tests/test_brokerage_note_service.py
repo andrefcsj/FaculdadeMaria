@@ -9,8 +9,10 @@ import legacy_app
 from services.brokerage_note_service import (
     build_notes_dashboard,
     delete_imported_note,
+    find_matching_provisional_note,
     note_to_api,
     parse_btg_necton_pdf,
+    replace_provisional_note,
     save_imported_note,
 )
 
@@ -131,6 +133,72 @@ class BrokerageNoteServiceTests(unittest.TestCase):
         self.assertEqual(note.trades[0].market, "Opção de venda")
         self.assertEqual(str(note.trades[0].unit_price), "1.53")
         self.assertEqual(str(note.trades[0].allocated_costs), "1.25")
+
+    def test_definitive_note_matches_only_the_correct_provisional_trade(self):
+        with tempfile.TemporaryDirectory() as directory:
+            class Legacy:
+                DATA = Path(directory)
+                USE_POSTGRES = False
+
+            def payload(asset, digest, provisional, price="10.00"):
+                return {
+                    "document_hash": digest, "note_number": f"PREVIA-{digest}" if provisional else "99123",
+                    "trade_date": "2026-07-22", "broker": "BTG Pactual / Necton",
+                    "is_provisional": provisional, "trade": {
+                        "trade_index": 0, "event_type": "equity_purchase",
+                        "option_code": asset, "underlying_asset": asset,
+                        "side": "Compra", "quantity": 100, "unit_price": price,
+                        "gross_value": str(Decimal(price) * 100), "cash_direction": "D",
+                        "allocated_costs": "1.00", "allocated_irrf": "0",
+                    },
+                }
+
+            petr_preview = payload("PETR4", "petr-preview", True)
+            vale_preview = payload("VALE3", "vale-preview", True)
+            self.assertTrue(save_imported_note(Legacy, petr_preview, "equity:PETR4"))
+            self.assertTrue(save_imported_note(Legacy, vale_preview, "equity:VALE3"))
+
+            # A definitiva pode ter preço/custos ajustados em relação à prévia.
+            petr_final = payload("PETR4", "petr-final", False, "10.02")
+            match = find_matching_provisional_note(Legacy, petr_final)
+            self.assertEqual(match["operation_id"], "equity:PETR4")
+            self.assertTrue(replace_provisional_note(Legacy, match["key"], petr_final, match["operation_id"]))
+
+            saved = json.loads((Path(directory) / "brokerage_notes.json").read_text(encoding="utf-8"))
+            self.assertEqual(len(saved), 2)
+            petr = next(row for row in saved if row["trade"]["underlying_asset"] == "PETR4")
+            vale = next(row for row in saved if row["trade"]["underlying_asset"] == "VALE3")
+            self.assertFalse(petr["is_provisional"])
+            self.assertEqual(petr["document_hash"], "petr-final")
+            self.assertTrue(vale["is_provisional"])
+            self.assertEqual(vale["document_hash"], "vale-preview")
+
+    def test_ambiguous_provisional_trades_are_not_reconciled_automatically(self):
+        with tempfile.TemporaryDirectory() as directory:
+            class Legacy:
+                DATA = Path(directory)
+                USE_POSTGRES = False
+
+            base_trade = {
+                "trade_index": 0, "event_type": "equity_purchase",
+                "option_code": "PETR4", "underlying_asset": "PETR4",
+                "side": "Compra", "quantity": 100, "unit_price": "10",
+                "gross_value": "1000", "cash_direction": "D",
+                "allocated_costs": "0", "allocated_irrf": "0",
+            }
+            for index in (1, 2):
+                preview = {
+                    "document_hash": f"preview-{index}", "note_number": f"PREVIA-{index}",
+                    "trade_date": "2026-07-22", "broker": "BTG Pactual / Necton",
+                    "is_provisional": True, "trade": dict(base_trade),
+                }
+                self.assertTrue(save_imported_note(Legacy, preview, f"equity:PETR4:{index}"))
+            definitive = {
+                "document_hash": "final", "note_number": "999",
+                "trade_date": "2026-07-22", "broker": "BTG Pactual / Necton",
+                "is_provisional": False, "trade": dict(base_trade),
+            }
+            self.assertIsNone(find_matching_provisional_note(Legacy, definitive))
 
 
 class BrokerageNoteRoutesTests(unittest.TestCase):

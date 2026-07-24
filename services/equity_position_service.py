@@ -94,6 +94,30 @@ def save_equity_lot(legacy, lot: dict[str, Any]) -> bool:
     return True
 
 
+def replace_equity_lot_from_note(legacy, provisional_note_key: str, lot: dict[str, Any]) -> bool:
+    """Troca o lote provisório pelo definitivo sem duplicar posição ou custo."""
+    lots = load_equity_lots(legacy)
+    matches = [
+        index for index, item in enumerate(lots)
+        if str(item.get("source_note_key", "")) == str(provisional_note_key)
+    ]
+    if len(matches) != 1:
+        return False
+    index = matches[0]
+    old = lots[index]
+    quantity = int(lot.get("quantity", 0) or 0)
+    old_quantity = int(old.get("quantity", 0) or 0)
+    old_available = int(old.get("available_quantity", old_quantity) or 0)
+    consumed = max(old_quantity - old_available, 0)
+    lots[index] = {
+        **lot,
+        "available_quantity": max(quantity - consumed, 0),
+        "updated_at": datetime.now().isoformat(timespec="seconds"),
+    }
+    _persist_lots(legacy, lots)
+    return True
+
+
 def _persist_lots(legacy, lots: list[dict[str, Any]]) -> None:
     if getattr(legacy, "USE_POSTGRES", False):
         conn = legacy.get_pg_conn()
