@@ -8,11 +8,13 @@ def test_open_operations_has_new_operation_popup_button():
     assert "Cadastrar Operação" in template
 
 
-def test_open_operations_shows_premium_strike_and_distance_without_option_current_price():
+def test_open_operations_shows_received_current_and_effective_exercise_prices():
     template = (Path(__file__).parents[1] / "templates" / "operacoes_abertas.html").read_text(encoding="utf-8")
-    assert "Valor do prêmio" in template
-    assert "<th>Opção</th><th>Strike</th><th>Valor do prêmio</th>" in template
-    assert "<th>Preço atual</th>" not in template
+    assert "<th>Prêmio recebido</th><th>Valor do prêmio hoje</th>" in template
+    assert "<th>Prob. de exercício</th><th>Preço efetivo no exercício</th>" in template
+    assert "{{ o.Vencimento_fmt }} ({{ o.Dias }}d)" in template
+    assert "Prazo / status" not in template
     assert "Distância do strike" in template
     assert "distancia_strike_class" in template
-    assert "Prazo / status" in template
+    assert "fonte_preco_atual" in template
+    assert "data-manual-quote" in template
