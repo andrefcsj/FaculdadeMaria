@@ -14,8 +14,29 @@ from services.equity_position_service import portfolio as equity_portfolio, vali
 from services.brokerage_note_service import load_imported_notes
 
 
+def effective_exercise_price(operation, contract_size=100):
+    """Preço efetivo por ação após descontar/somar o prêmio líquido recebido."""
+    strategy = str(operation.get("Estratégia", "")).strip().lower()
+    option_type = str(operation.get("Tipo", "")).strip().upper()
+    if strategy == "compra":
+        return None
+    contracts = Decimal(str(operation.get("Contratos_n", operation.get("Contratos", 0)) or 0))
+    size = Decimal(str(contract_size or 100))
+    strike = Decimal(str(operation.get("Strike_n", operation.get("Strike", 0)) or 0))
+    net_premium = Decimal(str(operation.get("Premio_liquido", 0) or 0))
+    shares = contracts * size
+    if shares <= 0 or strike <= 0:
+        return None
+    premium_per_share = net_premium / shares
+    if option_type == "PUT":
+        return float(strike - premium_per_share)
+    if option_type == "CALL" and strategy in {"venda coberta", "call coberta", "venda"}:
+        return float(strike + premium_per_share)
+    return None
+
+
 def register(app, legacy):
-    def prepare(operation, option_quotes):
+    def prepare(operation, option_quotes, contract_size):
         ticker = operation_underlying(legacy, operation)
         expiry = legacy.parse_date(str(operation.get("Vencimento", "")))
         estimate = estimate_operation_exercise_probability(
@@ -30,6 +51,12 @@ def register(app, legacy):
         operation["preco_venda"] = legacy.fnum(operation.get("Premio_opcao"), 0)
         operation["preco_atual_opcao"] = float(quote["price"]) if quote.get("price") is not None else None
         operation["fonte_preco_atual"] = str(quote.get("source", "Cotação da opção indisponível"))
+        operation["preco_efetivo_exercicio"] = effective_exercise_price(operation, contract_size)
+        operation["preco_efetivo_descricao"] = (
+            "Custo efetivo de aquisição: strike menos o prêmio líquido por ação."
+            if str(operation.get("Tipo", "")).upper() == "PUT"
+            else "Preço efetivo de venda: strike mais o prêmio líquido por ação."
+        )
         strike = legacy.fnum(operation.get("Strike"), 0)
         spot = operation["cotacao_atual"] or 0
         operation["distancia_strike"] = ((spot - strike) / strike * 100) if spot and strike else None
@@ -64,8 +91,9 @@ def register(app, legacy):
             operation["note_pending"] = str(operation.get("ID")) in provisional_operation_ids
         if abertas:
             option_quotes = load_option_quotes(legacy)
+            contract_size = cfg.get("Tamanho contrato opcoes", 100)
             with ThreadPoolExecutor(max_workers=min(6, len(abertas))) as executor:
-                abertas = list(executor.map(lambda operation: prepare(operation, option_quotes), abertas))
+                abertas = list(executor.map(lambda operation: prepare(operation, option_quotes, contract_size), abertas))
         option_capital = sum(legacy.fnum(operation.get("Capital"), 0) for operation in abertas)
         equity_capital = sum(float(item.get("cash_cost_total", 0)) for item in equity_portfolio(legacy, ops))
         # Ações usadas como cobertura já pertencem à carteira e não são
