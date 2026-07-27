@@ -18,3 +18,7 @@ def test_open_operations_shows_received_current_and_effective_exercise_prices():
     assert "distancia_strike_class" in template
     assert "fonte_preco_atual" in template
     assert "data-manual-quote" in template
+    assert "overflow-x:hidden" in template
+    assert "min-width:1880px" not in template
+    assert "border-right:1px solid rgba(203,213,225,.42)" in template
+    assert ".premium-ops th:nth-child(4),.premium-ops td:nth-child(4){text-align:center}" in template
