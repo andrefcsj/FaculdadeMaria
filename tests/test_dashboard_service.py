@@ -191,6 +191,26 @@ class DashboardServiceTests(unittest.TestCase):
         self.assertEqual(view.allocated_capital, 3000)
         self.assertEqual(view.available_to_trade, 7500)
 
+    def test_commitment_breakdown_is_gross_and_excludes_lftb11(self):
+        covered_call = dict(
+            self.operations[0], Ativo="PETRH300", Tipo="CALL",
+            Estratégia="Venda Coberta", Contratos_n=1, Capital=0,
+        )
+        holdings = [
+            {"asset": "PETR4", "quantity": 100, "cash_cost_per_share": 28},
+            {"asset": "LFTB11", "quantity": 10, "cash_cost_per_share": 100},
+        ]
+        view = build_dashboard_view_model(
+            [self.operations[0], covered_call], [], self.indicators,
+            self.history, self.config, equity_holdings=holdings,
+        )
+
+        self.assertEqual(
+            [(item["option_code"], item["quantity"], item["total"]) for item in view.commitment_items],
+            [("PETRH300", 100, 2800), ("PETRT123", 100, 3000)],
+        )
+        self.assertFalse(any(item["asset"] == "LFTB11" for item in view.commitment_items))
+
 
 if __name__ == "__main__":
     unittest.main()
