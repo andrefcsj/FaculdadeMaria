@@ -27,6 +27,7 @@ from services.paid_darf_extension import register as register_paid_darfs
 from services.date_format_service import format_date_br, format_datetime_br, format_month_br
 from services.concentration_service import build_portfolio_concentration
 from services.equity_portfolio_extension import register as register_equity_portfolio
+from services.premium_history_service import build_premium_history
 
 app = legacy.app
 app.jinja_env.filters["date_br"] = format_date_br
@@ -216,6 +217,18 @@ def rolagem_inteligente():
         except Exception as exc:
             error = str(exc)
     return render_template("rolagem_inteligente.html", operations=operations, analysis=analysis, error=error, selected=selected)
+
+
+@app.get("/premios-recebidos")
+def premios_recebidos():
+    operations, _closed, _config = legacy.load_all()
+    premium_history = build_premium_history(
+        legacy,
+        operations,
+        selected_month=request.args.get("month", "").strip(),
+        selected_year=request.args.get("year", "").strip(),
+    )
+    return render_template("premios_recebidos.html", premium_history=premium_history)
 
 
 register_open_operations(app, legacy)
