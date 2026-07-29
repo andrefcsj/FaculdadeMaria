@@ -36,6 +36,18 @@ def _asset_from_option(option_code: object) -> str:
     return letters[:4] if letters else "N/D"
 
 
+def _underlying_asset(operation: Mapping[str, object]) -> str:
+    explicit = str(operation.get("Ativo_subjacente") or "").strip().upper()
+    if explicit:
+        return explicit
+    root = _asset_from_option(operation.get("Ativo"))
+    return {
+        "BBDC": "BBDC4", "ITSA": "ITSA4", "GOAU": "GOAU4",
+        "CPLE": "CPLE3", "PETR": "PETR4", "VALE": "VALE3",
+        "BBAS": "BBAS3", "ABEV": "ABEV3",
+    }.get(root, root)
+
+
 def _has_exercise_interest(operation: Mapping[str, object]) -> bool:
     value = operation.get("Interesse_exercicio", False)
     return value if isinstance(value, bool) else str(value or "").strip().lower() in {"1", "true", "sim", "yes", "s"}
@@ -196,6 +208,15 @@ def build_dashboard_view_model(
     quotes = option_quotes or {}
     today_scenario = []
     probability_by_code: dict[str, object] = {}
+    for operation in open_options:
+        code = str(operation.get("Ativo", "N/D")).upper()
+        probability_by_code[code] = estimate_operation_exercise_probability(
+            ticker=_underlying_asset(operation),
+            option_type=str(operation.get("Tipo", "PUT")).upper(),
+            strike=Decimal(str(_number(operation.get("Strike_n", operation.get("Strike"))) or 0)),
+            expiry=_operation_expiry(operation.get("Vencimento")),
+        )
+
     for operation in sorted(open_options, key=lambda item: _number(item.get("Dias"), 999999))[:5]:
         code = str(operation.get("Ativo", "N/D")).upper()
         spot, strike = _number(operation.get("Cotacao_n")), _number(operation.get("Strike_n"))
@@ -206,15 +227,7 @@ def build_dashboard_view_model(
             exercised = (option_type == "PUT" and spot <= strike) or (option_type == "CALL" and spot >= strike)
             situation, situation_class = ("Seria exercida", "exercised") if exercised else ("Não seria exercida", "safe")
         quote = quotes.get(code, {})
-        underlying = str(operation.get("Ativo_subjacente") or "")
-        expiry = _operation_expiry(operation.get("Vencimento"))
-        estimate = estimate_operation_exercise_probability(
-            ticker=underlying,
-            option_type=option_type,
-            strike=Decimal(str(strike or 0)),
-            expiry=expiry,
-        )
-        probability_by_code[code] = estimate
+        estimate = probability_by_code[code]
         today_scenario.append({
             "option_code": code,
             "days": int(_number(operation.get("Dias"))),
@@ -229,7 +242,8 @@ def build_dashboard_view_model(
 
     open_positions = tuple({
         "option_code": str(operation.get("Ativo", "N/D")).upper(),
-        "asset": str(operation.get("Ativo_subjacente") or _asset_from_option(operation.get("Ativo"))),
+        "asset": _underlying_asset(operation),
+        "logo_url": f"https://raw.githubusercontent.com/thefintz/icones-b3/main/icones/{_underlying_asset(operation)}.png",
         "type": str(operation.get("Tipo", "PUT")).upper(),
         "strategy": str(operation.get("Estratégia", "Venda")),
         "strike": _number(operation.get("Strike_n", operation.get("Strike"))),
@@ -239,7 +253,16 @@ def build_dashboard_view_model(
         "days": int(_number(operation.get("Dias"))),
         "roi": _number(operation.get("ROI")),
         "spot": _number(operation.get("Cotacao_n")) or None,
-        "probability": getattr(probability_by_code.get(str(operation.get("Ativo", "")).upper()), "percentage", "—"),
+        "probability": probability_by_code[str(operation.get("Ativo", "")).upper()].percentage,
+        "probability_label": probability_by_code[str(operation.get("Ativo", "")).upper()].label,
+        "probability_class": (
+            "high" if probability_by_code[str(operation.get("Ativo", "")).upper()].probability is not None
+            and probability_by_code[str(operation.get("Ativo", "")).upper()].probability >= Decimal("0.65")
+            else "mid" if probability_by_code[str(operation.get("Ativo", "")).upper()].probability is not None
+            and probability_by_code[str(operation.get("Ativo", "")).upper()].probability >= Decimal("0.35")
+            else "low" if probability_by_code[str(operation.get("Ativo", "")).upper()].probability is not None
+            else "unavailable"
+        ),
     } for operation in sorted(open_options, key=lambda item: _number(item.get("Dias"), 999999)))
 
     goal_progress = min(max(average_roi / target_roi * 100, 0), 100) if target_roi else 0
