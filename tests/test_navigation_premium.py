@@ -13,6 +13,7 @@ class PremiumNavigationTests(unittest.TestCase):
         self.assertIn('href="/scanner-inteligente"', page)
         self.assertIn("FaculdadeMaria", page)
         self.assertIn("Opções Inteligentes", page)
+        self.assertLess(page.index("GESTÃO"), page.index("INTELIGÊNCIA"))
 
     def test_scanner_page_renders_explanation_and_filters(self):
         response = self.client.get("/scanner-inteligente")
