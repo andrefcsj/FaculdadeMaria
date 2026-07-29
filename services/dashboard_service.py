@@ -70,6 +70,7 @@ def _attention_item(option_code: object, categories: list[dict[str, str]]) -> di
 @dataclass(frozen=True)
 class DashboardViewModel:
     patrimony: float
+    current_month_filter: str
     premiums_month: float
     premiums_total: float
     average_roi: float
@@ -283,6 +284,7 @@ def build_dashboard_view_model(
 
     return DashboardViewModel(
         patrimony=_number(indicators.get("patrimonio_atual")),
+        current_month_filter=date.today().strftime("%Y-%m"),
         premiums_month=premiums_month,
         premiums_total=premiums_total,
         average_roi=average_roi,
