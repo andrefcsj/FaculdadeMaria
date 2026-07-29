@@ -76,6 +76,7 @@ class DashboardViewModel:
     premiums_total: float
     average_roi: float
     allocated_capital: float
+    commitment_items: tuple[Mapping[str, object], ...]
     available_to_trade: float
     open_puts: int
     open_operations: int
@@ -119,6 +120,7 @@ def build_dashboard_view_model(
     config: Mapping[str, object],
     option_quotes: Mapping[str, Mapping[str, object]] | None = None,
     darf_projection: Mapping[str, object] | None = None,
+    equity_holdings: Sequence[Mapping[str, object]] = (),
 ) -> DashboardViewModel:
     """Organiza dados existentes para o Dashboard sem recalcular o domínio."""
     open_operations = [
@@ -133,6 +135,45 @@ def build_dashboard_view_model(
         operation for operation in open_operations
         if str(operation.get("Tipo", "PUT")).upper() == "PUT"
     ]
+    contract_size = _number(config.get("Tamanho contrato opcoes"), 100)
+    commitment_items = []
+    for operation in open_puts:
+        strategy = str(operation.get("Estratégia", "Venda")).strip().lower()
+        if strategy == "compra":
+            continue
+        quantity = int(_number(operation.get("Contratos_n", operation.get("Contratos")), 1) * contract_size)
+        commitment_items.append({
+            "kind": "put",
+            "asset": _underlying_asset(operation),
+            "option_code": str(operation.get("Ativo", "N/D")).upper(),
+            "quantity": quantity,
+            "total": _number(operation.get("Capital_nominal", operation.get("Capital"))),
+            "logo_url": f"https://raw.githubusercontent.com/thefintz/icones-b3/main/icones/{_underlying_asset(operation)}.png",
+        })
+
+    holding_by_asset = {
+        str(holding.get("asset", "")).upper(): holding
+        for holding in equity_holdings
+        if str(holding.get("asset", "")).upper() != "LFTB11"
+    }
+    for operation in open_options:
+        strategy = str(operation.get("Estratégia", "")).strip().lower()
+        if str(operation.get("Tipo", "")).upper() != "CALL" or strategy not in {"venda coberta", "call coberta"}:
+            continue
+        asset = _underlying_asset(operation)
+        holding = holding_by_asset.get(asset, {})
+        quantity = int(_number(operation.get("Contratos_n", operation.get("Contratos")), 1) * contract_size)
+        covered_quantity = min(quantity, int(_number(holding.get("quantity"))))
+        unit_cost = _number(holding.get("cash_cost_per_share"))
+        commitment_items.append({
+            "kind": "shares",
+            "asset": asset,
+            "option_code": str(operation.get("Ativo", "N/D")).upper(),
+            "quantity": covered_quantity,
+            "total": covered_quantity * unit_cost,
+            "logo_url": f"https://raw.githubusercontent.com/thefintz/icones-b3/main/icones/{asset}.png",
+        })
+    commitment_items.sort(key=lambda item: (str(item["asset"]), str(item["option_code"])))
     expiries = sorted(
         (operation for operation in open_options if operation.get("Vencimento_fmt")),
         key=lambda operation: _number(operation.get("Dias"), 999999),
@@ -291,6 +332,7 @@ def build_dashboard_view_model(
         premiums_total=premiums_total,
         average_roi=average_roi,
         allocated_capital=_number(indicators.get("capital_comp")),
+        commitment_items=tuple(commitment_items),
         available_to_trade=(
             broker_cash
             + _number(indicators.get("margem_lftb11"))
