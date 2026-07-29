@@ -293,6 +293,25 @@ document.addEventListener('DOMContentLoaded',()=>{
 });
 
 document.addEventListener('DOMContentLoaded',()=>{
+  const patrimonyCard=document.getElementById('patrimonyCard');
+  const patrimonyModal=document.getElementById('patrimonyModal');
+  if(patrimonyCard && patrimonyModal){
+    const closePatrimony=()=>{
+      patrimonyModal.hidden=true;
+      document.body.classList.remove('patrimony-modal-open');
+      patrimonyCard.focus();
+    };
+    patrimonyCard.addEventListener('click',()=>{
+      patrimonyModal.hidden=false;
+      document.body.classList.add('patrimony-modal-open');
+      patrimonyModal.querySelector('.patrimony-modal__close')?.focus();
+    });
+    patrimonyModal.querySelectorAll('[data-close-patrimony]').forEach(button=>button.addEventListener('click',closePatrimony));
+    document.addEventListener('keydown',event=>{
+      if(event.key==='Escape' && !patrimonyModal.hidden) closePatrimony();
+    });
+  }
+
   const dataNode=document.getElementById('executiveDashboardData');
   const canvas=document.getElementById('executivePremiumChart');
   if(dataNode && canvas && typeof Chart !== 'undefined'){
