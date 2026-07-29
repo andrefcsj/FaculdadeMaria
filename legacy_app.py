@@ -576,8 +576,13 @@ def index():
     top = sorted(abertas, key=lambda x: float(x["Premio_liquido"]), reverse=True)[:5]
     from services.dashboard_market_service import load_option_quotes
     from services.closed_operations_service import build_closed_dashboard
+    from services.equity_position_service import portfolio as equity_portfolio
     darf_projection = build_closed_dashboard(__import__(__name__), scope="all", selected_month="")["darf_projection"]
-    dashboard = build_dashboard_view_model(dashboard_ops, fechadas, ind, hist, cfg, load_option_quotes(__import__(__name__)), darf_projection)
+    dashboard = build_dashboard_view_model(
+        dashboard_ops, fechadas, ind, hist, cfg,
+        load_option_quotes(__import__(__name__)), darf_projection,
+        equity_portfolio(__import__(__name__), ops),
+    )
     prox = sorted([o for o in abertas if o.get('Vencimento_fmt')], key=lambda x: float(x.get('Dias', 9999)))
     if prox:
         prox_venc = f"{int(float(prox[0].get('Dias',0)))} dias"
