@@ -1,7 +1,9 @@
 import unittest
 from decimal import Decimal
+from unittest.mock import patch
 
 from services.dashboard_service import build_dashboard_view_model
+from services.exercise_probability_service import ExerciseProbabilityEstimate
 
 
 class DashboardServiceTests(unittest.TestCase):
@@ -105,6 +107,25 @@ class DashboardServiceTests(unittest.TestCase):
         self.assertEqual(view.today_scenario[0]["current_value"], 1.45)
         self.assertEqual(view.today_scenario[0]["situation"], "Seria exercida")
         self.assertIsNone(view.today_scenario[1]["current_value"])
+
+    @patch("services.dashboard_service.estimate_operation_exercise_probability")
+    def test_probability_uses_inferred_underlying_for_every_open_operation(self, estimate):
+        estimate.return_value = ExerciseProbabilityEstimate(
+            Decimal("0.72"), "Alta", "Estatística", "Teste"
+        )
+        operations = [
+            dict(self.operations[0], Ativo="BBDCT20", Strike_n=18.81, Vencimento="2026-08-21"),
+            dict(self.operations[0], Ativo="PETRT500", Strike_n=43.11, Vencimento="2026-08-21"),
+        ]
+
+        view = build_dashboard_view_model(
+            operations, [], self.indicators, self.history, self.config
+        )
+
+        self.assertEqual([item["probability"] for item in view.open_positions], ["72,0%", "72,0%"])
+        self.assertEqual(view.open_positions[0]["asset"], "BBDC4")
+        self.assertEqual(view.open_positions[0]["probability_class"], "high")
+        self.assertEqual(estimate.call_args_list[0].kwargs["ticker"], "BBDC4")
 
     def test_upcoming_expiries_include_covered_calls(self):
         covered_call = dict(
