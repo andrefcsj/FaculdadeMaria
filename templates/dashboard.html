@@ -6,14 +6,12 @@
 {% block content %}
 <div class="executive-dashboard">
   <section class="exec-kpis" aria-label="Indicadores principais">
-    <article class="exec-kpi exec-kpi--navy"><span class="exec-kpi__icon">▰</span><small>SALDO NA CORRETORA</small><strong>{{ money(dashboard.broker_cash_balance) }}</strong><p>Saldo contábil calculado</p><div class="exec-kpi__insight"><i></i><span>Aportes + caixa operacional - retiradas</span></div></article>
-    <article class="exec-kpi exec-kpi--blue"><span class="exec-kpi__icon">◎</span><small>SALDO PARA OPERAR</small><strong class="{% if dashboard.available_to_trade < 0 %}negative{% endif %}">{{ money(dashboard.available_to_trade) }}</strong><p>Saldo da corretora + margem LFTB11 - capital comprometido</p><div class="exec-kpi__insight"><i></i><span>Inclui {{ money(ind.margem_lftb11 or 0) }} em garantia LFTB11</span></div></article>
-    <article class="exec-kpi exec-kpi--green"><span class="exec-kpi__icon">$</span><small>PRÊMIOS</small><strong>{{ money(dashboard.premiums_total) }}</strong><p>Total líquido registrado</p><div class="exec-kpi__insight"><i></i><span>Todo o histórico de operações</span></div></article>
-    <article class="exec-kpi exec-kpi--green"><span class="exec-kpi__icon">$</span><small>PRÊMIOS NO MÊS</small><strong>{{ money(dashboard.premiums_month) }}</strong><p>Recebidos no período atual</p><div class="exec-kpi__insight"><i></i><span>Resultado realizado no mês</span></div></article>
-    <article class="exec-kpi exec-kpi--blue"><span class="exec-kpi__icon">↗</span><small>ROI MÉDIO DA CARTEIRA</small><strong>{{ percent(dashboard.average_roi) }}</strong><p>Meta oficial: 4,00%</p><div class="exec-kpi__meter"><i style="width:{{ dashboard.goals[0].progress|round(1) }}%"></i></div><div class="exec-kpi__insight"><span>Progresso da meta</span><b>{{ dashboard.goals[0].progress|round|int }}%</b></div></article>
-    <article class="exec-kpi exec-kpi--yellow"><span class="exec-kpi__icon">▥</span><small>CAPITAL COMPROMETIDO</small><strong>{{ money(dashboard.allocated_capital) }}</strong><p>Dinheiro reservado para operações</p><div class="exec-kpi__meter"><i style="width:{{ dashboard.goals[1].progress|round(1) }}%"></i></div><div class="exec-kpi__insight"><span>Não inclui ações em CALL coberta</span><b>{{ dashboard.goals[1].progress|round|int }}%</b></div></article>
-    <article class="exec-kpi exec-kpi--purple"><span class="exec-kpi__icon">O</span><small>OPERAÇÕES ABERTAS</small><strong>{{ dashboard.open_operations }}</strong><p>PUTs, CALLs e compras acompanhadas</p><div class="exec-kpi__insight"><i></i><span>{% if dashboard.open_operations %}Monitoramento operacional ativo{% else %}Nenhuma exposição aberta{% endif %}</span></div></article>
-    <article class="exec-kpi exec-kpi--orange"><span class="exec-kpi__icon">◷</span><small>PRÓXIMO VENCIMENTO</small><strong>{% if dashboard.next_expiry %}{{ dashboard.next_expiry.days }} dias{% else %}—{% endif %}</strong><p>{% if dashboard.next_expiry %}{{ dashboard.next_expiry.option_code }} · {{ dashboard.next_expiry.date|date_br }}{% else %}Sem PUT aberta{% endif %}</p><div class="exec-kpi__insight"><i></i><span>{% if not dashboard.next_expiry %}Agenda livre{% elif dashboard.next_expiry.days <= 7 %}Ação necessária{% elif dashboard.next_expiry.days <= 15 %}Avaliar rolagem{% else %}Dentro do acompanhamento{% endif %}</span></div></article>
+    <article class="exec-kpi exec-kpi--patrimony"><span class="exec-kpi__watermark">FM</span><span class="exec-kpi__icon">◆</span><small>PATRIMÔNIO</small><strong>{{ money(dashboard.patrimony) }}</strong><p>Caixa líquido + ações mantidas na corretora</p><div class="exec-kpi__insight"><i></i><span>Já considera aportes, prêmios, custos e débitos</span></div></article>
+    <article class="exec-kpi exec-kpi--blue"><span class="exec-kpi__watermark">↗</span><span class="exec-kpi__icon">◎</span><small>SALDO PARA OPERAR</small><strong class="{% if dashboard.available_to_trade < 0 %}negative{% endif %}">{{ money(dashboard.available_to_trade) }}</strong><p>Caixa efetivamente livre para novas operações</p><div class="exec-kpi__insight"><i></i><span>Após ações alocadas e garantias comprometidas</span></div></article>
+    <article class="exec-kpi exec-kpi--commitment"><span class="exec-kpi__watermark">▦</span><span class="exec-kpi__icon">▥</span><small>CAPITAL COMPROMETIDO</small><strong>{{ money(dashboard.allocated_capital) }}</strong><p>PUTs vendidas + ações cobertas por CALLs</p><div class="exec-kpi__meter"><i style="width:{{ dashboard.goals[1].progress|round(1) }}%"></i></div><div class="exec-kpi__insight"><span>Parcela do patrimônio travada</span><b>{{ dashboard.goals[1].progress|round|int }}%</b></div></article>
+    <article class="exec-kpi exec-kpi--premium"><span class="exec-kpi__watermark">R$</span><span class="exec-kpi__icon">$</span><small>PRÊMIOS</small><strong>{{ money(dashboard.premiums_total) }}</strong><p>Total histórico líquido recebido</p><div class="exec-kpi__insight"><i></i><span>Custos e corretagens descontados</span></div></article>
+    <article class="exec-kpi exec-kpi--month"><span class="exec-kpi__watermark">{{ ind.mes_atual }}</span><span class="exec-kpi__icon">◫</span><small>PRÊMIOS DO MÊS</small><strong>{{ money(dashboard.premiums_month) }}</strong><p>Creditados no mês da negociação</p><div class="exec-kpi__insight"><i></i><span>Independentemente do vencimento da opção</span></div></article>
+    <article class="exec-kpi exec-kpi--roi"><span class="exec-kpi__watermark">%</span><span class="exec-kpi__icon">↗</span><small>ROI MÉDIO DA CARTEIRA</small><strong>{{ percent(dashboard.average_roi) }}</strong><p>Meta oficial: 4,00%</p><div class="exec-kpi__meter"><i style="width:{{ dashboard.goals[0].progress|round(1) }}%"></i></div><div class="exec-kpi__insight"><span>Progresso da meta</span><b>{{ dashboard.goals[0].progress|round|int }}%</b></div></article>
   </section>
 
   <section class="exec-ai exec-ai--{{ dashboard.ai_tone }}">
@@ -51,7 +49,7 @@
     </section>
     <section class="exec-panel exec-panel--today">
       <header class="exec-panel__header"><div><span>◇</span><h2>Se fosse hoje</h2></div><span class="exec-tag">CENÁRIO ATUAL</span></header>
-      {% if dashboard.today_scenario %}<div class="today-table"><div class="today-table__head"><span>Opção</span><span>Dias</span><span>Seu valor</span><span>Valor atual</span><span>Situação</span></div>{% for item in dashboard.today_scenario %}<a href="/operacoes-abertas" class="today-table__row"><strong>{{ item.option_code }}</strong><span>{{ item.days }}d</span><span>{{ money(item.own_value) }}</span><span title="{{ item.quote_source }}">{% if item.current_value is not none %}{{ money(item.current_value) }}{% else %}Indisponível{% endif %}</span><b class="today-status today-status--{{ item.situation_class }}">{{ item.situation }}</b></a>{% endfor %}</div><p class="today-note">Situação calculada pela cotação da ação contra o strike. O valor atual é a cotação unitária da opção disponível no mercado carregado.</p>{% else %}{{ empty_state('Sem operações abertas', 'Cadastre uma opção para simular como estaria a posição hoje.') }}{% endif %}
+      {% if dashboard.today_scenario %}<div class="today-table"><div class="today-table__head"><span>Opção</span><span>Seu valor</span><span>Valor atual</span><span>Prob. exercício</span><span>Situação</span></div>{% for item in dashboard.today_scenario %}<a href="/operacoes-abertas" class="today-table__row"><strong>{{ item.option_code }}</strong><span>{{ money(item.own_value) }}</span><span title="{{ item.quote_source }}">{% if item.current_value is not none %}{{ money(item.current_value) }}{% else %}Indisponível{% endif %}</span><span class="today-probability" title="{{ item.exercise_probability_label }}">{{ item.exercise_probability }}</span><b class="today-status today-status--{{ item.situation_class }}">{{ item.situation }}</b></a>{% endfor %}</div><p class="today-note">A probabilidade é uma estimativa estatística baseada na cotação, no strike, no prazo e na volatilidade histórica; não é garantia de exercício.</p>{% else %}{{ empty_state('Sem operações abertas', 'Cadastre uma opção para simular como estaria a posição hoje.') }}{% endif %}
     </section>
     <section class="exec-panel">
       <header class="exec-panel__header"><div><span>◷</span><h2>Próximos vencimentos</h2></div><a href="/operacoes-abertas">Detalhes</a></header>
@@ -75,21 +73,14 @@
     <div><span>Última atualização</span><strong id="lastUpdated">Agora</strong></div>
   </section>
 
-  <section class="exec-panel exec-new-operation" id="nova-operacao">
-    <header class="exec-panel__header"><div><span>＋</span><h2>Cadastrar operação</h2></div><span class="exec-tag">VENDA DE PUT</span></header>
-    <form class="op-form exec-operation-form" method="POST" action="/nova">
-      <input type="hidden" name="Estrategia" value="Venda"><input type="hidden" name="Tipo" value="PUT"><input type="hidden" name="Status" value="Aberta">
-      <label>Código da opção<input id="codigo_opcao" name="Ativo" placeholder="Ex.: PETRT123" required></label>
-      <label>Strike<input id="strike" name="Strike" placeholder="R$ 0,00" required></label>
-      <label>Vencimento<input type="date" name="Vencimento" required></label>
-      <label>Contratos<input type="number" id="contratos" name="Contratos" min="1" value="1" required><small id="acoesInfo">100 ações</small></label>
-      <label>Prêmio por opção<input id="premio" name="Premio_opcao" placeholder="R$ 0,00" required></label>
-      <label>Custos<input id="custos" name="Custos" placeholder="R$ 0,00"></label>
-      <label>IRRF<input id="irrf" name="IRRF" placeholder="R$ 0,00"></label>
-      <label class="exec-operation-form__wide">Observação<textarea name="Observacao" placeholder="Contexto da operação"></textarea></label>
-      <div class="op-summary exec-operation-form__summary"><div><strong>Capital</strong><span id="capitalCalc">R$ 0,00</span></div><div><strong>Prêmio líquido</strong><span id="premioCalc">R$ 0,00</span></div><div><strong>ROI estimado</strong><span id="roiCalc">0,00%</span></div></div>
-      <button type="submit" class="save-op">Salvar operação</button>
-    </form>
+  <section class="exec-panel exec-open-positions">
+    <header class="exec-panel__header"><div><span>▦</span><h2>Operações abertas</h2></div><a href="/operacoes-abertas">Abrir central completa →</a></header>
+    {% if dashboard.open_positions %}
+    <div class="dashboard-positions">
+      <div class="dashboard-positions__head"><span>Ação</span><span>Opção</span><span>Tipo / estratégia</span><span>Cotação</span><span>Strike</span><span>Prêmio líquido</span><span>Capital</span><span>Vencimento</span><span>Prob.</span><span>ROI</span></div>
+      {% for item in dashboard.open_positions %}<a class="dashboard-positions__row" href="/operacoes-abertas"><strong>{{ item.asset }}</strong><strong>{{ item.option_code }}</strong><span>{{ item.type }} · {{ item.strategy }}</span><span>{% if item.spot is not none %}{{ money(item.spot) }}{% else %}—{% endif %}</span><span>{{ money(item.strike) }}</span><span>{{ money(item.premium) }}</span><span>{{ money(item.capital) }}</span><span>{{ item.expiry|date_br }} <small>{{ item.days }}d</small></span><span>{{ item.probability }}</span><b>{{ percent(item.roi) }}</b></a>{% endfor %}
+    </div>
+    {% else %}{{ empty_state('Nenhuma operação aberta', 'As novas posições aparecerão aqui com seus principais dados.', '/operacoes-abertas?nova=1', 'Cadastrar operação') }}{% endif %}
   </section>
 </div>
 
