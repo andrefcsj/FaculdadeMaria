@@ -8,8 +8,10 @@ from __future__ import annotations
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import date, timedelta
+from decimal import Decimal
 from typing import Mapping, Sequence
 from services.concentration_service import ATTENTION_ASSET_CONCENTRATION, MAX_ASSET_CONCENTRATION
+from services.exercise_probability_service import estimate_operation_exercise_probability
 
 
 def _number(value: object, default: float = 0.0) -> float:
@@ -17,6 +19,16 @@ def _number(value: object, default: float = 0.0) -> float:
         return float(value)
     except (TypeError, ValueError):
         return default
+
+
+def _operation_expiry(value: object) -> date | None:
+    text = str(value or "").strip()
+    for parser in (date.fromisoformat, lambda raw: date(int(raw[6:]), int(raw[3:5]), int(raw[:2]))):
+        try:
+            return parser(text)
+        except (TypeError, ValueError):
+            continue
+    return None
 
 
 def _asset_from_option(option_code: object) -> str:
@@ -45,6 +57,7 @@ def _attention_item(option_code: object, categories: list[dict[str, str]]) -> di
 
 @dataclass(frozen=True)
 class DashboardViewModel:
+    patrimony: float
     premiums_month: float
     premiums_total: float
     average_roi: float
@@ -61,6 +74,7 @@ class DashboardViewModel:
     roll_candidates: tuple[Mapping[str, object], ...]
     attention_items: tuple[Mapping[str, object], ...]
     today_scenario: tuple[Mapping[str, object], ...]
+    open_positions: tuple[Mapping[str, object], ...]
     upcoming_expiries: tuple[Mapping[str, object], ...]
     goals: tuple[Mapping[str, object], ...]
     stats: tuple[Mapping[str, object], ...]
@@ -164,10 +178,10 @@ def build_dashboard_view_model(
     broker_cash = _number(indicators.get("broker_cash_balance"))
     projected_roi = _number(indicators.get("roi_abertas"))
     premiums_month = _number(indicators.get("lucro_mes"))
-    premiums_total = sum(
+    premiums_total = _number(indicators.get("premios_total")) if "premios_total" in indicators else sum(
         _number(operation.get("Premio_liquido"))
         for operation in operations
-        if str(operation.get("Estratégia", "Venda")).lower() == "venda"
+        if str(operation.get("Estratégia", "Venda")).strip().lower() != "compra"
     )
 
     if not open_puts:
@@ -181,6 +195,7 @@ def build_dashboard_view_model(
         tone = "attention"
     quotes = option_quotes or {}
     today_scenario = []
+    probability_by_code: dict[str, object] = {}
     for operation in sorted(open_options, key=lambda item: _number(item.get("Dias"), 999999))[:5]:
         code = str(operation.get("Ativo", "N/D")).upper()
         spot, strike = _number(operation.get("Cotacao_n")), _number(operation.get("Strike_n"))
@@ -191,6 +206,15 @@ def build_dashboard_view_model(
             exercised = (option_type == "PUT" and spot <= strike) or (option_type == "CALL" and spot >= strike)
             situation, situation_class = ("Seria exercida", "exercised") if exercised else ("Não seria exercida", "safe")
         quote = quotes.get(code, {})
+        underlying = str(operation.get("Ativo_subjacente") or "")
+        expiry = _operation_expiry(operation.get("Vencimento"))
+        estimate = estimate_operation_exercise_probability(
+            ticker=underlying,
+            option_type=option_type,
+            strike=Decimal(str(strike or 0)),
+            expiry=expiry,
+        )
+        probability_by_code[code] = estimate
         today_scenario.append({
             "option_code": code,
             "days": int(_number(operation.get("Dias"))),
@@ -199,7 +223,24 @@ def build_dashboard_view_model(
             "quote_source": quote.get("source", "Cotação não disponível"),
             "situation": situation,
             "situation_class": situation_class,
+            "exercise_probability": estimate.percentage,
+            "exercise_probability_label": estimate.label,
         })
+
+    open_positions = tuple({
+        "option_code": str(operation.get("Ativo", "N/D")).upper(),
+        "asset": str(operation.get("Ativo_subjacente") or _asset_from_option(operation.get("Ativo"))),
+        "type": str(operation.get("Tipo", "PUT")).upper(),
+        "strategy": str(operation.get("Estratégia", "Venda")),
+        "strike": _number(operation.get("Strike_n", operation.get("Strike"))),
+        "premium": _number(operation.get("Premio_liquido")),
+        "capital": _number(operation.get("Capital")),
+        "expiry": operation.get("Vencimento_fmt", ""),
+        "days": int(_number(operation.get("Dias"))),
+        "roi": _number(operation.get("ROI")),
+        "spot": _number(operation.get("Cotacao_n")) or None,
+        "probability": getattr(probability_by_code.get(str(operation.get("Ativo", "")).upper()), "percentage", "—"),
+    } for operation in sorted(open_options, key=lambda item: _number(item.get("Dias"), 999999)))
 
     goal_progress = min(max(average_roi / target_roi * 100, 0), 100) if target_roi else 0
     capital_usage = min(max(_number(indicators.get("capital_comp")) / capital_total * 100, 0), 100) if capital_total else 0
@@ -218,6 +259,7 @@ def build_dashboard_view_model(
     }
 
     return DashboardViewModel(
+        patrimony=_number(indicators.get("patrimonio_atual")),
         premiums_month=premiums_month,
         premiums_total=premiums_total,
         average_roi=average_roi,
@@ -225,7 +267,7 @@ def build_dashboard_view_model(
         available_to_trade=(
             broker_cash
             + _number(indicators.get("margem_lftb11"))
-            - _number(indicators.get("capital_comp"))
+            - _number(indicators.get("capital_opcoes", indicators.get("capital_comp")))
         ),
         open_puts=len(open_puts),
         open_operations=len(open_operations),
@@ -242,6 +284,7 @@ def build_dashboard_view_model(
         roll_candidates=roll_candidates,
         attention_items=tuple(attention[:6]),
         today_scenario=tuple(today_scenario),
+        open_positions=open_positions,
         upcoming_expiries=tuple({
             "option_code": operation.get("Ativo", "N/D"),
             "date": operation.get("Vencimento_fmt", ""),
