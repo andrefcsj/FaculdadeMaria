@@ -318,21 +318,23 @@ def metrics(ops: List[Dict[str, object]], fechadas: List[Dict[str, str]], cfg: D
         for item in carteira_acoes
         if str(item.get("asset", "")).upper() == "LFTB11"
     )
-    # Capital comprometido é exclusivamente o dinheiro reservado para honrar
-    # posições abertas. Ações já existentes na carteira cobrem a CALL, mas não
-    # representam dinheiro bloqueado na corretora.
-    capital_comp = capital_opcoes
-    premios_ativos = sum(float(o["Premio_liquido"]) for o in abertas)
+    capital_calls_cobertas = sum(
+        min(float(item.get("covered_quantity", 0)), float(item.get("quantity", 0)))
+        * float(item.get("cash_cost_per_share", 0))
+        for item in carteira_acoes
+    )
+    # Capital comprometido inclui a reserva das PUTs e o custo das ações
+    # efetivamente travadas como cobertura de CALLs.
+    capital_comp = capital_opcoes + capital_calls_cobertas
+    vendas = [
+        o for o in ops
+        if str(o.get("Estratégia", "Venda")).strip().lower() not in {"compra"}
+    ]
+    premios_ativos = sum(float(o["Premio_liquido"]) for o in abertas if o in vendas)
     mes_atual = current_month_label()
     # DARF e lucro do mês vêm apenas das operações fechadas.
     # Preferimos Premio_liquido; se não existir, usamos Lucro_tributavel/Resultado_final como fallback.
-    lucro_mes = sum(float(o.get("Premio_liquido",0)) for o in abertas if o.get("Mes_abertura")==mes_atual)
-    for f in fechadas:
-        if f.get("Mes") == mes_atual:
-            base_f = fnum(f.get("Premio_liquido"), 0)
-            if not base_f:
-                base_f = fnum(f.get("Lucro_tributavel"), fnum(f.get("Resultado_final"), 0))
-            lucro_mes += base_f
+    lucro_mes = sum(float(o.get("Premio_liquido", 0)) for o in vendas if o.get("Mes_abertura") == mes_atual)
     darf = lucro_mes * cfg.get("Aliquota IR opcoes", 0.15)
     roi_mes = lucro_mes / capital_total * 100 if capital_total else 0
     roi_abertas = premios_ativos / capital_comp * 100 if capital_comp else 0
@@ -344,16 +346,10 @@ def metrics(ops: List[Dict[str, object]], fechadas: List[Dict[str, str]], cfg: D
         if capital_f:
             rois_fechadas.append(lucro_f / capital_f * 100)
     roi_medio_fechadas = (sum(rois_fechadas) / len(rois_fechadas)) if rois_fechadas else 0
-    premios_fechados_total = 0.0
-    for f in fechadas:
-        base_f = fnum(f.get("Premio_liquido"), 0)
-        if not base_f:
-            base_f = fnum(f.get("Lucro_tributavel"), fnum(f.get("Resultado_final"), 0))
-        premios_fechados_total += base_f
-    premios_total = premios_fechados_total
-    caixa_livre = max(capital_total + margem_lftb11 - capital_comp, 0)
-    patrimonio_atual = capital_comp + premios_total
-    return {"capital_total": capital_total, "capital_comp": capital_comp, "capital_opcoes": capital_opcoes, "capital_acoes": capital_acoes, "margem_lftb11": margem_lftb11, "caixa": caixa_livre, "caixa_livre": caixa_livre, "premios_ativos": premios_ativos, "premios_total": premios_total, "patrimonio_atual": patrimonio_atual, "lucro_mes": lucro_mes, "darf": darf, "roi_mes": roi_mes, "roi_abertas": roi_abertas, "roi_medio_abertas": roi_medio_abertas, "roi_medio_fechadas": roi_medio_fechadas, "mes_atual": mes_atual, "abertas": len(abertas), "encerradas": len(ops) - len(abertas)}
+    premios_total = sum(float(o.get("Premio_liquido", 0)) for o in vendas)
+    caixa_livre = capital_total + premios_total - capital_acoes - capital_comp
+    patrimonio_atual = capital_total + premios_total
+    return {"capital_total": capital_total, "capital_comp": capital_comp, "capital_opcoes": capital_opcoes, "capital_calls_cobertas": capital_calls_cobertas, "capital_acoes": capital_acoes, "margem_lftb11": margem_lftb11, "caixa": caixa_livre, "caixa_livre": caixa_livre, "premios_ativos": premios_ativos, "premios_total": premios_total, "patrimonio_atual": patrimonio_atual, "lucro_mes": lucro_mes, "darf": darf, "roi_mes": roi_mes, "roi_abertas": roi_abertas, "roi_medio_abertas": roi_medio_abertas, "roi_medio_fechadas": roi_medio_fechadas, "mes_atual": mes_atual, "abertas": len(abertas), "encerradas": len(ops) - len(abertas)}
 
 
 def monthly(ops: List[Dict[str, object]], fechadas: List[Dict[str, str]], cfg: Dict[str, float]) -> List[Dict[str, float | str]]:
@@ -571,6 +567,8 @@ def index():
     ind = metrics(ops, fechadas, cfg)
     from services.cash_ledger_service import calculate_broker_balance
     ind["broker_cash_balance"] = float(calculate_broker_balance(__import__(__name__))["balance"])
+    ind["patrimonio_atual"] = ind["broker_cash_balance"] + float(ind["capital_acoes"])
+    ind["caixa_livre"] = ind["patrimonio_atual"] - float(ind["capital_acoes"]) - float(ind["capital_comp"])
     hist = monthly(ops, fechadas, cfg)
     from services.live_spot_service import with_current_underlying_quotes
     dashboard_ops = with_current_underlying_quotes(__import__(__name__), ops)
