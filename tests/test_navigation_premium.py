@@ -35,6 +35,15 @@ class PremiumNavigationTests(unittest.TestCase):
         self.assertNotIn("SALDO NA CORRETORA", page)
         self.assertNotIn("PRÓXIMO VENCIMENTO</small>", page)
         self.assertIn("Atenção necessária", page)
+        self.assertIn('href="/premios-recebidos"', page)
+        self.assertIn('href="/premios-recebidos?month=', page)
+
+    def test_premium_history_page_is_available(self):
+        page = self.client.get("/premios-recebidos").get_data(as_text=True)
+        self.assertIn("Todos os prêmios recebidos", page)
+        self.assertIn("Prêmio integral", page)
+        self.assertIn("Prêmio líquido", page)
+        self.assertIn("Totais do período", page)
 
 
 if __name__ == "__main__":
