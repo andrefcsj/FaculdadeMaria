@@ -6,13 +6,26 @@
 {% block content %}
 <div class="executive-dashboard">
   <section class="exec-kpis" aria-label="Indicadores principais">
-    <article class="exec-kpi exec-kpi--patrimony"><span class="exec-kpi__watermark">FM</span><span class="exec-kpi__icon"><svg viewBox="0 0 24 24"><path d="M3 10h18M5 10V7l7-4 7 4v3M6 10v8M10 10v8M14 10v8M18 10v8M3 21h18"/></svg></span><small>PATRIMÔNIO</small><strong>{{ money(dashboard.patrimony) }}</strong><p>Caixa líquido + ações mantidas na corretora</p><div class="exec-kpi__insight"><i></i><span>Já considera aportes, prêmios, custos e débitos</span></div></article>
+    <button class="exec-kpi exec-kpi--patrimony exec-kpi--clickable" id="patrimonyCard" type="button" aria-haspopup="dialog" aria-controls="patrimonyModal"><span class="exec-kpi__watermark">FM</span><span class="exec-kpi__icon"><svg viewBox="0 0 24 24"><path d="M3 10h18M5 10V7l7-4 7 4v3M6 10v8M10 10v8M14 10v8M18 10v8M3 21h18"/></svg></span><small>PATRIMÔNIO</small><strong>{{ money(dashboard.patrimony) }}</strong><p>Caixa líquido + ações mantidas na corretora</p><div class="exec-kpi__insight"><i></i><span>Ver onde o patrimônio está alocado →</span></div></button>
     <article class="exec-kpi exec-kpi--blue"><span class="exec-kpi__watermark">↗</span><span class="exec-kpi__icon"><svg viewBox="0 0 24 24"><path d="M4 19V9M10 19V5M16 19v-7M3 19h18M15 6l3-3 3 3"/></svg></span><small>SALDO PARA OPERAR</small><strong class="{% if dashboard.available_to_trade < 0 %}negative{% endif %}">{{ money(dashboard.available_to_trade) }}</strong><p>Caixa efetivamente livre para novas operações</p><div class="exec-kpi__insight"><i></i><span>Após ações alocadas e garantias comprometidas</span></div></article>
     <article class="exec-kpi exec-kpi--commitment"><span class="exec-kpi__watermark">▦</span><span class="exec-kpi__icon"><svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v3"/></svg></span><small>CAPITAL COMPROMETIDO</small><strong>{{ money(dashboard.allocated_capital) }}</strong><p>PUTs vendidas + ações cobertas por CALLs</p><div class="exec-kpi__meter"><i style="width:{{ dashboard.goals[1].progress|round(1) }}%"></i></div><div class="exec-kpi__insight"><span>Parcela do patrimônio travada</span><b>{{ dashboard.goals[1].progress|round|int }}%</b></div></article>
     <a class="exec-kpi exec-kpi--premium exec-kpi--clickable" href="/premios-recebidos"><span class="exec-kpi__watermark">R$</span><span class="exec-kpi__icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15 8.5c-.7-.7-1.7-1-3-1-1.7 0-3 .8-3 2s1 1.8 3 2.3 3 1.1 3 2.5-1.3 2.2-3 2.2c-1.3 0-2.4-.4-3.2-1.2M12 5.5v13"/></svg></span><small>PRÊMIOS</small><strong>{{ money(dashboard.premiums_total) }}</strong><p>Total histórico líquido recebido</p><div class="exec-kpi__insight"><i></i><span>Ver histórico completo →</span></div></a>
     <a class="exec-kpi exec-kpi--month exec-kpi--clickable" href="/premios-recebidos?month={{ dashboard.current_month_filter }}"><span class="exec-kpi__watermark">{{ ind.mes_atual }}</span><span class="exec-kpi__icon"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18M8 14h3M13 14h3M8 18h3"/></svg></span><small>PRÊMIOS DO MÊS</small><strong>{{ money(dashboard.premiums_month) }}</strong><p>Creditados no mês da negociação</p><div class="exec-kpi__insight"><i></i><span>Ver lançamentos do mês →</span></div></a>
     <article class="exec-kpi exec-kpi--roi"><span class="exec-kpi__watermark">%</span><span class="exec-kpi__icon"><svg viewBox="0 0 24 24"><path d="m4 17 5-5 4 3 7-8M15 7h5v5"/><circle cx="7" cy="7" r="2"/><circle cx="17" cy="18" r="2"/></svg></span><small>ROI MÉDIO DA CARTEIRA</small><strong>{{ percent(dashboard.average_roi) }}</strong><p>Meta oficial: 4,00%</p><div class="exec-kpi__meter"><i style="width:{{ dashboard.goals[0].progress|round(1) }}%"></i></div><div class="exec-kpi__insight"><span>Progresso da meta</span><b>{{ dashboard.goals[0].progress|round|int }}%</b></div></article>
   </section>
+  <div class="patrimony-modal" id="patrimonyModal" hidden>
+    <button class="patrimony-modal__backdrop" type="button" data-close-patrimony aria-label="Fechar resumo"></button>
+    <section class="patrimony-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="patrimonyModalTitle">
+      <button class="patrimony-modal__close" type="button" data-close-patrimony aria-label="Fechar">×</button>
+      <header><span class="patrimony-modal__seal"><svg viewBox="0 0 24 24"><path d="M3 10h18M5 10V7l7-4 7 4v3M6 10v8M10 10v8M14 10v8M18 10v8M3 21h18"/></svg></span><div><small>VISÃO PATRIMONIAL</small><h2 id="patrimonyModalTitle">Onde seu dinheiro está</h2><p>Um retrato simples da sua posição atual na corretora.</p></div></header>
+      <div class="patrimony-modal__allocations">
+        <div><span class="patrimony-modal__dot patrimony-modal__dot--shares"></span><p><small>AÇÕES COMPRADAS</small><strong>{{ money(dashboard.equities_value) }}</strong></p></div>
+        <div><span class="patrimony-modal__dot patrimony-modal__dot--cash"></span><p><small>SALDO LÍQUIDO EM CAIXA</small><strong>{{ money(dashboard.broker_cash_balance) }}</strong></p></div>
+      </div>
+      <aside><span>PRÊMIOS LÍQUIDOS RECEBIDOS</span><strong>{{ money(dashboard.premiums_total) }}</strong><small>Este valor já está incorporado ao saldo da corretora.</small></aside>
+      <footer><span><small>PATRIMÔNIO TOTAL</small><b>Ações + saldo líquido disponível</b></span><strong>{{ money(dashboard.patrimony) }}</strong></footer>
+    </section>
+  </div>
 
   <section class="exec-ai exec-ai--{{ dashboard.ai_tone }}">
     <div class="exec-ai__mark">FM</div>
@@ -86,5 +99,5 @@
 
 <script id="executiveDashboardData" type="application/json">{{ {'labels': dashboard.chart_labels, 'premiums': dashboard.chart_premiums}|tojson }}</script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="{{ url_for('static', filename='dashboard.js', v='20260711.2') }}"></script>
+<script src="{{ url_for('static', filename='dashboard.js', v='20260729.1') }}"></script>
 {% endblock %}
