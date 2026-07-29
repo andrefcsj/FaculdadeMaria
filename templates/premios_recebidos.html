@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block title %}Prêmios Recebidos | FaculdadeMaria{% endblock %}
+{% block page_title %}PRÊMIOS RECEBIDOS{% endblock %}
+{% block page_subtitle %}Histórico bruto e líquido das vendas de opções{% endblock %}
+{% macro brl(value) -%}R$ {{ '{:,.2f}'.format(value|float)|replace(',', 'X')|replace('.', ',')|replace('X', '.') }}{%- endmacro %}
+{% block content %}
+<div class="premium-history-page">
+  <section class="premium-history-hero">
+    <div><span>HISTÓRICO FINANCEIRO</span><h1>Todos os prêmios recebidos</h1><p>Valores derivados automaticamente das operações cadastradas. O líquido já desconta custos, taxas, corretagens e IRRF informados na entrada.</p></div>
+    <a href="/">← Voltar ao Dashboard</a>
+  </section>
+
+  <form class="premium-history-filters" method="get">
+    <label>Mês
+      <select name="month" onchange="this.form.submit()"><option value="">Todos os meses</option>{% for month in premium_history.months %}<option value="{{ month }}" {% if premium_history.selected_month == month %}selected{% endif %}>{{ month|month_br }}</option>{% endfor %}</select>
+    </label>
+    <label>Ano
+      <select name="year" onchange="this.form.submit()"><option value="">Todos os anos</option>{% for year in premium_history.years %}<option value="{{ year }}" {% if premium_history.selected_year == year %}selected{% endif %}>{{ year }}</option>{% endfor %}</select>
+    </label>
+    <a href="/premios-recebidos">Limpar filtros</a>
+    <span>{{ premium_history.rows|length }} lançamento(s)</span>
+  </form>
+
+  <section class="premium-history-table-wrap">
+    {% if premium_history.rows %}
+    <table class="premium-history-table">
+      <thead><tr><th>Data</th><th>Ativo</th><th>Código da opção</th><th>Quantidade de opções</th><th>Prêmio integral</th><th>Prêmio líquido</th></tr></thead>
+      <tbody>{% for row in premium_history.rows %}<tr><td>{{ row.date|date_br }}</td><td><span class="premium-history-asset"><img src="{{ row.logo_url }}" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='grid'"><i style="display:none">{{ row.asset[:2] }}</i><strong>{{ row.asset }}</strong></span></td><td><strong>{{ row.option_code }}</strong></td><td>{{ row.quantity }}</td><td>{{ brl(row.gross) }}</td><td class="premium-history-net">{{ brl(row.net) }}</td></tr>{% endfor %}</tbody>
+      <tfoot><tr><th colspan="3">Totais do período</th><th>{{ premium_history.total_quantity }}</th><th>{{ brl(premium_history.total_gross) }}</th><th>{{ brl(premium_history.total_net) }}</th></tr></tfoot>
+    </table>
+    {% else %}<div class="premium-history-empty"><strong>Nenhum prêmio encontrado</strong><p>Altere os filtros ou cadastre uma nova venda de opção.</p></div>{% endif %}
+  </section>
+</div>
+<style>
+.premium-history-page{max-width:1500px;margin:auto;color:#17243a}.premium-history-hero{display:flex;align-items:center;justify-content:space-between;gap:24px;margin-bottom:16px;padding:25px 28px;border-radius:20px;background:linear-gradient(125deg,#082d22,#0b8b59);color:#fff;box-shadow:0 14px 34px rgba(8,112,72,.2)}.premium-history-hero span{font-size:10px;font-weight:900;letter-spacing:1.4px}.premium-history-hero h1{margin:5px 0 7px;font-size:29px}.premium-history-hero p{max-width:790px;margin:0;color:#d9f7e9;font-size:13px;line-height:1.5}.premium-history-hero a{white-space:nowrap;border:1px solid rgba(255,255,255,.45);border-radius:11px;background:rgba(255,255,255,.13);color:#fff;padding:11px 15px;text-decoration:none;font-weight:800}.premium-history-filters{display:grid;grid-template-columns:220px 180px auto 1fr;align-items:end;gap:12px;margin-bottom:15px;padding:16px;border:1px solid #dfe6ef;border-radius:15px;background:#fff}.premium-history-filters label{margin:0;color:#68768a;font-size:10px;font-weight:850;text-transform:uppercase}.premium-history-filters select{height:42px;margin-top:5px;border:1px solid #d8e1ec;border-radius:10px;background:#fff;color:#17243a}.premium-history-filters a{height:42px;display:grid;place-items:center;border:1px solid #d8e1ec;border-radius:10px;color:#1769ee;text-decoration:none;font-size:12px;font-weight:800}.premium-history-filters>span{justify-self:end;padding-bottom:12px;color:#77859a;font-size:12px}.premium-history-table-wrap{overflow:hidden;border:1px solid #dfe6ef;border-radius:18px;background:#fff;box-shadow:0 10px 28px rgba(29,50,78,.07)}.premium-history-table{width:100%;border-collapse:collapse}.premium-history-table th,.premium-history-table td{padding:15px 18px;text-align:left}.premium-history-table thead th{background:#102a45;color:#fff;font-size:10px;text-transform:uppercase;letter-spacing:.45px}.premium-history-table tbody td{border-top:1px solid #e8edf3;color:#435168;font-size:13px}.premium-history-table tbody tr:nth-child(odd){background:#f7fbff}.premium-history-table tbody tr:nth-child(even){background:#eef8f3}.premium-history-table tbody tr:hover{background:#e5f2ff}.premium-history-table td:nth-child(n+4),.premium-history-table th:nth-child(n+4){text-align:right}.premium-history-asset{display:flex;align-items:center;gap:9px}.premium-history-asset img,.premium-history-asset i{width:35px;height:35px;border:1px solid #e0e6ee;border-radius:50%;background:#fff;object-fit:contain}.premium-history-asset i{place-items:center;color:#1769ee;font-style:normal;font-weight:900}.premium-history-net{color:#07864b!important;font-weight:900}.premium-history-table tfoot th{border-top:2px solid #0b8b59;background:#e5f7ee;color:#08683f;font-size:14px}.premium-history-empty{padding:55px;text-align:center;color:#718096}.premium-history-empty strong{display:block;color:#17243a;font-size:19px}.premium-history-empty p{margin:6px 0 0}@media(max-width:760px){.premium-history-hero{align-items:flex-start;flex-direction:column}.premium-history-filters{grid-template-columns:1fr}.premium-history-filters>span{justify-self:start}.premium-history-table-wrap{overflow:auto}.premium-history-table{min-width:850px}}
+</style>
+{% endblock %}
