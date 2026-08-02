@@ -12,6 +12,7 @@ from services.manual_option_quote_service import save_manual_option_quote
 from services.operation_preferences_service import load_operation_metadata, normalize_exercise_interest, operation_underlying, save_operation_metadata
 from services.equity_position_service import portfolio as equity_portfolio, validate_covered_call
 from services.brokerage_note_service import load_imported_notes
+from services.option_cycle_service import build_cycle_groups, classify_option_cycle
 
 
 def effective_exercise_price(operation, contract_size=100):
@@ -78,6 +79,7 @@ def register(app, legacy):
         operation["exercise_probability_class"] = "high" if estimate.probability is not None and estimate.probability >= Decimal("0.65") else "mid" if estimate.probability is not None and estimate.probability >= Decimal("0.35") else "low" if estimate.probability is not None else "unavailable"
         vol = f" Volatilidade histórica: {(estimate.annual_volatility * Decimal('100')).quantize(Decimal('0.1'))}%." if estimate.annual_volatility is not None else ""
         operation["exercise_probability_tooltip"] = f"{estimate.methodology}{vol}"
+        operation.update(classify_option_cycle(operation.get("Ativo")))
         return operation
 
     def view():
@@ -106,7 +108,8 @@ def register(app, legacy):
             "roi": total_result / total_capital * 100 if total_capital else 0,
             "equity_capital": equity_capital,
         }
-        return render_template("operacoes_abertas.html", abertas=abertas, ops=ops, fechadas=fechadas, cfg=cfg, ind=legacy.metrics(ops, fechadas, cfg), open_totals=open_totals)
+        open_groups = build_cycle_groups(abertas, result_key="Fluxo_liquido", capital_key="Capital")
+        return render_template("operacoes_abertas.html", abertas=abertas, open_groups=open_groups, ops=ops, fechadas=fechadas, cfg=cfg, ind=legacy.metrics(ops, fechadas, cfg), open_totals=open_totals)
 
     app.view_functions["operacoes_abertas"] = view
 

@@ -221,6 +221,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   const openModal = () => {
+    window.segmentedDates?.enhance(fields.expiry);
     modal.hidden = false;
     modal.setAttribute('aria-hidden', 'false');
     document.body.style.overflow = 'hidden';
