@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block title %}Radar Jade Lizard | FaculdadeMaria{% endblock %}
+{% block page_title %}Radar Jade Lizard{% endblock %}
+{% block page_subtitle %}Scanner inteligente de estruturas com PUT vendida e CALL spread{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ url_for('static', filename='jade_lizard.css', v='20260802.1') }}">{% endblock %}
+{% block content %}
+<section class="jade-hero">
+  <div><span class="jade-kicker">CORTEX IA · ESTRATÉGIAS</span><h2>Somente estruturas que melhoram a PUT isolada.</h2><p>O motor testa dezenas de combinações por ativo, aplica retenção mínima de 95% e exibe apenas Score Jade ≥ {{ config.min_score|int }}.</p></div>
+  <div class="jade-score"><strong>{{ opportunities|length }}</strong><span>oportunidades</span></div>
+</section>
+<section class="jade-notice"><strong>Modo de projeção controlada</strong><span>Preço à vista ao vivo em {{ live_count }}/{{ total_assets }} ativos; cadeia de opções, gregas, IV, liquidez e OI estão estimados até a conexão com uma API B3/Profit em tempo real. Não envie ordens com estes valores.</span><small>Atualizado em {{ updated_at }}</small></section>
+<form class="jade-filters" method="get">
+  <label>Liquidez mínima<input name="min_liquidity" type="number" value="{{ config.min_liquidity }}"></label>
+  <label>Open Interest mínimo<input name="min_open_interest" type="number" value="{{ config.min_open_interest }}"></label>
+  <label>Spread máximo (%)<input name="max_spread_pct" type="number" step="0.1" value="{{ config.max_spread_pct }}"></label>
+  <label>Score mínimo<input name="min_score" type="number" min="0" max="100" value="{{ config.min_score }}"></label>
+  <button type="submit">Aplicar filtros</button>
+</form>
+<section class="jade-table-card"><div class="jade-table-wrap"><table><thead><tr><th>Ticker</th><th>Preço atual</th><th>Dias</th><th>PUT</th><th>CALL vendida</th><th>CALL comprada</th><th>Crédito PUT</th><th>Crédito Jade</th><th>Diferença</th><th>Break-even</th><th>ROI</th><th>Lucro máximo</th><th>Score</th><th></th></tr></thead><tbody>
+{% for item in opportunities %}<tr data-jade='{{ item.to_dict()|tojson }}'><td><strong>{{ item.ticker }}</strong></td><td>R$ {{ '%.2f'|format(item.spot) }}</td><td>{{ item.days }}</td><td>{{ item.put_code }}<small>K {{ '%.2f'|format(item.put_strike) }}</small></td><td>{{ item.short_call_code }}<small>K {{ '%.2f'|format(item.short_call_strike) }}</small></td><td>{{ item.long_call_code }}<small>K {{ '%.2f'|format(item.long_call_strike) }}</small></td><td>R$ {{ '%.2f'|format(item.put_credit) }}</td><td><strong>R$ {{ '%.2f'|format(item.net_credit) }}</strong></td><td class="positive">+{{ '%.1f'|format(item.retention_pct - 100) }}%</td><td>R$ {{ '%.2f'|format(item.break_even) }}</td><td>{{ '%.2f'|format(item.roi) }}%</td><td>R$ {{ '%.2f'|format(item.max_profit) }}</td><td><b class="score-pill">{{ '%.0f'|format(item.score) }}</b></td><td><button class="jade-open" type="button">Comparar</button></td></tr>{% else %}<tr><td colspan="14" class="jade-empty">Nenhuma estrutura passou por todos os filtros agora.</td></tr>{% endfor %}
+</tbody></table></div></section>
+<dialog id="jadeDialog" class="jade-dialog"><button class="dialog-close" type="button" aria-label="Fechar">×</button><div id="jadeCompare"></div></dialog>
+<script src="{{ url_for('static', filename='jade_lizard.js', v='20260802.1') }}"></script>
+{% endblock %}

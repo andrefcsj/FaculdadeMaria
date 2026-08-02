@@ -28,6 +28,7 @@ from services.date_format_service import format_date_br, format_datetime_br, for
 from services.concentration_service import build_portfolio_concentration
 from services.equity_portfolio_extension import register as register_equity_portfolio
 from services.premium_history_service import build_premium_history
+from services.jade_lizard_extension import register as register_jade_lizard
 
 app = legacy.app
 app.jinja_env.filters["date_br"] = format_date_br
@@ -239,6 +240,7 @@ register_system_cleanup(app, legacy)
 register_cash_management(app, legacy)
 register_paid_darfs(app, legacy)
 register_equity_portfolio(app, legacy)
+register_jade_lizard(app, legacy)
 
 
 if __name__ == "__main__":
