@@ -7,6 +7,8 @@ from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any
 
+from services.option_cycle_service import build_cycle_groups, classify_option_cycle
+
 
 FIELDS = ["ID", "Data abertura", "Ativo", "Tipo", "Estratégia", "Status", "Contratos", "Strike", "Premio_opcao", "Custos", "IRRF", "Vencimento", "Cotacao_atual", "Resultado_realizado"]
 
@@ -166,7 +168,7 @@ def serialize_closed_operation(legacy, operation: dict[str, Any], metadata: dict
         f"https://raw.githubusercontent.com/thefintz/icones-b3/main/icones/{underlying}.png"
         if underlying else ""
     )
-    return {
+    serialized = {
         "ID": str(operation.get("ID", "")), "Ativo": str(operation.get("Ativo", "")),
         "Ativo_subjacente": underlying, "Logo_subjacente": underlying_logo,
         "Tipo": str(operation.get("Tipo", "PUT")), "Estrategia": str(operation.get("Estratégia", "Venda")),
@@ -179,6 +181,8 @@ def serialize_closed_operation(legacy, operation: dict[str, Any], metadata: dict
         "Valor_recompra": str(metadata.get("repurchase_value", "0")),
         "Resultado_realizado": str(result), "Capital": str(capital), "ROI_realizado": str(roi),
     }
+    serialized.update(classify_option_cycle(operation.get("Ativo")))
+    return serialized
 
 
 def _shift_month(month: str, amount: int) -> str:
@@ -313,4 +317,5 @@ def build_closed_dashboard(legacy, *, scope: str, selected_month: str) -> dict[s
     month_profit = sum((_decimal(item["Resultado_realizado"]) for item in all_closed if item["Data_fechamento"][:7] == current_month), Decimal("0"))
     roi_average = sum((_decimal(item["ROI_realizado"]) for item in filtered), Decimal("0")) / Decimal(len(filtered)) if filtered else Decimal("0")
     months = sorted({item["Data_fechamento"][:7] for item in all_closed if item["Data_fechamento"]})
-    return {"operations": filtered, "all_count": len(all_closed), "selected_count": len(filtered), "month_profit": month_profit, "accumulated_profit": accumulated, "roi_average": roi_average, "scope": scope, "selected_month": month, "available_months": months, "darf_projection": build_darf_projection(all_closed)}
+    groups = build_cycle_groups(filtered, result_key="Resultado_realizado", capital_key="Capital")
+    return {"operations": filtered, "groups": groups, "all_count": len(all_closed), "selected_count": len(filtered), "month_profit": month_profit, "accumulated_profit": accumulated, "roi_average": roi_average, "scope": scope, "selected_month": month, "available_months": months, "darf_projection": build_darf_projection(all_closed)}
