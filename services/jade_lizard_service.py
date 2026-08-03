@@ -72,8 +72,21 @@ def _round_strike(value: float, step: float = .5) -> float:
     return round(round(value / step) * step, 2)
 
 
-def _code(ticker: str, kind: str, strike: float) -> str:
-    return f"{ticker.replace('3', '').replace('4', '')}{'P' if kind == 'put' else 'C'}{int(round(strike * 100)):04d}"
+CALL_MONTH_CODES = "ABCDEFGHIJKL"
+PUT_MONTH_CODES = "MNOPQRSTUVWX"
+
+
+def build_estimated_option_code(ticker: str, kind: str, strike: float, expiry: date) -> str:
+    """Monta código projetado respeitando tipo e mês definidos pela B3.
+
+    O sufixo numérico continua sendo apenas uma referência de strike enquanto não
+    houver uma cadeia oficial; a letra, porém, nunca pode contradizer o vencimento.
+    """
+    normalized_ticker = str(ticker).strip().upper()
+    root = normalized_ticker[:-1] if normalized_ticker[-1:].isdigit() else normalized_ticker
+    month_codes = PUT_MONTH_CODES if kind.lower() == "put" else CALL_MONTH_CODES
+    month_code = month_codes[expiry.month - 1]
+    return f"{root}{month_code}{int(round(strike * 100)):04d}"
 
 
 def is_dte_allowed(days: int, config: JadeConfig | None = None) -> bool:
@@ -94,7 +107,8 @@ def scan_estimated_chain(
     if not is_dte_allowed(days, cfg):
         return []
     years = days / 365
-    expiry = (date.today() + timedelta(days=days)).isoformat()
+    expiry_date = date.today() + timedelta(days=days)
+    expiry = expiry_date.isoformat()
     for ticker in tickers:
         spot = float(spot_loader(ticker) or 0)
         if spot <= 0:
@@ -138,9 +152,9 @@ def scan_estimated_chain(
                         continue
                     candidate = JadeOpportunity(
                         ticker=ticker, spot=round(spot, 2), days=days, expiry=expiry,
-                        put_code=_code(ticker, "put", put_strike),
-                        short_call_code=_code(ticker, "call", short_strike),
-                        long_call_code=_code(ticker, "call", long_strike),
+                        put_code=build_estimated_option_code(ticker, "put", put_strike, expiry_date),
+                        short_call_code=build_estimated_option_code(ticker, "call", short_strike, expiry_date),
+                        long_call_code=build_estimated_option_code(ticker, "call", long_strike, expiry_date),
                         put_strike=put_strike, short_call_strike=short_strike, long_call_strike=long_strike,
                         put_credit=round(put_credit, 2), short_call_credit=round(short_credit, 2),
                         long_call_debit=round(long_debit, 2), net_credit=round(net, 2),
