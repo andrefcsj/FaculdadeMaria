@@ -22,7 +22,7 @@
   </nav>
   <nav class="executive-nav equity-nav-shortcut"><div class="nav-group"><a href="/carteira-acoes" class="{% if request.path=='/carteira-acoes' %}active{% endif %}"><svg viewBox="0 0 24 24"><path d="M3 20h18M5 20V8l7-4 7 4v12M9 12h6M9 16h6"/></svg>Carteira de Ações</a></div></nav>
   <nav class="executive-nav strategy-nav-shortcut" aria-label="Estratégias">
-    <div class="nav-group"><span class="nav-group__title">ESTRATÉGIAS</span><a href="/estrategias/jade-lizard" class="{% if request.path.startswith('/estrategias') %}active{% endif %}"><svg viewBox="0 0 24 24"><path d="M3 19h18M5 17l4-8 4 5 3-8 3 11"/><circle cx="9" cy="9" r="1"/><circle cx="16" cy="6" r="1"/></svg>Radar Jade Lizard</a></div>
+    <div class="nav-group"><span class="nav-group__title">ESTRATÉGIAS</span><a href="/estrategias/jade-lizard" class="{% if request.path=='/estrategias/jade-lizard' %}active{% endif %}"><svg viewBox="0 0 24 24"><path d="M3 19h18M5 17l4-8 4 5 3-8 3 11"/><circle cx="9" cy="9" r="1"/><circle cx="16" cy="6" r="1"/></svg>Radar Jade Lizard</a><a href="/estrategias/simulador-payoff" class="{% if request.path=='/estrategias/simulador-payoff' %}active{% endif %}"><svg viewBox="0 0 24 24"><path d="M3 12h4l2-7 4 14 3-8h5M3 21h18"/></svg>Simulador de Payoff</a></div>
   </nav>
 </aside>
 <section class="app-stage">

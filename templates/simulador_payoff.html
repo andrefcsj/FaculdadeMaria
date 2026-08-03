@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% block title %}Simulador de Payoff | FaculdadeMaria{% endblock %}
+{% block page_title %}Simulador de Payoff{% endblock %}
+{% block page_subtitle %}Monte sua estratégia e visualize o resultado no vencimento{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ url_for('static', filename='payoff_simulator.css', v='20260803.1') }}">{% endblock %}
+{% block page_actions %}<button class="payoff-clear" id="payoffClear" type="button">Limpar</button><button class="topbar-refresh" id="payoffSave" type="button">Salvar Simulação</button>{% endblock %}
+{% block content %}
+<div class="payoff-page">
+  <section class="payoff-toolbar">
+    <label>Ativo da estratégia<input id="payoffAsset" maxlength="7" value="PETR4" placeholder="PETR4" autocomplete="off"></label>
+    <label>Preço atual<input id="payoffSpot" inputmode="decimal" value="36,12"></label>
+    <label>Vencimento<input id="payoffExpiry" type="date"></label>
+    <div><span>Estratégia identificada</span><strong id="strategyName">JADE LIZARD</strong></div>
+  </section>
+  <div class="payoff-layout">
+    <section class="payoff-builder">
+      <header><div><h2>Pernas da Operação</h2><p>O ativo acima vale para todas as pernas.</p></div><span id="legsCount">3 pernas</span></header>
+      <div id="payoffLegs"></div>
+      <button id="addPayoffLeg" class="add-payoff-leg" type="button">＋ Adicionar perna</button>
+      <p class="payoff-validation" id="payoffValidation">Digite apenas os códigos das opções; o simulador confere se pertencem ao ativo selecionado.</p>
+    </section>
+    <section class="payoff-chart-card">
+      <header><div><h2>Payoff no vencimento</h2><p>Estrutura completa versus venda isolada da PUT</p></div><div class="chart-legend"><span class="legend-structure">Estrutura</span><span class="legend-put">PUT isolada</span></div></header>
+      <div class="payoff-chart"><canvas id="payoffChart"></canvas></div>
+      <p class="chart-help">Passe o mouse pelo gráfico para comparar os resultados em cada preço do ativo.</p>
+    </section>
+  </div>
+  <section class="payoff-kpis">
+    <article><span>Crédito líquido</span><strong id="netCredit">R$ 0,00</strong><small>Recebido na entrada</small></article>
+    <article class="green"><span>Lucro máximo</span><strong id="maxProfit">R$ 0,00</strong><small>Estrutura completa</small></article>
+    <article class="red"><span>Perda máxima</span><strong id="maxLoss">R$ 0,00</strong><small>No intervalo analisado</small></article>
+    <article class="purple"><span>Somente venda da PUT</span><strong id="putOnlyProfit">R$ 0,00</strong><small>Prêmio máximo isolado</small></article>
+    <article class="gold"><span>Diferença de ganho</span><strong id="gainDifference">0,00%</strong><small>Estrutura vs PUT isolada</small></article>
+    <article><span>Break-even</span><strong id="breakEvens">—</strong><small>Pontos de equilíbrio</small></article>
+  </section>
+  <p class="payoff-disclaimer">Simulação educacional no vencimento, sem impostos, corretagem, exercício antecipado ou variação de volatilidade. Confira os dados na corretora.</p>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{{ url_for('static', filename='payoff_simulator.js', v='20260803.1') }}"></script>
+{% endblock %}
