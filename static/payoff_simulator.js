@@ -11,6 +11,7 @@
   const defaultExpiry = new Date(Date.now()+30*86400000);
   const defaultMonthCode = kind => (kind === 'put' ? 'MNOPQRSTUVWX' : 'ABCDEFGHIJKL')[defaultExpiry.getMonth()];
   let chart;
+  let currentMarkers = {jade:null, put:null, tolerance:0};
   let legs = [
     {side:'short', kind:'put', code:`PETR${defaultMonthCode('put')}3200`, strike:32, premium:1.10, quantity:10},
     {side:'short', kind:'call', code:`PETR${defaultMonthCode('call')}3800`, strike:38, premium:1.20, quantity:10},
@@ -123,6 +124,17 @@
     ctx.save();ctx.setLineDash([5,5]);ctx.strokeStyle='#64748b';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x,area.top);ctx.lineTo(x,area.bottom);ctx.stroke();ctx.restore();
   }};
 
+  const breakEvenMarkerLines = {id:'breakEvenMarkerLines', afterDatasetsDraw(chart) {
+    const area=chart.chartArea, scale=chart.scales.x, labels=chart.data.labels || [], ctx=chart.ctx;
+    [{value:currentMarkers.jade,color:'#f59e0b'},{value:currentMarkers.put,color:'#8254d6'}].forEach(marker => {
+      if (!Number.isFinite(marker.value) || !labels.length) return;
+      const min=Number(labels[0]), max=Number(labels[labels.length-1]);
+      const firstX=scale.getPixelForValue(0), lastX=scale.getPixelForValue(labels.length-1);
+      const x=firstX+(marker.value-min)/(max-min)*(lastX-firstX);
+      ctx.save();ctx.setLineDash([7,6]);ctx.strokeStyle=marker.color;ctx.lineWidth=2.5;ctx.beginPath();ctx.moveTo(x,area.top);ctx.lineTo(x,area.bottom);ctx.stroke();ctx.restore();
+    });
+  }};
+
   function dockedTooltip(context) {
     const node = $('payoffTooltip'), floating = $('payoffFloatingTooltip'), tooltip = context.tooltip;
     if (!tooltip || tooltip.opacity === 0 || !tooltip.dataPoints?.length) {
@@ -135,13 +147,15 @@
     const put = tooltip.dataPoints.find(point => point.datasetIndex === 1)?.raw || 0;
     const spot = number(spotInput.value);
     const variation = `${spot ? ((price / spot - 1) * 100).toFixed(2).replace('.', ',') : '0,00'}%`;
-    node.innerHTML = `<span>Ativo em <b>${money(price)}</b></span><strong>Estrutura: ${money(structure)}</strong><strong class="put-detail">PUT isolada: ${money(put)}</strong><small>Variação sobre o preço atual: ${variation}</small>`;
-    floating.innerHTML = `<span>Ativo em ${money(price)}</span><strong>Estrutura: ${money(structure)}</strong><b>PUT isolada: ${money(put)}</b><small>Variação: ${variation}</small>`;
+    const jadeHint = Number.isFinite(currentMarkers.jade) && Math.abs(price-currentMarkers.jade)<=currentMarkers.tolerance ? `<em class="marker-hint jade-hint">Linha laranja: break-even da Jade (${money(currentMarkers.jade)}). Neste preço, o resultado da estrutura é zero.</em>` : '';
+    const putHint = Number.isFinite(currentMarkers.put) && Math.abs(price-currentMarkers.put)<=currentMarkers.tolerance ? `<em class="marker-hint put-hint">Linha roxa: break-even da PUT isolada (${money(currentMarkers.put)}). Abaixo deste preço, a PUT entra em prejuízo.</em>` : '';
+    node.innerHTML = `<span>Ativo em <b>${money(price)}</b></span><strong>Estrutura: ${money(structure)}</strong><strong class="put-detail">PUT isolada: ${money(put)}</strong><small>Variação sobre o preço atual: ${variation}</small>${jadeHint}${putHint}`;
+    floating.innerHTML = `<span>Ativo em ${money(price)}</span><strong>Estrutura: ${money(structure)}</strong><b>PUT isolada: ${money(put)}</b><small>Variação: ${variation}</small>${jadeHint}${putHint}`;
     floating.hidden = false;
     const placeLeft = tooltip.caretX > context.chart.width * .65;
     floating.style.left = `${placeLeft ? Math.max(10, tooltip.caretX - 300) : tooltip.caretX + 90}px`;
     floating.style.top = 'auto';
-    floating.style.bottom = '14px';
+    floating.style.bottom = '58px';
   }
 
   function update() {
@@ -157,15 +171,17 @@
     const maxProfit=Math.max(...structure), minProfit=Math.min(...structure);
     const putProfit=shortPut ? shortPut.premium*shortPut.quantity*100 : 0;
     const difference=putProfit ? (maxProfit-putProfit)/putProfit*100 : 0;
+    const structureBreakEvens=breakEvens(points,structure);
+    currentMarkers={jade:identify()==='JADE LIZARD' ? (structureBreakEvens[0] ?? null) : null,put:shortPut ? shortPut.strike-shortPut.premium : null,tolerance:(high-low)/120*1.25};
     $('netCredit').textContent=money(credit);$('maxProfit').textContent=money(maxProfit);$('maxLoss').textContent=money(Math.abs(Math.min(0,minProfit)));
     $('putOnlyProfit').textContent=money(putProfit);$('gainDifference').textContent=`${difference>=0?'+':''}${difference.toFixed(2).replace('.',',')}%`;
-    $('breakEvens').textContent=breakEvens(points,structure).map(value=>money(value)).join(' · ')||'—';$('strategyName').textContent=identify();
+    $('breakEvens').textContent=structureBreakEvens.map(value=>money(value)).join(' · ')||'—';$('strategyName').textContent=identify();
     const data={labels:points.map(value=>value.toFixed(2)),datasets:[
       {label:'Estrutura completa',data:structure,borderColor:'#0b8f62',backgroundColor:'rgba(11,143,98,.12)',fill:'origin',borderWidth:3,pointRadius:0,tension:.08,segment:{borderColor:ctx=>ctx.p1.parsed.y<0?'#e54b59':'#0b8f62'}},
       {label:'Somente venda da PUT',data:putOnly,borderColor:'#8254d6',borderDash:[8,6],borderWidth:2.5,pointRadius:0,tension:.05,fill:false}
     ]};
     if(chart){chart.data=data;chart.update();return;}
-    chart=new Chart($('payoffChart'),{type:'line',data,plugins:[hoverLine],options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{display:false},tooltip:{enabled:false,external:dockedTooltip}},scales:{x:{grid:{display:false},title:{display:true,text:'Preço do ativo no vencimento'},ticks:{maxTicksLimit:12,callback:(_v,i)=>money(points[i])}},y:{grid:{color:ctx=>ctx.tick.value===0?'#25352e':'rgba(100,120,110,.12)',lineWidth:ctx=>ctx.tick.value===0?2:1},title:{display:true,text:'Lucro / Prejuízo'},ticks:{callback:value=>money(value)}}}}});
+    chart=new Chart($('payoffChart'),{type:'line',data,plugins:[breakEvenMarkerLines,hoverLine],options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{display:false},tooltip:{enabled:false,external:dockedTooltip}},scales:{x:{grid:{display:false},title:{display:true,text:'Preço do ativo no vencimento'},ticks:{maxTicksLimit:12,callback:(_v,i)=>money(points[i])}},y:{grid:{color:ctx=>ctx.tick.value===0?'#25352e':'rgba(100,120,110,.12)',lineWidth:ctx=>ctx.tick.value===0?2:1},title:{display:true,text:'Lucro / Prejuízo'},ticks:{callback:value=>money(value)}}}}});
   }
 
   hydrateFromRadar();
