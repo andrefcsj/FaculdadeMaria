@@ -8,11 +8,13 @@
   };
   const params = new URLSearchParams(location.search);
   const assetInput = $('payoffAsset'), spotInput = $('payoffSpot'), legsNode = $('payoffLegs');
+  const defaultExpiry = new Date(Date.now()+30*86400000);
+  const defaultMonthCode = kind => (kind === 'put' ? 'MNOPQRSTUVWX' : 'ABCDEFGHIJKL')[defaultExpiry.getMonth()];
   let chart;
   let legs = [
-    {side:'short', kind:'put', code:'PETRP3200', strike:32, premium:1.10, quantity:10},
-    {side:'short', kind:'call', code:'PETRC3800', strike:38, premium:1.20, quantity:10},
-    {side:'long', kind:'call', code:'PETRC4400', strike:44, premium:.60, quantity:10},
+    {side:'short', kind:'put', code:`PETR${defaultMonthCode('put')}3200`, strike:32, premium:1.10, quantity:10},
+    {side:'short', kind:'call', code:`PETR${defaultMonthCode('call')}3800`, strike:38, premium:1.20, quantity:10},
+    {side:'long', kind:'call', code:`PETR${defaultMonthCode('call')}4400`, strike:44, premium:.60, quantity:10},
   ];
 
   function hydrateFromRadar() {
@@ -20,7 +22,7 @@
     assetInput.value = params.get('asset').toUpperCase();
     spotInput.value = String(params.get('spot') || '').replace('.', ',');
     legs = [
-      {side:'short', kind:'put', code:params.get('put') || '', strike:number(params.get('put_strike')), premium:number(params.get('put_premium')), quantity:1},
+      {side:'short', kind:'put', code:params.get('put') || '', strike:number(params.get('put_strike')), premium:number(params.get('put_premium')), quantity:1, delta:number(params.get('put_delta'))},
       {side:'short', kind:'call', code:params.get('short_call') || '', strike:number(params.get('short_call_strike')), premium:number(params.get('short_call_premium')), quantity:1},
       {side:'long', kind:'call', code:params.get('long_call') || '', strike:number(params.get('long_call_strike')), premium:number(params.get('long_call_premium')), quantity:1},
     ];
@@ -29,13 +31,18 @@
   function legLabel(leg) { return `${leg.side === 'short' ? 'Venda' : 'Compra'} ${leg.kind.toUpperCase()}`; }
   function renderLegs() {
     legsNode.innerHTML = legs.map((leg, index) => `<article class="payoff-leg ${leg.side}" data-index="${index}"><div class="payoff-leg-row">
-      <label>Operação<select data-field="side"><option value="short" ${leg.side==='short'?'selected':''}>Venda</option><option value="long" ${leg.side==='long'?'selected':''}>Compra</option></select></label>
-      <label>Código da opção<input data-field="code" value="${leg.code}" maxlength="14" placeholder="Ex.: PETRA320"></label>
+      <label>Operação<select data-field="side"><option value="short" ${leg.side==='short'?'selected':''}>Vender</option><option value="long" ${leg.side==='long'?'selected':''}>Comprar</option></select></label>
+      <label>Tipo<select data-field="kind"><option value="put" ${leg.kind==='put'?'selected':''}>Put</option><option value="call" ${leg.kind==='call'?'selected':''}>Call</option></select></label>
+      <label>Quantidade<input data-field="quantity" type="number" min="1" value="${leg.quantity}"></label>
+      <span class="leg-expiry" data-leg-expiry>—</span>
       <label>Strike<input data-field="strike" inputmode="decimal" value="${String(leg.strike).replace('.',',')}"></label>
-      <label>Prêmio<input data-field="premium" inputmode="decimal" value="${String(leg.premium).replace('.',',')}"></label>
-      <label>Qtd.<input data-field="quantity" type="number" min="1" value="${leg.quantity}"></label>
+      <label>Ticker<input data-field="code" value="${leg.code}" maxlength="14" placeholder="Ex.: PETRA320"></label>
+      <span class="leg-delta">${leg.delta ? leg.delta.toFixed(2).replace('.',',') : '—'}</span>
+      <span class="leg-distance" data-leg-distance>—</span>
+      <label>Preço<input data-field="premium" inputmode="decimal" value="${String(leg.premium).replace('.',',')}"></label>
+      <strong class="leg-total" data-leg-total>—</strong>
       <button class="payoff-leg-remove" data-remove="${index}" type="button" aria-label="Remover ${legLabel(leg)}">×</button>
-    </div><small>${legLabel(leg)} · ativo-base <strong>${assetInput.value.toUpperCase()}</strong></small></article>`).join('');
+    </div></article>`).join('');
     $('legsCount').textContent = `${legs.length} perna${legs.length === 1 ? '' : 's'}`;
   }
 
@@ -54,6 +61,21 @@
         leg[field] = ['strike','premium','quantity'].includes(field) ? number(input.value) : (field === 'code' ? input.value.toUpperCase() : input.value);
       });
       leg.kind = inferKind(leg.code, leg.kind);
+    });
+  }
+
+  function refreshLegRows(spot) {
+    const expiry = $('payoffExpiry').value;
+    const expiryLabel = expiry ? new Date(`${expiry}T12:00:00`).toLocaleDateString('pt-BR') : '—';
+    legsNode.querySelectorAll('.payoff-leg').forEach(card => {
+      const leg = legs[Number(card.dataset.index)];
+      const distance = spot ? (leg.strike / spot - 1) * 100 : 0;
+      const signedTotal = (leg.side === 'short' ? 1 : -1) * leg.premium * leg.quantity * 100;
+      card.querySelector('[data-leg-expiry]').textContent = expiryLabel;
+      card.querySelector('[data-leg-distance]').textContent = `${distance >= 0 ? '+' : ''}${distance.toFixed(2).replace('.', ',')}%`;
+      const total = card.querySelector('[data-leg-total]');
+      total.textContent = money(signedTotal);
+      total.classList.toggle('negative', signedTotal < 0);
     });
   }
 
@@ -96,9 +118,23 @@
     ctx.save();ctx.setLineDash([5,5]);ctx.strokeStyle='#64748b';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x,area.top);ctx.lineTo(x,area.bottom);ctx.stroke();ctx.restore();
   }};
 
+  function dockedTooltip(context) {
+    const node = $('payoffTooltip'), tooltip = context.tooltip;
+    if (!tooltip || tooltip.opacity === 0 || !tooltip.dataPoints?.length) {
+      node.innerHTML = '<span>Passe o mouse pelo gráfico</span><strong>Os detalhes da estrutura e da PUT isolada aparecerão aqui, sem cobrir as curvas.</strong>';
+      return;
+    }
+    const price = Number(tooltip.dataPoints[0].label);
+    const structure = tooltip.dataPoints.find(point => point.datasetIndex === 0)?.raw || 0;
+    const put = tooltip.dataPoints.find(point => point.datasetIndex === 1)?.raw || 0;
+    const spot = number(spotInput.value);
+    node.innerHTML = `<span>Ativo em <b>${money(price)}</b></span><strong>Estrutura: ${money(structure)}</strong><strong class="put-detail">PUT isolada: ${money(put)}</strong><small>Variação sobre o preço atual: ${spot ? ((price / spot - 1) * 100).toFixed(2).replace('.', ',') : '0,00'}%</small>`;
+  }
+
   function update() {
     syncLegs(); validate();
     const spot = number(spotInput.value), strikes = legs.map(leg=>leg.strike).filter(Boolean);
+    refreshLegRows(spot);
     const low=Math.max(.01, Math.min(spot || 1, ...strikes)*.55), high=Math.max(spot || 1, ...strikes)*1.45;
     const points=Array.from({length:121},(_,i)=>low+(high-low)*i/120);
     const structure=points.map(price=>legs.reduce((sum,leg)=>sum+legPayoff(leg,price),0));
@@ -116,11 +152,11 @@
       {label:'Somente venda da PUT',data:putOnly,borderColor:'#8254d6',borderDash:[8,6],borderWidth:2.5,pointRadius:0,tension:.05,fill:false}
     ]};
     if(chart){chart.data=data;chart.update();return;}
-    chart=new Chart($('payoffChart'),{type:'line',data,plugins:[hoverLine],options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{display:false},tooltip:{displayColors:true,callbacks:{title:items=>`Ativo em ${money(items[0].label)}`,label:ctx=>`${ctx.dataset.label}: ${money(ctx.raw)}`,afterBody:items=>{const price=Number(items[0].label);return [`Preço atual: ${money(spot)}`,`Variação até o ponto: ${spot?((price/spot-1)*100).toFixed(2).replace('.',','):'0,00'}%`]}}}},scales:{x:{grid:{display:false},title:{display:true,text:'Preço do ativo no vencimento'},ticks:{maxTicksLimit:12,callback:(_v,i)=>money(points[i])}},y:{grid:{color:ctx=>ctx.tick.value===0?'#25352e':'rgba(100,120,110,.12)',lineWidth:ctx=>ctx.tick.value===0?2:1},title:{display:true,text:'Lucro / Prejuízo'},ticks:{callback:value=>money(value)}}}}});
+    chart=new Chart($('payoffChart'),{type:'line',data,plugins:[hoverLine],options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{display:false},tooltip:{enabled:false,external:dockedTooltip}},scales:{x:{grid:{display:false},title:{display:true,text:'Preço do ativo no vencimento'},ticks:{maxTicksLimit:12,callback:(_v,i)=>money(points[i])}},y:{grid:{color:ctx=>ctx.tick.value===0?'#25352e':'rgba(100,120,110,.12)',lineWidth:ctx=>ctx.tick.value===0?2:1},title:{display:true,text:'Lucro / Prejuízo'},ticks:{callback:value=>money(value)}}}}});
   }
 
   hydrateFromRadar();
-  $('payoffExpiry').value=new Date(Date.now()+30*86400000).toISOString().slice(0,10);
+  $('payoffExpiry').value=defaultExpiry.toISOString().slice(0,10);
   renderLegs(); update();
   document.addEventListener('input', event=>{if(event.target.closest('.payoff-page')) update()});
   assetInput.addEventListener('input',()=>{renderLegs();update()});
