@@ -1,0 +1,9 @@
+/* Ajustes de ergonomia para digitação das pernas. */
+.payoff-layout{grid-template-columns:minmax(560px, .95fr) minmax(0, 1.35fr)}
+.payoff-leg-row{grid-template-columns:minmax(105px,.8fr) minmax(155px,1.45fr) minmax(105px,.9fr) minmax(105px,.9fr) 58px 31px;gap:9px}
+.payoff-leg-row label:nth-of-type(5){width:58px}
+.payoff-leg-row label:nth-of-type(5) input{padding:0 5px;text-align:center}
+.payoff-chart{height:350px}
+@media(max-width:1350px){.payoff-layout{grid-template-columns:minmax(520px,1fr) minmax(0,1.15fr)}.payoff-leg-row{grid-template-columns:minmax(92px,.75fr) minmax(135px,1.3fr) minmax(92px,.85fr) minmax(92px,.85fr) 54px 31px;gap:7px}}
+@media(max-width:1050px){.payoff-layout{grid-template-columns:1fr}.payoff-leg-row{grid-template-columns:minmax(105px,.8fr) minmax(180px,1.5fr) minmax(110px,.9fr) minmax(110px,.9fr) 58px 31px}.payoff-chart{height:320px}}
+@media(max-width:720px){.payoff-leg-row{grid-template-columns:1fr 1fr}.payoff-leg-row label:nth-of-type(5){width:auto}.payoff-chart{height:280px}}

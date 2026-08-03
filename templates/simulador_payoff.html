@@ -2,7 +2,7 @@
 {% block title %}Simulador de Payoff | FaculdadeMaria{% endblock %}
 {% block page_title %}Simulador de Payoff{% endblock %}
 {% block page_subtitle %}Monte sua estratégia e visualize o resultado no vencimento{% endblock %}
-{% block head %}<link rel="stylesheet" href="{{ url_for('static', filename='payoff_simulator.css', v='20260803.1') }}">{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ url_for('static', filename='payoff_simulator.css', v='20260803.1') }}"><link rel="stylesheet" href="{{ url_for('static', filename='payoff_simulator_layout.css', v='20260803.2') }}">{% endblock %}
 {% block page_actions %}<button class="payoff-clear" id="payoffClear" type="button">Limpar</button><button class="topbar-refresh" id="payoffSave" type="button">Salvar Simulação</button>{% endblock %}
 {% block content %}
 <div class="payoff-page">

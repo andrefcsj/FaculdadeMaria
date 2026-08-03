@@ -1,7 +1,11 @@
 (() => {
   const $ = id => document.getElementById(id);
   const money = value => Number(value || 0).toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
-  const number = value => Number(String(value ?? '').replace(/\./g, '').replace(',', '.')) || 0;
+  const number = value => {
+    const text = String(value ?? '').trim().replace(/\s/g, '');
+    const normalized = text.includes(',') ? text.replace(/\./g, '').replace(',', '.') : text;
+    return Number(normalized) || 0;
+  };
   const params = new URLSearchParams(location.search);
   const assetInput = $('payoffAsset'), spotInput = $('payoffSpot'), legsNode = $('payoffLegs');
   let chart;
