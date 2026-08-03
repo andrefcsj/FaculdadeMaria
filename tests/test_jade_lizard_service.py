@@ -1,4 +1,4 @@
-from services.jade_lizard_service import JadeConfig, scan_estimated_chain
+from services.jade_lizard_service import JadeConfig, is_dte_allowed, scan_estimated_chain
 
 
 def test_scanner_only_returns_jades_that_pass_the_main_rules():
@@ -15,6 +15,16 @@ def test_scanner_only_returns_jades_that_pass_the_main_rules():
 def test_scanner_discards_everything_when_score_threshold_is_unreachable():
     rows = scan_estimated_chain(["PETR4"], {"PETR4": 37.0}.get, JadeConfig(min_score=101))
 
+    assert rows == []
+
+
+def test_expiry_window_is_a_hard_filter_with_inclusive_45_day_limit():
+    assert is_dte_allowed(15)
+    assert is_dte_allowed(45)
+    assert not is_dte_allowed(46)
+    assert not is_dte_allowed(14)
+
+    rows = scan_estimated_chain(["PETR4"], {"PETR4": 37.0}.get, JadeConfig(max_dte=29))
     assert rows == []
 
 
