@@ -76,6 +76,12 @@ def _code(ticker: str, kind: str, strike: float) -> str:
     return f"{ticker.replace('3', '').replace('4', '')}{'P' if kind == 'put' else 'C'}{int(round(strike * 100)):04d}"
 
 
+def is_dte_allowed(days: int, config: JadeConfig | None = None) -> bool:
+    """Regra central: oportunidades fora da janela nunca chegam ao ranking."""
+    cfg = config or JadeConfig()
+    return cfg.min_dte <= int(days) <= cfg.max_dte
+
+
 def scan_estimated_chain(
     tickers: Iterable[str],
     spot_loader: Callable[[str], float | None],
@@ -85,6 +91,8 @@ def scan_estimated_chain(
     cfg = config or JadeConfig()
     results: list[JadeOpportunity] = []
     days = 30
+    if not is_dte_allowed(days, cfg):
+        return []
     years = days / 365
     expiry = (date.today() + timedelta(days=days)).isoformat()
     for ticker in tickers:
