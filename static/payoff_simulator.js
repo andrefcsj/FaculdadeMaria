@@ -11,7 +11,7 @@
   const defaultExpiry = new Date(Date.now()+30*86400000);
   const defaultMonthCode = kind => (kind === 'put' ? 'MNOPQRSTUVWX' : 'ABCDEFGHIJKL')[defaultExpiry.getMonth()];
   let chart;
-  let currentMarkers = {jade:null, put:null, tolerance:0};
+  let currentMarkers = {jade:null, put:null, spot:null, tolerance:0};
   let legs = [
     {side:'short', kind:'put', code:`PETR${defaultMonthCode('put')}3200`, strike:32, premium:1.10, quantity:10},
     {side:'short', kind:'call', code:`PETR${defaultMonthCode('call')}3800`, strike:38, premium:1.20, quantity:10},
@@ -126,7 +126,7 @@
 
   const breakEvenMarkerLines = {id:'breakEvenMarkerLines', afterDatasetsDraw(chart) {
     const area=chart.chartArea, scale=chart.scales.x, labels=chart.data.labels || [], ctx=chart.ctx;
-    [{value:currentMarkers.jade,color:'#f59e0b'},{value:currentMarkers.put,color:'#8254d6'}].forEach(marker => {
+    [{value:currentMarkers.jade,color:'#f59e0b'},{value:currentMarkers.put,color:'#8254d6'},{value:currentMarkers.spot,color:'#111827'}].forEach(marker => {
       if (!Number.isFinite(marker.value) || !labels.length) return;
       const min=Number(labels[0]), max=Number(labels[labels.length-1]);
       const firstX=scale.getPixelForValue(0), lastX=scale.getPixelForValue(labels.length-1);
@@ -149,8 +149,9 @@
     const variation = `${spot ? ((price / spot - 1) * 100).toFixed(2).replace('.', ',') : '0,00'}%`;
     const jadeHint = Number.isFinite(currentMarkers.jade) && Math.abs(price-currentMarkers.jade)<=currentMarkers.tolerance ? `<em class="marker-hint jade-hint">Linha laranja: break-even da Jade (${money(currentMarkers.jade)}). Neste preço, o resultado da estrutura é zero.</em>` : '';
     const putHint = Number.isFinite(currentMarkers.put) && Math.abs(price-currentMarkers.put)<=currentMarkers.tolerance ? `<em class="marker-hint put-hint">Linha roxa: break-even da PUT isolada (${money(currentMarkers.put)}). Abaixo deste preço, a PUT entra em prejuízo.</em>` : '';
-    node.innerHTML = `<span>Ativo em <b>${money(price)}</b></span><strong>Estrutura: ${money(structure)}</strong><strong class="put-detail">PUT isolada: ${money(put)}</strong><small>Variação sobre o preço atual: ${variation}</small>${jadeHint}${putHint}`;
-    floating.innerHTML = `<span>Ativo em ${money(price)}</span><strong>Estrutura: ${money(structure)}</strong><b>PUT isolada: ${money(put)}</b><small>Variação: ${variation}</small>${jadeHint}${putHint}`;
+    const spotHint = Number.isFinite(currentMarkers.spot) && Math.abs(price-currentMarkers.spot)<=currentMarkers.tolerance ? `<em class="marker-hint spot-hint">Linha preta: preço atual da ação (${money(currentMarkers.spot)}). Ela mostra onde o ativo está hoje em relação aos break-evens.</em>` : '';
+    node.innerHTML = `<span>Ativo em <b>${money(price)}</b></span><strong>Estrutura: ${money(structure)}</strong><strong class="put-detail">PUT isolada: ${money(put)}</strong><small>Variação sobre o preço atual: ${variation}</small>${jadeHint}${putHint}${spotHint}`;
+    floating.innerHTML = `<span>Ativo em ${money(price)}</span><strong>Estrutura: ${money(structure)}</strong><b>PUT isolada: ${money(put)}</b><small>Variação: ${variation}</small>${jadeHint}${putHint}${spotHint}`;
     floating.hidden = false;
     const placeLeft = tooltip.caretX > context.chart.width * .65;
     floating.style.left = `${placeLeft ? Math.max(10, tooltip.caretX - 300) : tooltip.caretX + 90}px`;
@@ -172,7 +173,7 @@
     const putProfit=shortPut ? shortPut.premium*shortPut.quantity*100 : 0;
     const difference=putProfit ? (maxProfit-putProfit)/putProfit*100 : 0;
     const structureBreakEvens=breakEvens(points,structure);
-    currentMarkers={jade:identify()==='JADE LIZARD' ? (structureBreakEvens[0] ?? null) : null,put:shortPut ? shortPut.strike-shortPut.premium : null,tolerance:(high-low)/120*1.25};
+    currentMarkers={jade:identify()==='JADE LIZARD' ? (structureBreakEvens[0] ?? null) : null,put:shortPut ? shortPut.strike-shortPut.premium : null,spot:spot || null,tolerance:(high-low)/120*1.25};
     $('netCredit').textContent=money(credit);$('maxProfit').textContent=money(maxProfit);$('maxLoss').textContent=money(Math.abs(Math.min(0,minProfit)));
     $('putOnlyProfit').textContent=money(putProfit);$('gainDifference').textContent=`${difference>=0?'+':''}${difference.toFixed(2).replace('.',',')}%`;
     $('breakEvens').textContent=structureBreakEvens.map(value=>money(value)).join(' · ')||'—';$('strategyName').textContent=identify();
