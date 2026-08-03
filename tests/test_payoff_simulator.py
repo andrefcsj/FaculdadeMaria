@@ -15,6 +15,8 @@ def test_payoff_simulator_page_has_comparison_and_single_asset_controls():
     assert b"Dist" in response.data
     assert b">ROI<" in response.data
     assert b"payoffFloatingTooltip" in response.data
+    assert b"BE Jade" in response.data
+    assert b"BE PUT" in response.data
     assert b"payoff_simulator.js" in response.data
 
 
