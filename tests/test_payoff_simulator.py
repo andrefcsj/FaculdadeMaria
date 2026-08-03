@@ -13,6 +13,8 @@ def test_payoff_simulator_page_has_comparison_and_single_asset_controls():
     assert b"payoffTooltip" in response.data
     assert b"Quantidade" in response.data
     assert b"Dist" in response.data
+    assert b">ROI<" in response.data
+    assert b"payoffFloatingTooltip" in response.data
     assert b"payoff_simulator.js" in response.data
 
 
