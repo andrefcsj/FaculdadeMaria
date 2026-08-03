@@ -3,6 +3,18 @@
   const target = document.querySelector('#jadeCompare');
   if (!dialog || !target) return;
   const money = value => Number(value).toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
+  const simulatorUrl = data => `/estrategias/simulador-payoff?asset=${encodeURIComponent(data.ticker)}&spot=${data.spot}&put=${encodeURIComponent(data.put_code)}&put_strike=${data.put_strike}&put_premium=${data.put_credit}&short_call=${encodeURIComponent(data.short_call_code)}&short_call_strike=${data.short_call_strike}&short_call_premium=${data.short_call_credit}&long_call=${encodeURIComponent(data.long_call_code)}&long_call_strike=${data.long_call_strike}&long_call_premium=${data.long_call_debit}`;
+  document.querySelectorAll('tr[data-jade]').forEach(row => {
+    const data = JSON.parse(row.dataset.jade);
+    const actions = row.querySelector('td:last-child');
+    const link = document.createElement('a');
+    link.className = 'jade-simulate';
+    link.style.cssText = 'display:inline-flex;align-items:center;justify-content:center;margin-left:7px;padding:9px 12px;border:1px solid #08744c;border-radius:9px;color:#08744c;background:#fff;text-decoration:none;font-weight:800';
+    link.href = simulatorUrl(data);
+    link.textContent = 'Simular';
+    link.setAttribute('aria-label', `Simular Jade Lizard de ${data.ticker}`);
+    actions.appendChild(link);
+  });
   document.querySelectorAll('.jade-open').forEach(button => button.addEventListener('click', () => {
     const data = JSON.parse(button.closest('tr').dataset.jade);
     const putCapital = Math.max(0, (data.put_strike - data.put_credit) * 100);
@@ -18,7 +30,7 @@
         ['Lucro máximo', money(data.max_profit)], ['Perda máxima', money(data.max_loss)],
         ['Capital em risco', money(data.capital_required)], ['Diferença de prêmio', '+' + (data.retention_pct-100).toFixed(1) + '%']
       ])}</section></div><div class="legs"><strong>Estrutura sugerida</strong><p>Vender ${data.put_code} · Vender ${data.short_call_code} · Comprar ${data.long_call_code}</p><small>Dados estimados: valide preços, liquidez e gregas na corretora.</small></div>
-      <a class="mount-jade" style="display:block;text-align:center;text-decoration:none;margin-bottom:8px" href="/estrategias/simulador-payoff?asset=${encodeURIComponent(data.ticker)}&spot=${data.spot}&put=${encodeURIComponent(data.put_code)}&put_strike=${data.put_strike}&put_premium=${data.put_credit}&short_call=${encodeURIComponent(data.short_call_code)}&short_call_strike=${data.short_call_strike}&short_call_premium=${data.short_call_credit}&long_call=${encodeURIComponent(data.long_call_code)}&long_call_strike=${data.long_call_strike}&long_call_premium=${data.long_call_debit}">Simular Payoff</a><button class="mount-jade" type="button">Montar Operação</button>`;
+      <a class="mount-jade" style="display:block;text-align:center;text-decoration:none;margin-bottom:8px" href="${simulatorUrl(data)}">Simular Payoff</a><button class="mount-jade" type="button">Montar Operação</button>`;
     target.querySelector('.mount-jade').addEventListener('click', async event => {
       event.currentTarget.disabled = true;
       const response = await fetch('/api/estrategias/jade-lizard/montar', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)});
