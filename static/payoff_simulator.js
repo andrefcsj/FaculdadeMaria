@@ -31,16 +31,17 @@
   function legLabel(leg) { return `${leg.side === 'short' ? 'Venda' : 'Compra'} ${leg.kind.toUpperCase()}`; }
   function renderLegs() {
     legsNode.innerHTML = legs.map((leg, index) => `<article class="payoff-leg ${leg.side}" data-index="${index}"><div class="payoff-leg-row">
-      <label>Operação<select data-field="side"><option value="short" ${leg.side==='short'?'selected':''}>Vender</option><option value="long" ${leg.side==='long'?'selected':''}>Comprar</option></select></label>
-      <label>Tipo<select data-field="kind"><option value="put" ${leg.kind==='put'?'selected':''}>Put</option><option value="call" ${leg.kind==='call'?'selected':''}>Call</option></select></label>
-      <label>Quantidade<input data-field="quantity" type="number" min="1" value="${leg.quantity}"></label>
+      <label><span class="leg-field-label">Operação</span><select data-field="side"><option value="short" ${leg.side==='short'?'selected':''}>Vender</option><option value="long" ${leg.side==='long'?'selected':''}>Comprar</option></select></label>
+      <label><span class="leg-field-label">Tipo</span><select data-field="kind"><option value="put" ${leg.kind==='put'?'selected':''}>Put</option><option value="call" ${leg.kind==='call'?'selected':''}>Call</option></select></label>
+      <label><span class="leg-field-label">Quantidade</span><input data-field="quantity" type="number" min="1" step="1" value="${leg.quantity}"></label>
       <span class="leg-expiry" data-leg-expiry>—</span>
-      <label>Strike<input data-field="strike" inputmode="decimal" value="${String(leg.strike).replace('.',',')}"></label>
-      <label>Ticker<input data-field="code" value="${leg.code}" maxlength="14" placeholder="Ex.: PETRA320"></label>
+      <label><span class="leg-field-label">Strike</span><input data-field="strike" type="number" min="0" step="0.01" value="${leg.strike}"></label>
+      <label><span class="leg-field-label">Ticker</span><input data-field="code" value="${leg.code}" maxlength="14" placeholder="Ex.: PETRA320"></label>
       <span class="leg-delta">${leg.delta ? leg.delta.toFixed(2).replace('.',',') : '—'}</span>
       <span class="leg-distance" data-leg-distance>—</span>
-      <label>Preço<input data-field="premium" inputmode="decimal" value="${String(leg.premium).replace('.',',')}"></label>
+      <label><span class="leg-field-label">Preço</span><input data-field="premium" type="number" min="0" step="0.01" value="${leg.premium}"></label>
       <strong class="leg-total" data-leg-total>—</strong>
+      <strong class="leg-roi" data-leg-roi>—</strong>
       <button class="payoff-leg-remove" data-remove="${index}" type="button" aria-label="Remover ${legLabel(leg)}">×</button>
     </div></article>`).join('');
     $('legsCount').textContent = `${legs.length} perna${legs.length === 1 ? '' : 's'}`;
@@ -76,6 +77,10 @@
       const total = card.querySelector('[data-leg-total]');
       total.textContent = money(signedTotal);
       total.classList.toggle('negative', signedTotal < 0);
+      const roi = leg.strike ? (leg.side === 'short' ? 1 : -1) * leg.premium / leg.strike * 100 : 0;
+      const roiNode = card.querySelector('[data-leg-roi]');
+      roiNode.textContent = `${roi >= 0 ? '+' : ''}${roi.toFixed(2).replace('.', ',')}%`;
+      roiNode.classList.toggle('negative', roi < 0);
     });
   }
 
@@ -119,16 +124,24 @@
   }};
 
   function dockedTooltip(context) {
-    const node = $('payoffTooltip'), tooltip = context.tooltip;
+    const node = $('payoffTooltip'), floating = $('payoffFloatingTooltip'), tooltip = context.tooltip;
     if (!tooltip || tooltip.opacity === 0 || !tooltip.dataPoints?.length) {
       node.innerHTML = '<span>Passe o mouse pelo gráfico</span><strong>Os detalhes da estrutura e da PUT isolada aparecerão aqui, sem cobrir as curvas.</strong>';
+      floating.hidden = true;
       return;
     }
     const price = Number(tooltip.dataPoints[0].label);
     const structure = tooltip.dataPoints.find(point => point.datasetIndex === 0)?.raw || 0;
     const put = tooltip.dataPoints.find(point => point.datasetIndex === 1)?.raw || 0;
     const spot = number(spotInput.value);
-    node.innerHTML = `<span>Ativo em <b>${money(price)}</b></span><strong>Estrutura: ${money(structure)}</strong><strong class="put-detail">PUT isolada: ${money(put)}</strong><small>Variação sobre o preço atual: ${spot ? ((price / spot - 1) * 100).toFixed(2).replace('.', ',') : '0,00'}%</small>`;
+    const variation = `${spot ? ((price / spot - 1) * 100).toFixed(2).replace('.', ',') : '0,00'}%`;
+    node.innerHTML = `<span>Ativo em <b>${money(price)}</b></span><strong>Estrutura: ${money(structure)}</strong><strong class="put-detail">PUT isolada: ${money(put)}</strong><small>Variação sobre o preço atual: ${variation}</small>`;
+    floating.innerHTML = `<span>Ativo em ${money(price)}</span><strong>Estrutura: ${money(structure)}</strong><b>PUT isolada: ${money(put)}</b><small>Variação: ${variation}</small>`;
+    floating.hidden = false;
+    const placeLeft = tooltip.caretX > context.chart.width * .65;
+    floating.style.left = `${placeLeft ? Math.max(10, tooltip.caretX - 300) : tooltip.caretX + 90}px`;
+    floating.style.top = 'auto';
+    floating.style.bottom = '14px';
   }
 
   function update() {
