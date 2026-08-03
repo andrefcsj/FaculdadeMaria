@@ -1,4 +1,11 @@
-from services.jade_lizard_service import JadeConfig, is_dte_allowed, scan_estimated_chain
+from datetime import date
+
+from services.jade_lizard_service import (
+    JadeConfig,
+    build_estimated_option_code,
+    is_dte_allowed,
+    scan_estimated_chain,
+)
 
 
 def test_scanner_only_returns_jades_that_pass_the_main_rules():
@@ -26,6 +33,22 @@ def test_expiry_window_is_a_hard_filter_with_inclusive_45_day_limit():
 
     rows = scan_estimated_chain(["PETR4"], {"PETR4": 37.0}.get, JadeConfig(max_dte=29))
     assert rows == []
+
+
+def test_option_codes_follow_b3_type_and_expiry_month():
+    assert build_estimated_option_code("PETR4", "call", 40, date(2026, 4, 17)) == "PETRD4000"
+    assert build_estimated_option_code("PETR4", "put", 40, date(2026, 4, 17)) == "PETRP4000"
+    assert build_estimated_option_code("B3SA3", "call", 12.5, date(2026, 9, 18)) == "B3SAI1250"
+    assert build_estimated_option_code("B3SA3", "put", 12.5, date(2026, 9, 18)) == "B3SAU1250"
+
+
+def test_all_jade_legs_use_codes_for_the_same_expiry_month():
+    row = scan_estimated_chain(["PETR4"], {"PETR4": 37.0}.get)[0]
+    month = date.fromisoformat(row.expiry).month
+
+    assert row.put_code[4] == "MNOPQRSTUVWX"[month - 1]
+    assert row.short_call_code[4] == "ABCDEFGHIJKL"[month - 1]
+    assert row.long_call_code[4] == "ABCDEFGHIJKL"[month - 1]
 
 
 def test_financial_identity_and_capital_are_consistent():
