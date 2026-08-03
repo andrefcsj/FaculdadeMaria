@@ -19,8 +19,8 @@
 .payoff-chart{position:relative;height:330px}
 .payoff-floating-tooltip{position:absolute;z-index:8;width:195px;box-sizing:border-box;padding:11px 13px;border:1px solid #34483e;border-radius:10px;background:rgba(18,27,23,.94);box-shadow:0 10px 28px rgba(0,0,0,.25);color:#fff;pointer-events:none;font-size:10px;line-height:1.35;transition:left .06s linear,top .06s linear}
 .payoff-floating-tooltip span,.payoff-floating-tooltip strong,.payoff-floating-tooltip b,.payoff-floating-tooltip small{display:block}.payoff-floating-tooltip span{color:#cbd7d1}.payoff-floating-tooltip strong{margin-top:4px;color:#84dfb2}.payoff-floating-tooltip b{color:#c5a8ff}.payoff-floating-tooltip small{margin-top:3px;color:#d5ded9}
-.chart-legend .legend-jade-be:before{border-top:3px dashed #f59e0b}.chart-legend .legend-put-be:before{border-top:3px dashed #8254d6}
-.marker-hint{display:block;flex-basis:100%;margin-top:5px;padding-top:5px;border-top:1px solid #ffffff24;font-size:9px;font-style:normal;line-height:1.35}.jade-hint{color:#ffc75a}.put-hint{color:#c5a8ff}
+.chart-legend .legend-jade-be:before{border-top:3px dashed #f59e0b}.chart-legend .legend-put-be:before{border-top:3px dashed #8254d6}.chart-legend .legend-spot:before{border-top:3px dashed #111827}
+.marker-hint{display:block;flex-basis:100%;margin-top:5px;padding-top:5px;border-top:1px solid #ffffff24;font-size:9px;font-style:normal;line-height:1.35}.jade-hint{color:#ffc75a}.put-hint{color:#c5a8ff}.spot-hint{color:#f1f5f9}
 .payoff-tooltip-dock{display:flex;align-items:center;gap:24px;min-height:48px;box-sizing:border-box;margin:4px 17px 15px;padding:10px 16px;border-radius:10px;background:#17211d;color:#fff;font-size:10px}
 .payoff-tooltip-dock span{color:#b8c6bf}.payoff-tooltip-dock strong{color:#8fe0b8}.payoff-tooltip-dock .put-detail{color:#c5a8ff}.payoff-tooltip-dock small{margin-left:auto;color:#d3ddd8}
 @media(max-width:900px){.payoff-toolbar{grid-template-columns:1fr 1fr}.payoff-kpis{grid-template-columns:repeat(2,1fr)}.payoff-chart{height:300px}.payoff-tooltip-dock{align-items:flex-start;flex-direction:column;gap:5px}.payoff-tooltip-dock small{margin-left:0}}
