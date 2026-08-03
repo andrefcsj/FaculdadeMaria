@@ -10,6 +10,9 @@ def test_payoff_simulator_page_has_comparison_and_single_asset_controls():
     assert b"Somente venda da PUT" in response.data
     assert b"Diferen" in response.data
     assert b"payoffChart" in response.data
+    assert b"payoffTooltip" in response.data
+    assert b"Quantidade" in response.data
+    assert b"Dist" in response.data
     assert b"payoff_simulator.js" in response.data
 
 

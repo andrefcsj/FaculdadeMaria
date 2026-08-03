@@ -3,7 +3,7 @@
   const target = document.querySelector('#jadeCompare');
   if (!dialog || !target) return;
   const money = value => Number(value).toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
-  const simulatorUrl = data => `/estrategias/simulador-payoff?asset=${encodeURIComponent(data.ticker)}&spot=${data.spot}&put=${encodeURIComponent(data.put_code)}&put_strike=${data.put_strike}&put_premium=${data.put_credit}&short_call=${encodeURIComponent(data.short_call_code)}&short_call_strike=${data.short_call_strike}&short_call_premium=${data.short_call_credit}&long_call=${encodeURIComponent(data.long_call_code)}&long_call_strike=${data.long_call_strike}&long_call_premium=${data.long_call_debit}`;
+  const simulatorUrl = data => `/estrategias/simulador-payoff?asset=${encodeURIComponent(data.ticker)}&spot=${data.spot}&put=${encodeURIComponent(data.put_code)}&put_strike=${data.put_strike}&put_premium=${data.put_credit}&put_delta=${data.put_delta}&short_call=${encodeURIComponent(data.short_call_code)}&short_call_strike=${data.short_call_strike}&short_call_premium=${data.short_call_credit}&long_call=${encodeURIComponent(data.long_call_code)}&long_call_strike=${data.long_call_strike}&long_call_premium=${data.long_call_debit}`;
   document.querySelectorAll('tr[data-jade]').forEach(row => {
     const data = JSON.parse(row.dataset.jade);
     const actions = row.querySelector('td:last-child');

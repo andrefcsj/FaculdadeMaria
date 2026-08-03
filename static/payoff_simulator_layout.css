@@ -1,9 +1,21 @@
-/* Ajustes de ergonomia para digitação das pernas. */
-.payoff-layout{grid-template-columns:minmax(560px, .95fr) minmax(0, 1.35fr)}
-.payoff-leg-row{grid-template-columns:minmax(105px,.8fr) minmax(155px,1.45fr) minmax(105px,.9fr) minmax(105px,.9fr) 58px 31px;gap:9px}
-.payoff-leg-row label:nth-of-type(5){width:58px}
-.payoff-leg-row label:nth-of-type(5) input{padding:0 5px;text-align:center}
-.payoff-chart{height:350px}
-@media(max-width:1350px){.payoff-layout{grid-template-columns:minmax(520px,1fr) minmax(0,1.15fr)}.payoff-leg-row{grid-template-columns:minmax(92px,.75fr) minmax(135px,1.3fr) minmax(92px,.85fr) minmax(92px,.85fr) 54px 31px;gap:7px}}
-@media(max-width:1050px){.payoff-layout{grid-template-columns:1fr}.payoff-leg-row{grid-template-columns:minmax(105px,.8fr) minmax(180px,1.5fr) minmax(110px,.9fr) minmax(110px,.9fr) 58px 31px}.payoff-chart{height:320px}}
-@media(max-width:720px){.payoff-leg-row{grid-template-columns:1fr 1fr}.payoff-leg-row label:nth-of-type(5){width:auto}.payoff-chart{height:280px}}
+/* Grade horizontal das pernas e gráfico em uma segunda seção. */
+.payoff-layout{display:grid;grid-template-columns:1fr;gap:15px}
+.payoff-builder,.payoff-chart-card{width:100%}
+.payoff-builder{overflow-x:auto}
+.payoff-builder>header,.payoff-builder>.add-payoff-leg,.payoff-builder>.payoff-validation{min-width:1280px}
+.payoff-leg-columns,.payoff-leg-row{display:grid;grid-template-columns:112px 82px 82px 122px 98px minmax(135px,1.2fr) 72px 84px 92px 118px 42px;gap:10px;align-items:center;min-width:1280px}
+.payoff-leg-columns{box-sizing:border-box;padding:12px 17px;background:#f4f7f5;color:#69766f;font-size:9px;font-weight:800;text-transform:uppercase}
+.payoff-leg{margin:0;padding:11px 17px;border:0;border-top:1px solid #e8eeeb;border-left:3px solid #0b8f62;border-radius:0;background:#fff}
+.payoff-leg.short{border-left-color:#e54b59}
+.payoff-leg-row label{display:block;margin:0}
+.payoff-leg-row label>select,.payoff-leg-row label>input{width:100%;height:39px;box-sizing:border-box;border:1px solid #d9e2dd;border-radius:8px;background:#fff;padding:0 9px;color:#26352e;font-size:11px}
+.payoff-leg-row label:nth-of-type(3) input{text-align:center}
+.leg-expiry,.leg-delta,.leg-distance{color:#52615a;font-size:11px;text-align:center}
+.leg-total{color:#118153;font-size:11px;text-align:center}.leg-total.negative{color:#cf4350}
+.payoff-leg-remove{justify-self:center;width:32px;height:36px}
+.add-payoff-leg{box-sizing:border-box;width:calc(100% - 34px);margin:12px 17px}
+.payoff-chart{height:330px}
+.payoff-tooltip-dock{display:flex;align-items:center;gap:24px;min-height:48px;box-sizing:border-box;margin:4px 17px 15px;padding:10px 16px;border-radius:10px;background:#17211d;color:#fff;font-size:10px}
+.payoff-tooltip-dock span{color:#b8c6bf}.payoff-tooltip-dock strong{color:#8fe0b8}.payoff-tooltip-dock .put-detail{color:#c5a8ff}.payoff-tooltip-dock small{margin-left:auto;color:#d3ddd8}
+@media(max-width:900px){.payoff-toolbar{grid-template-columns:1fr 1fr}.payoff-kpis{grid-template-columns:repeat(2,1fr)}.payoff-chart{height:300px}.payoff-tooltip-dock{align-items:flex-start;flex-direction:column;gap:5px}.payoff-tooltip-dock small{margin-left:0}}
+@media(max-width:600px){.payoff-toolbar,.payoff-kpis{grid-template-columns:1fr}.payoff-chart{height:270px}}
