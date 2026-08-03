@@ -10,6 +10,8 @@
 </section>
 <section class="jade-notice"><strong>Modo de projeção controlada</strong><span>Preço à vista ao vivo em {{ live_count }}/{{ total_assets }} ativos; cadeia de opções, gregas, IV, liquidez e OI estão estimados até a conexão com uma API B3/Profit em tempo real. Não envie ordens com estes valores.</span><small>Atualizado em {{ updated_at }}</small></section>
 <form class="jade-filters" method="get">
+  <label>Vencimento mínimo<input type="number" value="{{ config.min_dte }}" disabled title="Configuração fixa nesta versão"></label>
+  <label>Vencimento máximo<input type="number" value="{{ config.max_dte }}" disabled title="Nenhuma oportunidade acima de 45 dias"></label>
   <label>Liquidez mínima<input name="min_liquidity" type="number" value="{{ config.min_liquidity }}"></label>
   <label>Open Interest mínimo<input name="min_open_interest" type="number" value="{{ config.min_open_interest }}"></label>
   <label>Spread máximo (%)<input name="max_spread_pct" type="number" step="0.1" value="{{ config.max_spread_pct }}"></label>
