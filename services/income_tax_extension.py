@@ -13,6 +13,21 @@ from services.taxpayer_profile_service import load_taxpayer_profile, save_taxpay
 from services.darf_pdf_service import generate_darf_pdf
 
 
+def _attach_payment_operations(rows):
+    """Attach the operations accumulated into each payable DARF."""
+    carried_operations = []
+    for row in rows:
+        monthly_operations = [{**operation, "competence": row["competence"]} for operation in row["tax_operations"]]
+        row["payment_operations"] = [*carried_operations, *monthly_operations]
+        if row["estimated_darf"] > 0:
+            carried_operations = []
+        elif row["tax_carry"] > 0:
+            carried_operations = row["payment_operations"]
+        else:
+            carried_operations = []
+    return rows
+
+
 def _last_weekday(year: int, month: int) -> date:
     current = date(year, month, calendar.monthrange(year, month)[1])
     while current.weekday() >= 5:
@@ -41,6 +56,7 @@ def register(app, legacy):
             row["insufficient"] = row["estimated_darf"] == 0 and row["tax_carry"] > 0
             row["is_paid"] = row["estimated_darf"] > 0 and row["pending_amount"] == 0
             row["payment_status"] = "Pago" if row["is_paid"] else ("Pagamento pendente" if row["pending_amount"] > 0 else ("Valor insuficiente para gerar DARF" if row["insufficient"] else "Sem imposto"))
+        _attach_payment_operations(rows)
         return dashboard, rows
 
     @app.get("/apuracao-ir")

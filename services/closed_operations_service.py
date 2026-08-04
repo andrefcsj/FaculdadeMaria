@@ -243,6 +243,8 @@ def build_darf_projection(closed_operations: list[dict[str, Any]], *, today: dat
         bucket[irrf_key] += irrf
         bucket["tax_operation_candidates"].append({
             "option_code": str(operation.get("Ativo", "")),
+            "underlying": str(operation.get("Ativo_subjacente", "")),
+            "logo": str(operation.get("Logo_subjacente", "")),
             "open_date": str(operation.get("Data_abertura", ""))[:10],
             "close_date": close_date[:10],
             "modality": "Day trade" if is_day_trade else "Comum",
@@ -301,6 +303,8 @@ def build_darf_projection(closed_operations: list[dict[str, Any]], *, today: dat
                     continue
                 tax_operations.append({
                     "option_code": item["option_code"],
+                    "underlying": item["underlying"],
+                    "logo": item["logo"],
                     "open_date": item["open_date"],
                     "close_date": item["close_date"],
                     "modality": modality,

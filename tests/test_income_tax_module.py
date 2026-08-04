@@ -1,7 +1,7 @@
 from datetime import date
 
 from app import app
-from services.income_tax_extension import _due_date
+from services.income_tax_extension import _attach_payment_operations, _due_date
 from services.darf_pdf_service import generate_darf_pdf
 from pypdf import PdfReader
 
@@ -49,3 +49,13 @@ def test_simple_darf_pdf_contains_payment_fields():
 def test_missing_taxpayer_data_redirects_instead_of_raising_server_error():
     response = app.test_client().get("/apuracao-ir/darf.pdf?competencia=2026-07")
     assert response.status_code in (302, 200)
+
+
+def test_total_darf_includes_operations_carried_from_previous_months():
+    rows = [
+        {"competence":"2026-06", "tax_operations":[{"option_code":"AAA"}], "estimated_darf":0, "tax_carry":3},
+        {"competence":"2026-07", "tax_operations":[{"option_code":"BBB"}], "estimated_darf":14, "tax_carry":0},
+    ]
+    _attach_payment_operations(rows)
+    assert [item["option_code"] for item in rows[0]["payment_operations"]] == ["AAA"]
+    assert [item["option_code"] for item in rows[1]["payment_operations"]] == ["AAA", "BBB"]

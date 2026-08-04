@@ -75,7 +75,7 @@ class ClosedOperationsTests(unittest.TestCase):
         self.assertEqual(june["estimated_darf"], Decimal("0"))
         self.assertEqual(june["tax_carry"], Decimal("3.00"))
         self.assertEqual(june["tax_operations"], [{
-            "option_code": "PETRP300", "open_date": "2026-06-10",
+            "option_code": "PETRP300", "underlying": "", "logo": "", "open_date": "2026-06-10",
             "close_date": "2026-06-25", "modality": "Comum",
             "taxable_base": "20", "tax": "3.00",
         }])
