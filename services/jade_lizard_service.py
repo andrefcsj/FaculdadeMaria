@@ -21,6 +21,7 @@ class JadeConfig:
 @dataclass(frozen=True)
 class JadeOpportunity:
     ticker: str
+    logo_url: str
     spot: float
     days: int
     expiry: str
@@ -31,9 +32,11 @@ class JadeOpportunity:
     short_call_strike: float
     long_call_strike: float
     put_credit: float
+    put_roi_on_strike: float
     short_call_credit: float
     long_call_debit: float
     net_credit: float
+    jade_roi_on_strike: float
     spread_width: float
     break_even: float
     effective_cost: float
@@ -157,18 +160,28 @@ def scan_estimated_chain(
                              .10 * delta_score + .10 * iv_score + .10 * distance_score)
                     if score < cfg.min_score:
                         continue
+                    displayed_put_credit = round(put_credit, 2)
+                    displayed_net_credit = round(net, 2)
+                    displayed_max_loss = round(max(
+                        max(put_strike - displayed_net_credit, 0),
+                        max(width - displayed_net_credit, 0),
+                    ) * 100, 2)
+                    displayed_roi = (displayed_net_credit * 100 / displayed_max_loss * 100) if displayed_max_loss else 0
                     candidate = JadeOpportunity(
-                        ticker=ticker, spot=round(spot, 2), days=days, expiry=expiry,
+                        ticker=ticker,
+                        logo_url=f"https://raw.githubusercontent.com/thefintz/icones-b3/main/icones/{ticker}.png",
+                        spot=round(spot, 2), days=days, expiry=expiry,
                         put_code=build_estimated_option_code(ticker, "put", put_strike, expiry_date),
                         short_call_code=build_estimated_option_code(ticker, "call", short_strike, expiry_date),
                         long_call_code=build_estimated_option_code(ticker, "call", long_strike, expiry_date),
                         put_strike=put_strike, short_call_strike=short_strike, long_call_strike=long_strike,
-                        put_credit=round(put_credit, 2), short_call_credit=round(short_credit, 2),
-                        long_call_debit=round(long_debit, 2), net_credit=round(net, 2),
-                        spread_width=round(width, 2), break_even=round(put_strike - net, 2),
-                        effective_cost=round(put_strike - net, 2), max_profit=round(net * 100, 2),
-                        max_loss=round(max_loss * 100, 2), capital_required=round(capital, 2),
-                        roi=round(roi, 2), probability_profit=round((1 + put_delta) * 100, 1),
+                        put_credit=displayed_put_credit, put_roi_on_strike=round(displayed_put_credit / put_strike * 100, 2),
+                        short_call_credit=round(short_credit, 2), long_call_debit=round(long_debit, 2),
+                        net_credit=displayed_net_credit, jade_roi_on_strike=round(displayed_net_credit / put_strike * 100, 2),
+                        spread_width=round(width, 2), break_even=round(put_strike - displayed_net_credit, 2),
+                        effective_cost=round(put_strike - displayed_net_credit, 2), max_profit=round(displayed_net_credit * 100, 2),
+                        max_loss=displayed_max_loss, capital_required=displayed_max_loss,
+                        roi=round(displayed_roi, 2), probability_profit=round((1 + put_delta) * 100, 1),
                         retention_pct=round(retention, 1), score=round(score, 1), put_delta=round(put_delta, 3),
                         iv=iv, hv=hv, liquidity=liquidity, open_interest=oi, spread_pct=spread_pct,
                     )
