@@ -83,7 +83,8 @@ class ClosedOperationsTests(unittest.TestCase):
             {"Data_abertura":"2026-07-02","Data_fechamento":"2026-07-02","Resultado_realizado":"50","IRRF":"0","Metodo_encerramento":"recompra"},
         ]
         projection = build_darf_projection(operations, today=date(2026, 7, 14))
-        june, july, _august = projection["rows"]
+        by_month = {row["competence"]: row for row in projection["rows"]}
+        june, july = by_month["2026-06"], by_month["2026-07"]
         self.assertEqual(june["loss_compensated"], Decimal("30"))
         self.assertEqual(june["estimated_darf"], Decimal("0"))
         self.assertEqual(june["tax_carry"], Decimal("3.00"))
@@ -95,6 +96,26 @@ class ClosedOperationsTests(unittest.TestCase):
         june = build_darf_projection([operation], today=date(2026, 7, 14))["rows"][0]
         self.assertEqual(june["estimated_darf"], Decimal("0"))
         self.assertEqual(june["status"], "Revisar exercício")
+
+    def test_short_put_assignment_is_deferred_to_equity_cost(self):
+        operation = {
+            "Data_abertura":"2026-06-10", "Data_fechamento":"2026-06-25",
+            "Resultado_realizado":"33", "IRRF":"0", "Metodo_encerramento":"exercida",
+            "Tipo":"PUT", "Estrategia":"Venda",
+        }
+        june = build_darf_projection([operation], today=date(2026, 8, 3))["rows"][0]
+        self.assertEqual(june["competence"], "2026-06")
+        self.assertEqual(june["exercise_deferred_count"], 1)
+        self.assertEqual(june["review_count"], 0)
+        self.assertEqual(june["taxable_base"], Decimal("0"))
+
+    def test_historical_competence_remains_visible_after_two_months(self):
+        operation = {
+            "Data_abertura":"2026-06-10", "Data_fechamento":"2026-06-25",
+            "Resultado_realizado":"20", "IRRF":"0", "Metodo_encerramento":"recompra",
+        }
+        months = [row["competence"] for row in build_darf_projection([operation], today=date(2026, 8, 3))["rows"]]
+        self.assertIn("2026-06", months)
 
     def test_reopen_returns_operation_to_open_list_and_clears_result(self):
         directory, _root, operations, patches = self.environment()
