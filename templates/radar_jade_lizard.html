@@ -2,13 +2,20 @@
 {% block title %}Radar Jade Lizard | FaculdadeMaria{% endblock %}
 {% block page_title %}Radar Jade Lizard{% endblock %}
 {% block page_subtitle %}Scanner inteligente de estruturas com PUT vendida e CALL spread{% endblock %}
-{% block head %}<link rel="stylesheet" href="{{ url_for('static', filename='jade_lizard.css', v='20260802.1') }}">{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ url_for('static', filename='jade_lizard.css', v='20260803.3') }}">{% endblock %}
 {% block content %}
 <section class="jade-hero">
   <div><span class="jade-kicker">CORTEX IA · ESTRATÉGIAS</span><h2>Somente estruturas que melhoram a PUT isolada.</h2><p>O motor testa dezenas de combinações por ativo e só recomenda quando preserva ao menos 95% do prêmio da PUT, o crédito líquido cobre toda a largura da trava e o Score Jade é ≥ {{ config.min_score|int }}.</p></div>
   <div class="jade-score"><strong>{{ opportunities|length }}</strong><span>oportunidades</span></div>
 </section>
 <section class="jade-notice"><strong>Modo de projeção controlada</strong><span>Preço à vista ao vivo em {{ live_count }}/{{ total_assets }} ativos; cadeia de opções, gregas, IV, liquidez e OI estão estimados até a conexão com uma API B3/Profit em tempo real. Não envie ordens com estes valores.</span><small>Atualizado em {{ updated_at }}</small></section>
+<details class="jade-search" open><summary><span>Configurar busca do Radar</span><small>Ativo vazio = procurar em todos</small></summary><form method="get" class="jade-search__form">
+  <label>Ativo (opcional)<input name="asset" value="{{ search.asset }}" maxlength="6" placeholder="Ex.: PETR4"></label>
+  <label>Buscar por<select name="scan_mode" id="jadeScanMode"><option value="expiry" {% if search.mode=='expiry' %}selected{% endif %}>Vencimento projetado</option><option value="business_days" {% if search.mode=='business_days' %}selected{% endif %}>Quantidade de dias úteis</option></select></label>
+  <label data-expiry-field>Vencimento<select name="expiry">{% for expiry in search.expiry_options %}<option value="{{ expiry.isoformat() }}" {% if search.expiry==expiry.isoformat() %}selected{% endif %}>{{ expiry.strftime('%d/%m/%Y') }}</option>{% endfor %}</select></label>
+  <label data-business-field>Dias úteis<input name="business_days" type="number" min="1" max="32" value="{{ search.business_days }}"></label>
+  <button type="submit">Buscar oportunidades</button>
+</form><p>Sem API de opções, os vencimentos e a cadeia são projeções. O preço da ação é consultado nas fontes atuais quando disponível.</p></details>
 <form class="jade-filters" method="get">
   <label>Vencimento mínimo<input type="number" value="{{ config.min_dte }}" disabled title="Configuração fixa nesta versão"></label>
   <label>Vencimento máximo<input type="number" value="{{ config.max_dte }}" disabled title="Nenhuma oportunidade acima de 45 dias"></label>
@@ -23,4 +30,5 @@
 </tbody></table></div></section>
 <dialog id="jadeDialog" class="jade-dialog"><button class="dialog-close" type="button" aria-label="Fechar">×</button><div id="jadeCompare"></div></dialog>
 <script src="{{ url_for('static', filename='jade_lizard.js', v='20260803.2') }}"></script>
+<script>document.addEventListener('DOMContentLoaded',()=>{const mode=document.querySelector('#jadeScanMode'),expiry=document.querySelector('[data-expiry-field]'),days=document.querySelector('[data-business-field]');const sync=()=>{const byDays=mode.value==='business_days';expiry.hidden=byDays;days.hidden=!byDays};mode.addEventListener('change',sync);sync()})</script>
 {% endblock %}
