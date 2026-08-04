@@ -15,6 +15,7 @@ def test_scanner_only_returns_jades_that_pass_the_main_rules():
     assert all(-0.30 <= row.put_delta <= -0.15 for row in rows)
     assert all(15 <= row.days <= 45 for row in rows)
     assert all(row.retention_pct >= 95 for row in rows)
+    assert all(row.net_credit >= row.spread_width for row in rows)
     assert all(row.score >= 80 for row in rows)
     assert all(row.long_call_strike > row.short_call_strike for row in rows)
 
@@ -59,3 +60,12 @@ def test_financial_identity_and_capital_are_consistent():
     assert row.break_even == row.effective_cost
     assert abs(row.max_profit - row.net_credit * 100) <= 0.51
     assert row.capital_required == row.max_loss
+
+
+def test_scanner_only_recommends_structures_without_upside_loss_at_expiry():
+    rows = scan_estimated_chain(["PETR4", "VALE3"], {"PETR4": 37.0, "VALE3": 62.0}.get)
+
+    assert rows
+    for row in rows:
+        upside_result_per_share = row.net_credit - row.spread_width
+        assert upside_result_per_share >= 0
