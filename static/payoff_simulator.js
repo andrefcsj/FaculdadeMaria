@@ -11,7 +11,8 @@
   const defaultExpiry = new Date(Date.now()+30*86400000);
   const defaultMonthCode = kind => (kind === 'put' ? 'MNOPQRSTUVWX' : 'ABCDEFGHIJKL')[defaultExpiry.getMonth()];
   let chart;
-  let zoomLevel = 1;
+  const defaultZoomLevel = 1.5;
+  let zoomLevel = defaultZoomLevel;
   let currentMarkers = {jade:null, put:null, spot:null, tolerance:0};
   let legs = [
     {side:'short', kind:'put', code:`PETR${defaultMonthCode('put')}3200`, strike:32, premium:1.10, quantity:10},
@@ -199,6 +200,6 @@
   $('payoffClear').addEventListener('click',()=>{legs=[];renderLegs();update()});
   $('payoffZoomIn').addEventListener('click',()=>{zoomLevel=Math.min(zoomLevel*1.5,5);update()});
   $('payoffZoomOut').addEventListener('click',()=>{zoomLevel=Math.max(zoomLevel/1.5,1);update()});
-  $('payoffZoomReset').addEventListener('click',()=>{zoomLevel=1;update()});
+  $('payoffZoomReset').addEventListener('click',()=>{zoomLevel=defaultZoomLevel;update()});
   $('payoffSave').addEventListener('click',event=>{syncLegs();localStorage.setItem('faculdademaria.payoff',JSON.stringify({asset:assetInput.value,spot:spotInput.value,expiry:$('payoffExpiry').value,legs}));event.currentTarget.textContent='✓ Simulação salva';setTimeout(()=>event.currentTarget.textContent='Salvar Simulação',1600)});
 })();
