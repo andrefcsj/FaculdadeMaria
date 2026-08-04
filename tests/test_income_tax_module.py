@@ -2,6 +2,8 @@ from datetime import date
 
 from app import app
 from services.income_tax_extension import _due_date
+from services.darf_pdf_service import generate_darf_pdf
+from pypdf import PdfReader
 
 
 def test_darf_due_date_uses_last_weekday_of_following_month():
@@ -18,8 +20,9 @@ def test_income_tax_page_and_management_menu_are_available():
     assert b"Mem" in response.data
     assert "Operações comuns" in response.get_data(as_text=True)
     assert b"Day trade" in response.data
-    assert "ReVar da Receita" in response.get_data(as_text=True)
+    assert "guia simples" in response.get_data(as_text=True)
     assert "taxOperationsDialog" in response.get_data(as_text=True)
+    assert "DARFs por competência" in response.get_data(as_text=True)
 
     menu = client.get("/").get_data(as_text=True)
     assert "Apuração de IR" in menu
@@ -30,3 +33,14 @@ def test_income_tax_page_and_management_menu_are_available():
 def test_resolved_broker_observation_is_not_rendered():
     html = app.test_client().get("/notas-importadas").get_data(as_text=True)
     assert "CONFERIR COM A CORRETORA" not in html
+
+
+def test_simple_darf_pdf_contains_payment_fields():
+    pdf = generate_darf_pdf(
+        profile={"name":"Maria Teste","cpf":"12345678901","phone":"","city":"São Paulo","state":"SP"},
+        competence="2026-08", due_date=date(2026, 9, 30), amount="56.01",
+    )
+    text = PdfReader(pdf).pages[0].extract_text()
+    assert "6015" in text
+    assert "56,01" in text
+    assert "PAGAMENTO SEM CÓDIGO DE BARRAS" in text

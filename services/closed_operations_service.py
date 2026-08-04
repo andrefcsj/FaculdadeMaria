@@ -362,7 +362,7 @@ def build_darf_projection(closed_operations: list[dict[str, Any]], *, today: dat
             row["status"] = "DARF estimada"
             row["status_class"] = "due"
         elif row["tax_carry"] > 0:
-            row["status"] = "Abaixo de R$ 10"
+            row["status"] = "Valor insuficiente para gerar DARF"
             row["status_class"] = "minimum"
         elif row["loss_carry"] > 0:
             row["status"] = "Prejuízo a compensar"
