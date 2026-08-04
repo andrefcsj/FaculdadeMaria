@@ -2,7 +2,8 @@
 from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime
+from datetime import date, datetime, timedelta
+import re
 
 from flask import jsonify, render_template, request
 
@@ -23,10 +24,42 @@ def _number(name: str, default: float) -> float:
         return default
 
 
+def _add_business_days(start: date, amount: int) -> date:
+    current, added = start, 0
+    while added < amount:
+        current += timedelta(days=1)
+        if current.weekday() < 5:
+            added += 1
+    return current
+
+
+def _projected_expiries(today: date) -> list[date]:
+    return [today + timedelta(days=days) for days in range(15, 46)
+            if (today + timedelta(days=days)).weekday() == 4]
+
+
 def register(app, legacy):
     def build():
         roots, _profiles = legacy.load_personal_asset_universe(legacy.RADAR_ASSETS)
         tickers = list(dict.fromkeys(roots.values())) or list(REFERENCE_SPOTS)
+        selected_asset = str(request.args.get("asset", "")).strip().upper()
+        if selected_asset and re.fullmatch(r"[A-Z]{4}[0-9]{1,2}", selected_asset):
+            tickers = [selected_asset]
+        else:
+            selected_asset = ""
+        mode = request.args.get("scan_mode", "expiry")
+        expiry_options = _projected_expiries(date.today())
+        if mode == "business_days":
+            business_days = max(1, min(int(_number("business_days", 21)), 32))
+            target_expiry = _add_business_days(date.today(), business_days)
+        else:
+            requested_expiry = str(request.args.get("expiry", ""))
+            try:
+                parsed_expiry = date.fromisoformat(requested_expiry)
+            except ValueError:
+                parsed_expiry = None
+            target_expiry = parsed_expiry if parsed_expiry in expiry_options else (expiry_options[0] if expiry_options else None)
+            business_days = 21
         with ThreadPoolExecutor(max_workers=6) as pool:
             quotes = dict(zip(tickers, pool.map(legacy.cotacao_yahoo, tickers)))
         live_count = sum(bool(value) for value in quotes.values())
@@ -37,24 +70,27 @@ def register(app, legacy):
             max_spread_pct=_number("max_spread_pct", 15),
             min_score=_number("min_score", 80),
         )
-        opportunities = scan_estimated_chain(tickers, spots.get, config)
-        return opportunities, config, live_count, len(tickers)
+        opportunities = scan_estimated_chain(tickers, spots.get, config, target_expiry=target_expiry)
+        search = {"asset": selected_asset, "mode": mode, "business_days": business_days,
+                  "expiry": target_expiry.isoformat() if target_expiry else "", "expiry_options": expiry_options}
+        return opportunities, config, live_count, len(tickers), search
 
     @app.get("/estrategias/jade-lizard")
     def radar_jade_lizard():
-        opportunities, config, live_count, total = build()
+        opportunities, config, live_count, total, search = build()
         return render_template(
             "radar_jade_lizard.html", opportunities=opportunities, config=config,
-            live_count=live_count, total_assets=total,
+            live_count=live_count, total_assets=total, search=search,
             updated_at=datetime.now().strftime("%d/%m/%Y às %H:%M"),
         )
 
     @app.get("/api/estrategias/jade-lizard")
     def api_radar_jade_lizard():
-        opportunities, config, live_count, total = build()
+        opportunities, config, live_count, total, search = build()
         return jsonify({
             "data_mode": "estimated_chain", "live_spots": live_count, "assets": total,
             "filters": config.__dict__, "opportunities": [item.to_dict() for item in opportunities],
+            "search": {**search, "expiry_options": [item.isoformat() for item in search["expiry_options"]]},
         })
 
     @app.post("/api/estrategias/jade-lizard/montar")
