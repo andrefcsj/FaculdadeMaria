@@ -311,16 +311,22 @@ def build_dashboard_view_model(
     goal_progress = min(max(average_roi / target_roi * 100, 0), 100) if target_roi else 0
     capital_usage = min(max(_number(indicators.get("capital_comp")) / capital_total * 100, 0), 100) if capital_total else 0
     projection_rows = tuple((darf_projection or {}).get("rows", ()))
-    current_competence = str((darf_projection or {}).get("current_month", ""))
-    current_tax = next((row for row in projection_rows if str(row.get("competence")) == current_competence), {})
+    paid_by_competence = (darf_projection or {}).get("paid_by_competence", {})
+    pending_rows = [row for row in projection_rows if _number(row.get("estimated_darf")) > _number(paid_by_competence.get(str(row.get("competence"))))]
+    current_tax = pending_rows[-1] if pending_rows else next((row for row in reversed(projection_rows) if _number(row.get("estimated_darf")) > 0), {})
+    current_competence = str(current_tax.get("competence", (darf_projection or {}).get("current_month", "")))
     estimated_darf = _number(current_tax.get("estimated_darf"))
+    paid_amount = _number(paid_by_competence.get(current_competence))
+    pending_amount = max(estimated_darf - paid_amount, 0)
     darf_alert = {
         "competence": current_competence,
         "premium_base": _number(current_tax.get("net_result")),
         "taxable_base": _number(current_tax.get("taxable_base")),
         "estimated_darf": estimated_darf,
+        "paid_amount": paid_amount,
+        "pending_amount": pending_amount,
         "due_date": _estimated_darf_due_date(current_competence),
-        "has_due": estimated_darf > 0,
+        "has_due": pending_amount > 0,
         "review_count": int(_number(current_tax.get("review_count"))),
     }
 

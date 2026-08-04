@@ -207,6 +207,7 @@ def build_darf_projection(closed_operations: list[dict[str, Any]], *, today: dat
             "operations": 0, "common_result": Decimal("0"), "day_result": Decimal("0"),
             "common_irrf": Decimal("0"), "day_irrf": Decimal("0"), "review_count": 0,
             "exercise_deferred_count": 0,
+            "tax_operation_candidates": [],
         })
         bucket["operations"] += 1
         method = str(operation.get("Metodo_encerramento", "")).lower()
@@ -240,6 +241,13 @@ def build_darf_projection(closed_operations: list[dict[str, Any]], *, today: dat
         irrf_key = "day_irrf" if is_day_trade else "common_irrf"
         bucket[result_key] += taxable_result
         bucket[irrf_key] += irrf
+        bucket["tax_operation_candidates"].append({
+            "option_code": str(operation.get("Ativo", "")),
+            "open_date": str(operation.get("Data_abertura", ""))[:10],
+            "close_date": close_date[:10],
+            "modality": "Day trade" if is_day_trade else "Comum",
+            "taxable_result": taxable_result,
+        })
 
     first_month = min([*monthly.keys(), target_months[0]])
     month = first_month
@@ -272,6 +280,33 @@ def build_darf_projection(closed_operations: list[dict[str, Any]], *, today: dat
         available_tax = tax_carried_in + tax_calculated
         estimated_darf = available_tax if available_tax >= Decimal("10") else Decimal("0")
         tax_carry = Decimal("0") if estimated_darf else available_tax
+        tax_operations = []
+        for modality, base, rate in (
+            ("Comum", common_base, Decimal("0.15")),
+            ("Day trade", day_base, Decimal("0.20")),
+        ):
+            candidates = [
+                item for item in data.get("tax_operation_candidates", [])
+                if item["modality"] == modality and item["taxable_result"] > 0
+            ]
+            positive_total = sum((item["taxable_result"] for item in candidates), Decimal("0"))
+            allocated = Decimal("0")
+            for index, item in enumerate(candidates):
+                operation_base = (
+                    base - allocated if index == len(candidates) - 1
+                    else (base * item["taxable_result"] / positive_total).quantize(Decimal("0.01"))
+                ) if positive_total else Decimal("0")
+                allocated += operation_base
+                if operation_base <= 0:
+                    continue
+                tax_operations.append({
+                    "option_code": item["option_code"],
+                    "open_date": item["open_date"],
+                    "close_date": item["close_date"],
+                    "modality": modality,
+                    "taxable_base": str(operation_base),
+                    "tax": str((operation_base * rate).quantize(Decimal("0.01"))),
+                })
         calculated[month] = {
             "operations": data.get("operations", 0),
             "common_result": common_result,
@@ -300,6 +335,7 @@ def build_darf_projection(closed_operations: list[dict[str, Any]], *, today: dat
             "review_count": data.get("review_count", 0),
             "exercise_deferred_count": data.get("exercise_deferred_count", 0),
             "has_day_trade": bool(day_result or data.get("day_irrf", Decimal("0"))),
+            "tax_operations": tax_operations,
         }
         month = _shift_month(month, 1)
 

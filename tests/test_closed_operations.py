@@ -62,6 +62,7 @@ class ClosedOperationsTests(unittest.TestCase):
 
     def test_darf_projection_uses_close_month_not_expiry_month(self):
         operation = {
+            "Ativo": "PETRP300",
             "Data_abertura": "2026-06-10", "Data_fechamento": "2026-06-25",
             "Vencimento": "2026-07-17", "Resultado_realizado": "20", "IRRF": "0",
             "Metodo_encerramento": "recompra",
@@ -73,6 +74,11 @@ class ClosedOperationsTests(unittest.TestCase):
         self.assertEqual(june["tax_calculated"], Decimal("3.00"))
         self.assertEqual(june["estimated_darf"], Decimal("0"))
         self.assertEqual(june["tax_carry"], Decimal("3.00"))
+        self.assertEqual(june["tax_operations"], [{
+            "option_code": "PETRP300", "open_date": "2026-06-10",
+            "close_date": "2026-06-25", "modality": "Comum",
+            "taxable_base": "20", "tax": "3.00",
+        }])
         self.assertEqual(july["operations"], 0)
         self.assertEqual(august["operations"], 0)
 

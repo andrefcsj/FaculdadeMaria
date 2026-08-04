@@ -578,6 +578,12 @@ def index():
     from services.closed_operations_service import build_closed_dashboard
     from services.equity_position_service import portfolio as equity_portfolio
     darf_projection = build_closed_dashboard(__import__(__name__), scope="all", selected_month="")["darf_projection"]
+    from services.paid_darf_service import load_paid_darfs
+    paid_by_competence = {}
+    for payment in load_paid_darfs(__import__(__name__)):
+        competence = str(payment.get("competence", ""))
+        paid_by_competence[competence] = paid_by_competence.get(competence, 0.0) + float(payment.get("amount", 0) or 0)
+    darf_projection["paid_by_competence"] = paid_by_competence
     dashboard = build_dashboard_view_model(
         dashboard_ops, fechadas, ind, hist, cfg,
         load_option_quotes(__import__(__name__)), darf_projection,

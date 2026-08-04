@@ -18,6 +18,8 @@ def test_income_tax_page_and_management_menu_are_available():
     assert b"Mem" in response.data
     assert "Operações comuns" in response.get_data(as_text=True)
     assert b"Day trade" in response.data
+    assert "ReVar da Receita" in response.get_data(as_text=True)
+    assert "taxOperationsDialog" in response.get_data(as_text=True)
 
     menu = client.get("/").get_data(as_text=True)
     assert "Apuração de IR" in menu
