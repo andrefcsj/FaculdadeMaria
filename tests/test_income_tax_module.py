@@ -22,6 +22,7 @@ def test_income_tax_page_and_management_menu_are_available():
     menu = client.get("/").get_data(as_text=True)
     assert "Apuração de IR" in menu
     assert menu.index("Apuração de IR") < menu.index("DARFs Pagos")
+    assert menu.count("Radar Jade Lizard") == 1
 
 
 def test_resolved_broker_observation_is_not_rendered():
