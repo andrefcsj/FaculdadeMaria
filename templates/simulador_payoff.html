@@ -2,7 +2,7 @@
 {% block title %}Simulador de Payoff | FaculdadeMaria{% endblock %}
 {% block page_title %}Simulador de Payoff{% endblock %}
 {% block page_subtitle %}Monte sua estratégia e visualize o resultado no vencimento{% endblock %}
-{% block head %}<link rel="stylesheet" href="{{ url_for('static', filename='payoff_simulator.css', v='20260803.1') }}"><link rel="stylesheet" href="{{ url_for('static', filename='payoff_simulator_layout.css', v='20260803.7') }}">{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ url_for('static', filename='payoff_simulator.css', v='20260803.1') }}"><link rel="stylesheet" href="{{ url_for('static', filename='payoff_simulator_layout.css', v='20260803.8') }}">{% endblock %}
 {% block page_actions %}<button class="payoff-clear" id="payoffClear" type="button">Limpar</button><button class="topbar-refresh" id="payoffSave" type="button">Salvar Simulação</button>{% endblock %}
 {% block content %}
 <div class="payoff-page">
@@ -22,7 +22,7 @@
     </section>
     <section class="payoff-chart-card">
       <header><div><h2>Payoff no vencimento</h2><p>Estrutura completa versus venda isolada da PUT</p></div><div class="chart-legend"><span class="legend-structure">Estrutura</span><span class="legend-put">PUT isolada</span><span class="legend-jade-be">BE Jade</span><span class="legend-put-be">BE PUT</span><span class="legend-spot">Preço atual</span></div></header>
-      <div class="payoff-chart"><canvas id="payoffChart"></canvas><div id="payoffFloatingTooltip" class="payoff-floating-tooltip" hidden></div></div>
+      <div class="payoff-chart"><canvas id="payoffChart"></canvas><div class="payoff-zoom" aria-label="Controles de zoom"><button id="payoffZoomIn" type="button" title="Aproximar">＋</button><button id="payoffZoomOut" type="button" title="Afastar">−</button><button id="payoffZoomReset" type="button" title="Restaurar zoom">↺</button></div><div id="payoffFloatingTooltip" class="payoff-floating-tooltip" hidden></div></div>
       <div id="payoffTooltip" class="payoff-tooltip-dock"><span>Passe o mouse pelo gráfico</span><strong>Os detalhes da estrutura e da PUT isolada aparecerão aqui, sem cobrir as curvas.</strong></div>
     </section>
   </div>
@@ -37,5 +37,5 @@
   <p class="payoff-disclaimer">Simulação educacional no vencimento, sem impostos, corretagem, exercício antecipado ou variação de volatilidade. Confira os dados na corretora.</p>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="{{ url_for('static', filename='payoff_simulator.js', v='20260803.6') }}"></script>
+<script src="{{ url_for('static', filename='payoff_simulator.js', v='20260803.7') }}"></script>
 {% endblock %}
