@@ -5,7 +5,7 @@
 {% block head %}<link rel="stylesheet" href="{{ url_for('static', filename='jade_lizard.css', v='20260802.1') }}">{% endblock %}
 {% block content %}
 <section class="jade-hero">
-  <div><span class="jade-kicker">CORTEX IA · ESTRATÉGIAS</span><h2>Somente estruturas que melhoram a PUT isolada.</h2><p>O motor testa dezenas de combinações por ativo, aplica retenção mínima de 95% e exibe apenas Score Jade ≥ {{ config.min_score|int }}.</p></div>
+  <div><span class="jade-kicker">CORTEX IA · ESTRATÉGIAS</span><h2>Somente estruturas que melhoram a PUT isolada.</h2><p>O motor testa dezenas de combinações por ativo e só recomenda quando preserva ao menos 95% do prêmio da PUT, o crédito líquido cobre toda a largura da trava e o Score Jade é ≥ {{ config.min_score|int }}.</p></div>
   <div class="jade-score"><strong>{{ opportunities|length }}</strong><span>oportunidades</span></div>
 </section>
 <section class="jade-notice"><strong>Modo de projeção controlada</strong><span>Preço à vista ao vivo em {{ live_count }}/{{ total_assets }} ativos; cadeia de opções, gregas, IV, liquidez e OI estão estimados até a conexão com uma API B3/Profit em tempo real. Não envie ordens com estes valores.</span><small>Atualizado em {{ updated_at }}</small></section>
