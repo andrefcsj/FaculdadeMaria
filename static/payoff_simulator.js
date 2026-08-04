@@ -11,6 +11,7 @@
   const defaultExpiry = new Date(Date.now()+30*86400000);
   const defaultMonthCode = kind => (kind === 'put' ? 'MNOPQRSTUVWX' : 'ABCDEFGHIJKL')[defaultExpiry.getMonth()];
   let chart;
+  let zoomLevel = 1;
   let currentMarkers = {jade:null, put:null, spot:null, tolerance:0};
   let legs = [
     {side:'short', kind:'put', code:`PETR${defaultMonthCode('put')}3200`, strike:32, premium:1.10, quantity:10},
@@ -163,7 +164,9 @@
     syncLegs(); validate();
     const spot = number(spotInput.value), strikes = legs.map(leg=>leg.strike).filter(Boolean);
     refreshLegRows(spot);
-    const low=Math.max(.01, Math.min(spot || 1, ...strikes)*.55), high=Math.max(spot || 1, ...strikes)*1.45;
+    const fullLow=Math.max(.01, Math.min(spot || 1, ...strikes)*.55), fullHigh=Math.max(spot || 1, ...strikes)*1.45;
+    const center=spot || (fullLow+fullHigh)/2, half=(fullHigh-fullLow)/(2*zoomLevel);
+    const low=Math.max(.01,center-half), high=center+half;
     const points=Array.from({length:121},(_,i)=>low+(high-low)*i/120);
     const structure=points.map(price=>legs.reduce((sum,leg)=>sum+legPayoff(leg,price),0));
     const shortPut=legs.find(leg=>leg.side==='short'&&leg.kind==='put');
@@ -194,5 +197,8 @@
   document.addEventListener('click',event=>{const remove=event.target.closest('[data-remove]');if(remove){syncLegs();legs.splice(Number(remove.dataset.remove),1);renderLegs();update();}});
   $('addPayoffLeg').addEventListener('click',()=>{syncLegs();legs.push({side:'long',kind:'call',code:'',strike:number(spotInput.value),premium:0,quantity:1});renderLegs();update();});
   $('payoffClear').addEventListener('click',()=>{legs=[];renderLegs();update()});
+  $('payoffZoomIn').addEventListener('click',()=>{zoomLevel=Math.min(zoomLevel*1.5,5);update()});
+  $('payoffZoomOut').addEventListener('click',()=>{zoomLevel=Math.max(zoomLevel/1.5,1);update()});
+  $('payoffZoomReset').addEventListener('click',()=>{zoomLevel=1;update()});
   $('payoffSave').addEventListener('click',event=>{syncLegs();localStorage.setItem('faculdademaria.payoff',JSON.stringify({asset:assetInput.value,spot:spotInput.value,expiry:$('payoffExpiry').value,legs}));event.currentTarget.textContent='✓ Simulação salva';setTimeout(()=>event.currentTarget.textContent='Salvar Simulação',1600)});
 })();
