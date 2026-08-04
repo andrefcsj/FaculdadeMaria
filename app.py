@@ -30,6 +30,7 @@ from services.equity_portfolio_extension import register as register_equity_port
 from services.premium_history_service import build_premium_history
 from services.jade_lizard_extension import register as register_jade_lizard
 from services.payoff_simulator_extension import register as register_payoff_simulator
+from services.income_tax_extension import register as register_income_tax
 
 app = legacy.app
 app.jinja_env.filters["date_br"] = format_date_br
@@ -243,6 +244,7 @@ register_paid_darfs(app, legacy)
 register_equity_portfolio(app, legacy)
 register_jade_lizard(app, legacy)
 register_payoff_simulator(app, legacy)
+register_income_tax(app, legacy)
 
 
 if __name__ == "__main__":
