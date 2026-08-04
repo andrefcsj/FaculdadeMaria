@@ -11,7 +11,7 @@
   const defaultExpiry = new Date(Date.now()+30*86400000);
   const defaultMonthCode = kind => (kind === 'put' ? 'MNOPQRSTUVWX' : 'ABCDEFGHIJKL')[defaultExpiry.getMonth()];
   let chart;
-  const defaultZoomLevel = 1.5;
+  const defaultZoomLevel = 2.25;
   let zoomLevel = defaultZoomLevel;
   let currentMarkers = {jade:null, put:null, spot:null, tolerance:0};
   let legs = [
