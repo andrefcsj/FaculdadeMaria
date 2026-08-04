@@ -17,6 +17,7 @@
 .payoff-leg-remove{justify-self:center;width:34px;height:38px}
 .add-payoff-leg{box-sizing:border-box;width:calc(100% - 34px);margin:12px 17px}
 .payoff-chart{position:relative;height:330px}
+.payoff-zoom{position:absolute;top:12px;right:12px;z-index:7;display:flex;gap:5px;padding:5px;border:1px solid #d8e2dc;border-radius:12px;background:rgba(255,255,255,.92);box-shadow:0 8px 24px rgba(28,49,40,.12)}.payoff-zoom button{display:grid;place-items:center;width:34px;height:32px;border:0;border-radius:8px;background:#eef5f1;color:#174c37;font-size:18px;font-weight:900;cursor:pointer}.payoff-zoom button:hover{background:#d8ecdf;color:#08744c}
 .payoff-floating-tooltip{position:absolute;z-index:8;width:195px;box-sizing:border-box;padding:11px 13px;border:1px solid #34483e;border-radius:10px;background:rgba(18,27,23,.94);box-shadow:0 10px 28px rgba(0,0,0,.25);color:#fff;pointer-events:none;font-size:10px;line-height:1.35;transition:left .06s linear,top .06s linear}
 .payoff-floating-tooltip span,.payoff-floating-tooltip strong,.payoff-floating-tooltip b,.payoff-floating-tooltip small{display:block}.payoff-floating-tooltip span{color:#cbd7d1}.payoff-floating-tooltip strong{margin-top:4px;color:#84dfb2}.payoff-floating-tooltip b{color:#c5a8ff}.payoff-floating-tooltip small{margin-top:3px;color:#d5ded9}
 .chart-legend .legend-jade-be:before{border-top:3px dashed #f59e0b}.chart-legend .legend-put-be:before{border-top:3px dashed #8254d6}.chart-legend .legend-spot:before{border-top:3px dashed #111827}
