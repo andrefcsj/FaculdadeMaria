@@ -18,6 +18,9 @@ def test_scanner_only_returns_jades_that_pass_the_main_rules():
     assert all(row.net_credit >= row.spread_width for row in rows)
     assert all(row.score >= 80 for row in rows)
     assert all(row.long_call_strike > row.short_call_strike for row in rows)
+    assert all(row.put_roi_on_strike == round(row.put_credit / row.put_strike * 100, 2) for row in rows)
+    assert all(row.jade_roi_on_strike == round(row.net_credit / row.put_strike * 100, 2) for row in rows)
+    assert all(row.logo_url.endswith(f"/{row.ticker}.png") for row in rows)
 
 
 def test_scanner_discards_everything_when_score_threshold_is_unreachable():
@@ -60,6 +63,7 @@ def test_financial_identity_and_capital_are_consistent():
     assert row.break_even == row.effective_cost
     assert abs(row.max_profit - row.net_credit * 100) <= 0.51
     assert row.capital_required == row.max_loss
+    assert row.capital_required == round((row.put_strike - row.net_credit) * 100, 2)
 
 
 def test_scanner_uses_the_selected_projected_expiry():
