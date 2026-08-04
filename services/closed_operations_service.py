@@ -196,7 +196,6 @@ def build_darf_projection(closed_operations: list[dict[str, Any]], *, today: dat
     today = today or date.today()
     current_month = today.strftime("%Y-%m")
     target_months = [_shift_month(current_month, offset) for offset in (-1, 0, 1)]
-    relative_labels = ("Mês anterior", "Mês atual", "Mês seguinte")
     monthly: dict[str, dict[str, Any]] = {}
 
     for operation in closed_operations:
@@ -207,6 +206,7 @@ def build_darf_projection(closed_operations: list[dict[str, Any]], *, today: dat
         bucket = monthly.setdefault(month, {
             "operations": 0, "common_result": Decimal("0"), "day_result": Decimal("0"),
             "common_irrf": Decimal("0"), "day_irrf": Decimal("0"), "review_count": 0,
+            "exercise_deferred_count": 0,
         })
         bucket["operations"] += 1
         method = str(operation.get("Metodo_encerramento", "")).lower()
@@ -215,6 +215,16 @@ def build_darf_projection(closed_operations: list[dict[str, Any]], *, today: dat
             and str(operation.get("Tipo", "")).upper() == "CALL"
             and str(operation.get("Estrategia", operation.get("Estratégia", ""))).lower() in {"venda coberta", "call coberta"}
         )
+        is_short_put_assignment = (
+            method == "exercida"
+            and str(operation.get("Tipo", "")).upper() == "PUT"
+            and str(operation.get("Estrategia", operation.get("Estratégia", ""))).lower() in {"venda", "wheel"}
+        )
+        if is_short_put_assignment:
+            # No exercício da PUT vendida, strike menos prêmio recebido passa a
+            # compor o custo das ações. O resultado será apurado na venda delas.
+            bucket["exercise_deferred_count"] += 1
+            continue
         if method == "exercida" and not is_covered_call_assignment:
             bucket["review_count"] += 1
             continue
@@ -288,12 +298,26 @@ def build_darf_projection(closed_operations: list[dict[str, Any]], *, today: dat
             "tax_carry": tax_carry,
             "loss_carry": common_loss + day_loss,
             "review_count": data.get("review_count", 0),
+            "exercise_deferred_count": data.get("exercise_deferred_count", 0),
             "has_day_trade": bool(day_result or data.get("day_irrf", Decimal("0"))),
         }
         month = _shift_month(month, 1)
 
     rows = []
-    for competence, relative_label in zip(target_months, relative_labels):
+    display_months = []
+    month = first_month
+    while month <= target_months[-1]:
+        display_months.append(month)
+        month = _shift_month(month, 1)
+    for competence in display_months:
+        if competence == current_month:
+            relative_label = "Mês atual"
+        elif competence == _shift_month(current_month, -1):
+            relative_label = "Mês anterior"
+        elif competence == _shift_month(current_month, 1):
+            relative_label = "Mês seguinte"
+        else:
+            relative_label = "Histórico"
         row = {"competence": competence, "relative_label": relative_label, **calculated[competence]}
         if row["review_count"]:
             row["status"] = "Revisar exercício"
