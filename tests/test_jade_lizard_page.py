@@ -11,6 +11,8 @@ def test_jade_page_and_mount_plan(monkeypatch):
     assert b"Radar Jade Lizard" in page.data
     assert b"Modo de proje" in page.data
     assert b"jade_lizard.js" in page.data
+    assert b"Capital necess" in page.data
+    assert b"sobre o strike" in page.data
 
     plan = client.post("/api/estrategias/jade-lizard/montar", json={
         "ticker": "PETR4", "put_code": "PETRP3500",
