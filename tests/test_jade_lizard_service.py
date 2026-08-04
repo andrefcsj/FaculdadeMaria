@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, timedelta
 
 from services.jade_lizard_service import (
     JadeConfig,
@@ -60,6 +60,14 @@ def test_financial_identity_and_capital_are_consistent():
     assert row.break_even == row.effective_cost
     assert abs(row.max_profit - row.net_credit * 100) <= 0.51
     assert row.capital_required == row.max_loss
+
+
+def test_scanner_uses_the_selected_projected_expiry():
+    target = date.today() + timedelta(days=22)
+    rows = scan_estimated_chain(["PETR4"], {"PETR4": 37.0}.get, target_expiry=target)
+
+    assert rows
+    assert all(row.expiry == target.isoformat() and row.days == 22 for row in rows)
 
 
 def test_scanner_only_recommends_structures_without_upside_loss_at_expiry():
