@@ -99,15 +99,16 @@ def scan_estimated_chain(
     tickers: Iterable[str],
     spot_loader: Callable[[str], float | None],
     config: JadeConfig | None = None,
+    target_expiry: date | None = None,
 ) -> list[JadeOpportunity]:
     """Cria uma cadeia estimada e passa todas as combinações pelo mesmo motor do feed real."""
     cfg = config or JadeConfig()
     results: list[JadeOpportunity] = []
-    days = 30
+    expiry_date = target_expiry or (date.today() + timedelta(days=30))
+    days = (expiry_date - date.today()).days
     if not is_dte_allowed(days, cfg):
         return []
     years = days / 365
-    expiry_date = date.today() + timedelta(days=days)
     expiry = expiry_date.isoformat()
     for ticker in tickers:
         spot = float(spot_loader(ticker) or 0)
