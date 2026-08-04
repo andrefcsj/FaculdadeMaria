@@ -44,3 +44,8 @@ def test_simple_darf_pdf_contains_payment_fields():
     assert "6015" in text
     assert "56,01" in text
     assert "PAGAMENTO SEM CÓDIGO DE BARRAS" in text
+
+
+def test_missing_taxpayer_data_redirects_instead_of_raising_server_error():
+    response = app.test_client().get("/apuracao-ir/darf.pdf?competencia=2026-07")
+    assert response.status_code in (302, 200)

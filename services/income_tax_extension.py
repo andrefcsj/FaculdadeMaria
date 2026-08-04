@@ -4,7 +4,7 @@ from __future__ import annotations
 import calendar
 from datetime import date, timedelta
 
-from flask import flash, redirect, render_template, request, send_file, url_for
+from flask import redirect, render_template, request, send_file, url_for
 
 from services.closed_operations_service import build_closed_dashboard
 from services.cash_ledger_service import money
@@ -56,26 +56,29 @@ def register(app, legacy):
         return render_template(
             "apuracao_ir.html", tax_rows=rows, selected=selected, taxpayer=load_taxpayer_profile(legacy),
             history_rows=[row for row in rows if row["competence"].startswith(selected_year)], years=years, selected_year=selected_year, today=date.today(),
+            tax_message=request.args.get("mensagem", ""), tax_error=request.args.get("erro", ""),
             revenue_code=dashboard["darf_projection"]["revenue_code"],
         )
 
     @app.post("/apuracao-ir/contribuinte")
     def save_income_tax_taxpayer():
         competence = request.form.get("competence", "")
-        try: save_taxpayer_profile(legacy, request.form); flash("Dados do contribuinte salvos.", "success")
-        except ValueError as exc: flash(str(exc), "error")
-        return redirect(url_for("income_tax_assessment", competencia=competence))
+        try:
+            save_taxpayer_profile(legacy, request.form)
+            return redirect(url_for("income_tax_assessment", competencia=competence, mensagem="Dados do contribuinte salvos."))
+        except ValueError as exc:
+            return redirect(url_for("income_tax_assessment", competencia=competence, erro=str(exc)))
 
     @app.get("/apuracao-ir/darf.pdf")
     def download_income_tax_darf():
         competence = request.args.get("competencia", "")
         _dashboard, rows = assessment_rows(); row = next((item for item in rows if item["competence"] == competence), None)
         if not row or row["pending_amount"] < 10:
-            flash("Valor insuficiente para gerar DARF. Ele continuará acumulado para os próximos meses.", "error"); return redirect(url_for("income_tax_assessment", competencia=competence))
+            return redirect(url_for("income_tax_assessment", competencia=competence, erro="Valor insuficiente para gerar DARF. Ele continuará acumulado para os próximos meses."))
         if row["due_date"] < date.today():
-            flash("Esta DARF está vencida. Emita a guia atualizada no Sicalc para incluir multa e juros corretamente.", "error"); return redirect(url_for("income_tax_assessment", competencia=competence))
+            return redirect(url_for("income_tax_assessment", competencia=competence, erro="Esta DARF está vencida. Emita a guia atualizada no Sicalc para incluir multa e juros corretamente."))
         profile = load_taxpayer_profile(legacy)
         if not all(profile.get(field) for field in ("name", "cpf", "city", "state")):
-            flash("Preencha os dados do contribuinte antes de gerar a guia.", "error"); return redirect(url_for("income_tax_assessment", competencia=competence))
+            return redirect(url_for("income_tax_assessment", competencia=competence, erro="Preencha os dados do contribuinte antes de gerar a guia."))
         pdf = generate_darf_pdf(profile=profile, competence=competence, due_date=row["due_date"], amount=row["pending_amount"])
         return send_file(pdf, mimetype="application/pdf", as_attachment=True, download_name=f"DARF-6015-{competence}.pdf")
