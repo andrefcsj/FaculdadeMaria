@@ -19,3 +19,15 @@ def test_jade_page_and_mount_plan(monkeypatch):
     assert plan.status_code == 200
     assert plan.get_json()["status"] == "plano_pronto"
     assert len(plan.get_json()["legs"]) == 3
+
+
+def test_jade_page_exposes_asset_expiry_and_business_day_search(monkeypatch):
+    monkeypatch.setattr("legacy_app.cotacao_yahoo", lambda ticker: 37.0)
+    client = app.test_client()
+
+    page = client.get("/estrategias/jade-lizard?asset=PETR4&scan_mode=business_days&business_days=20")
+
+    assert page.status_code == 200
+    assert b'Configurar busca do Radar' in page.data
+    assert b'value="PETR4"' in page.data
+    assert b'value="20"' in page.data
