@@ -133,6 +133,12 @@ def scan_estimated_chain(
                     retention = net / put_credit * 100
                     if retention < cfg.min_retention_pct:
                         continue
+                    # Uma Jade Lizard sem risco na alta exige que todo o crédito
+                    # recebido cubra a largura máxima da trava de CALL no vencimento.
+                    # A retenção de 95% protege o prêmio da PUT, mas não substitui
+                    # esta identidade financeira.
+                    if net + 1e-9 < width:
+                        continue
                     downside = max(put_strike - net, 0)
                     upside = max(width - net, 0)
                     max_loss = max(downside, upside)
