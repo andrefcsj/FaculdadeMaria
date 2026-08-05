@@ -20,9 +20,10 @@ def test_income_tax_page_and_management_menu_are_available():
     assert b"Mem" in response.data
     assert "Operações comuns" in response.get_data(as_text=True)
     assert b"Day trade" in response.data
-    assert "guia simples" in response.get_data(as_text=True)
+    assert "modelo visual do Sicalc" in response.get_data(as_text=True)
     assert "taxOperationsDialog" in response.get_data(as_text=True)
     assert "DARFs por competência" in response.get_data(as_text=True)
+    assert "https://sicalc.receita.fazenda.gov.br/sicalc/rapido/calculo" in response.get_data(as_text=True)
 
     menu = client.get("/").get_data(as_text=True)
     assert "Apuração de IR" in menu
@@ -43,7 +44,9 @@ def test_simple_darf_pdf_contains_payment_fields():
     text = PdfReader(pdf).pages[0].extract_text()
     assert "6015" in text
     assert "56,01" in text
-    assert "PAGAMENTO SEM CÓDIGO DE BARRAS" in text
+    assert "1a. via" in text
+    assert "2a. via" in text
+    assert text.count("NÚMERO DO CPF OU CNPJ") == 2
 
 
 def test_missing_taxpayer_data_redirects_instead_of_raising_server_error():

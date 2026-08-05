@@ -96,5 +96,6 @@ def register(app, legacy):
         profile = load_taxpayer_profile(legacy)
         if not all(profile.get(field) for field in ("name", "cpf", "city", "state")):
             return redirect(url_for("income_tax_assessment", competencia=competence, erro="Preencha os dados do contribuinte antes de gerar a guia."))
-        pdf = generate_darf_pdf(profile=profile, competence=competence, due_date=row["due_date"], amount=row["pending_amount"])
+        payment_competences = tuple(dict.fromkeys(item.get("competence", competence) for item in row["payment_operations"]))
+        pdf = generate_darf_pdf(profile=profile, competence=competence, due_date=row["due_date"], amount=row["pending_amount"], payment_competences=payment_competences)
         return send_file(pdf, mimetype="application/pdf", as_attachment=True, download_name=f"DARF-6015-{competence}.pdf")
