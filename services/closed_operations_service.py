@@ -143,8 +143,9 @@ def serialize_closed_operation(legacy, operation: dict[str, Any], metadata: dict
     premium = _decimal(operation.get("Premio_opcao"))
     costs = _decimal(operation.get("Custos"))
     irrf = _decimal(operation.get("IRRF"))
-    capital = contracts * size * strike
-    gross_premium = contracts * size * premium
+    is_equity = str(operation.get("Tipo", "")).upper() in {"AÇÃO", "ACAO", "ETF"}
+    capital = contracts * strike if is_equity else contracts * size * strike
+    gross_premium = contracts * premium if is_equity else contracts * size * premium
     result = _decimal(operation.get("Resultado_realizado"))
     strategy = str(operation.get("Estratégia", "Venda")).strip().lower()
     method = str(metadata.get("method", "")).strip().lower()
@@ -173,7 +174,7 @@ def serialize_closed_operation(legacy, operation: dict[str, Any], metadata: dict
         "Ativo_subjacente": underlying, "Logo_subjacente": underlying_logo,
         "Tipo": str(operation.get("Tipo", "PUT")), "Estrategia": str(operation.get("Estratégia", "Venda")),
         "Status": str(operation.get("Status", "Encerrada")), "Contratos": str(contracts),
-        "Quantidade_acoes": int(contracts * size), "Strike": str(strike), "Premio_opcao": str(premium),
+        "Quantidade_acoes": int(contracts if is_equity else contracts * size), "Strike": str(strike), "Premio_opcao": str(premium),
         "Premio_bruto": str(gross_premium), "Custos": str(costs), "IRRF": str(irrf),
         "Vencimento": str(operation.get("Vencimento", "")), "Cotacao_atual": str(operation.get("Cotacao_atual", "0")),
         "Data_abertura": str(operation.get("Data abertura", "")), "Data_fechamento": str(close_date),
@@ -210,6 +211,8 @@ def build_darf_projection(closed_operations: list[dict[str, Any]], *, today: dat
             "tax_operation_candidates": [],
         })
         bucket["operations"] += 1
+        if str(operation.get("Tipo", "")).upper() == "ETF":
+            continue
         method = str(operation.get("Metodo_encerramento", "")).lower()
         is_covered_call_assignment = (
             method == "exercida"
