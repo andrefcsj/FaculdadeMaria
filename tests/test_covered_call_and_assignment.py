@@ -1,4 +1,5 @@
 from decimal import Decimal
+from io import BytesIO
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest.mock import patch
@@ -36,6 +37,18 @@ Resumo dos Negócios
 Líquido para 20/07/2026 D1.471,50
 """
 
+EQUITY_SALE_TEXT = """NOTA DE CORRETAGEM
+44556677
+08/08/2026 Data pregão
+BTG Pactual CTVM S.A. Necton
+Negócios realizados
+1-BOVESPA V VISTA LFTB11 CI 37 56,00 2.072,00 C
+Resumo dos Negócios
+2.072,00Valor das operações
+0,00 I.R.R.F. s/ operações, base R$ 0,00
+Líquido para 10/08/2026 C2.070,50
+"""
+
 
 def test_preliminary_put_assignment_is_parsed_without_inventing_note_number():
     with patch("services.brokerage_note_service.extract_pdf_text", return_value=EXERCISE_TEXT):
@@ -58,6 +71,59 @@ def test_cash_equity_purchase_is_recognized_for_portfolio():
     assert trade["quantity"] == 100
     assert trade["unit_price"] == "14.70"
     assert trade["allocated_costs"] == "1.50"
+
+
+def test_equity_sale_note_reduces_position_and_updates_brokerage_cash():
+    from app import app
+    from services.cash_ledger_service import calculate_broker_balance
+
+    with TemporaryDirectory() as directory:
+        root = Path(directory)
+        lot = manual_equity_lot(
+            asset="LFTB11", quantity=63, average_price=Decimal("50"),
+            acquisition_date="2026-07-01",
+        )
+        with patch.object(legacy_app, "DATA", root), patch.object(legacy_app, "USE_POSTGRES", False):
+            assert save_equity_lot(legacy_app, lot)
+            with patch("services.brokerage_note_service.extract_pdf_text", return_value=EQUITY_SALE_TEXT):
+                response = app.test_client().post(
+                    "/api/carteira-acoes/importar-nota",
+                    data={"brokerage_note": (BytesIO(b"pdf"), "nota.pdf")},
+                    content_type="multipart/form-data",
+                )
+
+            assert response.status_code == 200
+            result = response.get_json()
+            assert result["sales"][0]["asset"] == "LFTB11"
+            assert result["sales"][0]["quantity"] == 37
+            assert result["sales"][0]["realized_result"] == "220.50"
+            holding = portfolio(legacy_app)[0]
+            assert holding["quantity"] == 26
+            assert holding["tax_cost_per_share"] == 50
+            assert calculate_broker_balance(legacy_app)["brokerage_cash"] == Decimal("2070.50")
+
+
+def test_equity_sale_note_cannot_sell_more_than_free_position():
+    from app import app
+
+    with TemporaryDirectory() as directory:
+        root = Path(directory)
+        lot = manual_equity_lot(
+            asset="LFTB11", quantity=20, average_price=Decimal("50"),
+            acquisition_date="2026-07-01",
+        )
+        with patch.object(legacy_app, "DATA", root), patch.object(legacy_app, "USE_POSTGRES", False):
+            assert save_equity_lot(legacy_app, lot)
+            with patch("services.brokerage_note_service.extract_pdf_text", return_value=EQUITY_SALE_TEXT):
+                response = app.test_client().post(
+                    "/api/carteira-acoes/importar-nota",
+                    data={"brokerage_note": (BytesIO(b"pdf"), "nota.pdf")},
+                    content_type="multipart/form-data",
+                )
+
+            assert response.status_code == 400
+            assert "somente 20 ações livres" in response.get_json()["error"]
+            assert portfolio(legacy_app)[0]["quantity"] == 20
 
 
 def test_preliminary_regular_note_without_number_is_accepted_and_marked():
