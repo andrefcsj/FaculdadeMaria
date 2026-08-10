@@ -396,4 +396,46 @@ def build_closed_dashboard(legacy, *, scope: str, selected_month: str) -> dict[s
     roi_average = sum((_decimal(item["ROI_realizado"]) for item in filtered), Decimal("0")) / Decimal(len(filtered)) if filtered else Decimal("0")
     months = sorted({item["Data_fechamento"][:7] for item in all_closed if item["Data_fechamento"]})
     groups = build_cycle_groups(filtered, result_key="Resultado_realizado", capital_key="Capital")
-    return {"operations": filtered, "groups": groups, "all_count": len(all_closed), "selected_count": len(filtered), "month_profit": month_profit, "accumulated_profit": accumulated, "roi_average": roi_average, "scope": scope, "selected_month": month, "available_months": months, "darf_projection": build_darf_projection(all_closed)}
+    return {"operations": filtered, "all_operations": all_closed, "groups": groups, "all_count": len(all_closed), "selected_count": len(filtered), "month_profit": month_profit, "accumulated_profit": accumulated, "roi_average": roi_average, "scope": scope, "selected_month": month, "available_months": months, "available_assets": sorted({item["Ativo_subjacente"] for item in all_closed if item.get("Ativo_subjacente")}), "darf_projection": build_darf_projection(all_closed)}
+
+
+def build_asset_history(legacy, operations: list[dict[str, Any]], asset: str) -> dict[str, Any] | None:
+    """Consolida todo o histórico encerrado e o preço médio líquido de um ativo."""
+    ticker = str(asset or "").strip().upper()
+    if not ticker:
+        return None
+    rows = [item for item in operations if str(item.get("Ativo_subjacente", "")).upper() == ticker]
+    rows.sort(key=lambda item: (str(item.get("Data_fechamento", "")), str(item.get("Data_abertura", ""))), reverse=True)
+    premium_total = Decimal("0")
+    result_total = Decimal("0")
+    capital_total = Decimal("0")
+    for item in rows:
+        strategy = str(item.get("Estrategia", "")).strip().lower()
+        received = Decimal("0")
+        if strategy not in {"compra"}:
+            received = max(
+                _decimal(item.get("Premio_bruto")) - _decimal(item.get("Custos")) - _decimal(item.get("IRRF")),
+                Decimal("0"),
+            )
+        item["Premio_recebido_liquido"] = str(received)
+        premium_total += received
+        result_total += _decimal(item.get("Resultado_realizado"))
+        capital_total += _decimal(item.get("Capital"))
+
+    from services.equity_position_service import portfolio
+    holding = next((item for item in portfolio(legacy) if str(item.get("asset", "")).upper() == ticker), None)
+    adjusted_average = None
+    if holding and int(holding.get("quantity", 0) or 0) > 0:
+        quantity = Decimal(str(holding["quantity"]))
+        adjusted_average = max(_decimal(holding.get("tax_cost_per_share")) - premium_total / quantity, Decimal("0"))
+    return {
+        "asset": ticker,
+        "operations": rows,
+        "count": len(rows),
+        "premium_total": premium_total,
+        "result_total": result_total,
+        "capital_total": capital_total,
+        "roi_accumulated": result_total / capital_total * Decimal("100") if capital_total else Decimal("0"),
+        "holding": holding,
+        "adjusted_average": adjusted_average,
+    }

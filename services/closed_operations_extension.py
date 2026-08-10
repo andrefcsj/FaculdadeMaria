@@ -4,7 +4,7 @@ from __future__ import annotations
 from flask import jsonify, redirect, render_template, request, url_for
 
 from services.closed_operations_service import (
-    _decimal, build_closed_dashboard, delete_closure_metadata, delete_operation,
+    _decimal, build_asset_history, build_closed_dashboard, delete_closure_metadata, delete_operation,
     load_closure_metadata, persist_operation, raw_operation, save_closure_metadata,
     serialize_closed_operation,
 )
@@ -15,6 +15,7 @@ def register(app, legacy):
         scope = request.args.get("periodo", "all")
         if scope not in {"current", "year", "month", "all"}: scope = "all"
         dashboard = build_closed_dashboard(legacy, scope=scope, selected_month=request.args.get("mes", ""))
+        dashboard["asset_history"] = build_asset_history(legacy, dashboard["all_operations"], request.args.get("acao", ""))
         return render_template("operacoes_fechadas.html", closed_dashboard=dashboard)
 
     app.view_functions["op_fechadas"] = closed_view

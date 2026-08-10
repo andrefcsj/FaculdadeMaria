@@ -8,7 +8,7 @@ from unittest.mock import patch
 
 from app import app
 import legacy_app
-from services.closed_operations_service import build_closed_dashboard, build_darf_projection, save_closure_metadata, serialize_closed_operation
+from services.closed_operations_service import build_asset_history, build_closed_dashboard, build_darf_projection, save_closure_metadata, serialize_closed_operation
 
 
 FIELDS = ["ID", "Data abertura", "Ativo", "Tipo", "Estratégia", "Status", "Contratos", "Strike", "Premio_opcao", "Custos", "IRRF", "Vencimento", "Cotacao_atual", "Resultado_realizado"]
@@ -43,9 +43,26 @@ class ClosedOperationsTests(unittest.TestCase):
         self.assertIn("data-closed-edit",script)
         self.assertIn("data-closed-delete",script)
         self.assertIn("data-closed-reopen",script)
+        self.assertIn("Quanto cada ativo já rendeu?", html)
+
+    @patch("services.equity_position_service.portfolio")
+    def test_asset_history_consolidates_premiums_roi_and_adjusted_average(self, portfolio):
+        portfolio.return_value = [{"asset":"WEGE3", "quantity":100, "tax_cost_per_share":48.39}]
+        operations = [
+            {"Ativo_subjacente":"WEGE3", "Ativo":"WEGET500", "Estrategia":"Venda Coberta", "Premio_bruto":"70", "Custos":"2", "IRRF":"0", "Resultado_realizado":"60", "Capital":"4839", "Data_fechamento":"2026-08-10", "Data_abertura":"2026-08-01"},
+            {"Ativo_subjacente":"WEGE3", "Ativo":"WEGET510W1", "Estrategia":"Venda Coberta", "Premio_bruto":"50", "Custos":"1", "IRRF":"0", "Resultado_realizado":"40", "Capital":"4839", "Data_fechamento":"2026-07-31", "Data_abertura":"2026-07-20"},
+            {"Ativo_subjacente":"PETR4", "Ativo":"PETRT400", "Estrategia":"Venda", "Premio_bruto":"99", "Custos":"0", "IRRF":"0", "Resultado_realizado":"99", "Capital":"4000", "Data_fechamento":"2026-07-01"},
+        ]
+        history = build_asset_history(legacy_app, operations, "wege3")
+        self.assertEqual(history["count"], 2)
+        self.assertEqual(history["premium_total"], Decimal("117"))
+        self.assertEqual(history["result_total"], Decimal("100"))
+        self.assertEqual(history["roi_accumulated"].quantize(Decimal("0.01")), Decimal("1.03"))
+        self.assertEqual(history["adjusted_average"], Decimal("47.22"))
 
     def test_closed_table_has_requested_column_order_without_costs(self):
         template = Path("templates/operacoes_fechadas.html").read_text(encoding="utf-8")
+        template = template[template.index('<table class="closed-table">'):]
         headers = ["Ação", "Código da opção", "Resultado", "ROI", "Abertura e fechamento", "Strike", "Encerramento", "Posição", "Ações"]
         positions = [template.index(f">{header}</th>") for header in headers]
         self.assertEqual(positions, sorted(positions))
