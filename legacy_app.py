@@ -3,6 +3,7 @@ from __future__ import annotations
 import csv
 import math
 import json
+import re
 import sqlite3
 import os
 import zipfile
