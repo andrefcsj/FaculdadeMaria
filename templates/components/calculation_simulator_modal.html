@@ -1,0 +1,28 @@
+<link rel="stylesheet" href="{{ url_for('static', filename='calculation_simulator.css', v='20260810.1') }}">
+<div class="calc-simulator" id="calculationSimulator" hidden aria-hidden="true">
+  <button class="calc-simulator__backdrop" type="button" data-close-calculation-simulator aria-label="Fechar simulador"></button>
+  <section class="calc-simulator__dialog" role="dialog" aria-modal="true" aria-labelledby="calculationSimulatorTitle">
+    <header><span class="calc-simulator__icon">%</span><div><small>CALL COBERTA</small><h2 id="calculationSimulatorTitle">Simulador de Cálculos</h2><p>Veja o resultado líquido antes de lançar sua opção.</p></div><button class="calc-simulator__close" type="button" data-close-calculation-simulator aria-label="Fechar">×</button></header>
+    <div class="calc-simulator__body">
+      <form class="calc-simulator__form" id="calculationSimulatorForm">
+        <label>Código da ação<input id="calcAsset" maxlength="8" placeholder="Ex.: WEGE3" autocomplete="off"></label>
+        <label>Quantidade<input id="calcQuantity" type="number" min="1" step="1" value="100"></label>
+        <label>Preço médio da ação (R$)<input id="calcAveragePrice" type="text" inputmode="decimal" placeholder="48,39"></label>
+        <label>Cotação atual (R$)<input id="calcSpotPrice" type="text" inputmode="decimal" placeholder="Opcional"></label>
+        <label>Strike da CALL (R$)<input id="calcStrike" type="text" inputmode="decimal" placeholder="49,50"></label>
+        <label>Prêmio por ação (R$)<input id="calcPremium" type="text" inputmode="decimal" placeholder="0,70"></label>
+        <label>Custos totais (R$)<input id="calcCosts" type="text" inputmode="decimal" value="0,00"></label>
+        <label>Alíquota estimada (%)<input id="calcTaxRate" type="text" inputmode="decimal" value="15,00"></label>
+        <label>Meta de ROI líquido (%)<input id="calcTargetRoi" type="text" inputmode="decimal" value="3,00"></label>
+      </form>
+      <aside class="calc-simulator__results">
+        <div class="calc-result calc-result--hero"><small>ROI LÍQUIDO SE EXERCIDO</small><strong id="calcNetRoi">0,00%</strong><span id="calcGoalStatus">Preencha preço médio, strike e prêmio</span></div>
+        <div class="calc-result-grid"><div><small>Lucro líquido</small><strong id="calcNetProfit">R$ 0,00</strong></div><div><small>DARF estimado</small><strong id="calcTax">R$ 0,00</strong></div><div><small>Saída líquida por ação</small><strong id="calcEffectiveExit">R$ 0,00</strong></div><div><small>Distância até o strike</small><strong id="calcStrikeDistance">--</strong></div></div>
+        <div class="calc-scenario"><span>SE A CALL EXPIRAR</span><div><p><small>Prêmio líquido</small><strong id="calcNetPremium">R$ 0,00</strong></p><p><small>Novo preço médio</small><strong id="calcAdjustedAverage">R$ 0,00</strong></p></div></div>
+        <div class="calc-needed"><span>PARA ATINGIR SUA META</span><strong id="calcRequiredPremium">Prêmio mínimo: R$ 0,00</strong><small id="calcRequiredCombination">Strike + prêmio necessários: R$ 0,00</small></div>
+        <p class="calc-disclaimer">Estimativa gerencial com tributação informada e sem compensação de prejuízos ou IRRF. Confirme a apuração fiscal mensal.</p>
+      </aside>
+    </div>
+    <footer><button type="button" data-reset-calculation-simulator>Limpar</button><button type="button" data-close-calculation-simulator>Concluir simulação</button></footer>
+  </section>
+</div>
