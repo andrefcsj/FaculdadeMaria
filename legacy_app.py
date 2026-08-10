@@ -161,7 +161,7 @@ def write_csv(path: Path, rows: List[Dict[str, str]], fieldnames: List[str]) -> 
 
 
 def load_config() -> Dict[str, float]:
-    cfg = {"Capital total inicial": 4000.0, "Aliquota IR opcoes": 0.15, "Meta ROI mensal": 0.04, "Tamanho contrato opcoes": 100.0}
+    cfg = {"Capital total inicial": 4000.0, "Aliquota IR opcoes": 0.15, "Meta ROI mensal": 0.02, "Meta ROI semanal": 0.01, "Tamanho contrato opcoes": 100.0}
     for row in read_csv(CONFIG):
         cfg[row.get("Parametro", "")] = fnum(row.get("Valor"), cfg.get(row.get("Parametro", ""), 0))
     return cfg
@@ -209,13 +209,16 @@ def enrich_ops(rows: List[Dict[str, str]], cfg: Dict[str, float]) -> List[Dict[s
             alerta = "PUT dentro do dinheiro"
         if tipo == "CALL" and cotacao and cotacao > strike:
             alerta = "CALL dentro do dinheiro"
-        # Nota provisória baseada no ROI líquido da operação.
-        # 0 a 1,50% = baixo; 1,51% a 2,99% = regular; 3%+ = excelente.
-        if roi >= 3:
+        # A avaliação acompanha a meta do ciclo da opção: W1...W5 é semanal;
+        # as demais séries usam a meta mensal.
+        is_weekly = bool(re.search(r"W[1-5]$", str(r.get("Ativo", "")).strip().upper()))
+        target_roi = cfg.get("Meta ROI semanal" if is_weekly else "Meta ROI mensal", 0.01 if is_weekly else 0.02) * 100
+        achievement = roi / target_roi if target_roi > 0 else 0
+        if achievement >= 1.5:
             nota = "★★★★★"
-        elif roi >= 2.5:
+        elif achievement >= 1.25:
             nota = "★★★★☆"
-        elif roi >= 1.51:
+        elif achievement >= 1:
             nota = "★★★☆☆"
         elif roi > 0:
             nota = "★★☆☆☆"
@@ -1408,7 +1411,8 @@ def sobre():
 def salvar_configuracoes():
     rows = [
         {"Parametro":"Capital total inicial","Valor":request.form.get("capital_inicial","4000")},
-        {"Parametro":"Meta ROI mensal","Valor":str(float(request.form.get("meta_roi","4"))/100)},
+        {"Parametro":"Meta ROI mensal","Valor":str(float(request.form.get("meta_roi_mensal","2"))/100)},
+        {"Parametro":"Meta ROI semanal","Valor":str(float(request.form.get("meta_roi_semanal","1"))/100)},
         {"Parametro":"Aliquota IR opcoes","Valor":str(float(request.form.get("aliquota_ir","15"))/100)},
         {"Parametro":"Tamanho contrato opcoes","Valor":request.form.get("tamanho_contrato","100")},
     ]

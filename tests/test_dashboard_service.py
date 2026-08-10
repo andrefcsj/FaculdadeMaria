@@ -20,7 +20,7 @@ class DashboardServiceTests(unittest.TestCase):
             "capital_total": 10000, "caixa_livre": 7000,
         }
         self.history = [{"mes": "Jul/26", "premios": 150}]
-        self.config = {"Meta ROI mensal": 0.04}
+        self.config = {"Meta ROI mensal": 0.02, "Meta ROI semanal": 0.01}
 
     def test_builds_real_dashboard_summary(self):
         self.operations[0]["Premio_liquido"] = 150
@@ -30,6 +30,8 @@ class DashboardServiceTests(unittest.TestCase):
         self.assertEqual(view.portfolio[0]["asset"], "PETR")
         self.assertEqual(view.ai_tone, "positive")
         self.assertEqual(view.premiums_total, 150)
+        self.assertEqual(view.monthly_target_roi, 2)
+        self.assertEqual(view.weekly_target_roi, 1)
 
     def test_does_not_invent_opportunities_for_empty_portfolio(self):
         indicators = dict(self.indicators, roi_medio_abertas=0, capital_comp=0, roi_abertas=0)

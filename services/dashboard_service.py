@@ -12,6 +12,7 @@ from decimal import Decimal
 from typing import Mapping, Sequence
 from services.concentration_service import ATTENTION_ASSET_CONCENTRATION, MAX_ASSET_CONCENTRATION
 from services.exercise_probability_service import estimate_operation_exercise_probability
+from services.option_cycle_service import build_cycle_groups, classify_option_cycle
 
 
 def _number(value: object, default: float = 0.0) -> float:
@@ -75,6 +76,10 @@ class DashboardViewModel:
     premiums_month: float
     premiums_total: float
     average_roi: float
+    monthly_roi: float
+    weekly_roi: float
+    monthly_target_roi: float
+    weekly_target_roi: float
     allocated_capital: float
     commitment_items: tuple[Mapping[str, object], ...]
     available_to_trade: float
@@ -226,7 +231,19 @@ def build_dashboard_view_model(
         if categories:
             attention.append(_attention_item(operation.get("Ativo", "N/D"), categories))
 
-    target_roi = _number(config.get("Meta ROI mensal"), 0.04) * 100
+    monthly_target_roi = _number(config.get("Meta ROI mensal"), 0.02) * 100
+    weekly_target_roi = _number(config.get("Meta ROI semanal"), 0.01) * 100
+    cycle_operations = []
+    for operation in open_options:
+        enriched = dict(operation)
+        enriched.update(classify_option_cycle(operation.get("Ativo")))
+        cycle_operations.append(enriched)
+    cycle_groups = {
+        group["cycle"]: group
+        for group in build_cycle_groups(cycle_operations, result_key="Premio_liquido", capital_key="Capital")
+    }
+    monthly_roi = _number(cycle_groups["monthly"]["roi"])
+    weekly_roi = _number(cycle_groups["weekly"]["roi"])
     average_roi = _number(indicators.get("roi_medio_abertas"))
     capital_total = _number(indicators.get("capital_total"))
     capital_free = _number(indicators.get("caixa_livre"))
@@ -242,11 +259,14 @@ def build_dashboard_view_model(
     if not open_puts:
         summary = "Não há PUTs abertas. O capital está livre para aguardar oportunidades que atendam aos critérios do Radar Premium."
         tone = "neutral"
-    elif average_roi >= target_roi:
-        summary = f"A carteira possui {len(open_puts)} PUT(s) aberta(s) e ROI médio de {average_roi:.2f}%, acima da meta oficial de {target_roi:.2f}%. Revise risco, liquidez e vencimentos antes de ampliar exposição."
+    elif all(
+        _number(group["roi"]) >= (weekly_target_roi if cycle == "weekly" else monthly_target_roi)
+        for cycle, group in cycle_groups.items() if group["count"]
+    ):
+        summary = f"A carteira possui {len(open_puts)} PUT(s) aberta(s). ROI mensal: {monthly_roi:.2f}% (meta {monthly_target_roi:.2f}%) e semanal: {weekly_roi:.2f}% (meta {weekly_target_roi:.2f}%). Revise risco, liquidez e vencimentos antes de ampliar exposição."
         tone = "positive"
     else:
-        summary = f"A carteira possui {len(open_puts)} PUT(s) aberta(s) e ROI médio de {average_roi:.2f}%, abaixo da meta oficial de {target_roi:.2f}%. Não aumente risco apenas para buscar retorno."
+        summary = f"A carteira possui {len(open_puts)} PUT(s) aberta(s). ROI mensal: {monthly_roi:.2f}% (meta {monthly_target_roi:.2f}%) e semanal: {weekly_roi:.2f}% (meta {weekly_target_roi:.2f}%). Não aumente risco apenas para buscar retorno."
         tone = "attention"
     quotes = option_quotes or {}
     today_scenario = []
@@ -308,7 +328,8 @@ def build_dashboard_view_model(
         ),
     } for operation in sorted(open_options, key=lambda item: _number(item.get("Dias"), 999999)))
 
-    goal_progress = min(max(average_roi / target_roi * 100, 0), 100) if target_roi else 0
+    monthly_goal_progress = min(max(monthly_roi / monthly_target_roi * 100, 0), 100) if monthly_target_roi else 0
+    weekly_goal_progress = min(max(weekly_roi / weekly_target_roi * 100, 0), 100) if weekly_target_roi else 0
     capital_usage = min(max(_number(indicators.get("capital_comp")) / capital_total * 100, 0), 100) if capital_total else 0
     projection_rows = tuple((darf_projection or {}).get("rows", ()))
     paid_by_competence = (darf_projection or {}).get("paid_by_competence", {})
@@ -341,6 +362,10 @@ def build_dashboard_view_model(
         premiums_month=premiums_month,
         premiums_total=premiums_total,
         average_roi=average_roi,
+        monthly_roi=monthly_roi,
+        weekly_roi=weekly_roi,
+        monthly_target_roi=monthly_target_roi,
+        weekly_target_roi=weekly_target_roi,
         allocated_capital=_number(indicators.get("capital_comp")),
         commitment_items=tuple(commitment_items),
         available_to_trade=(
@@ -370,8 +395,9 @@ def build_dashboard_view_model(
             "days": int(_number(operation.get("Dias"))),
         } for operation in expiries[:6]),
         goals=(
-            {"label": "ROI médio", "value": average_roi, "target": target_roi, "progress": goal_progress, "unit": "%"},
+            {"label": "ROI mensal", "value": monthly_roi, "target": monthly_target_roi, "progress": monthly_goal_progress, "unit": "%"},
             {"label": "Capital utilizado", "value": _number(indicators.get("capital_comp")), "target": capital_total, "progress": capital_usage, "unit": "R$"},
+            {"label": "ROI semanal", "value": weekly_roi, "target": weekly_target_roi, "progress": weekly_goal_progress, "unit": "%"},
         ),
         stats=(
             {"label": "Capital total", "value": capital_total, "kind": "money"},

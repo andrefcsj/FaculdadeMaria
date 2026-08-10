@@ -25,6 +25,18 @@ I.R.R.F. s/ operações, base R$ 0,00
 Líquido: D1.529,50
 """
 
+REAL_WEEKLY_EXERCISE_TEXT = """NOTA DE CORRETAGEM
+Nr. nota Folha Data pregão
+33585225 1 07/08/2026
+BTG Pactual CTVM S.A. necton
+Negócios realizados
+1-BOVESPA C EXERC OPC VENDA WEGET486W1E 100 48,62 4.862,00 D
+Resumo dos Negócios Resumo Financeiro
+Valor das operações 4.862,00
+I.R.R.F. s/ operações, base R$ 0,00 0,00
+Líquido para 11/08/2026 4.864,50 D
+"""
+
 EQUITY_PURCHASE_TEXT = """NOTA DE CORRETAGEM
 33445566
 17/07/2026 Data pregão
@@ -59,6 +71,17 @@ def test_preliminary_put_assignment_is_parsed_without_inventing_note_number():
     assert payload["net_cash"] == "1529.50"
     assert payload["operational_costs"] == "1.50"
     assert trade["option_code"] == "CPLES15"
+    assert trade["event_type"] == "exercise_put_assignment"
+
+
+def test_real_weekly_put_assignment_layout_is_recognized():
+    with patch("services.brokerage_note_service.extract_pdf_text", return_value=REAL_WEEKLY_EXERCISE_TEXT):
+        payload = note_to_api(parse_btg_necton_pdf(b"real-weekly-exercise"))
+    trade = payload["trades"][0]
+    assert payload["note_number"] == "33585225"
+    assert payload["net_cash"] == "4864.50"
+    assert payload["operational_costs"] == "2.50"
+    assert trade["option_code"] == "WEGET486W1"
     assert trade["event_type"] == "exercise_put_assignment"
 
 

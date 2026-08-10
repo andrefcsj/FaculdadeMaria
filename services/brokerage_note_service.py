@@ -127,7 +127,7 @@ def parse_btg_necton_pdf(data: bytes) -> ParsedBrokerageNote:
     # Exercício do lançador de PUT. A nota prévia não traz número e o sufixo E
     # identifica o exercício, não faz parte do código negociado da opção.
     exercise_match = re.search(
-        r"1-BOVESPA\s+C\s+EOV\s+([A-Z0-9]+)\s+(\d+)\s+([0-9.,]+)\s+([0-9.,]+)\s+D",
+        r"1-BOVESPA\s+C\s+(?:EOV|EXERC\s+OPC(?:AO|ÃO)?\s+VENDA)\s+([A-Z0-9]+)\s+(\d+)\s+([0-9.,]+)\s+([0-9.,]+)\s+D",
         text, re.IGNORECASE,
     )
     if exercise_match:
@@ -136,8 +136,8 @@ def parse_btg_necton_pdf(data: bytes) -> ParsedBrokerageNote:
         quantity = int(exercise_match.group(2))
         unit_price = _money(exercise_match.group(3))
         gross = _money(exercise_match.group(4))
-        liquid = re.search(r"Líquido:\s*D\s*([0-9.,]+)", text, re.IGNORECASE)
-        net = _money(liquid.group(1)) if liquid else gross
+        liquid = re.search(r"Líquido(?:\s+para\s+\d{2}/\d{2}/\d{4}|:)?\s*(?:D\s*([0-9.,]+)|([0-9.,]+)\s*D)", text, re.IGNORECASE)
+        net = _money(liquid.group(1) or liquid.group(2)) if liquid else gross
         irrf = _extract_amount(text, "I.R.R.F. s/ operações, base R$", after=True) or Decimal("0")
         costs = max(net - gross - irrf, Decimal("0"))
         trade = ParsedTrade(

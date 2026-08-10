@@ -109,6 +109,11 @@ def register(app, legacy):
             "equity_capital": equity_capital,
         }
         open_groups = build_cycle_groups(abertas, result_key="Fluxo_liquido", capital_key="Capital")
+        for group in open_groups:
+            key = "Meta ROI semanal" if group["cycle"] == "weekly" else "Meta ROI mensal"
+            default = 0.01 if group["cycle"] == "weekly" else 0.02
+            group["target_roi"] = Decimal(str(cfg.get(key, default))) * Decimal("100")
+            group["goal_progress"] = min(group["roi"] / group["target_roi"] * Decimal("100"), Decimal("100")) if group["target_roi"] else Decimal("0")
         return render_template("operacoes_abertas.html", abertas=abertas, open_groups=open_groups, ops=ops, fechadas=fechadas, cfg=cfg, ind=legacy.metrics(ops, fechadas, cfg), open_totals=open_totals)
 
     app.view_functions["operacoes_abertas"] = view
