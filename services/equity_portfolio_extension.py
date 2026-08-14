@@ -12,6 +12,38 @@ from services.equity_position_service import (
     delete_equity_asset, manual_equity_lot, portfolio, replace_equity_asset,
     replace_equity_lot_from_note, save_equity_lot, sell_equity_asset,
 )
+from services.closed_operations_service import FIELDS, save_closure_metadata
+
+ETF_TICKERS = {"BOVA11", "BOVV11", "BRAX11", "DIVO11", "ECOO11", "GOVE11", "HASH11", "IVVB11", "LFTB11", "MATB11", "PIBB11", "SMAL11", "SPXI11", "TECK11", "XFIX11"}
+
+
+def _is_etf(asset: str) -> bool:
+    return str(asset or "").strip().upper() in ETF_TICKERS
+
+
+def _register_closed_equity_sale(legacy, *, trade: dict, note: dict, tax_cost: Decimal, result: Decimal, acquisition_date: str) -> str:
+    """Espelha uma venda no histórico sem criar um segundo fluxo de caixa."""
+    rows = legacy.read_csv(legacy.OPERACOES)
+    next_id = max([int(legacy.fnum(row.get("ID"))) for row in rows] + [0]) + 1
+    ticker = str(trade["underlying_asset"]).upper()
+    quantity = int(trade["quantity"])
+    unit_cost = tax_cost / Decimal(quantity) if quantity else Decimal("0")
+    row = {
+        "ID": str(next_id), "Data abertura": acquisition_date or note["trade_date"],
+        "Ativo": ticker, "Tipo": "ETF" if _is_etf(ticker) else "AÇÃO",
+        "Estratégia": "Venda de ETF" if _is_etf(ticker) else "Venda de ação",
+        "Status": "Encerrada", "Contratos": str(quantity), "Strike": str(unit_cost),
+        "Premio_opcao": str(trade["unit_price"]), "Custos": str(trade["allocated_costs"]),
+        "IRRF": str(trade["allocated_irrf"]), "Vencimento": note["trade_date"],
+        "Cotacao_atual": str(trade["unit_price"]), "Resultado_realizado": str(result),
+    }
+    if legacy.USE_POSTGRES:
+        row["ID"] = str(legacy.salvar_operacao_pg(row))
+    else:
+        rows.append(row)
+        legacy.write_csv(legacy.OPERACOES, rows, FIELDS)
+    save_closure_metadata(legacy, row["ID"], close_date=date.fromisoformat(note["trade_date"]), method="venda_etf" if _is_etf(ticker) else "venda_acao", repurchase_value=Decimal("0"), result=result)
+    return row["ID"]
 
 
 def register(app, legacy):
@@ -91,17 +123,22 @@ def register(app, legacy):
                             raise BrokerageNoteError("Não foi possível substituir a nota prévia de venda pela definitiva.")
                     elif not save_imported_note(legacy, trade_payload, operation_id):
                         raise BrokerageNoteError(f"A venda de {ticker} desta nota já foi importada.")
+                    current_position = next((item for item in portfolio(legacy) if item["asset"] == ticker), {})
+                    acquisition_date = str(current_position.get("acquisition_date", payload["trade_date"]))
                     consumed_cost = sell_equity_asset(legacy, asset=ticker, quantity=int(trade["quantity"]))
                     net_proceeds = (
                         Decimal(str(trade["gross_value"]))
                         - Decimal(str(trade["allocated_costs"]))
                         - Decimal(str(trade["allocated_irrf"]))
                     )
+                    realized_result = net_proceeds - consumed_cost
+                    closed_operation_id = _register_closed_equity_sale(legacy, trade=trade, note=payload, tax_cost=consumed_cost, result=realized_result, acquisition_date=acquisition_date)
                     sales.append({
                         "asset": ticker, "quantity": int(trade["quantity"]),
                         "net_proceeds": str(net_proceeds),
                         "tax_cost": str(consumed_cost),
-                        "realized_result": str(net_proceeds - consumed_cost),
+                        "realized_result": str(realized_result), "closed_operation_id": closed_operation_id,
+                        "is_etf": _is_etf(ticker),
                     })
                     imported.append(ticker)
                     continue

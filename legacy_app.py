@@ -300,7 +300,8 @@ def load_all() -> Tuple[List[Dict[str, object]], List[Dict[str, str]], Dict[str,
 
 
 def metrics(ops: List[Dict[str, object]], fechadas: List[Dict[str, str]], cfg: Dict[str, float]) -> Dict[str, float | str | int]:
-    abertas = [o for o in ops if str(o.get("Status", "")).lower() == "aberta"]
+    option_ops = [o for o in ops if str(o.get("Tipo", "")).upper() in {"PUT", "CALL"}]
+    abertas = [o for o in option_ops if str(o.get("Status", "")).lower() == "aberta"]
     from services.cash_ledger_service import load_cash_events, money
     eventos_caixa = load_cash_events(__import__(__name__))
     aportes_liquidos = sum((
@@ -331,7 +332,7 @@ def metrics(ops: List[Dict[str, object]], fechadas: List[Dict[str, str]], cfg: D
     # efetivamente travadas como cobertura de CALLs.
     capital_comp = capital_opcoes + capital_calls_cobertas
     vendas = [
-        o for o in ops
+        o for o in option_ops
         if str(o.get("Estratégia", "Venda")).strip().lower() not in {"compra"}
     ]
     premios_ativos = sum(float(o["Premio_liquido"]) for o in abertas if o in vendas)
@@ -353,7 +354,7 @@ def metrics(ops: List[Dict[str, object]], fechadas: List[Dict[str, str]], cfg: D
     premios_total = sum(float(o.get("Premio_liquido", 0)) for o in vendas)
     caixa_livre = capital_total + premios_total - capital_acoes - capital_comp
     patrimonio_atual = capital_total + premios_total
-    return {"capital_total": capital_total, "capital_comp": capital_comp, "capital_opcoes": capital_opcoes, "capital_calls_cobertas": capital_calls_cobertas, "capital_acoes": capital_acoes, "margem_lftb11": margem_lftb11, "caixa": caixa_livre, "caixa_livre": caixa_livre, "premios_ativos": premios_ativos, "premios_total": premios_total, "patrimonio_atual": patrimonio_atual, "lucro_mes": lucro_mes, "darf": darf, "roi_mes": roi_mes, "roi_abertas": roi_abertas, "roi_medio_abertas": roi_medio_abertas, "roi_medio_fechadas": roi_medio_fechadas, "mes_atual": mes_atual, "abertas": len(abertas), "encerradas": len(ops) - len(abertas)}
+    return {"capital_total": capital_total, "capital_comp": capital_comp, "capital_opcoes": capital_opcoes, "capital_calls_cobertas": capital_calls_cobertas, "capital_acoes": capital_acoes, "margem_lftb11": margem_lftb11, "caixa": caixa_livre, "caixa_livre": caixa_livre, "premios_ativos": premios_ativos, "premios_total": premios_total, "patrimonio_atual": patrimonio_atual, "lucro_mes": lucro_mes, "darf": darf, "roi_mes": roi_mes, "roi_abertas": roi_abertas, "roi_medio_abertas": roi_medio_abertas, "roi_medio_fechadas": roi_medio_fechadas, "mes_atual": mes_atual, "abertas": len(abertas), "encerradas": len(option_ops) - len(abertas)}
 
 
 def monthly(ops: List[Dict[str, object]], fechadas: List[Dict[str, str]], cfg: Dict[str, float]) -> List[Dict[str, float | str]]:
@@ -572,7 +573,7 @@ def index():
     from services.cash_ledger_service import calculate_broker_balance
     ind["broker_cash_balance"] = float(calculate_broker_balance(__import__(__name__))["balance"])
     ind["patrimonio_atual"] = ind["broker_cash_balance"] + float(ind["capital_acoes"])
-    ind["caixa_livre"] = ind["patrimonio_atual"] - float(ind["capital_acoes"]) - float(ind["capital_comp"])
+    ind["caixa_livre"] = ind["broker_cash_balance"] + float(ind["margem_lftb11"]) - float(ind["capital_opcoes"])
     hist = monthly(ops, fechadas, cfg)
     from services.live_spot_service import with_current_underlying_quotes
     dashboard_ops = with_current_underlying_quotes(__import__(__name__), ops)

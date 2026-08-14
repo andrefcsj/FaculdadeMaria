@@ -96,5 +96,13 @@ class CashAndDarfTests(unittest.TestCase):
         self.assertLess(html.index("Cadastrar Operação"),html.index("Operações Abertas"))
         self.assertIn("Novos Aportes",html);self.assertIn("DARFs Pagos",html)
 
+    def test_closed_equity_sale_does_not_inflate_option_premiums(self):
+        equity_sale={"ID":"9","Data abertura":"2026-08-01","Ativo":"CPLE3","Tipo":"AÇÃO","Estratégia":"Venda de ação","Status":"Encerrada","Contratos":"100","Strike":"10","Premio_opcao":"14","Custos":"1","IRRF":"0","Vencimento":"2026-08-08","Cotacao_atual":"14","Resultado_realizado":"399"}
+        enriched=legacy_app.enrich_ops([equity_sale],legacy_app.load_config())
+        indicators=legacy_app.metrics(enriched,[],legacy_app.load_config())
+        self.assertEqual(indicators["premios_total"],0)
+        self.assertEqual(indicators["lucro_mes"],0)
+        self.assertEqual(indicators["encerradas"],0)
+
 
 if __name__=="__main__":unittest.main()

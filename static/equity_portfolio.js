@@ -41,5 +41,26 @@ document.addEventListener('DOMContentLoaded',()=>{
     }catch(exc){error.textContent=exc.message;error.hidden=false}
   });
   const input=document.getElementById('equityNoteFile'),status=document.getElementById('equityImportStatus');
-  input?.addEventListener('change',async()=>{if(!input.files?.[0])return;status.hidden=false;status.classList.remove('error');status.textContent='Lendo a nota e recalculando posição, preço médio e caixa...';const body=new FormData();body.append('brokerage_note',input.files[0]);try{const response=await fetch('/api/carteira-acoes/importar-nota',{method:'POST',body}),data=await response.json();if(!response.ok||!data.ok)throw new Error(data.error||'Não foi possível importar.');status.textContent=data.message;location.reload()}catch(exc){status.textContent=exc.message;status.classList.add('error');input.value=''}});
+  const noteModal=document.getElementById('equityNoteModal'),noteSummary=document.getElementById('equityNoteSummary'),noteConfirm=document.getElementById('equityNoteConfirm');
+  let pendingNoteFile=null;
+  const brl=value=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(Number(value)||0);
+  const dateBr=value=>{const parts=String(value||'').split('-');return parts.length===3?`${parts[2]}/${parts[1]}/${parts[0]}`:value};
+  const closeNote=()=>{noteModal.hidden=true;pendingNoteFile=null;input.value=''};
+  document.querySelectorAll('[data-equity-note-close]').forEach(button=>button.addEventListener('click',closeNote));
+  input?.addEventListener('change',async()=>{
+    if(!input.files?.[0])return;pendingNoteFile=input.files[0];status.hidden=false;status.classList.remove('error');status.textContent='Lendo a nota para conferência...';
+    const body=new FormData();body.append('brokerage_note',pendingNoteFile);
+    try{
+      const response=await fetch('/api/notas-corretagem/analisar',{method:'POST',body}),data=await response.json();if(!response.ok||!data.ok)throw new Error(data.error||'Não foi possível analisar.');
+      const note=data.note,trades=note.trades.filter(trade=>['equity_purchase','equity_sale'].includes(trade.event_type));if(!trades.length)throw new Error('A nota não possui compra ou venda de ações reconhecida.');
+      noteSummary.innerHTML=`<div class="equity-note-overview"><div><small>Nota</small><strong>${note.note_number}</strong></div><div><small>Pregão</small><strong>${dateBr(note.trade_date)}</strong></div><div><small>Líquido</small><strong>${note.cash_direction==='C'?'Crédito':'Débito'} ${brl(note.net_cash)}</strong></div><div><small>Custos + IRRF</small><strong>${brl(Number(note.operational_costs)+Number(note.irrf))}</strong></div></div><div class="equity-note-trades">${trades.map(trade=>`<div class="equity-note-trade"><div><small>Operação</small><strong>${trade.side} de ${trade.underlying_asset}</strong></div><div><small>Quantidade</small><strong>${trade.quantity}</strong></div><div><small>Preço unitário</small><strong>${brl(trade.unit_price)}</strong></div><div><small>Valor bruto</small><strong>${brl(trade.gross_value)}</strong></div></div>`).join('')}</div><p class="equity-note-warning">Ao confirmar, a carteira e o caixa serão recalculados. Vendas também aparecerão em Operações Fechadas e, para ações comuns, entrarão na previsão de DARF.</p>`;
+      status.hidden=true;noteModal.hidden=false;
+    }catch(exc){status.textContent=exc.message;status.classList.add('error');pendingNoteFile=null;input.value=''}
+  });
+  noteConfirm?.addEventListener('click',async()=>{
+    if(!pendingNoteFile)return;noteConfirm.disabled=true;noteConfirm.textContent='Importando e recalculando...';const body=new FormData();body.append('brokerage_note',pendingNoteFile);
+    try{const response=await fetch('/api/carteira-acoes/importar-nota',{method:'POST',body}),data=await response.json();if(!response.ok||!data.ok)throw new Error(data.error||'Não foi possível importar.');status.hidden=false;status.classList.remove('error');status.textContent=data.message;location.reload()}
+    catch(exc){noteModal.hidden=true;status.hidden=false;status.textContent=exc.message;status.classList.add('error');input.value=''}
+    finally{noteConfirm.disabled=false;noteConfirm.textContent='Importar e recalcular'}
+  });
 });

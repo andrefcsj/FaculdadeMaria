@@ -102,11 +102,13 @@ def test_equity_sale_note_reduces_position_and_updates_brokerage_cash():
 
     with TemporaryDirectory() as directory:
         root = Path(directory)
+        operations = root / "operacoes.csv"
+        operations.write_text("ID,Data abertura,Ativo,Tipo,Estratégia,Status,Contratos,Strike,Premio_opcao,Custos,IRRF,Vencimento,Cotacao_atual,Resultado_realizado\n", encoding="utf-8")
         lot = manual_equity_lot(
             asset="LFTB11", quantity=63, average_price=Decimal("50"),
             acquisition_date="2026-07-01",
         )
-        with patch.object(legacy_app, "DATA", root), patch.object(legacy_app, "USE_POSTGRES", False):
+        with patch.object(legacy_app, "DATA", root), patch.object(legacy_app, "OPERACOES", operations), patch.object(legacy_app, "USE_POSTGRES", False):
             assert save_equity_lot(legacy_app, lot)
             with patch("services.brokerage_note_service.extract_pdf_text", return_value=EQUITY_SALE_TEXT):
                 response = app.test_client().post(
@@ -124,6 +126,10 @@ def test_equity_sale_note_reduces_position_and_updates_brokerage_cash():
             assert holding["quantity"] == 26
             assert holding["tax_cost_per_share"] == 50
             assert calculate_broker_balance(legacy_app)["brokerage_cash"] == Decimal("2070.50")
+            closed = legacy_app.read_csv(operations)
+            assert closed[0]["Ativo"] == "LFTB11"
+            assert closed[0]["Status"] == "Encerrada"
+            assert closed[0]["Tipo"] == "ETF"
 
 
 def test_equity_sale_note_cannot_sell_more_than_free_position():
