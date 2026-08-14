@@ -9,7 +9,7 @@ from services.brokerage_note_service import note_to_api, parse_btg_necton_pdf
 from services.equity_position_service import (
     delete_equity_asset, manual_equity_lot, portfolio, replace_equity_asset,
     replace_equity_lot_from_note, save_equity_lot, sell_equity_asset,
-    validate_covered_call,
+    validate_covered_call, exercise_covered_call,
 )
 from services.new_operation_extension import _preview_roi
 
@@ -200,6 +200,104 @@ def test_manual_portfolio_actions_recalculate_quantity_and_cost():
         assert consumed == 550
         assert portfolio(Legacy)[0]["quantity"] == 100
         assert delete_equity_asset(Legacy, "LFTB11") is True
+        assert portfolio(Legacy) == []
+
+
+def test_covered_call_premium_reduces_average_only_during_current_holding_cycle():
+    with TemporaryDirectory() as directory:
+        operations = [
+            {"ID":"old", "Data abertura":"2026-06-01", "Ativo":"PETRF400", "Tipo":"CALL", "Estratégia":"Venda Coberta", "Status":"Encerrada", "Contratos":"1", "Premio_opcao":"1.00", "Custos":"0", "IRRF":"0"},
+            {"ID":"put", "Data abertura":"2026-07-02", "Ativo":"PETRS350", "Tipo":"PUT", "Estratégia":"Venda", "Status":"Encerrada", "Contratos":"1", "Premio_opcao":"2.00", "Custos":"0", "IRRF":"0"},
+            {"ID":"current", "Data abertura":"2026-07-10", "Ativo":"PETRH420", "Tipo":"CALL", "Estratégia":"Venda Coberta", "Status":"Aberta", "Contratos":"1", "Premio_opcao":"0.52", "Custos":"2", "IRRF":"0"},
+        ]
+        class Legacy:
+            DATA = Path(directory)
+            USE_POSTGRES = False
+            read_operacoes = staticmethod(lambda: operations)
+            load_config = staticmethod(lambda: {"Tamanho contrato opcoes": 100})
+            infer_acao_from_option = staticmethod(lambda _code: "PETR4")
+
+        save_equity_lot(Legacy, manual_equity_lot(asset="PETR4", quantity=100, average_price=Decimal("30"), acquisition_date="2026-07-01"))
+        holding = portfolio(Legacy)[0]
+        assert holding["covered_call_premium_total"] == 50
+        assert holding["adjusted_average_price"] == 29.5
+
+        operations[-1]["Status"] = "Encerrada"
+        sell_equity_asset(Legacy, asset="PETR4", quantity=100)
+        assert portfolio(Legacy) == []
+
+        save_equity_lot(Legacy, manual_equity_lot(asset="PETR4", quantity=100, average_price=Decimal("35"), acquisition_date="2026-08-01"))
+        new_holding = portfolio(Legacy)[0]
+        assert new_holding["covered_call_premium_total"] == 0
+        assert new_holding["adjusted_average_price"] == 35
+
+
+def test_closed_covered_call_uses_realized_result_after_repurchase():
+    with TemporaryDirectory() as directory:
+        operations = [
+            {"ID":"call", "Data abertura":"2026-07-10", "Ativo":"PETRH420", "Tipo":"CALL", "Estratégia":"Venda Coberta", "Status":"Encerrada", "Contratos":"1", "Premio_opcao":"0.52", "Custos":"2", "IRRF":"0", "Resultado_realizado":"30"},
+        ]
+        class Legacy:
+            DATA = Path(directory)
+            USE_POSTGRES = False
+            read_operacoes = staticmethod(lambda: operations)
+            load_config = staticmethod(lambda: {"Tamanho contrato opcoes": 100})
+            infer_acao_from_option = staticmethod(lambda _code: "PETR4")
+
+        save_equity_lot(Legacy, manual_equity_lot(asset="PETR4", quantity=100, average_price=Decimal("30"), acquisition_date="2026-07-01"))
+        holding = portfolio(Legacy)[0]
+        assert holding["covered_call_premium_total"] == 30
+        assert holding["adjusted_average_price"] == 29.7
+
+
+def test_expired_covered_call_keeps_full_net_premium_in_average():
+    with TemporaryDirectory() as directory:
+        operations = [
+            {"ID":"call", "Data abertura":"2026-07-10", "Ativo":"PETRH420", "Tipo":"CALL", "Estratégia":"Venda Coberta", "Status":"Encerrada", "Contratos":"1", "Premio_opcao":"0.52", "Custos":"2", "IRRF":"0", "Resultado_realizado":"50"},
+        ]
+        class Legacy:
+            DATA = Path(directory)
+            USE_POSTGRES = False
+            read_operacoes = staticmethod(lambda: operations)
+            load_config = staticmethod(lambda: {"Tamanho contrato opcoes": 100})
+            infer_acao_from_option = staticmethod(lambda _code: "PETR4")
+
+        save_equity_lot(Legacy, manual_equity_lot(asset="PETR4", quantity=100, average_price=Decimal("30"), acquisition_date="2026-07-01"))
+        holding = portfolio(Legacy)[0]
+        assert holding["covered_call_premium_total"] == 50
+        assert holding["adjusted_average_price"] == 29.5
+
+
+def test_covered_call_closed_at_a_loss_increases_adjusted_average():
+    with TemporaryDirectory() as directory:
+        operations = [
+            {"ID":"call", "Data abertura":"2026-07-10", "Ativo":"PETRH420", "Tipo":"CALL", "Estratégia":"Venda Coberta", "Status":"Encerrada", "Contratos":"1", "Premio_opcao":"0.52", "Custos":"2", "IRRF":"0", "Resultado_realizado":"-20"},
+        ]
+        class Legacy:
+            DATA = Path(directory)
+            USE_POSTGRES = False
+            read_operacoes = staticmethod(lambda: operations)
+            load_config = staticmethod(lambda: {"Tamanho contrato opcoes": 100})
+            infer_acao_from_option = staticmethod(lambda _code: "PETR4")
+
+        save_equity_lot(Legacy, manual_equity_lot(asset="PETR4", quantity=100, average_price=Decimal("30"), acquisition_date="2026-07-01"))
+        holding = portfolio(Legacy)[0]
+        assert holding["covered_call_premium_total"] == -20
+        assert holding["adjusted_average_price"] == 30.2
+
+
+def test_covered_call_exercise_removes_delivered_shares_and_stops_average_adjustment():
+    with TemporaryDirectory() as directory:
+        operation = {"ID":"call", "Data abertura":"2026-07-10", "Ativo":"PETRH420", "Tipo":"CALL", "Estratégia":"Venda Coberta", "Status":"Aberta", "Contratos":"1", "Strike":"32", "Premio_opcao":"0.52", "Custos":"2", "IRRF":"0"}
+        class Legacy:
+            DATA = Path(directory)
+            USE_POSTGRES = False
+            read_operacoes = staticmethod(lambda: [operation])
+            load_config = staticmethod(lambda: {"Tamanho contrato opcoes": 100})
+            infer_acao_from_option = staticmethod(lambda _code: "PETR4")
+
+        save_equity_lot(Legacy, manual_equity_lot(asset="PETR4", quantity=100, average_price=Decimal("30"), acquisition_date="2026-07-01"))
+        assert exercise_covered_call(Legacy, operation) == Decimal("250.00")
         assert portfolio(Legacy) == []
 
 

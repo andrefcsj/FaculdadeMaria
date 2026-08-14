@@ -47,7 +47,7 @@ class ClosedOperationsTests(unittest.TestCase):
 
     @patch("services.equity_position_service.portfolio")
     def test_asset_history_consolidates_premiums_roi_and_adjusted_average(self, portfolio):
-        portfolio.return_value = [{"asset":"WEGE3", "quantity":100, "tax_cost_per_share":48.39}]
+        portfolio.return_value = [{"asset":"WEGE3", "quantity":100, "tax_cost_per_share":48.39, "adjusted_average_price":47.22}]
         operations = [
             {"Ativo_subjacente":"WEGE3", "Ativo":"WEGET500", "Estrategia":"Venda Coberta", "Premio_bruto":"70", "Custos":"2", "IRRF":"0", "Resultado_realizado":"60", "Capital":"4839", "Data_fechamento":"2026-08-10", "Data_abertura":"2026-08-01"},
             {"Ativo_subjacente":"WEGE3", "Ativo":"WEGET510W1", "Estrategia":"Venda Coberta", "Premio_bruto":"50", "Custos":"1", "IRRF":"0", "Resultado_realizado":"40", "Capital":"4839", "Data_fechamento":"2026-07-31", "Data_abertura":"2026-07-20"},

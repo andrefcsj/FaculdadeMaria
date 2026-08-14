@@ -37,6 +37,48 @@ def test_confirmed_purchase_note_closes_matching_open_sale():
             assert len(saved) == 1
 
 
+def test_purchase_note_closes_covered_call_without_client_hint():
+    with tempfile.TemporaryDirectory() as directory:
+        root = Path(directory)
+        operations = root / "operacoes.csv"
+        operations.write_text(
+            ",".join(FIELDS) + "\n1,2026-07-10,CPLEH15,CALL,Venda Coberta,Aberta,1,15.05,0.32,1,0,2026-08-21,13.67,0\n",
+            encoding="utf-8",
+        )
+        note = {
+            "document_hash":"covered-call-close", "note_number":"100", "trade_date":"2026-08-13",
+            "broker":"BTG Pactual / Necton", "cash_direction":"D", "net_cash":"2.05",
+            "operational_costs":"1.05", "irrf":"0", "gross_operations":"1.00",
+            "trade":{"trade_index":0,"option_code":"CPLEH15","side":"Compra","quantity":100,"contracts":"1","unit_price":"0.01","gross_value":"1.00","cash_direction":"D","allocated_costs":"1.05","allocated_irrf":"0","event_type":"trade"},
+        }
+        with patch.object(legacy_app,"DATA",root),patch.object(legacy_app,"OPERACOES",operations),patch.object(legacy_app,"USE_POSTGRES",False):
+            response = app.test_client().post("/api/operacoes", json={
+                "Ativo":"CPLEH15", "Tipo":"CALL", "Estrategia":"Compra", "Contratos":"1",
+                "Strike":"15.05", "Premio_opcao":"0.01", "Custos":"1.05", "IRRF":"0",
+                "Vencimento":"2026-08-21", "Cotacao_atual":"13.67", "Nota_corretagem":note,
+            })
+            assert response.status_code == 200
+            assert response.get_json()["closed"] is True
+            rows = legacy_app.read_csv(operations)
+            assert len(rows) == 1
+            assert rows[0]["Status"] == "Encerrada"
+            assert Decimal(rows[0]["Resultado_realizado"]) == Decimal("28.95")
+
+
+def test_partial_covered_call_repurchase_is_not_created_as_new_operation():
+    with tempfile.TemporaryDirectory() as directory:
+        root = Path(directory); operations = root / "operacoes.csv"
+        operations.write_text(",".join(FIELDS) + "\n1,2026-07-10,CPLEH15,CALL,Venda Coberta,Aberta,1,15.05,0.32,1,0,2026-08-21,13.67,0\n", encoding="utf-8")
+        note = {"document_hash":"partial-covered","note_number":"101","trade_date":"2026-08-13","broker":"BTG Pactual / Necton","trade":{"trade_index":0,"option_code":"CPLEH15","side":"Compra","quantity":50,"unit_price":"0.01","allocated_costs":"0","allocated_irrf":"0","event_type":"trade"}}
+        with patch.object(legacy_app,"DATA",root),patch.object(legacy_app,"OPERACOES",operations),patch.object(legacy_app,"USE_POSTGRES",False):
+            response = app.test_client().post("/api/operacoes", json={"Ativo":"CPLEH15","Nota_corretagem":note})
+            assert response.status_code == 400
+            assert "parcial" in response.get_json()["error"].lower()
+            rows = legacy_app.read_csv(operations)
+            assert len(rows) == 1
+            assert rows[0]["Status"] == "Aberta"
+
+
 def test_partial_purchase_note_is_rejected_by_automatic_close():
     with tempfile.TemporaryDirectory() as directory:
         root = Path(directory);operations = root / "operacoes.csv"

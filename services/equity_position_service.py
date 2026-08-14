@@ -28,6 +28,37 @@ def _decimal(value: Any) -> Decimal:
         return Decimal("0")
 
 
+def _covered_call_premium(
+    legacy, asset: str, operations: list[dict[str, Any]], position_start: str
+) -> Decimal:
+    """Resultado líquido de CALLs cobertas no ciclo atual da posição."""
+    ticker = str(asset or "").strip().upper()
+    total = Decimal("0")
+    contract_size = _decimal(legacy.load_config().get("Tamanho contrato opcoes", 100))
+    for operation in operations:
+        strategy = str(operation.get("Estratégia", operation.get("Estrategia", ""))).strip().lower()
+        if str(operation.get("Tipo", "")).upper() != "CALL" or strategy not in {"venda coberta", "call coberta"}:
+            continue
+        underlying = str(
+            operation.get("Ativo_subjacente")
+            or legacy.infer_acao_from_option(str(operation.get("Ativo", "")))
+        ).upper()
+        opened_at = str(operation.get("Data abertura", operation.get("Data_abertura", "")))
+        if underlying != ticker or (position_start and opened_at and opened_at < position_start):
+            continue
+        status = str(operation.get("Status", "")).strip().lower()
+        if status == "encerrada":
+            # No encerramento, Resultado_realizado já representa o crédito de
+            # entrada menos a recompra (quando houver). Usar novamente o prêmio
+            # de entrada faria o PM ignorar o desembolso da recompra.
+            realized = _decimal(operation.get("Resultado_realizado"))
+            total += realized
+            continue
+        gross = _decimal(operation.get("Premio_opcao")) * _decimal(operation.get("Contratos")) * contract_size
+        total += max(gross - _decimal(operation.get("Custos")) - _decimal(operation.get("IRRF")), Decimal("0"))
+    return total
+
+
 def _path(legacy) -> Path:
     return legacy.DATA / "equity_lots.json"
 
@@ -285,9 +316,19 @@ def portfolio(legacy, operations: list[dict[str, Any]] | None = None) -> list[di
         item["note_pending"] = any(bool(source.get("note_pending")) for source in item["sources"])
         item["cash_cost_per_share"] = item["cash_cost_total"] / item["quantity"] if item["quantity"] else Decimal("0")
         item["tax_cost_per_share"] = item["tax_cost_total"] / item["quantity"] if item["quantity"] else Decimal("0")
-        for key in ("cash_cost_total", "tax_cost_total", "cash_cost_per_share", "tax_cost_per_share"):
+        # O PM fiscal permanece disponível para apuração. O PM exibido ao
+        # investidor desconta somente prêmios de CALL coberta recebidos durante
+        # o ciclo atual de posse; um novo ciclo começa após a posição zerar.
+        item["covered_call_premium_total"] = _covered_call_premium(
+            legacy, item["asset"], operations, item["acquisition_date"]
+        ) if item["quantity"] else Decimal("0")
+        item["adjusted_average_price"] = max(
+            item["tax_cost_per_share"] - item["covered_call_premium_total"] / Decimal(item["quantity"]),
+            Decimal("0"),
+        ) if item["quantity"] else Decimal("0")
+        for key in ("cash_cost_total", "tax_cost_total", "cash_cost_per_share", "tax_cost_per_share", "covered_call_premium_total", "adjusted_average_price"):
             item[key] = float(item[key])
-    return sorted(grouped.values(), key=lambda value: value["asset"])
+    return sorted((item for item in grouped.values() if item["quantity"] > 0), key=lambda value: value["asset"])
 
 
 def available_coverage(legacy, asset: str, operations=None, *, exclude_operation_id: str | None = None) -> int:
@@ -322,24 +363,18 @@ def exercise_covered_call(legacy, operation: dict[str, Any]) -> Decimal:
         if not take:
             continue
         unit_tax_cost = _decimal(lot.get("tax_cost_per_share"))
+        lot_quantity = int(lot.get("quantity", available) or 0)
+        unit_cash_cost = _decimal(lot.get("cash_cost_total")) / Decimal(max(lot_quantity, 1))
         consumed_cost += unit_tax_cost * take
         lot["available_quantity"] = available - take
+        lot["quantity"] = max(lot_quantity - take, 0)
+        lot["cash_cost_total"] = str(max(_decimal(lot.get("cash_cost_total")) - unit_cash_cost * take, Decimal("0")))
+        lot["tax_cost_total"] = str(max(_decimal(lot.get("tax_cost_total")) - unit_tax_cost * take, Decimal("0")))
         remaining -= take
         changed.append(lot)
     if remaining:
         raise ValueError(f"Faltam {remaining} ações para liquidar o exercício desta CALL coberta.")
-    if getattr(legacy, "USE_POSTGRES", False):
-        conn = legacy.get_pg_conn()
-        try:
-            cur = conn.cursor()
-            for lot in changed:
-                cur.execute("UPDATE equity_lots SET payload=%s::jsonb WHERE lot_id=%s", (json.dumps(lot, ensure_ascii=False), lot["lot_id"]))
-            conn.commit()
-            _invalidate_cache(legacy)
-        finally:
-            conn.close()
-    else:
-        _path(legacy).write_text(json.dumps(lots, ensure_ascii=False, indent=2), encoding="utf-8")
+    _persist_lots(legacy, [lot for lot in lots if int(lot.get("quantity", 0) or 0) > 0])
     proceeds = _decimal(operation.get("Strike")) * quantity
     premium_net = _decimal(operation.get("Premio_opcao")) * quantity - _decimal(operation.get("Custos")) - _decimal(operation.get("IRRF"))
     return proceeds + premium_net - consumed_cost

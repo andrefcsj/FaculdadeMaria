@@ -8,7 +8,7 @@ from flask import jsonify, request
 
 from engine.providers import B3CotahistProvider, ProviderError, download_cotahist_for_date
 from services.market_import_service import load_market_import
-from services.brokerage_note_service import imported_note_exists, save_imported_note
+from services.brokerage_note_service import imported_note_exists, option_closure_matches, save_imported_note
 from services.operation_close_service import calculate_operation_close
 from services.closed_operations_service import save_closure_metadata
 from services.operation_preferences_service import normalize_exercise_interest, save_operation_metadata
@@ -59,14 +59,16 @@ def _preview_roi(*, strategy: str, contracts: Decimal, strike: Decimal, premium:
 def register(app, legacy, market_path):
     def close_from_note(operation_id: str, note_payload: dict, option_code: str):
         trade = note_payload.get("trade", {})
-        if str(trade.get("side", "")).lower() != "compra":
-            raise ValueError("A nota não representa uma recompra.")
         is_assignment = str(trade.get("event_type", "")) == "exercise_put_assignment"
         rows = legacy.read_csv(legacy.OPERACOES)
         operation = legacy.get_operacao_pg(operation_id) if legacy.USE_POSTGRES else legacy.find_row(rows, operation_id)
         if not operation or str(operation.get("Status", "")).lower() != "aberta":
             raise ValueError("A operação aberta para encerramento não foi encontrada.")
-        if str(operation.get("Ativo", "")).upper() != option_code or str(operation.get("Estratégia", "")).lower() not in {"venda", "wheel"}:
+        strategy = str(operation.get("Estratégia", operation.get("Estrategia", ""))).lower()
+        note_side = str(trade.get("side", "")).lower()
+        closes_short = note_side == "compra" and strategy in {"venda", "wheel", "venda coberta", "call coberta"}
+        closes_long = note_side == "venda" and strategy == "compra"
+        if str(operation.get("Ativo", "")).upper() != option_code or not (closes_short or closes_long):
             raise ValueError("A negociação não corresponde à operação aberta.")
         if is_assignment and str(operation.get("Tipo", "PUT")).upper() != "PUT":
             raise ValueError("A nota de exercício não corresponde a uma PUT vendida.")
@@ -80,7 +82,7 @@ def register(app, legacy, market_path):
         repurchase = Decimal("0") if is_assignment else _decimal(trade.get("unit_price"), "Valor de recompra")
         premium_total = Decimal(str(legacy.fnum(operation.get("Premio_opcao")))) * contracts * contract_size - Decimal(str(legacy.fnum(operation.get("Custos")))) - Decimal(str(legacy.fnum(operation.get("IRRF"))) )
         method = "exercida" if is_assignment else "recompra"
-        closure = calculate_operation_close(method=method, close_date=close_date, expiry=legacy.parse_date(str(operation.get("Vencimento", ""))), premium_received=premium_total, repurchase_per_unit=repurchase, contracts=contracts, contract_size=contract_size)
+        closure = calculate_operation_close(method=method, close_date=close_date, expiry=legacy.parse_date(str(operation.get("Vencimento", ""))), premium_received=premium_total, repurchase_per_unit=repurchase, contracts=contracts, contract_size=contract_size, position_side=str(operation.get("Estratégia", "Venda")))
         closing_costs = _decimal(trade.get("allocated_costs"), "Custos") + _decimal(trade.get("allocated_irrf"), "IRRF")
         # No exercício da PUT o prêmio passa a compor o custo fiscal das ações;
         # os custos da nota pertencem à aquisição, não a uma recompra da opção.
@@ -228,6 +230,15 @@ def register(app, legacy, market_path):
                 if not note_payload:
                     raise ValueError("A nota de recompra é obrigatória para o encerramento automático.")
                 return close_from_note(str(payload["Encerrar_operacao_id"]), note_payload, option_code)
+            if note_payload:
+                closure_matches = option_closure_matches(legacy, note_payload.get("trade", {}))
+                if len(closure_matches) > 1:
+                    raise ValueError(f"Existem {len(closure_matches)} posições abertas para {option_code}; o encerramento exige conferência manual.")
+                if len(closure_matches) == 1:
+                    # Autoridade final fica no servidor: mesmo que uma tela não
+                    # envie Encerrar_operacao_id, a negociação oposta com o
+                    # mesmo código nunca é cadastrada como nova posição.
+                    return close_from_note(str(closure_matches[0].get("ID")), note_payload, option_code)
             option_type = str(payload.get("Tipo", "PUT")).upper()
             if option_type not in {"PUT", "CALL"}:
                 raise ValueError("Tipo de opção inválido.")

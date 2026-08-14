@@ -426,8 +426,9 @@ def build_asset_history(legacy, operations: list[dict[str, Any]], asset: str) ->
     holding = next((item for item in portfolio(legacy) if str(item.get("asset", "")).upper() == ticker), None)
     adjusted_average = None
     if holding and int(holding.get("quantity", 0) or 0) > 0:
-        quantity = Decimal(str(holding["quantity"]))
-        adjusted_average = max(_decimal(holding.get("tax_cost_per_share")) - premium_total / quantity, Decimal("0"))
+        adjusted_average = _decimal(
+            holding.get("adjusted_average_price", holding.get("tax_cost_per_share"))
+        )
     return {
         "asset": ticker,
         "operations": rows,

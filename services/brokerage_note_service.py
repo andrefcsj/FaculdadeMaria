@@ -462,6 +462,31 @@ def imported_note_exists(legacy, payload: dict[str, Any]) -> bool:
     return any(row.get("key") == key for row in load_imported_notes(legacy))
 
 
+def option_closure_matches(legacy, trade: dict[str, Any]) -> list[dict[str, Any]]:
+    """Localiza posições abertas encerradas pela negociação oposta da nota.
+
+    A decisão é feita no servidor pelo código B3 exato, lado oposto e status,
+    para que qualquer tela de importação aplique a mesma conciliação.
+    """
+    code = str(trade.get("option_code", "")).strip().upper()
+    note_side = str(trade.get("side", "")).strip().lower()
+    if not code or note_side not in {"compra", "venda"} or str(trade.get("event_type", "trade")) not in {"", "trade", "exercise_put_assignment"}:
+        return []
+    short_strategies = {"venda", "wheel", "venda coberta", "call coberta"}
+    matches = []
+    for operation in legacy.read_operacoes():
+        if str(operation.get("Status", "")).strip().lower() != "aberta":
+            continue
+        if str(operation.get("Ativo", "")).strip().upper() != code:
+            continue
+        strategy = str(operation.get("Estratégia", operation.get("Estrategia", ""))).strip().lower()
+        closes_short = note_side == "compra" and strategy in short_strategies
+        closes_long = note_side == "venda" and strategy == "compra"
+        if closes_short or closes_long:
+            matches.append(operation)
+    return matches
+
+
 def delete_imported_note(legacy, note_key: str) -> bool:
     key = str(note_key or "").strip()
     if not key:

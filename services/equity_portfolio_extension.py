@@ -22,9 +22,9 @@ def register(app, legacy):
             item["current_price"] = float(quote) if quote else None
             item["market_value"] = float(quote) * item["quantity"] if quote else None
             item["unrealized_result"] = item["market_value"] - item["cash_cost_total"] if quote else None
-            item["appreciation"] = ((float(quote) / item["tax_cost_per_share"] - 1) * 100) if quote and item["tax_cost_per_share"] else None
+            item["appreciation"] = ((float(quote) / item["adjusted_average_price"] - 1) * 100) if quote and item["adjusted_average_price"] else None
             item["appreciation_class"] = "positive" if item["appreciation"] is not None and item["appreciation"] >= 0 else "negative" if item["appreciation"] is not None else "unavailable"
-            item["total_allocated"] = item["tax_cost_per_share"] * item["quantity"]
+            item["total_allocated"] = item["adjusted_average_price"] * item["quantity"]
             item["logo_url"] = f"https://raw.githubusercontent.com/thefintz/icones-b3/main/icones/{item['asset']}.png"
         return values
 

@@ -9,15 +9,14 @@ from services.brokerage_note_service import (
     delete_imported_note,
     load_imported_notes,
     note_to_api,
+    option_closure_matches,
     parse_btg_necton_pdf,
 )
 
 
 def register(app, legacy):
     def closure_candidate(trade):
-        if str(trade.get("side", "")).lower() != "compra":
-            return None
-        matches = [row for row in legacy.read_operacoes() if str(row.get("Status", "")).lower() == "aberta" and str(row.get("Estratégia", "")).lower() in {"venda", "wheel"} and str(row.get("Ativo", "")).upper() == str(trade.get("option_code", "")).upper()]
+        matches = option_closure_matches(legacy, trade)
         if len(matches) != 1:
             return None
         operation = matches[0]
@@ -28,7 +27,7 @@ def register(app, legacy):
             "operation_id": str(operation.get("ID")), "option_code": str(operation.get("Ativo")),
             "open_quantity": open_quantity, "note_quantity": note_quantity, "match_type": match_type,
             "event_type": str(trade.get("event_type", "trade")),
-            "action": "Registrar exercício e criar posição em ações" if trade.get("event_type") == "exercise_put_assignment" else "Encerrar por recompra",
+            "action": "Registrar exercício e criar posição em ações" if trade.get("event_type") == "exercise_put_assignment" else "Encerrar pela negociação oposta",
         }
 
     @app.post("/api/notas-corretagem/analisar")
