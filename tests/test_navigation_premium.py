@@ -27,7 +27,7 @@ class PremiumNavigationTests(unittest.TestCase):
         page = self.client.get("/").get_data(as_text=True)
         self.assertEqual(page.count('class="exec-kpi__spark"'), 0)
         self.assertEqual(page.count('class="exec-kpi__insight"'), 6)
-        self.assertIn("Progresso da meta", page)
+        self.assertIn("ROI semanal:", page)
         self.assertIn("PATRIMÔNIO", page)
         self.assertIn("SALDO PARA OPERAR", page)
         self.assertIn("CAPITAL COMPROMETIDO", page)

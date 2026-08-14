@@ -117,6 +117,14 @@ def parse_btg_necton_pdf(data: bytes) -> ParsedBrokerageNote:
 
     document_hash = hashlib.sha256(data).hexdigest()
     note_match = re.search(r"NOTA DE CORRETAGEM\s+(\d{5,})", text, re.IGNORECASE)
+    if not note_match:
+        # Na nota definitiva o BTG pode imprimir os cabeçalhos antes do
+        # número: ``Nr. nota Folha Data pregão`` seguido da linha numérica.
+        note_match = re.search(
+            r"Nr\.\s*nota\s+Folha\s+Data\s+pregão\s+(\d{5,})",
+            text,
+            re.IGNORECASE,
+        )
     date_match = re.search(r"(\d{2}/\d{2}/\d{4})[^\n]{0,80}Data pregão", text, re.IGNORECASE)
     if not date_match:
         date_match = re.search(r"(\d{2}/\d{2}/\d{4})", text)
