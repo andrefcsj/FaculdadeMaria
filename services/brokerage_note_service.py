@@ -549,8 +549,16 @@ def build_notes_dashboard(notes: list[dict[str, Any]]) -> dict[str, Any]:
     totals = {name: sum((row[name] for row in year_rows), Decimal("0")) for name in ("credits", "trade_debits", "costs", "irrf")}
     current_key = date.today().strftime("%Y-%m")
     current = monthly.get(current_key, {name: Decimal("0") for name in ("credits", "trade_debits", "costs", "irrf")})
+    newest_notes = sorted(
+        notes,
+        key=lambda note: (
+            str(note.get("trade_date", ""))[:10],
+            str(note.get("imported_at", "")),
+        ),
+        reverse=True,
+    )
     return {
-        "notes": list(reversed(notes)),
+        "notes": newest_notes,
         "count": len(notes),
         "months": months,
         "credit_series": [float(monthly[m]["credits"]) for m in months],

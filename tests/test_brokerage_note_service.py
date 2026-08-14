@@ -94,6 +94,18 @@ class BrokerageNoteServiceTests(unittest.TestCase):
         self.assertEqual(dashboard["cost_series"], [1.08])
         self.assertEqual(str(dashboard["totals"]["trade_debits"]), "1001.08")
 
+    def test_dashboard_lists_most_recent_trade_dates_first(self):
+        notes = [
+            {"note_number":"old", "trade_date":"2026-06-10"},
+            {"note_number":"new", "trade_date":"2026-08-13"},
+            {"note_number":"middle", "trade_date":"2026-07-22"},
+        ]
+        dashboard = build_notes_dashboard(notes)
+        self.assertEqual(
+            [note["note_number"] for note in dashboard["notes"]],
+            ["new", "middle", "old"],
+        )
+
     def test_mixed_note_uses_signed_trades_and_persists_each_trade_once(self):
         with patch("services.brokerage_note_service.extract_pdf_text", return_value=MIXED_BTG_TEXT):
             note = parse_btg_necton_pdf(b"mixed-note")
