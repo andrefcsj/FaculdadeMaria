@@ -71,10 +71,18 @@ def test_complete_postgres_backup_exports_all_public_tables(monkeypatch):
         assert connection.closed is True
 
 
-def test_backup_download_requires_admin_pin(monkeypatch):
+def test_backup_download_does_not_require_admin_pin(monkeypatch):
     from app import app
 
-    monkeypatch.setenv("ADMIN_RESET_PIN", "senha-segura")
     client = app.test_client()
-    assert client.get("/backup-completo").status_code == 405
-    assert client.post("/backup-completo", data={"admin_pin": "errada"}).status_code == 403
+    assert client.get("/backup-completo").status_code == 200
+
+
+def test_wrong_admin_password_has_elegant_recovery_popup():
+    root = Path(__file__).parents[1]
+    template = (root / "templates" / "configuracoes.html").read_text(encoding="utf-8")
+    script = (root / "static" / "settings_cleanup.js").read_text(encoding="utf-8")
+    assert 'id="passwordErrorModal"' in template
+    assert "Senha administrativa incorreta" in template
+    assert "https://dashboard.render.com/" in template
+    assert "passwordErrorModal.hidden=false" in script
