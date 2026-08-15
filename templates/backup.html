@@ -1,15 +1,57 @@
 {% extends "base.html" %}
 
-{% block title %}Central de Backup{% endblock %}
+{% block title %}Configurações e backup{% endblock %}
+{% block page_title %}Backup{% endblock %}
+{% block page_subtitle %}Proteção e recuperação dos dados{% endblock %}
+{% block page_actions %}{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ url_for('static', filename='backup_center.css', v='20260815.1') }}">{% endblock %}
 
 {% block content %}
-<h1>💾 Central de Backup</h1>
+<section class="backup-center">
+  <header class="backup-hero">
+    <span class="backup-hero__icon" aria-hidden="true">⚙</span>
+    <div><small>CENTRAL DE SEGURANÇA</small><h1>Configurações e backup</h1><p>Proteja todos os dados do FaculdadeMaria.</p></div>
+  </header>
 
-<p>Faça uma cópia portátil dos dados do FaculdadeMaria.</p>
+  <div class="backup-grid">
+    <article class="backup-card backup-create">
+      <span class="backup-card__icon" aria-hidden="true">↓</span>
+      <h2>Criar backup completo</h2>
+      <p>Baixe um único arquivo com operações, carteira, notas, caixa, DARFs, preferências, configurações e dados do Radar.</p>
+      <a class="backup-primary" href="/backup-completo" download>Baixar backup completo <span>↓</span></a>
+      <small>Senhas e tokens nunca são incluídos.</small>
+    </article>
 
-<p>O arquivo inclui operações, carteira de ações, notas de corretagem, caixa,
-DARFs, preferências, encerramentos, configurações, mercado do Radar e todas as
-tabelas públicas do banco Neon. Senhas e tokens nunca são incluídos.</p>
+    <article class="backup-card backup-restore">
+      <span class="backup-card__icon" aria-hidden="true">↻</span>
+      <h2>Restaurar seus dados</h2>
+      <p>Selecione um arquivo criado por este sistema. Ele será validado antes de qualquer alteração.</p>
+      <form id="restoreForm" enctype="multipart/form-data">
+        <label class="file-picker" for="backupFile">Escolher arquivo</label>
+        <input id="backupFile" name="backup_file" type="file" accept=".zip,application/zip" hidden>
+        <span class="file-name" id="backupFileName">Nenhum arquivo selecionado</span>
+        <button class="restore-button" id="restoreButton" type="submit" disabled>Restaurar backup</button>
+      </form>
+    </article>
 
-<p><a href="/backup-completo">⬇️ Baixar Backup Completo e Verificável (.zip)</a></p>
+    <aside class="backup-safe">
+      <span aria-hidden="true">✓</span>
+      <div><strong>Restauração segura</strong><p>O arquivo é validado por completo. Se algo falhar, os dados atuais do banco permanecem intactos.</p></div>
+    </aside>
+  </div>
+</section>
+
+<div class="backup-modal" id="restoreModal" hidden>
+  <div class="backup-modal__backdrop" data-close-modal></div>
+  <section role="dialog" aria-modal="true" aria-labelledby="restoreModalTitle">
+    <span class="backup-modal__icon">↻</span>
+    <h2 id="restoreModalTitle">Confirmar restauração?</h2>
+    <p>Os dados do arquivo substituirão os dados atuais. Primeiro validaremos todo o conteúdo e, se houver qualquer problema, nada será alterado.</p>
+    <div class="backup-modal__file" id="restoreModalFile"></div>
+    <footer><button type="button" class="modal-cancel" data-close-modal>Cancelar</button><button type="button" class="modal-confirm" id="restoreConfirm">Sim, restaurar</button></footer>
+  </section>
+</div>
+
+<div class="backup-toast" id="backupToast" hidden role="status" aria-live="polite"><span></span><div><strong></strong><p></p></div><button type="button" aria-label="Fechar">×</button></div>
+<script src="{{ url_for('static', filename='backup_center.js', v='20260815.1') }}"></script>
 {% endblock %}
