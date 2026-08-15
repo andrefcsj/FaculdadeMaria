@@ -1202,6 +1202,28 @@ def backup_center():
     return render_template('backup.html')
 
 
+@app.route('/restaurar-backup', methods=['POST'])
+def restaurar_backup():
+    from services.backup_service import BackupValidationError, MAX_BACKUP_BYTES, restore_complete_backup
+
+    uploaded = request.files.get('backup_file')
+    if not uploaded or not uploaded.filename:
+        return jsonify({'ok': False, 'error': 'Selecione um arquivo de backup.'}), 400
+    if not uploaded.filename.lower().endswith('.zip'):
+        return jsonify({'ok': False, 'error': 'Escolha um arquivo ZIP criado pelo FaculdadeMaria.'}), 400
+    if request.content_length and request.content_length > MAX_BACKUP_BYTES:
+        return jsonify({'ok': False, 'error': 'O backup ultrapassa o limite de 100 MB.'}), 413
+    content = uploaded.stream.read(MAX_BACKUP_BYTES + 1)
+    try:
+        result = restore_complete_backup(__import__(__name__), content)
+    except BackupValidationError as exc:
+        return jsonify({'ok': False, 'error': str(exc)}), 400
+    except Exception:
+        app.logger.exception('Falha ao restaurar backup')
+        return jsonify({'ok': False, 'error': 'Não foi possível restaurar o backup. Nenhum dado do banco foi alterado.'}), 500
+    return jsonify({'ok': True, 'message': 'Backup restaurado com sucesso.', 'result': result})
+
+
 
 # ===== MENU INTEGRADO v3.5 =====
 @app.route('/historico')
