@@ -11,6 +11,7 @@ from flask import jsonify, redirect, render_template, request, url_for
 from engine.providers import apply_intraday_quote
 from engine.roll import RollInput, analyze_put_roll
 from services.market_import_service import (
+    MarketImportResult,
     MarketImportError,
     load_market_import,
     parse_market_csv,
@@ -28,9 +29,7 @@ from services.date_format_service import format_date_br, format_datetime_br, for
 from services.concentration_service import build_portfolio_concentration
 from services.equity_portfolio_extension import register as register_equity_portfolio
 from services.premium_history_service import build_premium_history
-from services.jade_lizard_extension import register as register_jade_lizard
-from services.payoff_simulator_extension import register as register_payoff_simulator
-from services.income_tax_extension import register as register_income_tax
+from services.sldx_market_service import fetch_options_market
 
 app = legacy.app
 app.jinja_env.filters["date_br"] = format_date_br
@@ -86,6 +85,42 @@ def radar_oportunidades_importado():
 
 
 app.view_functions["radar_oportunidades"] = radar_oportunidades_importado
+
+
+def atualizar_radar_sldx():
+    """Substitui a atualização manual da B3 pela cadeia autenticada da SLDX."""
+    roots, _profiles = legacy.load_personal_asset_universe(legacy.RADAR_ASSETS)
+    tickers = sorted(set(roots.values()))
+    if not tickers:
+        return redirect(url_for("radar_oportunidades", message="Nenhum ativo está cadastrado para o Radar."))
+    result = fetch_options_market(tickers)
+    if not result.opportunities:
+        return redirect(url_for(
+            "radar_oportunidades",
+            message="A SLDX está indisponível. O último mercado válido foi preservado.",
+        ))
+    opportunities = list(result.opportunities)
+    previous = load_market_import(RADAR_IMPORTED)
+    if previous is not None and result.failures:
+        failed_tickers = set(result.failures)
+        opportunities.extend(
+            item for item in previous.opportunities if item.asset in failed_tickers
+        )
+    market = MarketImportResult(
+        opportunities=tuple(opportunities), imported_at=datetime.now(),
+        accepted_rows=len(opportunities), rejected_rows=len(result.failures),
+    )
+    save_market_import(RADAR_IMPORTED, market)
+    message = (
+        f"SLDX atualizada: {len(opportunities)} PUTs de "
+        f"{len(result.successful_tickers)} ativos."
+    )
+    if result.failures:
+        message += f" {len(result.failures)} ativo(s) mantiveram os dados anteriores por indisponibilidade."
+    return redirect(url_for("radar_oportunidades", message=message))
+
+
+app.view_functions["atualizar_radar_b3"] = atualizar_radar_sldx
 
 
 @app.route("/api/alertas-operacionais")
@@ -242,9 +277,6 @@ register_system_cleanup(app, legacy)
 register_cash_management(app, legacy)
 register_paid_darfs(app, legacy)
 register_equity_portfolio(app, legacy)
-register_jade_lizard(app, legacy)
-register_payoff_simulator(app, legacy)
-register_income_tax(app, legacy)
 
 
 if __name__ == "__main__":
