@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded',()=>{
   const page=document.querySelector('.settings-page'),modal=document.getElementById('cleanupModal');
   if(!page||!modal)return;
-  const q=id=>document.getElementById(id),preview=q('cleanupPreview'),expected=q('cleanupExpected'),pin=q('cleanupPin'),confirmation=q('cleanupConfirmation'),error=q('cleanupError'),execute=q('cleanupExecute');
+  const q=id=>document.getElementById(id),preview=q('cleanupPreview'),expected=q('cleanupExpected'),pin=q('cleanupPin'),confirmation=q('cleanupConfirmation'),error=q('cleanupError'),execute=q('cleanupExecute'),passwordErrorModal=q('passwordErrorModal');
   let requestPayload=null;
   document.addEventListener('click',event=>{
     const button=event.target.closest('[data-cleanup-scope]');
@@ -25,7 +25,12 @@ document.addEventListener('DOMContentLoaded',()=>{
     if(!requestPayload)return;error.hidden=true;execute.disabled=true;execute.textContent='Excluindo...';
     try{
       const response=await fetch('/api/configuracoes/limpeza/executar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...requestPayload,pin:pin.value,confirmation:confirmation.value})}),data=await response.json();
-      if(!response.ok||!data.ok)throw new Error(data.error||'Não foi possível excluir.');window.location.assign('/?limpeza=concluida');
+      if(!response.ok||!data.ok){
+        if((data.error||'').toLowerCase().includes('senha administrativa incorreta')){passwordErrorModal.hidden=false;execute.disabled=false;execute.textContent='Excluir dados selecionados';return}
+        throw new Error(data.error||'Não foi possível excluir.');
+      }
+      window.location.assign('/?limpeza=concluida');
     }catch(err){error.textContent=err.message;error.hidden=false;execute.disabled=false;execute.textContent='Excluir dados selecionados'}
   });
+  document.addEventListener('click',event=>{if(event.target.closest('[data-password-error-close]')){passwordErrorModal.hidden=true;pin.focus()}});
 });
