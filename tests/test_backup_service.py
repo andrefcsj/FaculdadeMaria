@@ -154,7 +154,19 @@ def test_backup_center_has_download_restore_and_confirmation_ui():
     assert response.status_code == 200
     assert "Criar backup completo" in html
     assert "Restaurar seus dados" in html
+    assert "Não abra nem descompacte" in html
+    assert "Um ZIP restaura tudo" in html
     assert 'id="restoreModal"' in html
+
+
+def test_favicon_uses_the_faculdade_maria_academic_brand():
+    root = Path(__file__).parents[1]
+    favicon = (root / "static" / "favicon.svg").read_text(encoding="utf-8")
+    base = (root / "templates" / "base.html").read_text(encoding="utf-8")
+    assert "FaculdadeMaria" in favicon
+    assert "M10 25.5 32 15l22 10.5" in favicon
+    assert "🧠" not in favicon
+    assert "20260815.2" in base
 
 
 def test_wrong_admin_password_has_elegant_recovery_popup():
