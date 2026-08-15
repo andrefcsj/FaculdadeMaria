@@ -69,3 +69,12 @@ def test_complete_postgres_backup_exports_all_public_tables(monkeypatch):
         assert exported["rows"][0]["payload"]["asset"] == "PETR4"
         assert {item["table"] for item in manifest["database_tables"]} == {"brokerage_notes", "equity_lots"}
         assert connection.closed is True
+
+
+def test_backup_download_requires_admin_pin(monkeypatch):
+    from app import app
+
+    monkeypatch.setenv("ADMIN_RESET_PIN", "senha-segura")
+    client = app.test_client()
+    assert client.get("/backup-completo").status_code == 405
+    assert client.post("/backup-completo", data={"admin_pin": "errada"}).status_code == 403
