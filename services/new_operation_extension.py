@@ -162,7 +162,8 @@ def register(app, legacy, market_path):
                     "source": "operação já cadastrada",
                 })
                 return jsonify(result)
-        quote = legacy.cotacao_yahoo(underlying) if underlying else None
+        quote_fn = getattr(legacy, "cotacao_mercado", legacy.cotacao_yahoo)
+        quote = quote_fn(underlying) if underlying else None
         if quote:
             result["spot_price"] = str(quote)
         return jsonify(result)

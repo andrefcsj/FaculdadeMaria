@@ -21,13 +21,15 @@ def with_current_underlying_quotes(legacy, operations: Sequence[dict[str, Any]])
     } - {""})
     if not tickers:
         return enriched
+    quote_fn = getattr(legacy, "cotacao_mercado", legacy.cotacao_yahoo)
     with ThreadPoolExecutor(max_workers=min(6, len(tickers))) as executor:
-        prices = dict(zip(tickers, executor.map(legacy.cotacao_yahoo, tickers)))
+        prices = dict(zip(tickers, executor.map(quote_fn, tickers)))
     for operation in enriched:
         ticker = operation_underlying(legacy, operation)
         price = prices.get(ticker)
         if price is not None and float(price) > 0:
             operation["Cotacao_n"] = float(price)
             operation["Cotacao_atual"] = float(price)
-            operation["Cotacao_fonte"] = "Yahoo Finance intradiário"
+            source_fn = getattr(legacy, "cotacao_fonte", None)
+            operation["Cotacao_fonte"] = source_fn(ticker) if source_fn else "Yahoo Finance intradiário"
     return enriched

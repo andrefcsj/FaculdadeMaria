@@ -1,6 +1,7 @@
 Flask==3.0.3
 gunicorn==22.0.0
 psycopg2-binary==2.9.10
+python-dotenv==1.0.1
 pypdf==6.10.0
 reportlab==4.4.3
 
