@@ -3,7 +3,6 @@ from __future__ import annotations
 import csv
 import math
 import json
-import re
 import sqlite3
 import os
 import zipfile
@@ -43,6 +42,7 @@ def get_pg_conn():
     if not DATABASE_URL:
         raise RuntimeError("DATABASE_URL não configurada.")
     import psycopg2
+
     return psycopg2.connect(DATABASE_URL, connect_timeout=15)
 
 
@@ -164,7 +164,7 @@ def write_csv(path: Path, rows: List[Dict[str, str]], fieldnames: List[str]) -> 
 
 
 def load_config() -> Dict[str, float]:
-    cfg = {"Capital total inicial": 4000.0, "Aliquota IR opcoes": 0.15, "Meta ROI mensal": 0.02, "Meta ROI semanal": 0.01, "Tamanho contrato opcoes": 100.0}
+    cfg = {"Capital total inicial": 4000.0, "Aliquota IR opcoes": 0.15, "Meta ROI mensal": 0.04, "Tamanho contrato opcoes": 100.0}
     for row in read_csv(CONFIG):
         cfg[row.get("Parametro", "")] = fnum(row.get("Valor"), cfg.get(row.get("Parametro", ""), 0))
     return cfg
@@ -212,16 +212,13 @@ def enrich_ops(rows: List[Dict[str, str]], cfg: Dict[str, float]) -> List[Dict[s
             alerta = "PUT dentro do dinheiro"
         if tipo == "CALL" and cotacao and cotacao > strike:
             alerta = "CALL dentro do dinheiro"
-        # A avaliação acompanha a meta do ciclo da opção: W1...W5 é semanal;
-        # as demais séries usam a meta mensal.
-        is_weekly = bool(re.search(r"W[1-5]$", str(r.get("Ativo", "")).strip().upper()))
-        target_roi = cfg.get("Meta ROI semanal" if is_weekly else "Meta ROI mensal", 0.01 if is_weekly else 0.02) * 100
-        achievement = roi / target_roi if target_roi > 0 else 0
-        if achievement >= 1.5:
+        # Nota provisória baseada no ROI líquido da operação.
+        # 0 a 1,50% = baixo; 1,51% a 2,99% = regular; 3%+ = excelente.
+        if roi >= 3:
             nota = "★★★★★"
-        elif achievement >= 1.25:
+        elif roi >= 2.5:
             nota = "★★★★☆"
-        elif achievement >= 1:
+        elif roi >= 1.51:
             nota = "★★★☆☆"
         elif roi > 0:
             nota = "★★☆☆☆"
@@ -302,7 +299,8 @@ def load_all() -> Tuple[List[Dict[str, object]], List[Dict[str, str]], Dict[str,
 
 
 def metrics(ops: List[Dict[str, object]], fechadas: List[Dict[str, str]], cfg: Dict[str, float]) -> Dict[str, float | str | int]:
-    abertas = [o for o in ops if str(o.get("Status", "")).lower() == "aberta"]
+    option_ops = [o for o in ops if str(o.get("Tipo", "")).upper() in {"PUT", "CALL"}]
+    abertas = [o for o in option_ops if str(o.get("Status", "")).lower() == "aberta"]
     from services.cash_ledger_service import load_cash_events, money
     eventos_caixa = load_cash_events(__import__(__name__))
     aportes_liquidos = sum((
@@ -333,7 +331,7 @@ def metrics(ops: List[Dict[str, object]], fechadas: List[Dict[str, str]], cfg: D
     # efetivamente travadas como cobertura de CALLs.
     capital_comp = capital_opcoes + capital_calls_cobertas
     vendas = [
-        o for o in ops
+        o for o in option_ops
         if str(o.get("Estratégia", "Venda")).strip().lower() not in {"compra"}
     ]
     premios_ativos = sum(float(o["Premio_liquido"]) for o in abertas if o in vendas)
@@ -355,7 +353,7 @@ def metrics(ops: List[Dict[str, object]], fechadas: List[Dict[str, str]], cfg: D
     premios_total = sum(float(o.get("Premio_liquido", 0)) for o in vendas)
     caixa_livre = capital_total + premios_total - capital_acoes - capital_comp
     patrimonio_atual = capital_total + premios_total
-    return {"capital_total": capital_total, "capital_comp": capital_comp, "capital_opcoes": capital_opcoes, "capital_calls_cobertas": capital_calls_cobertas, "capital_acoes": capital_acoes, "margem_lftb11": margem_lftb11, "caixa": caixa_livre, "caixa_livre": caixa_livre, "premios_ativos": premios_ativos, "premios_total": premios_total, "patrimonio_atual": patrimonio_atual, "lucro_mes": lucro_mes, "darf": darf, "roi_mes": roi_mes, "roi_abertas": roi_abertas, "roi_medio_abertas": roi_medio_abertas, "roi_medio_fechadas": roi_medio_fechadas, "mes_atual": mes_atual, "abertas": len(abertas), "encerradas": len(ops) - len(abertas)}
+    return {"capital_total": capital_total, "capital_comp": capital_comp, "capital_opcoes": capital_opcoes, "capital_calls_cobertas": capital_calls_cobertas, "capital_acoes": capital_acoes, "margem_lftb11": margem_lftb11, "caixa": caixa_livre, "caixa_livre": caixa_livre, "premios_ativos": premios_ativos, "premios_total": premios_total, "patrimonio_atual": patrimonio_atual, "lucro_mes": lucro_mes, "darf": darf, "roi_mes": roi_mes, "roi_abertas": roi_abertas, "roi_medio_abertas": roi_medio_abertas, "roi_medio_fechadas": roi_medio_fechadas, "mes_atual": mes_atual, "abertas": len(abertas), "encerradas": len(option_ops) - len(abertas)}
 
 
 def monthly(ops: List[Dict[str, object]], fechadas: List[Dict[str, str]], cfg: Dict[str, float]) -> List[Dict[str, float | str]]:
@@ -565,6 +563,7 @@ def cotacao_mercado(acao: str) -> float | None:
     if os.getenv("SLDX_API_TOKEN", "").strip():
         try:
             from services.sldx_market_service import fetch_stock_price
+
             value = fetch_stock_price(ticker)
             _QUOTE_CACHE[f"SLDX:{ticker}"] = (time.time(), value)
             _QUOTE_SOURCE[ticker] = "SLDX API"
@@ -601,7 +600,10 @@ def index():
     from services.cash_ledger_service import calculate_broker_balance
     ind["broker_cash_balance"] = float(calculate_broker_balance(__import__(__name__))["balance"])
     ind["patrimonio_atual"] = ind["broker_cash_balance"] + float(ind["capital_acoes"])
-    ind["caixa_livre"] = ind["patrimonio_atual"] - float(ind["capital_acoes"]) - float(ind["capital_comp"])
+    # O disponível inclui a garantia LFTB11 e desconta apenas a reserva das
+    # PUTs. Ações cobertas já estão fora do caixa e não podem ser abatidas uma
+    # segunda vez aqui.
+    ind["caixa_livre"] = ind["broker_cash_balance"] + float(ind["margem_lftb11"]) - float(ind["capital_opcoes"])
     hist = monthly(ops, fechadas, cfg)
     from services.live_spot_service import with_current_underlying_quotes
     dashboard_ops = with_current_underlying_quotes(__import__(__name__), ops)
@@ -611,12 +613,6 @@ def index():
     from services.closed_operations_service import build_closed_dashboard
     from services.equity_position_service import portfolio as equity_portfolio
     darf_projection = build_closed_dashboard(__import__(__name__), scope="all", selected_month="")["darf_projection"]
-    from services.paid_darf_service import load_paid_darfs
-    paid_by_competence = {}
-    for payment in load_paid_darfs(__import__(__name__)):
-        competence = str(payment.get("competence", ""))
-        paid_by_competence[competence] = paid_by_competence.get(competence, 0.0) + float(payment.get("amount", 0) or 0)
-    darf_projection["paid_by_competence"] = paid_by_competence
     dashboard = build_dashboard_view_model(
         dashboard_ops, fechadas, ind, hist, cfg,
         load_option_quotes(__import__(__name__)), darf_projection,
@@ -1194,40 +1190,10 @@ def restaurar_db_info():
 @app.route('/backup-completo')
 def backup_completo():
     from flask import send_file
-    mem = io.BytesIO()
-    with zipfile.ZipFile(mem, "w", zipfile.ZIP_DEFLATED) as z:
-        operacoes = read_operacoes()
-        if operacoes:
-            import csv
-            sio = io.StringIO()
-            w = csv.DictWriter(sio, fieldnames=list(operacoes[0].keys()))
-            w.writeheader()
-            w.writerows(operacoes)
-            z.writestr("operacoes.csv", sio.getvalue())
-
-        fechadas = read_csv(FECHADAS)
-        if fechadas:
-            sio = io.StringIO()
-            w = csv.DictWriter(sio, fieldnames=list(fechadas[0].keys()))
-            w.writeheader()
-            w.writerows(fechadas)
-            z.writestr("fechadas.csv", sio.getvalue())
-
-        cfg = read_csv(CONFIG)
-        if cfg:
-            sio = io.StringIO()
-            w = csv.DictWriter(sio, fieldnames=list(cfg[0].keys()))
-            w.writeheader()
-            w.writerows(cfg)
-            z.writestr("config.csv", sio.getvalue())
-
-        z.writestr("README_Backup.txt",
-                   "Backup completo do Cortex Invest.")
-
-    mem.seek(0)
-    nome = f"Backup_Cortex_{datetime.now().strftime('%Y-%m-%d_%H-%M')}.zip"
-    return send_file(mem, as_attachment=True,
-                     download_name=nome,
+    from services.backup_service import build_complete_backup
+    memory, filename, _manifest = build_complete_backup(__import__(__name__))
+    return send_file(memory, as_attachment=True,
+                     download_name=filename,
                      mimetype="application/zip")
 
 
@@ -1441,8 +1407,7 @@ def sobre():
 def salvar_configuracoes():
     rows = [
         {"Parametro":"Capital total inicial","Valor":request.form.get("capital_inicial","4000")},
-        {"Parametro":"Meta ROI mensal","Valor":str(float(request.form.get("meta_roi_mensal","2"))/100)},
-        {"Parametro":"Meta ROI semanal","Valor":str(float(request.form.get("meta_roi_semanal","1"))/100)},
+        {"Parametro":"Meta ROI mensal","Valor":str(float(request.form.get("meta_roi","4"))/100)},
         {"Parametro":"Aliquota IR opcoes","Valor":str(float(request.form.get("aliquota_ir","15"))/100)},
         {"Parametro":"Tamanho contrato opcoes","Valor":request.form.get("tamanho_contrato","100")},
     ]
