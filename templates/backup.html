@@ -17,7 +17,7 @@
     <article class="backup-card backup-create">
       <span class="backup-card__icon" aria-hidden="true">↓</span>
       <h2>Criar backup completo</h2>
-      <p>Baixe um único arquivo com operações, carteira, notas, caixa, DARFs, preferências, configurações e dados do Radar.</p>
+      <p>Baixe um único arquivo ZIP com operações, carteira, notas, caixa, DARFs, preferências, configurações e dados do Radar.</p>
       <a class="backup-primary" href="/backup-completo" download>Baixar backup completo <span>↓</span></a>
       <small>Senhas e tokens nunca são incluídos.</small>
     </article>
@@ -25,9 +25,9 @@
     <article class="backup-card backup-restore">
       <span class="backup-card__icon" aria-hidden="true">↻</span>
       <h2>Restaurar seus dados</h2>
-      <p>Selecione um arquivo criado por este sistema. Ele será validado antes de qualquer alteração.</p>
+      <p>Selecione o arquivo ZIP original criado pelo sistema. Não abra nem descompacte: as pastas internas serão restauradas automaticamente.</p>
       <form id="restoreForm" enctype="multipart/form-data">
-        <label class="file-picker" for="backupFile">Escolher arquivo</label>
+        <label class="file-picker" for="backupFile">Escolher o arquivo ZIP</label>
         <input id="backupFile" name="backup_file" type="file" accept=".zip,application/zip" hidden>
         <span class="file-name" id="backupFileName">Nenhum arquivo selecionado</span>
         <button class="restore-button" id="restoreButton" type="submit" disabled>Restaurar backup</button>
@@ -36,7 +36,7 @@
 
     <aside class="backup-safe">
       <span aria-hidden="true">✓</span>
-      <div><strong>Restauração segura</strong><p>O arquivo é validado por completo. Se algo falhar, os dados atuais do banco permanecem intactos.</p></div>
+      <div><strong>Um ZIP restaura tudo</strong><p>Não é necessário enviar pasta por pasta. O sistema valida e recupera automaticamente todo o conteúdo do arquivo compactado.</p></div>
     </aside>
   </div>
 </section>
