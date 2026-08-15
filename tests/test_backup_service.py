@@ -1,9 +1,17 @@
 import json
+import io
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from zipfile import ZipFile
 
-from services.backup_service import build_complete_backup
+import pytest
+
+from services.backup_service import (
+    BackupValidationError,
+    build_complete_backup,
+    inspect_complete_backup,
+    restore_complete_backup,
+)
 
 
 def test_complete_local_backup_includes_every_data_file_and_manifest():
@@ -76,6 +84,77 @@ def test_backup_download_does_not_require_admin_pin(monkeypatch):
 
     client = app.test_client()
     assert client.get("/backup-completo").status_code == 200
+
+
+def test_complete_local_backup_can_be_validated_and_restored():
+    with TemporaryDirectory() as source_directory, TemporaryDirectory() as target_directory:
+        source = Path(source_directory)
+        target = Path(target_directory)
+        (source / "market").mkdir()
+        (source / "operacoes.csv").write_text("ID,Ativo\n1,PETR4\n", encoding="utf-8")
+        (source / "market" / "quotes.json").write_text('{"PETR4": 31.5}', encoding="utf-8")
+
+        class Source:
+            DATA = source
+            USE_POSTGRES = False
+
+        class Target:
+            DATA = target
+            USE_POSTGRES = False
+
+        memory, _filename, _manifest = build_complete_backup(Source)
+        result = restore_complete_backup(Target, memory.getvalue())
+
+        assert result["files"] == 2
+        assert (target / "operacoes.csv").read_text(encoding="utf-8") == "ID,Ativo\n1,PETR4\n"
+        assert (target / "market" / "quotes.json").read_text(encoding="utf-8") == '{"PETR4": 31.5}'
+
+
+def test_restore_rejects_a_tampered_backup_before_writing_files():
+    with TemporaryDirectory() as directory:
+        root = Path(directory)
+        (root / "operacoes.csv").write_text("original", encoding="utf-8")
+
+        class Legacy:
+            DATA = root
+            USE_POSTGRES = False
+
+        memory, _filename, _manifest = build_complete_backup(Legacy)
+        rebuilt = io.BytesIO()
+        with ZipFile(memory) as source, ZipFile(rebuilt, "w") as target:
+            for item in source.infolist():
+                content = source.read(item.filename)
+                if item.filename == "files/data/operacoes.csv":
+                    content = b"alterado"
+                target.writestr(item, content)
+
+        with pytest.raises(BackupValidationError, match="integridade"):
+            inspect_complete_backup(rebuilt.getvalue())
+        assert (root / "operacoes.csv").read_text(encoding="utf-8") == "original"
+
+
+def test_restore_endpoint_requires_a_valid_zip():
+    from app import app
+
+    client = app.test_client()
+    response = client.post(
+        "/restaurar-backup",
+        data={"backup_file": (io.BytesIO(b"nao e zip"), "backup.zip")},
+        content_type="multipart/form-data",
+    )
+    assert response.status_code == 400
+    assert response.get_json()["ok"] is False
+
+
+def test_backup_center_has_download_restore_and_confirmation_ui():
+    from app import app
+
+    response = app.test_client().get("/backup")
+    html = response.get_data(as_text=True)
+    assert response.status_code == 200
+    assert "Criar backup completo" in html
+    assert "Restaurar seus dados" in html
+    assert 'id="restoreModal"' in html
 
 
 def test_wrong_admin_password_has_elegant_recovery_popup():
