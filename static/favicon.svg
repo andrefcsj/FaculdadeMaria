@@ -1,4 +1,12 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64">
-<rect width="64" height="64" rx="14" fill="#0b1220"/>
-<text x="32" y="42" font-size="34" text-anchor="middle" fill="#4d8cff">🧠</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="FaculdadeMaria">
+  <defs>
+    <linearGradient id="fm" x1="8" y1="7" x2="56" y2="58" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1769ee"/>
+      <stop offset="1" stop-color="#10365c"/>
+    </linearGradient>
+  </defs>
+  <rect x="2" y="2" width="60" height="60" rx="16" fill="url(#fm)"/>
+  <path d="M10 25.5 32 15l22 10.5L32 36 10 25.5Z" fill="none" stroke="#fff" stroke-width="4" stroke-linejoin="round"/>
+  <path d="M18 30.2v11.1c8 6.8 20 6.8 28 0V30.2M54 25.5v15" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="54" cy="43.5" r="2.5" fill="#fff"/>
 </svg>
