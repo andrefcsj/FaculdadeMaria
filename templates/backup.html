@@ -11,9 +11,14 @@
 DARFs, preferências, encerramentos, configurações, mercado do Radar e todas as
 tabelas públicas do banco Neon. Senhas e tokens nunca são incluídos.</p>
 
-<p>
-    <a href="/backup-completo">
-        ⬇️ Baixar Backup Completo e Verificável (.zip)
-    </a>
-</p>
+{% if backup_enabled %}
+<form method="post" action="/backup-completo">
+    <label>Senha administrativa
+        <input type="password" name="admin_pin" required autocomplete="current-password">
+    </label>
+    <button type="submit">⬇️ Baixar Backup Completo e Verificável (.zip)</button>
+</form>
+{% else %}
+<p>O download está bloqueado até que a senha administrativa seja configurada no Render.</p>
+{% endif %}
 {% endblock %}
