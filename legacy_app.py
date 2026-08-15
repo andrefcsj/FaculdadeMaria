@@ -8,6 +8,7 @@ import os
 import zipfile
 import io
 import time
+import hmac
 from dotenv import load_dotenv
 from datetime import date, datetime
 from pathlib import Path
@@ -1187,9 +1188,15 @@ def restaurar_db_info():
 
 
 
-@app.route('/backup-completo')
+@app.route('/backup-completo', methods=['POST'])
 def backup_completo():
     from flask import send_file
+    expected_pin = os.getenv("ADMIN_RESET_PIN", "").strip()
+    supplied_pin = request.form.get("admin_pin", "").strip()
+    if not expected_pin:
+        return "Backup protegido indisponível: configure a senha administrativa.", 503
+    if not hmac.compare_digest(supplied_pin, expected_pin):
+        return "Senha administrativa inválida.", 403
     from services.backup_service import build_complete_backup
     memory, filename, _manifest = build_complete_backup(__import__(__name__))
     return send_file(memory, as_attachment=True,
@@ -1199,7 +1206,7 @@ def backup_completo():
 
 @app.route('/backup')
 def backup_center():
-    return render_template('backup.html')
+    return render_template('backup.html', backup_enabled=bool(os.getenv("ADMIN_RESET_PIN", "").strip()))
 
 
 
