@@ -18,7 +18,8 @@ def register(app, legacy):
     def rows():
         values = portfolio(legacy)
         for item in values:
-            quote = legacy.cotacao_yahoo(item["asset"])
+            quote_fn = getattr(legacy, "cotacao_mercado", legacy.cotacao_yahoo)
+            quote = quote_fn(item["asset"])
             item["current_price"] = float(quote) if quote else None
             item["market_value"] = float(quote) * item["quantity"] if quote else None
             item["unrealized_result"] = item["market_value"] - item["cash_cost_total"] if quote else None

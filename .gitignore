@@ -1,0 +1,11 @@
+# Credenciais locais
+.env
+.env.*
+!.env.example
+
+# Artefatos locais
+__pycache__/
+*.py[cod]
+.pytest_cache/
+tmp/
+data/cortex.db

@@ -9,7 +9,7 @@ import os
 import zipfile
 import io
 import time
-import psycopg2
+from dotenv import load_dotenv
 from datetime import date, datetime
 from pathlib import Path
 from typing import Dict, List, Tuple
@@ -24,6 +24,7 @@ from services.asset_universe_service import load_cvm_issuer_config, load_persona
 from services.radar_service import build_radar_from_market
 
 BASE = Path(__file__).resolve().parent
+load_dotenv(BASE / ".env")
 DATA = BASE / "data"
 OPERACOES = DATA / "operacoes.csv"
 FECHADAS = DATA / "fechadas.csv"
@@ -41,6 +42,7 @@ USE_POSTGRES = bool(DATABASE_URL)
 def get_pg_conn():
     if not DATABASE_URL:
         raise RuntimeError("DATABASE_URL não configurada.")
+    import psycopg2
     return psycopg2.connect(DATABASE_URL, connect_timeout=15)
 
 
@@ -528,6 +530,7 @@ def infer_acao_from_option(codigo: str) -> str:
     return mapa.get(base, f"{base}4" if base else "")
 
 _QUOTE_CACHE: dict[str, tuple[float, float | None]] = {}
+_QUOTE_SOURCE: dict[str, str] = {}
 
 
 def cotacao_yahoo(acao: str) -> float | None:
@@ -551,6 +554,32 @@ def cotacao_yahoo(acao: str) -> float | None:
     except Exception:
         _QUOTE_CACHE[ticker] = (time.time(), None)
         return None
+
+
+def cotacao_mercado(acao: str) -> float | None:
+    """Prioriza a fonte contratada SLDX e mantém o Yahoo como contingência."""
+    ticker = str(acao or "").upper().strip().removesuffix(".SA")
+    cached = _QUOTE_CACHE.get(f"SLDX:{ticker}")
+    if cached and time.time() - cached[0] < (300 if cached[1] is not None else 90):
+        return cached[1]
+    if os.getenv("SLDX_API_TOKEN", "").strip():
+        try:
+            from services.sldx_market_service import fetch_stock_price
+            value = fetch_stock_price(ticker)
+            _QUOTE_CACHE[f"SLDX:{ticker}"] = (time.time(), value)
+            _QUOTE_SOURCE[ticker] = "SLDX API"
+            return value
+        except Exception:
+            _QUOTE_CACHE[f"SLDX:{ticker}"] = (time.time(), None)
+    value = cotacao_yahoo(ticker)
+    if value is not None:
+        _QUOTE_SOURCE[ticker] = "Yahoo Finance (contingência)"
+    return value
+
+
+def cotacao_fonte(acao: str) -> str:
+    ticker = str(acao or "").upper().strip().removesuffix(".SA")
+    return _QUOTE_SOURCE.get(ticker, "Cotação indisponível")
 
 
 def rows_html(rows: List[Dict[str, object]], limit: int | None = None) -> str:
@@ -737,7 +766,7 @@ def nova():
 
     if not fnum(row.get("Cotacao_atual")):
         acao = infer_acao_from_option(row.get("Ativo", ""))
-        valor = cotacao_yahoo(acao) if acao else None
+        valor = cotacao_mercado(acao) if acao else None
 
         if valor:
             row["Cotacao_atual"] = f"{valor:.2f}"
@@ -775,7 +804,7 @@ def nova():
 def cotacao():
     codigo = request.args.get('codigo', '')
     acao = infer_acao_from_option(codigo)
-    valor = cotacao_yahoo(acao) if acao else None
+    valor = cotacao_mercado(acao) if acao else None
     return jsonify({'codigo_opcao': codigo.upper(), 'acao': acao, 'cotacao': valor})
 
 
@@ -1333,7 +1362,7 @@ def operacoes_abertas():
     for o in abertas:
         acao = infer_acao_from_option(o.get("Ativo", ""))
         o["ticker"] = acao
-        o["cotacao_atual"] = cotacao_yahoo(acao)
+        o["cotacao_atual"] = cotacao_mercado(acao)
         dominio = logos.get(acao)
         o["logo_url"] = f"https://raw.githubusercontent.com/thefintz/icones-b3/main/icones/{acao}.png" if acao else None
 
