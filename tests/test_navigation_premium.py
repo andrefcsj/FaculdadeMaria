@@ -16,6 +16,10 @@ class PremiumNavigationTests(unittest.TestCase):
         self.assertLess(page.index("GESTÃO"), page.index("INTELIGÊNCIA"))
         self.assertIn("Simulador de Exercício", page)
         self.assertIn('href="/carteira"', page)
+        self.assertIn("Carteira de Ações", page)
+        self.assertIn('href="/carteira-acoes"', page)
+        self.assertIn("Radar de CALL Coberta", page)
+        self.assertIn('/radar-oportunidades?scan=calls#calls-cobertas', page)
 
     def test_exercise_simulator_is_not_redirected_to_equity_portfolio(self):
         response = self.client.get("/carteira")
