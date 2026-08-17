@@ -350,10 +350,17 @@ def metrics(ops: List[Dict[str, object]], fechadas: List[Dict[str, str]], cfg: D
         if capital_f:
             rois_fechadas.append(lucro_f / capital_f * 100)
     roi_medio_fechadas = (sum(rois_fechadas) / len(rois_fechadas)) if rois_fechadas else 0
-    premios_total = sum(float(o.get("Premio_liquido", 0)) for o in vendas)
+    from services.closed_operations_service import load_closure_metadata
+    from services.premium_totals_service import calculate_premium_totals
+    premios_recebidos, premios_retidos = calculate_premium_totals(
+        option_ops,
+        load_closure_metadata(__import__(__name__)),
+        contract_size=Decimal(str(cfg.get("Tamanho contrato opcoes", 100))),
+    )
+    premios_total = float(premios_recebidos)
     caixa_livre = capital_total + premios_total - capital_acoes - capital_comp
     patrimonio_atual = capital_total + premios_total
-    return {"capital_total": capital_total, "capital_comp": capital_comp, "capital_opcoes": capital_opcoes, "capital_calls_cobertas": capital_calls_cobertas, "capital_acoes": capital_acoes, "margem_lftb11": margem_lftb11, "caixa": caixa_livre, "caixa_livre": caixa_livre, "premios_ativos": premios_ativos, "premios_total": premios_total, "patrimonio_atual": patrimonio_atual, "lucro_mes": lucro_mes, "darf": darf, "roi_mes": roi_mes, "roi_abertas": roi_abertas, "roi_medio_abertas": roi_medio_abertas, "roi_medio_fechadas": roi_medio_fechadas, "mes_atual": mes_atual, "abertas": len(abertas), "encerradas": len(option_ops) - len(abertas)}
+    return {"capital_total": capital_total, "capital_comp": capital_comp, "capital_opcoes": capital_opcoes, "capital_calls_cobertas": capital_calls_cobertas, "capital_acoes": capital_acoes, "margem_lftb11": margem_lftb11, "caixa": caixa_livre, "caixa_livre": caixa_livre, "premios_ativos": premios_ativos, "premios_total": premios_total, "premios_retidos": float(premios_retidos), "patrimonio_atual": patrimonio_atual, "lucro_mes": lucro_mes, "darf": darf, "roi_mes": roi_mes, "roi_abertas": roi_abertas, "roi_medio_abertas": roi_medio_abertas, "roi_medio_fechadas": roi_medio_fechadas, "mes_atual": mes_atual, "abertas": len(abertas), "encerradas": len(option_ops) - len(abertas)}
 
 
 def monthly(ops: List[Dict[str, object]], fechadas: List[Dict[str, str]], cfg: Dict[str, float]) -> List[Dict[str, float | str]]:

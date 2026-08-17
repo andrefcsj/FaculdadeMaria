@@ -75,6 +75,7 @@ class DashboardViewModel:
     current_month_filter: str
     premiums_month: float
     premiums_total: float
+    premiums_retained: float
     average_roi: float
     monthly_roi: float
     weekly_roi: float
@@ -255,6 +256,7 @@ def build_dashboard_view_model(
         for operation in operations
         if str(operation.get("Estratégia", "Venda")).strip().lower() != "compra"
     )
+    premiums_retained = _number(indicators.get("premios_retidos"), premiums_total)
 
     if not open_puts:
         summary = "Não há PUTs abertas. O capital está livre para aguardar oportunidades que atendam aos critérios do Radar Premium."
@@ -361,6 +363,7 @@ def build_dashboard_view_model(
         current_month_filter=date.today().strftime("%Y-%m"),
         premiums_month=premiums_month,
         premiums_total=premiums_total,
+        premiums_retained=premiums_retained,
         average_roi=average_roi,
         monthly_roi=monthly_roi,
         weekly_roi=weekly_roi,

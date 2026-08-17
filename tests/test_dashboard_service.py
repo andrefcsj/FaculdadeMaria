@@ -30,8 +30,15 @@ class DashboardServiceTests(unittest.TestCase):
         self.assertEqual(view.portfolio[0]["asset"], "PETR")
         self.assertEqual(view.ai_tone, "positive")
         self.assertEqual(view.premiums_total, 150)
+        self.assertEqual(view.premiums_retained, 150)
         self.assertEqual(view.monthly_target_roi, 2)
         self.assertEqual(view.weekly_target_roi, 1)
+
+    def test_uses_real_retained_premium_without_hiding_received_total(self):
+        indicators = dict(self.indicators, premios_total=250, premios_retidos=175)
+        view = build_dashboard_view_model(self.operations, [], indicators, self.history, self.config)
+        self.assertEqual(view.premiums_retained, 175)
+        self.assertEqual(view.premiums_total, 250)
 
     def test_does_not_invent_opportunities_for_empty_portfolio(self):
         indicators = dict(self.indicators, roi_medio_abertas=0, capital_comp=0, roi_abertas=0)
