@@ -1,0 +1,29 @@
+.calc-simulator__tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding: 12px 28px;
+  border-bottom: 1px solid #dfe6ee;
+  background: #fff;
+}
+.calc-simulator__tabs button {
+  height: 42px;
+  border: 1px solid #d7e0ea;
+  border-radius: 11px;
+  background: #f4f7fa;
+  color: #607086;
+  font-size: 12px;
+  font-weight: 900;
+  cursor: pointer;
+}
+.calc-simulator__tabs button.active {
+  border-color: #1769ee;
+  background: #1769ee;
+  color: #fff;
+  box-shadow: 0 7px 18px rgba(23, 105, 238, .2);
+}
+.calc-simulator__body[hidden] { display: none; }
+@media (max-width: 480px) {
+  .calc-simulator__tabs { padding: 10px 13px; }
+  .calc-simulator__tabs button { font-size: 11px; }
+}
