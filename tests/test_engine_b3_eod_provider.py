@@ -89,6 +89,19 @@ class B3EodProviderTests(unittest.TestCase):
     self.assertEqual(option.expiry, date(2026, 8, 21))
     self.assertEqual(option.source, "b3_cotahist_eod")
 
+  def test_reads_calls_separately_for_covered_call_scanner(self):
+    rows = [
+        _line(ticker="PETR4", market="010", close="32.50"),
+        _line(ticker="PETRH340", market="080", close="0.70", strike="34", expiry="20260821"),
+        _line(ticker="PETRT300", market="080", close="1.20", strike="30", expiry="20260821"),
+    ]
+    with TemporaryDirectory() as folder:
+        path = Path(folder) / "COTAHIST.TXT"
+        path.write_text("\n".join(rows), encoding="latin-1")
+        calls = B3CotahistProvider(path, {"PETR": "PETR4"}, option_types=("CALL",)).fetch()
+    self.assertEqual([item.option_code for item in calls], ["PETRH340"])
+    self.assertEqual(calls[0].option_type, "CALL")
+
 
   def test_manual_quote_replaces_confirmed_market_price_and_strike(self):
     rows = [

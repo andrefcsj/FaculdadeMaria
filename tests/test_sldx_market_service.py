@@ -97,3 +97,19 @@ def test_fetch_options_market_keeps_successes_when_one_ticker_fails(monkeypatch)
     assert len(result.opportunities) == 1
     assert result.successful_tickers == ("PETR4",)
     assert result.failures == {"VALE3": "indisponível"}
+
+
+def test_option_chain_can_select_calls_for_covered_call_scanner(monkeypatch):
+    responses = iter([
+        {"success": True, "result": {"underlying_price": 32, "options": [
+            {"type": "PUT", "symbol": "PETRT300", "expiration_date": "2027-09-18", "strike": 30, "last_price": 0.4},
+            {"type": "CALL", "symbol": "PETRI340", "expiration_date": "2027-09-18", "strike": 34, "last_price": 0.5},
+        ]}},
+        {"success": True, "trade_date": "2026-08-17"},
+    ])
+    monkeypatch.setattr("urllib.request.urlopen", lambda *_args, **_kwargs: FakeResponse(next(responses)))
+    calls = fetch_option_chain(
+        "PETR4", token="kid.secret", base_url="https://api.sldx.test", option_types=("CALL",),
+    )
+    assert [item.option_code for item in calls] == ["PETRI340"]
+    assert calls[0].option_type == "CALL"

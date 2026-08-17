@@ -7,11 +7,8 @@ function applyTheme(){
 }
 document.addEventListener('DOMContentLoaded',()=>{
  applyTheme();
- const legacyWalletLink=document.querySelector('.executive-nav a[href="/carteira"]');
- if(legacyWalletLink){legacyWalletLink.href='/carteira-acoes';const textNode=[...legacyWalletLink.childNodes].find(node=>node.nodeType===Node.TEXT_NODE);if(textNode)textNode.textContent='Carteira';legacyWalletLink.classList.toggle('active',location.pathname==='/carteira-acoes');}
  const contributionsLink=document.querySelector('.executive-nav a[href="/novos-aportes"]');
  if(contributionsLink){const textNode=[...contributionsLink.childNodes].find(node=>node.nodeType===Node.TEXT_NODE);if(textNode)textNode.textContent='Aportes Realizados';}
- document.querySelector('.equity-nav-shortcut')?.remove();
  const c=document.getElementById('themeToggle');
  if(c){
    c.addEventListener('change',()=>{

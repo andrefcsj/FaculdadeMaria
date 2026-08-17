@@ -9,3 +9,6 @@ __pycache__/
 .pytest_cache/
 tmp/
 data/cortex.db
+data/market/
+backups/
+http_cache.sqlite

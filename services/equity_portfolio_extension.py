@@ -1,7 +1,7 @@
 """Página e API da carteira de ações usada nas CALLs cobertas."""
 from datetime import date
 from decimal import Decimal
-from flask import jsonify, redirect, render_template, request, url_for
+from flask import jsonify, render_template, request
 from services.brokerage_note_service import (
     BrokerageNoteError, find_matching_provisional_note, note_to_api,
     imported_note_exists, parse_btg_necton_pdf, replace_provisional_note,
@@ -39,12 +39,6 @@ def register(app, legacy):
             "cost": sum(item["cash_cost_total"] for item in holdings),
         }
         return render_template("carteira_acoes.html", holdings=holdings, totals=totals)
-
-    # Mantém endereços antigos e o item histórico do menu apontando para a
-    # carteira real, sem apagar o simulador do código legado.
-    def legacy_wallet_redirect():
-        return redirect(url_for("equity_portfolio"))
-    app.view_functions["carteira"] = legacy_wallet_redirect
 
     @app.post("/api/carteira-acoes/importar-nota")
     def import_equity_note():

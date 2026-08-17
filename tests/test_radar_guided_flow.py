@@ -11,6 +11,7 @@ import legacy_app
 class RadarGuidedFlowTests(unittest.TestCase):
     def test_radar_explains_update_sequence(self):
         html = app.test_client().get("/radar-oportunidades").get_data(as_text=True)
+        self.assertIn("Scanear CALLs da carteira", html)
         expected = [
             "1. Atualizar opções pela API",
             "2. Atualizar qualidade CVM",

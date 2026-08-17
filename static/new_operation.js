@@ -246,6 +246,11 @@ document.addEventListener('DOMContentLoaded', () => {
     q('newVenda').checked = true;
     q('newCall').checked = true;
     fields.under.value = String(params.get('ativo') || '').toUpperCase();
+    fields.code.value = String(params.get('opcao') || '').toUpperCase();
+    if (params.get('strike')) fields.strike.value = brl(num(params.get('strike')));
+    if (params.get('premio')) fields.premium.value = brl(num(params.get('premio')));
+    if (params.get('vencimento')) fields.expiry.value = params.get('vencimento');
+    if (params.get('cotacao')) fields.spot.value = brl(num(params.get('cotacao')));
     coverageHint.textContent = 'A cobertura será validada automaticamente pelas ações livres da carteira.';
     const linkPrice = num(params.get('preco_medio'));
     if (linkPrice > 0) {
