@@ -82,7 +82,7 @@ def radar_oportunidades_importado():
         cards = build_radar_from_market(opportunities, profiles, portfolio=_portfolio_context())[:50]
         if request.args.get("scan") == "calls":
             holdings = equity_portfolio(legacy)
-            tickers = [item["asset"] for item in holdings if int(item.get("available_quantity", 0)) >= 100]
+            tickers = [item["asset"] for item in holdings if int(item.get("quantity", 0)) >= 100]
             call_opportunities = fetch_options_market(tickers, option_types=("CALL",)).opportunities if tickers else ()
             covered_call_cards = scan_covered_calls(call_opportunities, holdings)[:50]
     except Exception as exc:

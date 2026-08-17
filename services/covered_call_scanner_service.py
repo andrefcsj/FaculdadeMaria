@@ -1,4 +1,4 @@
-"""Scanner de CALL coberta restrito às ações livres da carteira real."""
+"""Scanner de CALL coberta para as ações da carteira real."""
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -18,8 +18,11 @@ class CoveredCallCard:
     premium: Decimal
     expiry: date
     dte: int
+    portfolio_quantity: int
+    covered_quantity: int
     available_quantity: int
     contracts: int
+    replacement_required: bool
     adjusted_average: Decimal
     premium_yield: Decimal
     upside: Decimal
@@ -30,12 +33,12 @@ class CoveredCallCard:
 def scan_covered_calls(
     opportunities: Iterable[OptionOpportunity], holdings: Iterable[dict], *, as_of: date | None = None,
 ) -> tuple[CoveredCallCard, ...]:
-    """Prioriza CALLs OTM que preservam o PM e possuem cobertura disponível."""
+    """Prioriza CALLs OTM de 1 a 45 dias que preservam o PM da carteira."""
     as_of = as_of or date.today()
     portfolio = {
         str(item.get("asset", "")).upper(): item
         for item in holdings
-        if int(item.get("available_quantity", 0) or 0) >= 100
+        if int(item.get("quantity", item.get("available_quantity", 0)) or 0) >= 100
     }
     cards: list[CoveredCallCard] = []
     for option in opportunities:
@@ -44,13 +47,15 @@ def scan_covered_calls(
             continue
         dte = (option.expiry - as_of).days
         average = Decimal(str(holding.get("adjusted_average_price", holding.get("tax_cost_per_share", 0)) or 0))
-        if not 7 <= dte <= 60 or option.premium <= 0 or option.spot_price <= 0:
+        if not 1 <= dte <= 45 or option.premium <= 0 or option.spot_price <= 0:
             continue
         # Evita sugerir entrega abaixo do custo ajustado ou CALL já dentro do dinheiro.
         if option.strike < max(average, option.spot_price):
             continue
         available = int(holding.get("available_quantity", 0) or 0)
-        contracts = available // 100
+        portfolio_quantity = int(holding.get("quantity", available) or 0)
+        covered_quantity = int(holding.get("covered_quantity", max(portfolio_quantity - available, 0)) or 0)
+        contracts = portfolio_quantity // 100
         premium_yield = option.premium / option.spot_price
         upside = option.strike / option.spot_price - Decimal("1")
         annualized_yield = premium_yield * Decimal("365") / Decimal(max(dte, 1))
@@ -59,7 +64,9 @@ def scan_covered_calls(
         cards.append(CoveredCallCard(
             asset=option.asset, option_code=option.option_code, spot=option.spot_price,
             strike=option.strike, premium=option.premium, expiry=option.expiry, dte=dte,
-            available_quantity=available, contracts=contracts, adjusted_average=average,
+            portfolio_quantity=portfolio_quantity, covered_quantity=covered_quantity,
+            available_quantity=available, contracts=contracts,
+            replacement_required=available < 100, adjusted_average=average,
             premium_yield=premium_yield, upside=upside,
             effective_sale_price=option.strike + option.premium, score=score,
         ))
