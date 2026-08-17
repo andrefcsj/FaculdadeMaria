@@ -14,6 +14,13 @@ class PremiumNavigationTests(unittest.TestCase):
         self.assertIn("FaculdadeMaria", page)
         self.assertIn("Opções Inteligentes", page)
         self.assertLess(page.index("GESTÃO"), page.index("INTELIGÊNCIA"))
+        self.assertIn("Simulador de Exercício", page)
+        self.assertIn('href="/carteira"', page)
+
+    def test_exercise_simulator_is_not_redirected_to_equity_portfolio(self):
+        response = self.client.get("/carteira")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("RESUMO DA CARTEIRA", response.get_data(as_text=True).upper())
 
     def test_scanner_route_is_removed(self):
         response = self.client.get("/scanner-inteligente")

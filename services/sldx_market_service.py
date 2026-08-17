@@ -69,9 +69,9 @@ def _decimal(value, *, positive: bool = False) -> Decimal | None:
 
 def fetch_option_chain(
     ticker: str, *, token: str | None = None, base_url: str | None = None,
-    timeout: float = 12,
+    timeout: float = 12, option_types=("PUT",),
 ) -> tuple[OptionOpportunity, ...]:
-    """Busca e normaliza as PUTs de um ativo para o Decision Engine."""
+    """Busca e normaliza PUTs e/ou CALLs de um ativo."""
     symbol = str(ticker or "").upper().strip().removesuffix(".SA")
     if not symbol:
         raise SldxMarketError("Ticker não informado.")
@@ -95,9 +95,13 @@ def fetch_option_chain(
     except ValueError:
         trade_date = date.today()
     timestamp = datetime.combine(trade_date, time.min, tzinfo=timezone.utc)
+    allowed_types = {str(value).upper() for value in option_types}
+    if not allowed_types or not allowed_types <= {"PUT", "CALL"}:
+        raise ValueError("option_types deve conter PUT e/ou CALL")
     opportunities = []
     for row in options:
-        if not isinstance(row, dict) or str(row.get("type", "")).upper() != "PUT":
+        option_type = str(row.get("type", "")).upper() if isinstance(row, dict) else ""
+        if option_type not in allowed_types:
             continue
         try:
             expiry = date.fromisoformat(str(row.get("expiration_date")))
@@ -114,20 +118,21 @@ def fetch_option_chain(
         raw_volume = _decimal(row.get("volume"))
         raw_iv = _decimal(row.get("implied_volatility"))
         opportunities.append(OptionOpportunity(
-            asset=symbol, option_code=str(row.get("symbol", "")).upper(), option_type="PUT",
+            asset=symbol, option_code=str(row.get("symbol", "")).upper(), option_type=option_type,
             expiry=expiry, spot_price=spot, strike=strike, premium=premium,
             bid=bid, ask=ask, volume=int(raw_volume) if raw_volume is not None else None,
             liquidity=raw_volume, implied_volatility=(raw_iv / Decimal("100") if raw_iv is not None else None),
             timestamp=timestamp, source="sldx_api", data_confidence=Decimal("0.95"),
         ))
     if not opportunities:
-        raise SldxMarketError(f"SLDX não retornou PUT válida para {symbol}.")
+        label = "/".join(sorted(allowed_types))
+        raise SldxMarketError(f"SLDX não retornou {label} válida para {symbol}.")
     return tuple(opportunities)
 
 
 def fetch_options_market(
     tickers, *, token: str | None = None, base_url: str | None = None,
-    timeout: float = 12, max_workers: int = 5,
+    timeout: float = 12, max_workers: int = 5, option_types=("PUT",),
 ) -> SldxOptionsResult:
     """Atualiza vários ativos em paralelo, isolando falhas por ticker."""
     symbols = tuple(dict.fromkeys(str(item).upper().strip() for item in tickers if str(item).strip()))
@@ -136,7 +141,10 @@ def fetch_options_market(
     failures: dict[str, str] = {}
     with ThreadPoolExecutor(max_workers=min(max_workers, max(len(symbols), 1))) as executor:
         futures = {
-            executor.submit(fetch_option_chain, symbol, token=token, base_url=base_url, timeout=timeout): symbol
+            executor.submit(
+                fetch_option_chain, symbol, token=token, base_url=base_url,
+                timeout=timeout, option_types=option_types,
+            ): symbol
             for symbol in symbols
         }
         for future in as_completed(futures):

@@ -23,13 +23,19 @@ def _integer(raw: str) -> int:
 
 
 class B3CotahistProvider(MarketDataProvider):
-    """Normaliza PUTs EOD sem acoplar o Decision Engine ao formato posicional."""
+    """Normaliza opções EOD sem acoplar os scanners ao formato posicional."""
 
     name = "b3_cotahist_eod"
 
-    def __init__(self, source: str | Path, underlying_by_root: Mapping[str, str]):
+    def __init__(
+        self, source: str | Path, underlying_by_root: Mapping[str, str],
+        option_types: Iterable[str] = ("PUT",),
+    ):
         self.source = Path(source)
         self.underlying_by_root = {str(k).upper(): str(v).upper() for k, v in underlying_by_root.items()}
+        self.option_types = {str(value).upper() for value in option_types}
+        if not self.option_types or not self.option_types <= {"PUT", "CALL"}:
+            raise ValueError("option_types deve conter PUT e/ou CALL")
 
     def _lines(self) -> Iterable[str]:
         if not self.source.exists():
@@ -68,6 +74,10 @@ class B3CotahistProvider(MarketDataProvider):
             asset = self.underlying_by_root.get(root)
             if not asset:
                 continue
+            month_code = ticker[4:5]
+            option_type = "CALL" if month_code in "ABCDEFGHIJKL" else "PUT" if month_code in "MNOPQRSTUVWX" else None
+            if option_type not in self.option_types:
+                continue
             expiry_text = line[202:210]
             try:
                 trade_date = datetime.strptime(line[2:10], "%Y%m%d").date()
@@ -77,6 +87,7 @@ class B3CotahistProvider(MarketDataProvider):
             option_rows.append({
                 "asset": asset,
                 "ticker": ticker,
+                "option_type": option_type,
                 "trade_date": trade_date,
                 "expiry": expiry,
                 "strike": _decimal(line[188:201]),
@@ -97,7 +108,7 @@ class B3CotahistProvider(MarketDataProvider):
             if bid is not None and ask is not None and ask < bid:
                 bid = ask = None
             opportunities.append(OptionOpportunity(
-                asset=str(row["asset"]), option_code=str(row["ticker"]), option_type="PUT",
+                asset=str(row["asset"]), option_code=str(row["ticker"]), option_type=str(row["option_type"]),
                 expiry=row["expiry"], spot_price=spot, strike=row["strike"], premium=row["premium"],
                 bid=bid, ask=ask, volume=int(row["volume"]), trades=int(row["trades"]),
                 liquidity=Decimal(int(row["volume"])),

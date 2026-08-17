@@ -1466,6 +1466,7 @@ if __name__ == "__main__":
 @app.route('/radar-oportunidades')
 def radar_oportunidades():
     cards = ()
+    covered_call_cards = ()
     message = request.args.get("message", "")
     try:
         roots, profiles = load_personal_asset_universe(RADAR_ASSETS)
@@ -1489,9 +1490,18 @@ def radar_oportunidades():
             current_indicators = metrics(current_ops, current_closed, current_config)
             portfolio = build_portfolio_concentration(current_ops, current_indicators.get("capital_total", 0))
             cards = build_radar_from_market(opportunities, profiles, portfolio=portfolio)[:50]
+            if request.args.get("scan") == "calls":
+                from services.covered_call_scanner_service import scan_covered_calls
+                from services.equity_position_service import portfolio as equity_portfolio
+                calls = B3CotahistProvider(RADAR_COTAHIST, roots, option_types=("CALL",)).fetch()
+                covered_call_cards = scan_covered_calls(calls, equity_portfolio(__import__(__name__)))[:50]
     except Exception as exc:
         message = f"Não foi possível processar os dados: {exc}"
-    return render_template('radar_oportunidades.html', cards=cards, message=message, has_eod=RADAR_COTAHIST.exists(), has_quality=RADAR_DFP.exists())
+    return render_template(
+        'radar_oportunidades.html', cards=cards, covered_call_cards=covered_call_cards,
+        call_scan_requested=request.args.get("scan") == "calls", message=message,
+        has_eod=RADAR_COTAHIST.exists(), has_quality=RADAR_DFP.exists(),
+    )
 
 
 @app.route('/radar-oportunidades/atualizar-b3', methods=['POST'])

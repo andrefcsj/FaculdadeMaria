@@ -29,6 +29,11 @@ from services.date_format_service import format_date_br, format_datetime_br, for
 from services.concentration_service import build_portfolio_concentration
 from services.equity_portfolio_extension import register as register_equity_portfolio
 from services.premium_history_service import build_premium_history
+from services.jade_lizard_extension import register as register_jade_lizard
+from services.payoff_simulator_extension import register as register_payoff_simulator
+from services.income_tax_extension import register as register_income_tax
+from services.covered_call_scanner_service import scan_covered_calls
+from services.equity_position_service import portfolio as equity_portfolio
 from services.sldx_market_service import fetch_options_market
 
 app = legacy.app
@@ -58,6 +63,7 @@ def radar_oportunidades_importado():
     if imported is None:
         return _original_radar_view()
     cards = ()
+    covered_call_cards = ()
     message = request.args.get("message", "")
     try:
         _, profiles = _load_profiles()
@@ -74,10 +80,16 @@ def radar_oportunidades_importado():
                     strike=Decimal(str(quote["strike"])) if quote.get("strike") not in (None, "") else None,
                 )
         cards = build_radar_from_market(opportunities, profiles, portfolio=_portfolio_context())[:50]
+        if request.args.get("scan") == "calls":
+            holdings = equity_portfolio(legacy)
+            tickers = [item["asset"] for item in holdings if int(item.get("available_quantity", 0)) >= 100]
+            call_opportunities = fetch_options_market(tickers, option_types=("CALL",)).opportunities if tickers else ()
+            covered_call_cards = scan_covered_calls(call_opportunities, holdings)[:50]
     except Exception as exc:
         message = f"Não foi possível processar o mercado importado: {exc}"
     return render_template(
-        "radar_oportunidades.html", cards=cards, message=message, has_eod=True,
+        "radar_oportunidades.html", cards=cards, covered_call_cards=covered_call_cards,
+        call_scan_requested=request.args.get("scan") == "calls", message=message, has_eod=True,
         has_quality=legacy.RADAR_DFP.exists(),
         last_import_at=imported.imported_at.strftime("%d/%m/%Y às %H:%M"),
         imported_rows=imported.accepted_rows,
@@ -233,6 +245,9 @@ register_system_cleanup(app, legacy)
 register_cash_management(app, legacy)
 register_paid_darfs(app, legacy)
 register_equity_portfolio(app, legacy)
+register_jade_lizard(app, legacy)
+register_payoff_simulator(app, legacy)
+register_income_tax(app, legacy)
 
 
 if __name__ == "__main__":
