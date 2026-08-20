@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from decimal import Decimal
 
@@ -34,7 +35,8 @@ from services.payoff_simulator_extension import register as register_payoff_simu
 from services.income_tax_extension import register as register_income_tax
 from services.covered_call_scanner_service import scan_covered_calls
 from services.equity_position_service import portfolio as equity_portfolio
-from services.sldx_market_service import fetch_options_market
+from services.sldx_market_service import fetch_options_market, fetch_stock_price
+from services.dashboard_market_service import save_underlying_quotes
 
 app = legacy.app
 app.jinja_env.filters["date_br"] = format_date_br
@@ -67,7 +69,7 @@ def radar_oportunidades_importado():
     message = request.args.get("message", "")
     try:
         _, profiles = _load_profiles()
-        opportunities = list(imported.opportunities)
+        opportunities = [item for item in imported.opportunities if item.option_type == "PUT"]
         overrides = json.loads(legacy.RADAR_QUOTES.read_text(encoding="utf-8")) if legacy.RADAR_QUOTES.exists() else {}
         for index, opportunity in enumerate(opportunities):
             quote = overrides.get(opportunity.option_code)
@@ -100,17 +102,22 @@ app.view_functions["radar_oportunidades"] = radar_oportunidades_importado
 
 
 def atualizar_radar_sldx():
-    """Substitui a atualização manual da B3 pela cadeia autenticada da SLDX."""
+    """Atualiza opções e ações pela SLDX e preserva o último snapshot válido."""
     roots, _profiles = legacy.load_personal_asset_universe(legacy.RADAR_ASSETS)
-    tickers = sorted(set(roots.values()))
+    operations, _closed, _config = legacy.load_all()
+    holdings = equity_portfolio(legacy, operations)
+    open_underlyings = {
+        str(operation.get("Ativo_subjacente") or legacy.infer_acao_from_option(str(operation.get("Ativo", "")))).upper()
+        for operation in operations if str(operation.get("Status", "")).lower() == "aberta"
+    }
+    tickers = sorted((set(roots.values()) | open_underlyings | {str(item.get("asset", "")).upper() for item in holdings}) - {""})
     if not tickers:
-        return redirect(url_for("radar_oportunidades", message="Nenhum ativo está cadastrado para o Radar."))
-    result = fetch_options_market(tickers)
+        return redirect(url_for("index", market_message="Nenhum ativo foi encontrado para atualização."))
+    result = fetch_options_market(tickers, option_types=("PUT", "CALL"))
     if not result.opportunities:
-        return redirect(url_for(
-            "radar_oportunidades",
-            message="A SLDX está indisponível. O último mercado válido foi preservado.",
-        ))
+        destination = "index" if request.form.get("next") == "dashboard" else "radar_oportunidades"
+        parameter = "market_message" if destination == "index" else "message"
+        return redirect(url_for(destination, **{parameter: "A API está indisponível. O último mercado válido foi preservado."}))
     opportunities = list(result.opportunities)
     previous = load_market_import(RADAR_IMPORTED)
     if previous is not None and result.failures:
@@ -123,13 +130,30 @@ def atualizar_radar_sldx():
         accepted_rows=len(opportunities), rejected_rows=len(result.failures),
     )
     save_market_import(RADAR_IMPORTED, market)
+    stock_quotes = {item.asset: float(item.spot_price) for item in opportunities}
+    missing_stocks = [ticker for ticker in tickers if ticker not in stock_quotes]
+    if missing_stocks:
+        def safe_stock_price(symbol):
+            try:
+                return fetch_stock_price(symbol)
+            except Exception:
+                return None
+        with ThreadPoolExecutor(max_workers=min(6, len(missing_stocks))) as executor:
+            for ticker, price in zip(missing_stocks, executor.map(safe_stock_price, missing_stocks)):
+                if price is not None:
+                    stock_quotes[ticker] = price
+    save_underlying_quotes(legacy, stock_quotes)
+    put_count = sum(1 for item in opportunities if item.option_type == "PUT")
+    call_count = sum(1 for item in opportunities if item.option_type == "CALL")
     message = (
-        f"SLDX atualizada: {len(opportunities)} PUTs de "
-        f"{len(result.successful_tickers)} ativos."
+        f"API atualizada: {put_count} PUTs, {call_count} CALLs e "
+        f"{len(stock_quotes)} ações."
     )
     if result.failures:
         message += f" {len(result.failures)} ativo(s) mantiveram os dados anteriores por indisponibilidade."
-    return redirect(url_for("radar_oportunidades", message=message))
+    destination = "index" if request.form.get("next") == "dashboard" else "radar_oportunidades"
+    parameter = "market_message" if destination == "index" else "message"
+    return redirect(url_for(destination, **{parameter: message}))
 
 
 app.view_functions["atualizar_radar_b3"] = atualizar_radar_sldx

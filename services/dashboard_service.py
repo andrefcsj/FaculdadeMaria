@@ -6,6 +6,7 @@ calculadas pela aplicação em um view model estável para a interface.
 from __future__ import annotations
 
 from collections import defaultdict
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from datetime import date, timedelta
 from decimal import Decimal
@@ -92,6 +93,7 @@ class DashboardViewModel:
     ai_summary: str
     ai_tone: str
     portfolio: tuple[Mapping[str, object], ...]
+    equity_portfolio: tuple[Mapping[str, object], ...]
     roll_candidates: tuple[Mapping[str, object], ...]
     attention_items: tuple[Mapping[str, object], ...]
     today_scenario: tuple[Mapping[str, object], ...]
@@ -203,6 +205,13 @@ def build_dashboard_view_model(
         }
         for asset, capital in sorted(allocated_by_asset.items(), key=lambda item: item[1], reverse=True)
     )
+    equity_portfolio_view = tuple({
+        "asset": str(holding.get("asset", "")).upper(),
+        "quantity": int(_number(holding.get("quantity"))),
+        "tax_average": _number(holding.get("tax_cost_per_share")),
+        "managerial_average": _number(holding.get("adjusted_average_price", holding.get("tax_cost_per_share"))),
+        "logo_url": f"https://raw.githubusercontent.com/thefintz/icones-b3/main/icones/{str(holding.get('asset', '')).upper()}.png",
+    } for holding in equity_holdings if int(_number(holding.get("quantity"))) > 0)
 
     roll_candidates = tuple(
         {
@@ -276,15 +285,19 @@ def build_dashboard_view_model(
         tone = "attention"
     quotes = option_quotes or {}
     today_scenario = []
-    probability_by_code: dict[str, object] = {}
-    for operation in open_options:
+    def probability_for(operation):
         code = str(operation.get("Ativo", "N/D")).upper()
-        probability_by_code[code] = estimate_operation_exercise_probability(
+        return code, estimate_operation_exercise_probability(
             ticker=_underlying_asset(operation),
             option_type=str(operation.get("Tipo", "PUT")).upper(),
             strike=Decimal(str(_number(operation.get("Strike_n", operation.get("Strike"))) or 0)),
             expiry=_operation_expiry(operation.get("Vencimento")),
         )
+
+    probability_by_code: dict[str, object] = {}
+    with ThreadPoolExecutor(max_workers=min(6, max(len(open_options), 1))) as executor:
+        for code, estimate in executor.map(probability_for, open_options):
+            probability_by_code[code] = estimate
 
     for operation in sorted(open_options, key=lambda item: _number(item.get("Dias"), 999999))[:5]:
         code = str(operation.get("Ativo", "N/D")).upper()
@@ -392,6 +405,7 @@ def build_dashboard_view_model(
         ai_summary=summary,
         ai_tone=tone,
         portfolio=portfolio,
+        equity_portfolio=equity_portfolio_view,
         roll_candidates=roll_candidates,
         attention_items=tuple(attention[:6]),
         today_scenario=tuple(today_scenario),

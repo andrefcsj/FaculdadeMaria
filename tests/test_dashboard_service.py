@@ -220,6 +220,21 @@ class DashboardServiceTests(unittest.TestCase):
         )
         self.assertFalse(any(item["asset"] == "LFTB11" for item in view.commitment_items))
 
+    def test_dashboard_equity_composition_uses_real_holdings_and_both_average_prices(self):
+        holdings = [{
+            "asset": "WEGE3", "quantity": 200, "tax_cost_per_share": 48.39,
+            "adjusted_average_price": 47.78,
+        }]
+        view = build_dashboard_view_model(
+            self.operations, [], self.indicators, self.history, self.config,
+            equity_holdings=holdings,
+        )
+
+        self.assertEqual(view.equity_portfolio[0]["asset"], "WEGE3")
+        self.assertEqual(view.equity_portfolio[0]["quantity"], 200)
+        self.assertEqual(view.equity_portfolio[0]["tax_average"], 48.39)
+        self.assertEqual(view.equity_portfolio[0]["managerial_average"], 47.78)
+
 
 if __name__ == "__main__":
     unittest.main()

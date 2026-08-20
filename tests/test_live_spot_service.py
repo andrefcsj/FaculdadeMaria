@@ -1,4 +1,5 @@
 from services.live_spot_service import with_current_underlying_quotes
+from services.dashboard_market_service import save_underlying_quotes
 
 
 class FakeLegacy:
@@ -11,22 +12,26 @@ class FakeLegacy:
         return {"GOAU4": 10.52, "CPLE3": 14.95, "CPLE6": None}[ticker]
 
 
-def test_live_quotes_override_stale_spot_and_keep_fallback_when_unavailable():
+def test_snapshot_quotes_override_stale_spot_and_keep_fallback_when_unavailable(tmp_path):
+    FakeLegacy.DATA = tmp_path
+    save_underlying_quotes(FakeLegacy, {"GOAU4": 10.52})
     operations = [
         {"Ativo": "GOAUS139", "Status": "Aberta", "Cotacao_n": 9.59},
         {"Ativo": "CPLES15", "Status": "Aberta", "Cotacao_n": 15.21},
     ]
     enriched = with_current_underlying_quotes(FakeLegacy, operations)
     assert enriched[0]["Cotacao_n"] == 10.52
-    assert enriched[0]["Cotacao_fonte"] == "Yahoo Finance intradiário"
+    assert enriched[0]["Cotacao_fonte"] == "SLDX API"
     assert enriched[1]["Cotacao_n"] == 15.21
     assert operations[0]["Cotacao_n"] == 9.59
 
 
-def test_saved_underlying_drives_quote_instead_of_option_root_guess():
+def test_saved_underlying_drives_quote_instead_of_option_root_guess(tmp_path):
+    FakeLegacy.DATA = tmp_path
+    save_underlying_quotes(FakeLegacy, {"CPLE3": 14.95})
     operations = [
         {"Ativo": "CPLES15", "Ativo_subjacente": "CPLE3", "Status": "Aberta", "Cotacao_n": 15.60},
     ]
     enriched = with_current_underlying_quotes(FakeLegacy, operations)
     assert enriched[0]["Cotacao_n"] == 14.95
-    assert enriched[0]["Cotacao_fonte"] == "Yahoo Finance intradiário"
+    assert enriched[0]["Cotacao_fonte"] == "SLDX API"
