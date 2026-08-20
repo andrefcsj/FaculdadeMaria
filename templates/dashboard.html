@@ -33,14 +33,20 @@
       <header><span class="patrimony-modal__seal"><svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v3"/></svg></span><div><small>CAPITAL EM OPERAÇÕES</small><h2 id="commitmentModalTitle">Onde seu capital está comprometido</h2><p>PUTs vendidas e ações travadas em CALL coberta, sem taxas.</p></div></header>
       {% if dashboard.commitment_items %}
       <div class="commitment-table">
-        <div class="commitment-table__head"><span>Ação</span><span>Opção</span><span>Qtd.</span><span>Valor total</span></div>
-        {% for item in dashboard.commitment_items %}
+        {% for kind, title in [('put', 'PUTS VENDIDAS'), ('shares', 'CALLS COBERTAS')] %}
+        {% set group_items = dashboard.commitment_items|selectattr('kind', 'equalto', kind)|list %}
+        {% if group_items %}<div class="commitment-table__group commitment-table__group--{{ kind }}"><strong>{{ title }}</strong><span>{{ group_items|length }} operação(ões)</span></div>
+        <div class="commitment-table__head"><span>Ação</span><span>Opção</span><span>Vencimento</span><span>Qtd.</span><span>Valor total</span></div>
+        {% for item in group_items %}
         <div class="commitment-table__row">
           <span class="commitment-asset">{% if item.logo_url %}<img src="{{ item.logo_url }}" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='grid'">{% endif %}<i {% if item.logo_url %}style="display:none"{% endif %}>{{ item.asset[:2] }}</i><b title="{{ item.asset }}">{{ item.asset }}</b></span>
           <strong title="{{ item.option_code }}">{{ item.option_code }}</strong>
+          <span class="commitment-expiry">{{ item.expiry }} <small>({{ item.days }} dias)</small></span>
           <span>{{ item.quantity }}</span>
           <b>{{ money(item.total) }}</b>
         </div>
+        {% endfor %}
+        {% endif %}
         {% endfor %}
       </div>
       {% else %}
@@ -147,5 +153,5 @@
 })();
 </script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="{{ url_for('static', filename='dashboard.js', v='20260729.3') }}"></script>
+<script src="{{ url_for('static', filename='dashboard.js', v='20260819.1') }}"></script>
 {% endblock %}
