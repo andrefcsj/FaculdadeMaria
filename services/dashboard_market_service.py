@@ -14,6 +14,70 @@ def _underlying_path(legacy: Any) -> Path:
     return Path(legacy.DATA) / "market" / "underlying_quotes.json"
 
 
+def _ensure_api_quotes_table(cursor: Any) -> None:
+    cursor.execute("""CREATE TABLE IF NOT EXISTS api_market_quotes (
+        quote_kind TEXT NOT NULL,
+        symbol TEXT NOT NULL,
+        price NUMERIC NOT NULL,
+        source TEXT NOT NULL,
+        quoted_at TIMESTAMPTZ NOT NULL,
+        PRIMARY KEY (quote_kind, symbol)
+    )""")
+
+
+def _save_api_quotes(legacy: Any, quote_kind: str, quotes: dict[str, float], source: str, quoted_at: datetime) -> None:
+    if not getattr(legacy, "USE_POSTGRES", False) or not quotes:
+        return
+    connection = legacy.get_pg_conn()
+    try:
+        cursor = connection.cursor()
+        _ensure_api_quotes_table(cursor)
+        for symbol, price in quotes.items():
+            cursor.execute("""INSERT INTO api_market_quotes(quote_kind, symbol, price, source, quoted_at)
+                VALUES (%s, %s, %s, %s, %s)
+                ON CONFLICT(quote_kind, symbol) DO UPDATE SET
+                price=EXCLUDED.price, source=EXCLUDED.source, quoted_at=EXCLUDED.quoted_at""",
+                (quote_kind, str(symbol).upper(), float(price), source, quoted_at))
+        connection.commit()
+    except Exception:
+        connection.rollback()
+        raise
+    finally:
+        connection.close()
+
+
+def _load_api_quotes(legacy: Any, quote_kind: str) -> dict[str, dict[str, object]]:
+    if not getattr(legacy, "USE_POSTGRES", False):
+        return {}
+    connection = legacy.get_pg_conn()
+    try:
+        cursor = connection.cursor()
+        _ensure_api_quotes_table(cursor)
+        connection.commit()
+        cursor.execute(
+            "SELECT symbol, price, source, quoted_at FROM api_market_quotes WHERE quote_kind=%s",
+            (quote_kind,),
+        )
+        return {
+            str(row[0]).upper(): {
+                "price": float(row[1]), "source": str(row[2]),
+                "quoted_at": row[3].isoformat(timespec="seconds") if row[3] else None,
+            }
+            for row in cursor.fetchall()
+        }
+    finally:
+        connection.close()
+
+
+def save_option_quotes(legacy: Any, opportunities: Any, quoted_at: datetime) -> None:
+    """Persiste a última cotação da API para sobreviver aos reinícios do Render."""
+    quotes = {
+        str(item.option_code).upper(): float(item.premium)
+        for item in opportunities if float(item.premium) >= 0
+    }
+    _save_api_quotes(legacy, "option", quotes, "SLDX API", quoted_at)
+
+
 def save_underlying_quotes(legacy: Any, quotes: dict[str, float], source: str = "SLDX API") -> None:
     path = _underlying_path(legacy)
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -23,10 +87,11 @@ def save_underlying_quotes(legacy: Any, quotes: dict[str, float], source: str = 
         "quotes": {str(code).upper(): float(value) for code, value in quotes.items() if float(value) > 0},
     }
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    _save_api_quotes(legacy, "underlying", payload["quotes"], source, datetime.fromisoformat(payload["updated_at"]))
 
 
 def load_underlying_quotes(legacy: Any) -> dict[str, dict[str, object]]:
-    quotes: dict[str, dict[str, object]] = {}
+    quotes: dict[str, dict[str, object]] = _load_api_quotes(legacy, "underlying")
     imported = load_market_import(Path(legacy.DATA) / "market" / "imported_options.json")
     if imported:
         for opportunity in imported.opportunities:
@@ -49,7 +114,7 @@ def load_underlying_quotes(legacy: Any) -> dict[str, dict[str, object]]:
 
 
 def load_option_quotes(legacy: Any) -> dict[str, dict[str, object]]:
-    quotes: dict[str, dict[str, object]] = {}
+    quotes: dict[str, dict[str, object]] = _load_api_quotes(legacy, "option")
     imported_path = Path(legacy.DATA) / "market" / "imported_options.json"
     imported = load_market_import(imported_path)
     if imported:

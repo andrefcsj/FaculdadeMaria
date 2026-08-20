@@ -36,7 +36,7 @@ from services.income_tax_extension import register as register_income_tax
 from services.covered_call_scanner_service import scan_covered_calls
 from services.equity_position_service import portfolio as equity_portfolio
 from services.sldx_market_service import fetch_options_market, fetch_stock_price
-from services.dashboard_market_service import save_underlying_quotes
+from services.dashboard_market_service import save_option_quotes, save_underlying_quotes
 
 app = legacy.app
 app.jinja_env.filters["date_br"] = format_date_br
@@ -130,6 +130,7 @@ def atualizar_radar_sldx():
         accepted_rows=len(opportunities), rejected_rows=len(result.failures),
     )
     save_market_import(RADAR_IMPORTED, market)
+    save_option_quotes(legacy, opportunities, market.imported_at)
     stock_quotes = {item.asset: float(item.spot_price) for item in opportunities}
     missing_stocks = [ticker for ticker in tickers if ticker not in stock_quotes]
     if missing_stocks:

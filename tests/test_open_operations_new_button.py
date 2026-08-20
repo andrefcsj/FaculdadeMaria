@@ -17,7 +17,8 @@ def test_open_operations_shows_received_current_and_effective_exercise_prices():
     assert "Distância do strike" in template
     assert "distancia_strike_class" in template
     assert "fonte_preco_atual" in template
-    assert "data-manual-quote" in template
+    assert "data-manual-quote" not in template
+    assert "Sem cotação na última atualização da API" in template
     assert "overflow-x:hidden" in template
     assert "min-width:1880px" not in template
     assert "border-right:1px solid rgba(203,213,225,.42)" in template
