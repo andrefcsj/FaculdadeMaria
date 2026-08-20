@@ -154,6 +154,8 @@ def build_dashboard_view_model(
             "option_code": str(operation.get("Ativo", "N/D")).upper(),
             "quantity": quantity,
             "total": _number(operation.get("Capital_nominal", operation.get("Capital"))),
+            "expiry": operation.get("Vencimento_fmt", ""),
+            "days": int(_number(operation.get("Dias"))),
             "logo_url": f"https://raw.githubusercontent.com/thefintz/icones-b3/main/icones/{_underlying_asset(operation)}.png",
         })
 
@@ -177,6 +179,8 @@ def build_dashboard_view_model(
             "option_code": str(operation.get("Ativo", "N/D")).upper(),
             "quantity": covered_quantity,
             "total": covered_quantity * unit_cost,
+            "expiry": operation.get("Vencimento_fmt", ""),
+            "days": int(_number(operation.get("Dias"))),
             "logo_url": f"https://raw.githubusercontent.com/thefintz/icones-b3/main/icones/{asset}.png",
         })
     commitment_items.sort(key=lambda item: (str(item["asset"]), str(item["option_code"])))

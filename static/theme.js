@@ -21,10 +21,11 @@ document.addEventListener('DOMContentLoaded',()=>{
    if(row.querySelector('td:nth-child(2) strong')?.textContent.trim()==='Aporte') row.classList.add('cash-row-contribution');
  });
  const now=new Date();
+ const brasiliaTimeZone='America/Sao_Paulo';
  const date=document.getElementById('topbarDate');
  const time=document.getElementById('topbarTime');
- if(date) date.textContent=now.toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'});
- if(time) time.textContent=now.toLocaleDateString('pt-BR',{weekday:'long'})+', '+now.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+ if(date) date.textContent=now.toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric',timeZone:brasiliaTimeZone});
+ if(time) time.textContent=now.toLocaleDateString('pt-BR',{weekday:'long',timeZone:brasiliaTimeZone})+', '+now.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',timeZone:brasiliaTimeZone})+' (Brasília)';
  const layout=document.querySelector('.layout');
  const toggle=document.getElementById('sidebarToggle');
  if(layout && toggle){

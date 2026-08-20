@@ -13,13 +13,14 @@
         <label>Cotação atual (R$)<input id="calcSpotPrice" type="text" inputmode="decimal" placeholder="Opcional"></label>
         <label>Strike da CALL (R$)<input id="calcStrike" type="text" inputmode="decimal" placeholder="49,50"></label>
         <label>Prêmio por ação (R$)<input id="calcPremium" type="text" inputmode="decimal" placeholder="0,70"></label>
+        <label>Data de vencimento<input id="calcExpiry" type="date"></label>
         <label>Custos totais (R$)<input id="calcCosts" type="text" inputmode="decimal" value="0,00"></label>
         <label>Alíquota estimada (%)<input id="calcTaxRate" type="text" inputmode="decimal" value="15,00"></label>
         <label>Meta de ROI líquido (%)<input id="calcTargetRoi" type="text" inputmode="decimal" value="3,00"></label>
       </form>
       <aside class="calc-simulator__results">
         <div class="calc-result calc-result--hero"><small>ROI LÍQUIDO SE EXERCIDO</small><strong id="calcNetRoi">0,00%</strong><span id="calcGoalStatus">Preencha preço médio, strike e prêmio</span></div>
-        <div class="calc-result-grid"><div><small>Lucro líquido</small><strong id="calcNetProfit">R$ 0,00</strong></div><div><small>DARF estimado</small><strong id="calcTax">R$ 0,00</strong></div><div><small>Saída líquida por ação</small><strong id="calcEffectiveExit">R$ 0,00</strong></div><div><small>Distância até o strike</small><strong id="calcStrikeDistance">--</strong></div></div>
+        <div class="calc-result-grid"><div><small>ROI da operação</small><strong id="calcOperationRoi">0,00%</strong></div><div><small>Prazo até o vencimento</small><strong id="calcDaysToExpiry">--</strong></div><div><small>Lucro líquido se exercido</small><strong id="calcNetProfit">R$ 0,00</strong></div><div><small>DARF estimado</small><strong id="calcTax">R$ 0,00</strong></div><div><small>Saída líquida por ação</small><strong id="calcEffectiveExit">R$ 0,00</strong></div><div><small>Distância até o strike</small><strong id="calcStrikeDistance">--</strong></div></div>
         <div class="calc-scenario"><span>SE A CALL EXPIRAR</span><div><p><small>Prêmio líquido</small><strong id="calcNetPremium">R$ 0,00</strong></p><p><small>Novo preço médio</small><strong id="calcAdjustedAverage">R$ 0,00</strong></p></div></div>
         <p class="calc-disclaimer">Estimativa gerencial com tributação informada e sem compensação de prejuízos ou IRRF. Confirme a apuração fiscal mensal.</p>
       </aside>
@@ -34,12 +35,13 @@
         <label>Tamanho do contrato<input id="putCalcContractSize" type="number" min="1" step="1" value="100"></label>
         <label>Strike da PUT (R$)<input id="putCalcStrike" type="text" inputmode="decimal" placeholder="Ex.: 30,00"></label>
         <label>Prêmio por ação (R$)<input id="putCalcPremium" type="text" inputmode="decimal" placeholder="Ex.: 0,80"></label>
+        <label>Data de vencimento<input id="putCalcExpiry" type="date"></label>
         <label>Custos totais (R$)<input id="putCalcCosts" type="text" inputmode="decimal" value="0,00"></label>
         <label>Alíquota estimada (%)<input id="putCalcTaxRate" type="text" inputmode="decimal" value="15,00"></label>
       </form>
       <aside class="calc-simulator__results">
         <div class="calc-result calc-result--hero"><small>PM CONSOLIDADO SE EXERCIDO</small><strong id="putCalcConsolidatedAverage">R$ 0,00</strong><span id="putCalcPositionStatus">Informe strike e prêmio da PUT</span></div>
-        <div class="calc-result-grid"><div><small>Ações no exercício</small><strong id="putCalcAssignedQuantity">100</strong></div><div><small>Capital necessário</small><strong id="putCalcRequiredCapital">R$ 0,00</strong></div><div><small>Prêmio líquido</small><strong id="putCalcNetPremium">R$ 0,00</strong></div><div><small>Distância até o strike</small><strong id="putCalcStrikeDistance">--</strong></div></div>
+        <div class="calc-result-grid"><div><small>ROI da operação</small><strong id="putCalcOperationRoi">0,00%</strong></div><div><small>Prazo até o vencimento</small><strong id="putCalcDaysToExpiry">--</strong></div><div><small>Ações no exercício</small><strong id="putCalcAssignedQuantity">100</strong></div><div><small>Capital necessário</small><strong id="putCalcRequiredCapital">R$ 0,00</strong></div><div><small>Prêmio líquido</small><strong id="putCalcNetPremium">R$ 0,00</strong></div><div><small>Distância até o strike</small><strong id="putCalcStrikeDistance">--</strong></div></div>
         <div class="calc-scenario"><span>SE VOCÊ AINDA NÃO POSSUI A AÇÃO</span><div><p><small>PM líquido da compra</small><strong id="putCalcNewLotAverage">R$ 0,00</strong></p><p><small>Desconto pelo prêmio</small><strong id="putCalcPremiumDiscount">R$ 0,00/ação</strong></p></div></div>
         <div class="calc-scenario"><span>SE VOCÊ JÁ POSSUI A AÇÃO</span><div><p><small>PM após o exercício</small><strong id="putCalcAverageAfterAssignment">R$ 0,00</strong></p><p><small>PM se a PUT expirar</small><strong id="putCalcAverageIfExpired">--</strong></p></div></div>
         <p class="calc-disclaimer">PM gerencial: considera o prêmio líquido informado como redução do custo. No exercício, combina a posição atual com as novas ações compradas ao strike. Confirme o tratamento fiscal com sua apuração.</p>
