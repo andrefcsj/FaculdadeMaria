@@ -199,7 +199,7 @@ def load_market_import(path: Path) -> MarketImportResult | None:
         OptionOpportunity(
             asset=item["asset"],
             option_code=item["option_code"],
-            option_type="PUT",
+            option_type=str(item.get("option_type", "PUT")).upper(),
             expiry=date.fromisoformat(item["expiry"]),
             spot_price=Decimal(item["spot_price"]),
             strike=Decimal(item["strike"]),

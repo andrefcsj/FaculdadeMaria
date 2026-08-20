@@ -5,3 +5,6 @@ services:
     plan: free
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --worker-class gthread --workers 1 --threads 8 --timeout 45 --graceful-timeout 15
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.13
