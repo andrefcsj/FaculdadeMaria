@@ -15,6 +15,27 @@ Seu objetivo é oferecer uma visão cronológica e legível da evolução oficia
 
 ---
 
+## 2026-08-20 — Atualização centralizada de mercado e Dashboard da carteira
+
+Status: `Implementado`
+
+### Added
+
+- botão no Dashboard para atualizar PUTs, CALLs e ações pela SLDX API;
+- snapshot local de cotações para acelerar a abertura das páginas;
+- cópia do código da opção e vencimento no detalhamento do capital;
+- totais separados de PUTs vendidas e CALLs cobertas;
+- composição da carteira com ações reais, quantidade, PM fiscal e PM gerencial.
+
+### Changed
+
+- Operações Abertas passa a usar o valor da opção obtido pela API como fonte prioritária;
+- coluna redundante Tipo e fluxo manual do ProfitPro são removidos da tabela;
+- probabilidades do Dashboard passam a ser calculadas em paralelo;
+- páginas deixam de consultar cotações de ações externamente durante cada carregamento.
+
+---
+
 ## 2026-07-12 — Cards, gestão de notas e encerramento assistido
 
 Status: `Em revisão`

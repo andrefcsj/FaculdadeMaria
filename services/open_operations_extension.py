@@ -7,7 +7,7 @@ from decimal import Decimal
 from flask import jsonify, redirect, render_template, request, url_for
 
 from services.exercise_probability_service import estimate_operation_exercise_probability
-from services.dashboard_market_service import load_option_quotes
+from services.dashboard_market_service import load_option_quotes, load_underlying_quotes
 from services.manual_option_quote_service import save_manual_option_quote
 from services.operation_preferences_service import load_operation_metadata, normalize_exercise_interest, operation_underlying, save_operation_metadata
 from services.equity_position_service import portfolio as equity_portfolio, validate_covered_call
@@ -37,7 +37,7 @@ def effective_exercise_price(operation, contract_size=100):
 
 
 def register(app, legacy):
-    def prepare(operation, option_quotes, contract_size):
+    def prepare(operation, option_quotes, underlying_quotes, contract_size):
         ticker = operation_underlying(legacy, operation)
         expiry = legacy.parse_date(str(operation.get("Vencimento", "")))
         estimate = estimate_operation_exercise_probability(
@@ -47,7 +47,12 @@ def register(app, legacy):
             expiry=expiry,
         )
         operation["ticker"] = ticker
-        operation["cotacao_atual"] = float(estimate.spot_price) if estimate.spot_price is not None else legacy.fnum(operation.get("Cotacao_atual"), 0) or None
+        snapshot = underlying_quotes.get(ticker, {})
+        operation["cotacao_atual"] = (
+            float(snapshot["price"]) if snapshot.get("price") is not None
+            else float(estimate.spot_price) if estimate.spot_price is not None
+            else legacy.fnum(operation.get("Cotacao_atual"), 0) or None
+        )
         quote = option_quotes.get(str(operation.get("Ativo", "")).upper(), {})
         operation["preco_venda"] = legacy.fnum(operation.get("Premio_opcao"), 0)
         operation["preco_atual_opcao"] = float(quote["price"]) if quote.get("price") is not None else None
@@ -93,9 +98,10 @@ def register(app, legacy):
             operation["note_pending"] = str(operation.get("ID")) in provisional_operation_ids
         if abertas:
             option_quotes = load_option_quotes(legacy)
+            underlying_quotes = load_underlying_quotes(legacy)
             contract_size = cfg.get("Tamanho contrato opcoes", 100)
             with ThreadPoolExecutor(max_workers=min(6, len(abertas))) as executor:
-                abertas = list(executor.map(lambda operation: prepare(operation, option_quotes, contract_size), abertas))
+                abertas = list(executor.map(lambda operation: prepare(operation, option_quotes, underlying_quotes, contract_size), abertas))
         option_capital = sum(legacy.fnum(operation.get("Capital"), 0) for operation in abertas)
         equity_capital = sum(float(item.get("cash_cost_total", 0)) for item in equity_portfolio(legacy, ops))
         # Ações usadas como cobertura já pertencem à carteira e não são

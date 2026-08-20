@@ -1,10 +1,10 @@
 """Atualiza cotações dos ativos subjacentes sem alterar o registro financeiro."""
 from __future__ import annotations
 
-from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Sequence
 
 from services.operation_preferences_service import operation_underlying
+from services.dashboard_market_service import load_underlying_quotes
 
 
 def with_current_underlying_quotes(legacy, operations: Sequence[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -21,15 +21,13 @@ def with_current_underlying_quotes(legacy, operations: Sequence[dict[str, Any]])
     } - {""})
     if not tickers:
         return enriched
-    quote_fn = getattr(legacy, "cotacao_mercado", legacy.cotacao_yahoo)
-    with ThreadPoolExecutor(max_workers=min(6, len(tickers))) as executor:
-        prices = dict(zip(tickers, executor.map(quote_fn, tickers)))
+    snapshot = load_underlying_quotes(legacy)
+    prices = {ticker: snapshot.get(ticker, {}).get("price") for ticker in tickers}
     for operation in enriched:
         ticker = operation_underlying(legacy, operation)
         price = prices.get(ticker)
         if price is not None and float(price) > 0:
             operation["Cotacao_n"] = float(price)
             operation["Cotacao_atual"] = float(price)
-            source_fn = getattr(legacy, "cotacao_fonte", None)
-            operation["Cotacao_fonte"] = source_fn(ticker) if source_fn else "Yahoo Finance intradiário"
+            operation["Cotacao_fonte"] = snapshot.get(ticker, {}).get("source", "Última cotação registrada")
     return enriched

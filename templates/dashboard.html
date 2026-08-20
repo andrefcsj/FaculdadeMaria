@@ -3,8 +3,10 @@
 {% block title %}Dashboard Executivo | FaculdadeMaria{% endblock %}
 {% block page_title %}DASHBOARD EXECUTIVO{% endblock %}
 {% block page_subtitle %}Visão geral da sua carteira de opções{% endblock %}
+{% block page_actions %}<form method="post" action="{{ url_for('atualizar_radar_b3') }}"><input type="hidden" name="next" value="dashboard"><button class="topbar-refresh" type="submit"><span>↻</span> Atualizar opções pela API</button></form>{% endblock %}
 {% block content %}
 <div class="executive-dashboard">
+  {% if request.args.get('market_message') %}<div class="market-update-message">{{ request.args.get('market_message') }}</div>{% endif %}
   <section class="exec-kpis" aria-label="Indicadores principais">
     <button class="exec-kpi exec-kpi--patrimony exec-kpi--clickable" id="patrimonyCard" type="button" aria-haspopup="dialog" aria-controls="patrimonyModal"><span class="exec-kpi__watermark">FM</span><span class="exec-kpi__icon"><svg viewBox="0 0 24 24"><path d="M3 10h18M5 10V7l7-4 7 4v3M6 10v8M10 10v8M14 10v8M18 10v8M3 21h18"/></svg></span><small>PATRIMÔNIO</small><strong>{{ money(dashboard.patrimony) }}</strong><p>Caixa líquido + ações mantidas na corretora</p><div class="exec-kpi__insight"><i></i><span>Ver onde o patrimônio está alocado →</span></div></button>
     <article class="exec-kpi exec-kpi--blue"><span class="exec-kpi__watermark">↗</span><span class="exec-kpi__icon"><svg viewBox="0 0 24 24"><path d="M4 19V9M10 19V5M16 19v-7M3 19h18M15 6l3-3 3 3"/></svg></span><small>SALDO PARA OPERAR</small><strong class="{% if dashboard.available_to_trade < 0 %}negative{% endif %}">{{ money(dashboard.available_to_trade) }}</strong><p>Caixa efetivamente livre para novas operações</p><div class="exec-kpi__insight"><i></i><span>Após ações alocadas e garantias comprometidas</span></div></article>
@@ -35,7 +37,7 @@
       <div class="commitment-table">
         {% for kind, title in [('put', 'PUTS VENDIDAS'), ('shares', 'CALLS COBERTAS')] %}
         {% set group_items = dashboard.commitment_items|selectattr('kind', 'equalto', kind)|list %}
-        {% if group_items %}<div class="commitment-table__group commitment-table__group--{{ kind }}"><strong>{{ title }}</strong><span>{{ group_items|length }} operação(ões)</span></div>
+        {% if group_items %}<div class="commitment-table__group commitment-table__group--{{ kind }}"><strong>{{ title }}</strong><span>{{ group_items|length }} operação(ões) · <b>{{ money(group_items|sum(attribute='total')) }}</b></span></div>
         <div class="commitment-table__head"><span>Ação</span><span>Opção</span><span>Vencimento</span><span>Qtd.</span><span>Valor total</span></div>
         {% for item in group_items %}
         <div class="commitment-table__row">
@@ -43,7 +45,7 @@
           <strong title="{{ item.option_code }}">{{ item.option_code }}</strong>
           <span class="commitment-expiry">{{ item.expiry }} <small>({{ item.days }} dias)</small></span>
           <span>{{ item.quantity }}</span>
-          <b>{{ money(item.total) }}</b>
+          <span class="commitment-total"><b>{{ money(item.total) }}</b><button class="commitment-copy" type="button" data-copy-option="{{ item.option_code }} {{ item.expiry }}" title="Copiar opção e vencimento" aria-label="Copiar {{ item.option_code }} e vencimento {{ item.expiry }}"><svg viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg></button></span>
         </div>
         {% endfor %}
         {% endif %}
@@ -65,14 +67,14 @@
 
   <div class="exec-grid exec-grid--primary">
     <section class="exec-panel exec-panel--portfolio">
-      <header class="exec-panel__header"><div><span>◉</span><h2>Composição da carteira</h2></div><a href="/operacoes-abertas">Ver carteira</a></header>
-      {% if dashboard.portfolio %}
-      <div class="portfolio-list">
-        {% for item in dashboard.portfolio %}
-        <div class="portfolio-item portfolio-item--{{ item.risk }}"><div><strong>{{ item.asset }}</strong><span>{{ money(item.capital) }}</span></div><div class="progress"><i style="width:{{ item.capital_share|round(1) }}%"></i></div><small>{{ percent(item.capital_share) }} do capital total · {% if item.risk == 'high' %}concentração alta{% elif item.risk == 'attention' %}atenção ao limite{% else %}dentro da política{% endif %}</small></div>
+      <header class="exec-panel__header"><div><span>◉</span><h2>Composição da carteira</h2></div><a href="/carteira-acoes">Ver carteira</a></header>
+      {% if dashboard.equity_portfolio %}
+      <div class="equity-composition"><div class="equity-composition__head"><span>Ação</span><span>Quantidade</span><span>PM fiscal</span><span>PM gerencial</span></div>
+        {% for item in dashboard.equity_portfolio %}
+        <a class="equity-composition__row" href="/carteira-acoes"><span>{% if item.logo_url %}<img src="{{ item.logo_url }}" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='grid'">{% endif %}<i {% if item.logo_url %}style="display:none"{% endif %}>{{ item.asset[:2] }}</i><strong>{{ item.asset }}</strong></span><b>{{ item.quantity }}</b><span>{{ money(item.tax_average) }}</span><span>{{ money(item.managerial_average) }}</span></a>
         {% endfor %}
       </div>
-      {% else %}{{ empty_state('Carteira sem posições', 'Cadastre uma PUT para acompanhar a composição do capital.', '/#nova-operacao', 'Cadastrar operação') }}{% endif %}
+      {% else %}{{ empty_state('Carteira sem ações', 'As ações efetivamente mantidas aparecerão aqui.', '/carteira-acoes', 'Abrir carteira') }}{% endif %}
     </section>
 
     <section class="exec-panel exec-panel--opportunities">
@@ -153,5 +155,5 @@
 })();
 </script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="{{ url_for('static', filename='dashboard.js', v='20260819.1') }}"></script>
+<script src="{{ url_for('static', filename='dashboard.js', v='20260820.1') }}"></script>
 {% endblock %}

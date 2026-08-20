@@ -350,6 +350,19 @@ document.addEventListener('DOMContentLoaded',()=>{
   if(updated){
     updated.textContent=new Date().toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit',timeZone:'America/Sao_Paulo'})+' (Brasília)';
   }
+
+  document.querySelectorAll('[data-copy-option]').forEach(button=>{
+    button.addEventListener('click',async()=>{
+      const value=button.dataset.copyOption||'';
+      try{
+        await navigator.clipboard.writeText(value);
+      }catch(error){
+        const input=document.createElement('textarea');input.value=value;input.style.position='fixed';input.style.opacity='0';document.body.appendChild(input);input.select();document.execCommand('copy');input.remove();
+      }
+      button.classList.add('copied');button.title='Copiado!';
+      setTimeout(()=>{button.classList.remove('copied');button.title='Copiar opção e vencimento'},1600);
+    });
+  });
   const headerUpdated=document.getElementById('headerUpdated');
   if(headerUpdated){
     headerUpdated.textContent=new Date().toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',timeZone:'America/Sao_Paulo'})+' (Brasília)';
