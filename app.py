@@ -33,6 +33,7 @@ from services.premium_history_service import build_premium_history
 from services.jade_lizard_extension import register as register_jade_lizard
 from services.payoff_simulator_extension import register as register_payoff_simulator
 from services.income_tax_extension import register as register_income_tax
+from services.roi_calculator_extension import register as register_roi_calculator
 from services.covered_call_scanner_service import scan_covered_calls
 from services.equity_position_service import portfolio as equity_portfolio
 from services.sldx_market_service import fetch_options_market, fetch_stock_price
@@ -273,6 +274,7 @@ register_equity_portfolio(app, legacy)
 register_jade_lizard(app, legacy)
 register_payoff_simulator(app, legacy)
 register_income_tax(app, legacy)
+register_roi_calculator(app, legacy)
 
 
 if __name__ == "__main__":

@@ -1039,3 +1039,4 @@ body.app-shell .nav-group--operations a.active:before{background:#159447}
 .segmented-date__separator{flex:0 0 auto;color:#7b8797;font-weight:600;user-select:none}
 .segmented-date__original{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important;opacity:0!important;pointer-events:none!important}
 .segmented-date--invalid{border-color:#dc2626!important;box-shadow:0 0 0 3px rgba(220,38,38,.1)!important}
+.equity-composition__head>span:first-child{text-align:left}.equity-composition__head>span:not(:first-child){text-align:right}

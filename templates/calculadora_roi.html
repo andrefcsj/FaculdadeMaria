@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block title %}Calculadora de ROI | FaculdadeMaria{% endblock %}
+{% block page_title %}Calculadora de ROI{% endblock %}
+{% block page_subtitle %}Grade de venda de opções com retorno, distância do strike e probabilidade de exercício{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ url_for('static',filename='roi_calculator.css',v='20260824.1') }}">{% endblock %}
+{% block content %}
+<div class="roi-page">
+  <section class="roi-hero">
+    <div><span>VENDA DE OPÇÕES</span><h1>Calculadora de ROI</h1><p>Consulte a cadeia atualizada da API e compare oportunidades com vencimento em até 60 dias úteis.</p></div>
+    <form method="get" action="/calculadora-roi" class="roi-form">
+      <label>Ação<input name="ativo" value="{{ ticker }}" list="roiAssets" placeholder="Ex.: CPLE3" autocomplete="off" required></label>
+      <datalist id="roiAssets">{% for asset in suggestions %}<option value="{{ asset }}">{% endfor %}</datalist>
+      <fieldset><legend>Opção para venda</legend><input id="roiPut" type="radio" name="tipo" value="PUT" {% if option_type == 'PUT' %}checked{% endif %}><label for="roiPut">PUT</label><input id="roiCall" type="radio" name="tipo" value="CALL" {% if option_type == 'CALL' %}checked{% endif %}><label for="roiCall">CALL</label></fieldset>
+      <button type="submit">↻ Atualizar grade pela API</button>
+    </form>
+  </section>
+  <aside class="roi-rule"><strong>Como o ROI é calculado</strong><span>PUT: prêmio ÷ strike. CALL: prêmio ÷ cotação atual da ação. O sistema usa o bid quando disponível.</span></aside>
+  {% if error %}<p class="roi-error">{{ error }}</p>{% endif %}
+  {% if rows %}
+  <section class="roi-chain">
+    <header><div><strong>{{ ticker }}</strong><span>Venda de {{ option_type }}</span></div><div><small>Cotação atual</small><b>R$ {{ '%.2f'|format(rows[0].spot)|replace('.', ',') }}</b></div><div><small>Opções encontradas</small><b>{{ rows|length }}</b></div></header>
+    <div class="roi-table-wrap"><table><thead><tr><th>Vencimento</th><th>Dias úteis</th><th>Código</th><th>Strike</th><th>Distância do strike</th><th>Bid</th><th>Ask</th><th>Prêmio usado</th><th>ROI</th><th>Prob. exercício</th><th>Volume</th></tr></thead><tbody>
+    {% for row in rows %}<tr><td><strong>{{ row.expiry|date_br }}</strong></td><td>{{ row.business_days }}</td><td><b>{{ row.option_code }}</b></td><td>R$ {{ '%.2f'|format(row.strike)|replace('.', ',') }}</td><td><span class="distance {{ 'above' if row.strike_distance_pct >= 0 else 'below' }}">{{ '%+.2f'|format(row.strike_distance_pct)|replace('.', ',') }}%</span></td><td>{% if row.bid is not none %}R$ {{ '%.2f'|format(row.bid)|replace('.', ',') }}{% else %}—{% endif %}</td><td>{% if row.ask is not none %}R$ {{ '%.2f'|format(row.ask)|replace('.', ',') }}{% else %}—{% endif %}</td><td><strong>R$ {{ '%.2f'|format(row.premium)|replace('.', ',') }}</strong></td><td><span class="roi-value">{{ '%.2f'|format(row.roi_pct)|replace('.', ',') }}%</span></td><td>{% if row.exercise_probability_pct is not none %}<span class="probability {{ row.exercise_probability_label|lower }}">{{ '%.1f'|format(row.exercise_probability_pct)|replace('.', ',') }}% · {{ row.exercise_probability_label }}</span>{% else %}<span class="unavailable">Indisponível</span>{% endif %}</td><td>{{ row.volume }}</td></tr>{% endfor %}
+    </tbody></table></div>
+  </section>
+  {% elif not ticker %}<section class="roi-empty"><span>%</span><h2>Escolha uma ação para começar</h2><p>A grade será atualizada diretamente pela API após selecionar PUT ou CALL.</p></section>{% endif %}
+</div>
+{% endblock %}
