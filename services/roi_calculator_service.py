@@ -26,6 +26,15 @@ class RoiOptionRow:
     exercise_probability_pct: Decimal | None
     exercise_probability_label: str
     volume: int
+    market_date: date
+    cycle: str
+
+
+def option_cycle(expiry: date) -> str:
+    """Classifica o vencimento padrão (3ª sexta) e os vencimentos semanais."""
+    first = expiry.replace(day=1)
+    first_friday = 1 + (4 - first.weekday()) % 7
+    return "Mensal" if expiry.weekday() == 4 and expiry.day == first_friday + 14 else "Semanal"
 
 
 def business_days_until(start: date, end: date) -> int:
@@ -80,5 +89,6 @@ def build_roi_option_rows(
             exercise_probability_pct=probability,
             exercise_probability_label=probability_label,
             volume=int(option.volume or 0),
+            market_date=option.timestamp.date(), cycle=option_cycle(option.expiry),
         ))
     return tuple(sorted(rows, key=lambda row: (row.expiry, row.strike, row.option_code)))

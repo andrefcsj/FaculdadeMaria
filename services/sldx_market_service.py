@@ -35,12 +35,19 @@ def _credentials(token: str | None, base_url: str | None) -> tuple[str, str]:
     return api_token, api_base
 
 
-def _request_json(path: str, *, token: str, base_url: str, timeout: float) -> dict:
+def _request_json(
+    path: str, *, token: str, base_url: str, timeout: float,
+    force_refresh: bool = False,
+) -> dict:
+    if force_refresh:
+        separator = "&" if "?" in path else "?"
+        path = f"{path}{separator}_fresh={int(datetime.now(timezone.utc).timestamp())}"
     request = urllib.request.Request(
         f"{base_url}{path}",
         headers={
             "Accept": "application/json", "Authorization": f"Bearer {token}",
-            "User-Agent": "FaculdadeMaria/1.0",
+            "User-Agent": "FaculdadeMaria/1.0", "Cache-Control": "no-cache, no-store",
+            "Pragma": "no-cache",
         },
     )
     try:
@@ -69,7 +76,7 @@ def _decimal(value, *, positive: bool = False) -> Decimal | None:
 
 def fetch_option_chain(
     ticker: str, *, token: str | None = None, base_url: str | None = None,
-    timeout: float = 12, option_types=("PUT",),
+    timeout: float = 12, option_types=("PUT",), force_refresh: bool = False,
 ) -> tuple[OptionOpportunity, ...]:
     """Busca e normaliza PUTs e/ou CALLs de um ativo."""
     symbol = str(ticker or "").upper().strip().removesuffix(".SA")
@@ -79,11 +86,11 @@ def fetch_option_chain(
     encoded = urllib.parse.quote(symbol, safe="")
     chain = _request_json(
         f"/stock-options-chain/{encoded}", token=api_token,
-        base_url=api_base, timeout=timeout,
+        base_url=api_base, timeout=timeout, force_refresh=force_refresh,
     )
     summary = _request_json(
         f"/stock-options/{encoded}", token=api_token,
-        base_url=api_base, timeout=timeout,
+        base_url=api_base, timeout=timeout, force_refresh=force_refresh,
     )
     result = chain.get("result") if isinstance(chain.get("result"), dict) else {}
     spot = _decimal(result.get("underlying_price"), positive=True)

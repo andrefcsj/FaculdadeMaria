@@ -3,7 +3,7 @@ from decimal import Decimal
 from pathlib import Path
 
 from engine import OptionOpportunity
-from services.roi_calculator_service import business_days_until, build_roi_option_rows
+from services.roi_calculator_service import business_days_until, build_roi_option_rows, option_cycle
 
 
 ROOT = Path(__file__).parents[1]
@@ -47,16 +47,21 @@ def test_options_beyond_sixty_business_days_are_excluded():
     assert rows == ()
 
 
+def test_option_cycle_separates_third_friday_from_weeklies():
+    assert option_cycle(date(2026, 9, 18)) == "Mensal"
+    assert option_cycle(date(2026, 9, 11)) == "Semanal"
+
+
 def test_roi_page_and_sidebar_entry_are_available():
     from app import app
 
     response = app.test_client().get("/calculadora-roi")
     assert response.status_code == 200
     html = response.get_data(as_text=True)
-    assert "Calculadora de ROI" in html
+    assert "Grade de opções" in html
     assert "Atualizar grade pela API" in html
     base = (ROOT / "templates" / "base.html").read_text(encoding="utf-8")
-    assert base.index("Calculadora de ROI") < base.index("SIMULADOR de Cálculos")
+    assert base.index("Grade de opções") < base.index("SIMULADOR de Cálculos")
 
 
 def test_dashboard_portfolio_headers_align_with_numeric_columns():
