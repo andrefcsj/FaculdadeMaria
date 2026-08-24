@@ -8,6 +8,13 @@ def test_open_operations_has_new_operation_popup_button():
     assert "Cadastrar Operação" in template
 
 
+def test_multi_trade_import_refreshes_open_operations_while_modal_stays_open():
+    script = (Path(__file__).parents[1] / "static" / "new_operation.js").read_text(encoding="utf-8")
+    assert "async function refreshOpenOperationsList()" in script
+    assert "await refreshOpenOperationsList();" in script
+    assert "currentPanel.replaceWith(updatedPanel)" in script
+
+
 def test_open_operations_shows_received_current_and_effective_exercise_prices():
     template = (Path(__file__).parents[1] / "templates" / "operacoes_abertas.html").read_text(encoding="utf-8")
     assert "<th>Prêmio recebido</th><th>Valor do prêmio hoje</th>" in template

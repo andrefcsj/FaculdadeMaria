@@ -2,15 +2,17 @@ document.addEventListener('DOMContentLoaded',()=>{
   const modal=document.getElementById('equityModal'),form=document.getElementById('equityForm');
   const asset=document.getElementById('equityAsset'),quantity=document.getElementById('equityQuantity');
   const average=document.getElementById('equityAverage'),date=document.getElementById('equityDate');
+  const managerialAverage=document.getElementById('equityManagerialAverage'),managerialField=document.getElementById('equityManagerialField');
   const saleField=document.getElementById('equitySalePriceField'),salePrice=document.getElementById('equitySalePrice');
   const title=document.getElementById('equityModalTitle'),hint=document.getElementById('equityModalHint');
   const error=document.getElementById('equityError'),submit=document.getElementById('equitySubmit');
   let mode='add',currentAsset='';
   const today=()=>new Date().toISOString().slice(0,10);
-  const rowData=row=>({asset:row.dataset.asset,quantity:row.dataset.quantity,average:row.dataset.average,date:row.dataset.date,available:row.dataset.available});
+  const rowData=row=>({asset:row.dataset.asset,quantity:row.dataset.quantity,average:row.dataset.average,managerialAverage:row.dataset.managerialAverage,date:row.dataset.date,available:row.dataset.available});
   function open(nextMode,data={}){
     mode=nextMode;currentAsset=data.asset||'';error.hidden=true;form.reset();date.value=data.date||today();
-    asset.value=data.asset||'';quantity.value=data.quantity||'';average.value=data.average||'';
+    asset.value=data.asset||'';quantity.value=data.quantity||'';average.value=data.average||'';managerialAverage.value=data.managerialAverage||'';
+    managerialField.hidden=mode!=='edit';managerialField.style.display=mode==='edit'?'flex':'none';
     asset.readOnly=mode!=='add';saleField.hidden=mode!=='sell';saleField.style.display=mode==='sell'?'flex':'none';average.closest('label').hidden=mode==='sell';average.closest('label').style.display=mode==='sell'?'none':'flex';
     title.textContent=mode==='add'?'Adicionar ação':mode==='edit'?'Editar posição':'Registrar venda';
     hint.textContent=mode==='sell'?`Disponíveis para venda: ${data.available||0}`:'Os totais da carteira serão recalculados automaticamente.';

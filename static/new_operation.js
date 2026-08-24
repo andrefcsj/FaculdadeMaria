@@ -264,6 +264,19 @@ document.addEventListener('DOMContentLoaded', () => {
     if (event.key === 'Escape' && !modal.hidden) closeModal();
   });
 
+  async function refreshOpenOperationsList() {
+    if (location.pathname !== '/operacoes-abertas') return;
+    const response = await fetch('/operacoes-abertas', {
+      cache: 'no-store',
+      headers: {Accept: 'text/html', 'X-Requested-With': 'fetch'}
+    });
+    if (!response.ok) return;
+    const page = new DOMParser().parseFromString(await response.text(), 'text/html');
+    const currentPanel = document.querySelector('.ops-panel');
+    const updatedPanel = page.querySelector('.ops-panel');
+    if (currentPanel && updatedPanel) currentPanel.replaceWith(updatedPanel);
+  }
+
   form.addEventListener('submit', async event => {
     event.preventDefault();
     errorBox.style.display = 'none';
@@ -294,6 +307,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const data = await response.json();
       if (!response.ok || !data.ok) throw new Error(data.error || 'Não foi possível cadastrar.');
       if (window.brokerageNoteImport?.handleSaved?.()) {
+        await refreshOpenOperationsList();
         updateSummary();
         return;
       }
@@ -303,7 +317,8 @@ document.addEventListener('DOMContentLoaded', () => {
       fields.contracts.value = '1';
       fields.costs.value = brl(0);
       fields.irrf.value = brl(0);
-      if (location.pathname === '/operacoes-abertas' || location.pathname === '/carteira-acoes') location.reload();
+      if (location.pathname === '/operacoes-abertas') window.location.assign('/operacoes-abertas');
+      else if (location.pathname === '/carteira-acoes') window.location.assign('/carteira-acoes');
       else window.dispatchEvent(new CustomEvent('operation-created', {detail: data}));
     } catch (error) {
       errorBox.textContent = error.message;

@@ -331,6 +331,17 @@ def test_covered_call_exercise_removes_delivered_shares_and_stops_average_adjust
         assert portfolio(Legacy) == []
 
 
+def test_equity_edit_modal_distinguishes_fiscal_and_managerial_average():
+    root = Path(__file__).parents[1]
+    template = (root / "templates" / "carteira_acoes.html").read_text(encoding="utf-8")
+    script = (root / "static" / "equity_portfolio.js").read_text(encoding="utf-8")
+    assert "Preço Médio Fiscal" in template
+    assert "Preço Médio Gerencial" in template
+    assert 'data-managerial-average="{{ h.adjusted_average_price }}"' in template
+    assert 'id="equityManagerialAverage" readonly' in template
+    assert "managerialField.hidden=mode!=='edit'" in script
+
+
 def test_definitive_note_replaces_equity_lot_without_duplicating_quantity():
     with TemporaryDirectory() as directory:
         class Legacy:
