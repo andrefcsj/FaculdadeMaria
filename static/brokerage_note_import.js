@@ -67,7 +67,11 @@ document.addEventListener('DOMContentLoaded', () => {
       strategy.checked = true;
       strategy.dispatchEvent(new Event('change', {bubbles: true}));
     }
-    const typeValue = selectedTrade.market.toLowerCase().includes('venda') ? 'PUT' : 'CALL';
+    const typeValue = selectedTrade.event_type === 'exercise_put_assignment'
+      ? 'PUT'
+      : selectedTrade.event_type === 'exercise_call_assignment'
+        ? 'CALL'
+        : selectedTrade.market.toLowerCase().includes('venda') ? 'PUT' : 'CALL';
     const type = operationForm.querySelector(`input[name="Tipo"][value="${typeValue}"]`);
     if (type) type.checked = true;
 

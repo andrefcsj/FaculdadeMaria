@@ -249,6 +249,8 @@ class BrokerageNoteRoutesTests(unittest.TestCase):
         self.assertIn("const operationForm = document.getElementById('newOperationForm')", script)
         self.assertIn("operationForm.querySelector(`input[name=\"Estrategia\"]", script)
         self.assertIn("operationForm.querySelector(`input[name=\"Tipo\"]", script)
+        self.assertIn("selectedTrade.event_type === 'exercise_put_assignment'", script)
+        self.assertIn("selectedTrade.event_type === 'exercise_call_assignment'", script)
 
 
 if __name__ == "__main__":

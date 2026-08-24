@@ -12,7 +12,7 @@ from services.brokerage_note_service import imported_note_exists, option_closure
 from services.operation_close_service import calculate_operation_close
 from services.closed_operations_service import save_closure_metadata
 from services.operation_preferences_service import normalize_exercise_interest, save_operation_metadata
-from services.equity_position_service import create_put_assignment_lot, save_equity_lot, validate_covered_call
+from services.equity_position_service import create_put_assignment_lot, exercise_covered_call, save_equity_lot, validate_covered_call
 from services.exercise_probability_service import estimate_exercise_probability, estimate_operation_exercise_probability
 
 
@@ -59,19 +59,29 @@ def _preview_roi(*, strategy: str, contracts: Decimal, strike: Decimal, premium:
 def register(app, legacy, market_path):
     def close_from_note(operation_id: str, note_payload: dict, option_code: str):
         trade = note_payload.get("trade", {})
-        is_assignment = str(trade.get("event_type", "")) == "exercise_put_assignment"
+        event_type = str(trade.get("event_type", ""))
+        is_put_assignment = event_type == "exercise_put_assignment"
+        is_call_assignment = event_type == "exercise_call_assignment"
+        is_assignment = is_put_assignment or is_call_assignment
         rows = legacy.read_csv(legacy.OPERACOES)
         operation = legacy.get_operacao_pg(operation_id) if legacy.USE_POSTGRES else legacy.find_row(rows, operation_id)
         if not operation or str(operation.get("Status", "")).lower() != "aberta":
             raise ValueError("A operação aberta para encerramento não foi encontrada.")
         strategy = str(operation.get("Estratégia", operation.get("Estrategia", ""))).lower()
         note_side = str(trade.get("side", "")).lower()
-        closes_short = note_side == "compra" and strategy in {"venda", "wheel", "venda coberta", "call coberta"}
+        closes_short = (
+            note_side == "compra" and strategy in {"venda", "wheel", "venda coberta", "call coberta"}
+        ) or (
+            is_call_assignment and note_side == "venda" and strategy in {"venda coberta", "call coberta"}
+        )
         closes_long = note_side == "venda" and strategy == "compra"
         if str(operation.get("Ativo", "")).upper() != option_code or not (closes_short or closes_long):
             raise ValueError("A negociação não corresponde à operação aberta.")
-        if is_assignment and str(operation.get("Tipo", "PUT")).upper() != "PUT":
+        operation_type = str(operation.get("Tipo", "PUT")).upper()
+        if is_put_assignment and operation_type != "PUT":
             raise ValueError("A nota de exercício não corresponde a uma PUT vendida.")
+        if is_call_assignment and operation_type != "CALL":
+            raise ValueError("A nota de exercício não corresponde a uma CALL coberta.")
         config = legacy.load_config()
         contracts = Decimal(str(legacy.fnum(operation.get("Contratos"), 0)))
         contract_size = Decimal(str(config.get("Tamanho contrato opcoes", 100)))
@@ -91,9 +101,12 @@ def register(app, legacy, market_path):
             raise ValueError("Esta negociação da nota já foi importada.")
         lot = None
         if is_assignment:
-            lot = create_put_assignment_lot(legacy, operation, note_payload)
-            if not save_equity_lot(legacy, lot):
-                raise ValueError("O lote de ações deste exercício já foi registrado.")
+            if is_put_assignment:
+                lot = create_put_assignment_lot(legacy, operation, note_payload)
+                if not save_equity_lot(legacy, lot):
+                    raise ValueError("O lote de ações deste exercício já foi registrado.")
+            else:
+                exercise_covered_call(legacy, operation)
         if legacy.USE_POSTGRES:
             conn = legacy.get_pg_conn()
             try:
@@ -103,7 +116,13 @@ def register(app, legacy, market_path):
             operation["Status"] = "Encerrada";operation["Resultado_realizado"] = str(realized)
             legacy.write_csv(legacy.OPERACOES, rows, list(rows[0].keys()))
         save_closure_metadata(legacy, operation_id, close_date=close_date, method=method, repurchase_value=repurchase, result=realized)
-        message = "Exercício registrado: PUT encerrada e 100 ações incluídas na carteira." if is_assignment else "Recompra identificada e operação encerrada."
+        message = (
+            "Exercício registrado: PUT encerrada e ações incluídas na carteira."
+            if is_put_assignment else
+            "Exercício registrado: CALL coberta encerrada e ações entregues."
+            if is_call_assignment else
+            "Recompra identificada e operação encerrada."
+        )
         return jsonify({"ok": True, "operation_id": operation_id, "note_saved": True, "closed": True, "equity_lot": lot, "redirect": "/carteira-acoes" if is_assignment else "/operacoes-abertas", "message": message})
 
     @app.get("/api/opcoes/<option_code>")

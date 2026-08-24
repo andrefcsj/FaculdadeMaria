@@ -37,6 +37,20 @@ I.R.R.F. s/ operações, base R$ 0,00 0,00
 Líquido para 11/08/2026 4.864,50 D
 """
 
+MULTIPLE_EXERCISES_TEXT = """NOTA DE CORRETAGEM
+33895998
+21/08/2026 Data pregão
+BTG Pactual CTVM S.A. necton
+Negócios realizados
+1-BOVESPA C EXERC OPC VENDA BBDCT20E 100 18,76 1.876,00 D
+1-BOVESPA C EXERC OPC VENDA CPLET150E 100 14,80 1.480,00 D
+1-BOVESPA V EXERC OPC COMPRA WEGEH485E 100 48,37 4.837,00 C
+Resumo dos Negócios Resumo Financeiro
+8.193,00Valor das operações
+I.R.R.F. s/ operações, base R$ 0,00
+Líquido para 25/08/2026 C1.475,36
+"""
+
 EQUITY_PURCHASE_TEXT = """NOTA DE CORRETAGEM
 33445566
 17/07/2026 Data pregão
@@ -83,6 +97,22 @@ def test_real_weekly_put_assignment_layout_is_recognized():
     assert payload["operational_costs"] == "2.50"
     assert trade["option_code"] == "WEGET486W1"
     assert trade["event_type"] == "exercise_put_assignment"
+
+
+def test_all_exercises_in_the_same_note_are_recognized_in_order():
+    with patch("services.brokerage_note_service.extract_pdf_text", return_value=MULTIPLE_EXERCISES_TEXT):
+        payload = note_to_api(parse_btg_necton_pdf(b"multiple-exercises"))
+
+    assert payload["note_number"] == "33895998"
+    assert payload["net_cash"] == "1475.36"
+    assert payload["operational_costs"] == "5.64"
+    assert [trade["option_code"] for trade in payload["trades"]] == [
+        "BBDCT20", "CPLET150", "WEGEH485",
+    ]
+    assert [trade["event_type"] for trade in payload["trades"]] == [
+        "exercise_put_assignment", "exercise_put_assignment", "exercise_call_assignment",
+    ]
+    assert [trade["side"] for trade in payload["trades"]] == ["Compra", "Compra", "Venda"]
 
 
 def test_cash_equity_purchase_is_recognized_for_portfolio():

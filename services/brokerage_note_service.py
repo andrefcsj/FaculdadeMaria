@@ -132,39 +132,6 @@ def parse_btg_necton_pdf(data: bytes) -> ParsedBrokerageNote:
         raise BrokerageNoteError("A data do pregão não foi reconhecida.")
     trade_date = datetime.strptime(date_match.group(1), "%d/%m/%Y").date()
 
-    # Exercício do lançador de PUT. A nota prévia não traz número e o sufixo E
-    # identifica o exercício, não faz parte do código negociado da opção.
-    exercise_match = re.search(
-        r"1-BOVESPA\s+C\s+(?:EOV|EXERC\s+OPC(?:AO|ÃO)?\s+VENDA)\s+([A-Z0-9]+)\s+(\d+)\s+([0-9.,]+)\s+([0-9.,]+)\s+D",
-        text, re.IGNORECASE,
-    )
-    if exercise_match:
-        raw_code = exercise_match.group(1).upper()
-        option_code = raw_code[:-1] if raw_code.endswith("E") else raw_code
-        quantity = int(exercise_match.group(2))
-        unit_price = _money(exercise_match.group(3))
-        gross = _money(exercise_match.group(4))
-        liquid = re.search(r"Líquido(?:\s+para\s+\d{2}/\d{2}/\d{4}|:)?\s*(?:D\s*([0-9.,]+)|([0-9.,]+)\s*D)", text, re.IGNORECASE)
-        net = _money(liquid.group(1) or liquid.group(2)) if liquid else gross
-        irrf = _extract_amount(text, "I.R.R.F. s/ operações, base R$", after=True) or Decimal("0")
-        costs = max(net - gross - irrf, Decimal("0"))
-        trade = ParsedTrade(
-            trade_index=0, option_code=option_code, side="Compra",
-            market="Exercício de PUT vendida", expiry_month="",
-            quantity=quantity, contracts=Decimal(quantity) / Decimal("100"),
-            unit_price=unit_price, gross_value=gross, cash_direction="D",
-            allocated_costs=costs, allocated_irrf=irrf,
-            event_type="exercise_put_assignment",
-        )
-        return ParsedBrokerageNote(
-            broker="BTG Pactual / Necton",
-            note_number=note_match.group(1) if note_match else f"EXERCICIO-{trade_date:%Y%m%d}-{document_hash[:8].upper()}",
-            trade_date=trade_date, settlement_date=trade_date,
-            document_hash=document_hash, gross_operations=gross, net_cash=net,
-            operational_costs=costs, irrf=irrf, cash_direction="D", trades=(trade,),
-            is_provisional=note_match is None,
-        )
-
     provisional_number = f"PREVIA-{trade_date:%Y%m%d}-{document_hash[:8].upper()}"
 
     section = text.split("Negócios realizados", 1)[-1].split("Resumo dos Negócios", 1)[0]
@@ -190,6 +157,14 @@ def parse_btg_necton_pdf(data: bytes) -> ParsedBrokerageNote:
         re.IGNORECASE,
     )
     equity_trades = list(equity_pattern.finditer(section))
+    # Uma nota pode conter vários exercícios. O sufixo E identifica a
+    # liquidação e não faz parte do código negociado da opção.
+    exercise_pattern = re.compile(
+        r"1-BOVESPA\s+([CV])\s+(?:EOV|EXERC\s+OPC(?:AO|ÃO)?(?:\s+(VENDA|COMPRA))?)"
+        r"\s+([A-Z0-9]+)\s+(\d+)\s+([0-9.,]+)\s+([0-9.,]+)\s+([CD])",
+        re.IGNORECASE,
+    )
+    exercise_trades = list(exercise_pattern.finditer(section))
     entries: list[dict[str, Any]] = []
     for match in raw_trades:
         entries.append({
@@ -216,6 +191,20 @@ def parse_btg_necton_pdf(data: bytes) -> ParsedBrokerageNote:
             "unit_price": _money(match.group(4)), "value": _money(match.group(5)),
             "direction": match.group(6).upper(), "event_type": "equity_purchase" if match.group(1).upper() == "C" else "equity_sale",
             "underlying": ticker,
+        })
+    for match in exercise_trades:
+        raw_code = match.group(3).upper()
+        option_code = raw_code[:-1] if raw_code.endswith("E") else raw_code
+        is_put_assignment = (match.group(2) or "VENDA").upper() == "VENDA"
+        entries.append({
+            "code": option_code,
+            "side": "Venda" if match.group(1).upper() == "V" else "Compra",
+            "market": "Exercício de PUT vendida" if is_put_assignment else "Exercício de CALL coberta",
+            "expiry_month": "", "quantity": int(match.group(4)),
+            "unit_price": _money(match.group(5)), "value": _money(match.group(6)),
+            "direction": match.group(7).upper(),
+            "event_type": "exercise_put_assignment" if is_put_assignment else "exercise_call_assignment",
+            "underlying": "",
         })
     if not entries:
         raise BrokerageNoteError("Nenhuma operação de opção ou ação foi reconhecida na nota.")
@@ -283,7 +272,10 @@ def parse_btg_necton_pdf(data: bytes) -> ParsedBrokerageNote:
 
     return ParsedBrokerageNote(
         broker="BTG Pactual / Necton",
-        note_number=note_match.group(1) if note_match else provisional_number,
+        note_number=note_match.group(1) if note_match else (
+            f"EXERCICIO-{trade_date:%Y%m%d}-{document_hash[:8].upper()}"
+            if exercise_trades else provisional_number
+        ),
         trade_date=trade_date,
         settlement_date=settlement_date,
         document_hash=document_hash,
@@ -478,7 +470,8 @@ def option_closure_matches(legacy, trade: dict[str, Any]) -> list[dict[str, Any]
     """
     code = str(trade.get("option_code", "")).strip().upper()
     note_side = str(trade.get("side", "")).strip().lower()
-    if not code or note_side not in {"compra", "venda"} or str(trade.get("event_type", "trade")) not in {"", "trade", "exercise_put_assignment"}:
+    event_type = str(trade.get("event_type", "trade"))
+    if not code or note_side not in {"compra", "venda"} or event_type not in {"", "trade", "exercise_put_assignment", "exercise_call_assignment"}:
         return []
     short_strategies = {"venda", "wheel", "venda coberta", "call coberta"}
     matches = []
@@ -488,7 +481,11 @@ def option_closure_matches(legacy, trade: dict[str, Any]) -> list[dict[str, Any]
         if str(operation.get("Ativo", "")).strip().upper() != code:
             continue
         strategy = str(operation.get("Estratégia", operation.get("Estrategia", ""))).strip().lower()
-        closes_short = note_side == "compra" and strategy in short_strategies
+        closes_short = (
+            note_side == "compra" and strategy in short_strategies
+        ) or (
+            event_type == "exercise_call_assignment" and note_side == "venda" and strategy in short_strategies
+        )
         closes_long = note_side == "venda" and strategy == "compra"
         if closes_short or closes_long:
             matches.append(operation)
