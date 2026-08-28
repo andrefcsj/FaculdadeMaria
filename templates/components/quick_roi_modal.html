@@ -1,0 +1,13 @@
+<link rel="stylesheet" href="{{ url_for('static', filename='quick_roi.css', v='20260828.1') }}">
+<dialog id="quickRoi" class="quick-roi" aria-labelledby="quickRoiTitle">
+  <header><div><small>CONTAS RÁPIDAS · OPÇÕES</small><h2 id="quickRoiTitle">Calculadora de ROI</h2><p>Três valores. Seu retorno e a distância até o strike.</p></div><button type="button" data-close-quick-roi aria-label="Fechar calculadora">×</button></header>
+  <form id="quickRoiForm" autocomplete="off">
+    <label>Strike (R$)<input name="strike" inputmode="decimal" placeholder="41,42" autofocus></label>
+    <label>Preço / prêmio da opção (R$)<input name="premium" inputmode="decimal" placeholder="0,55"></label>
+    <label>Preço atual da ação (R$)<input name="spot" inputmode="decimal" placeholder="42,70"></label>
+  </form>
+  <div class="quick-roi-results" aria-live="polite" aria-atomic="true"><section><small>ROI BRUTO SOBRE O STRIKE</small><strong id="quickRoiValue">—</strong><span>Prêmio ÷ strike × 100</span></section><section><small>DISTÂNCIA DO STRIKE</small><strong id="quickRoiDistance">—</strong><span id="quickRoiDirection">(Strike ÷ preço atual − 1) × 100</span></section></div>
+  <p class="quick-roi-note" id="quickRoiNote">Informe valores positivos; o prêmio pode ser zero. ROI sem custos ou impostos, não anualizado.</p>
+  <footer><button type="button" id="quickRoiReset">Limpar valores</button><button type="button" data-close-quick-roi>Concluir</button></footer>
+</dialog>
+<script src="{{ url_for('static', filename='quick_roi.js', v='20260828.1') }}"></script>

@@ -68,8 +68,8 @@ class DashboardServiceTests(unittest.TestCase):
         self.assertFalse(any(item["option_code"] == "PETRT123" for item in view.attention_items))
         self.assertEqual(view.roll_candidates, ())
 
-    def test_put_at_or_below_strike_only_becomes_critical_with_ten_days_or_less(self):
-        operation = dict(self.operations[0], Cotacao_n=Decimal("18"), Strike_n=Decimal("18"), Dias=30, Alerta="OK")
+    def test_put_below_strike_only_becomes_critical_with_ten_days_or_less(self):
+        operation = dict(self.operations[0], Cotacao_n=Decimal("17.90"), Strike_n=Decimal("18"), Dias=30, Alerta="OK")
         view = build_dashboard_view_model([operation], [], self.indicators, self.history, self.config)
         self.assertFalse(any(item["option_code"] == "PETRT123" for item in view.attention_items))
 

@@ -37,6 +37,7 @@
 </div>
     <div class="nav-group nav-group--strategies">
 <span class="nav-group__title">ESTRATÉGIAS</span>
+<a href="#roi-rapido" data-open-quick-roi><svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 12h2M14 12h2M8 16h2M14 16h2"/></svg>Calculadora de ROI</a>
 <a href="/calculadora-roi" class="{% if request.path=='/calculadora-roi' %}active{% endif %}">
 <svg viewBox="0 0 24 24">
 <circle cx="8" cy="8" r="3"/>
@@ -61,10 +62,6 @@
 </div>
     <div class="nav-group">
 <span class="nav-group__title">OPERAÇÕES</span>
-<a href="/operacoes-abertas?nova=1" data-open-new-operation>
-<svg viewBox="0 0 24 24">
-<path d="M12 5v14M5 12h14"/>
-</svg>Cadastrar Operação</a>
 <a href="/operacoes-abertas" class="{% if request.path=='/operacoes-abertas' %}active{% endif %}">
 <svg viewBox="0 0 24 24">
 <path d="M4 7h16v13H4zM7 7V4h10v3M4 12h16"/>
@@ -217,7 +214,9 @@
   <main class="content">{% block content %}{% endblock %}</main>
 </section>
 </div>
-{% include 'components/new_operation_modal.html' %}{% include 'components/calculation_simulator_modal.html' %}<input type="checkbox" id="themeToggle" hidden>
+{% include 'components/new_operation_modal.html' %}{% include 'components/calculation_simulator_modal.html' %}
+{% include 'components/quick_roi_modal.html' %}
+<input type="checkbox" id="themeToggle" hidden>
 <script src="{{ url_for('static', filename='theme.js', v='20260819.1') }}">
 </script>
 <script src="{{ url_for('static', filename='draggable_dialogs.js', v='20260819.1') }}">

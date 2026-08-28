@@ -59,7 +59,7 @@ def _is_in_the_money(operation: Mapping[str, object]) -> bool:
     spot = _number(operation.get("Cotacao_n"))
     strike = _number(operation.get("Strike_n"))
     option_type = str(operation.get("Tipo", "PUT")).upper()
-    return bool(spot > 0 and strike > 0 and ((option_type == "PUT" and spot <= strike) or (option_type == "CALL" and spot >= strike)))
+    return bool(spot > 0 and strike > 0 and ((option_type == "PUT" and spot < strike) or (option_type == "CALL" and spot > strike)))
 
 
 def _attention_item(option_code: object, categories: list[dict[str, str]]) -> dict[str, object]:
@@ -233,7 +233,7 @@ def build_dashboard_view_model(
         strike = _number(operation.get("Strike_n"))
         option_type = str(operation.get("Tipo", "PUT")).upper()
         if spot > 0 and strike > 0:
-            in_the_money = (option_type == "PUT" and spot <= strike) or (option_type == "CALL" and spot >= strike)
+            in_the_money = _is_in_the_money(operation)
             if in_the_money and days <= 10:
                 distance = abs(spot - strike) / strike * 100
                 if _has_exercise_interest(operation):
@@ -292,6 +292,7 @@ def build_dashboard_view_model(
             option_type=str(operation.get("Tipo", "PUT")).upper(),
             strike=Decimal(str(_number(operation.get("Strike_n", operation.get("Strike"))) or 0)),
             expiry=_operation_expiry(operation.get("Vencimento")),
+            spot_price=Decimal(str(_number(operation.get("Cotacao_n")))),
         )
 
     probability_by_code: dict[str, object] = {}
@@ -306,7 +307,7 @@ def build_dashboard_view_model(
         if spot <= 0 or strike <= 0:
             situation, situation_class = "Não calculada", "unknown"
         else:
-            exercised = (option_type == "PUT" and spot <= strike) or (option_type == "CALL" and spot >= strike)
+            exercised = _is_in_the_money(operation)
             situation, situation_class = ("Seria exercida", "exercised") if exercised else ("Não seria exercida", "safe")
         quote = quotes.get(code, {})
         estimate = probability_by_code[code]

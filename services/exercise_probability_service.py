@@ -60,11 +60,14 @@ def _fetch_yahoo_history(ticker:str):
     spot=Decimal(str(price)) if price not in (None,0) else (closes[-1] if closes else None)
     out=(spot,closes); _CACHE[ticker]=(now,out); return out
 
-def estimate_operation_exercise_probability(*,ticker:str,option_type:str,strike:Decimal,expiry:date|None,as_of:date|None=None)->ExerciseProbabilityEstimate:
+def estimate_operation_exercise_probability(*,ticker:str,option_type:str,strike:Decimal,expiry:date|None,as_of:date|None=None,spot_price:Decimal|None=None)->ExerciseProbabilityEstimate:
     as_of=as_of or date.today()
+    if spot_price is not None and (not spot_price.is_finite() or spot_price <= 0):
+        return ExerciseProbabilityEstimate(None,'Indisponível','Dados insuficientes','Cotação atual indisponível; cenário não calculado.')
     if not ticker or expiry is None or strike<=0:return ExerciseProbabilityEstimate(None,'Indisponível','Dados insuficientes','Cotação, strike ou vencimento ausente.')
     try:
-        spot,closes=_fetch_yahoo_history(ticker); vol=annualized_historical_volatility(closes)
+        history_spot,closes=_fetch_yahoo_history(ticker); vol=annualized_historical_volatility(closes)
+        spot = spot_price if spot_price is not None else history_spot
         if spot is None or vol is None:return ExerciseProbabilityEstimate(None,'Indisponível','Dados insuficientes','Histórico insuficiente; nenhuma volatilidade foi inventada.',spot_price=spot)
         return estimate_exercise_probability(option_type=option_type,spot_price=spot,strike=strike,days_to_expiry=max((expiry-as_of).days,0),annual_volatility=vol)
     except Exception:

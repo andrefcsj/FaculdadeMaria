@@ -1,0 +1,37 @@
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const vm = require('node:vm');
+const node = () => ({value:'', textContent:'', handlers:{}, addEventListener(k,f){this.handlers[k]=f}, focus(){}});
+const ids = Object.fromEntries(['quickRoi','quickRoiForm','quickRoiValue','quickRoiDistance','quickRoiDirection','quickRoiReset'].map(id=>[id,node()]));
+const form = ids.quickRoiForm;
+form.elements = {strike:node(),premium:node(),spot:node()};
+form.reset = () => Object.values(form.elements).forEach(field=>field.value='');
+ids.quickRoi.querySelectorAll = () => [];
+const document = {getElementById:id=>ids[id],querySelectorAll:()=>[]};
+vm.runInNewContext(fs.readFileSync(require.resolve('../static/quick_roi.js'),'utf8'), {document});
+function input(strike,premium,spot){
+  Object.assign(form.elements.strike,{value:strike});
+  Object.assign(form.elements.premium,{value:premium});
+  Object.assign(form.elements.spot,{value:spot});
+  form.handlers.input();
+}
+input('41,42','0,55','42,70');
+assert.equal(ids.quickRoiValue.textContent,'1,33%');
+assert.equal(ids.quickRoiDistance.textContent,'-3,00%');
+assert.equal(ids.quickRoiDirection.textContent,'Strike abaixo do preço atual');
+input('20','0','20');
+assert.equal(ids.quickRoiValue.textContent,'0,00%');
+assert.equal(ids.quickRoiDistance.textContent,'0,00%');
+input('0','0.55','42.70');
+assert.equal(ids.quickRoiValue.textContent,'—');
+assert.equal(ids.quickRoiDistance.textContent,'—');
+input('41,42','-1','texto');
+assert.equal(ids.quickRoiValue.textContent,'—');
+assert.equal(ids.quickRoiDistance.textContent,'—');
+input('1.000,00','10,00','900,00');
+assert.equal(ids.quickRoiValue.textContent,'1,00%');
+assert.equal(ids.quickRoiDistance.textContent,'11,11%');
+ids.quickRoiReset.handlers.click();
+assert.equal(ids.quickRoiValue.textContent,'—');
+assert.equal(ids.quickRoiDistance.textContent,'—');
+console.log('ROI: cálculos, vírgula decimal, zero, inválidos e reset OK');
