@@ -45,6 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const match = normalized.match(/^([A-Z]{4})(\d)/);
     return match ? `${match[1]}${match[2]}` : normalized.slice(0, 5);
   };
+  const isEquity = () => Boolean(window.brokerageNoteImport?.isEquity?.());
   const saveLabel = () => window.brokerageNoteImport?.buttonLabel?.() || '＋ Cadastrar operação';
 
   const setTone = (element, tone) => {
@@ -57,6 +58,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const quantity = Math.max(num(fields.contracts.value), 0) * 100;
     const strike = num(fields.strike.value);
     const premium = num(fields.premium.value);
+    if (isEquity()) {
+      previewRoi.textContent = '--';
+      setTone(previewRoi, 'is-unavailable');
+      previewRoiHint.textContent = 'Negociação de ativo à vista.';
+      return;
+    }
     if (strategy === 'Compra') {
       previewRoi.textContent = '--';
       setTone(previewRoi, 'is-unavailable');
@@ -80,14 +87,14 @@ document.addEventListener('DOMContentLoaded', () => {
   let previewSequence = 0;
   const scheduleProbabilityPreview = () => {
     clearTimeout(previewTimer);
+    const sequence = ++previewSequence;
     const strike = num(fields.strike.value);
-    if (!strike || !fields.expiry.value || !(fields.under.value || infer(fields.code.value))) {
+    if (isEquity() || !strike || !fields.expiry.value || !(fields.under.value || infer(fields.code.value))) {
       previewExercise.textContent = '--';
       setTone(previewExercise, 'is-unavailable');
-      previewExerciseHint.textContent = 'Preencha cotação, strike e vencimento.';
+      previewExerciseHint.textContent = isEquity() ? 'Não se aplica a ativos à vista.' : 'Preencha cotação, strike e vencimento.';
       return;
     }
-    const sequence = ++previewSequence;
     previewExercise.textContent = '…';
     setTone(previewExercise, 'is-unavailable');
     previewExerciseHint.textContent = 'Calculando com volatilidade histórica...';
@@ -134,7 +141,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const isSale = form.querySelector('input[name="Estrategia"]:checked')?.value === 'Venda';
     const isCall = form.querySelector('input[name="Tipo"]:checked')?.value === 'CALL';
     const asset = (fields.under.value || infer(fields.code.value)).trim().toUpperCase();
-    if (!isSale || !isCall || !asset) {
+    if (isEquity() || !isSale || !isCall || !asset) {
       averageCostBox.hidden = true;
       return;
     }
@@ -161,16 +168,31 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const updateSummary = () => {
+    const equity = isEquity();
+    [fields.strike, fields.expiry].forEach(field => {
+      field.required = !equity;
+      field.disabled = equity;
+      field.closest('label').hidden = equity;
+    });
+    [fields.code, fields.under, fields.contracts, fields.premium, fields.costs, fields.irrf].forEach(field => { field.readOnly = equity; });
+    form.querySelectorAll('input[name="Tipo"], input[name="Estrategia"]').forEach(field => { field.disabled = equity; });
+    form.querySelector('.new-op-grid--toggles').hidden = equity;
+    form.querySelector('.exercise-interest-box').hidden = equity;
+    form.querySelector('.new-op-insights').hidden = equity;
+    q('newCodeLabel').textContent = equity ? 'Código do ativo' : 'Código da opção';
+    q('newPriceLabel').textContent = equity ? 'Preço unitário' : 'Prêmio unitário';
+    q('newQuantityHint').textContent = equity ? 'Unidades negociadas na nota' : 'Contratos cadastrados';
+    coverageHint.textContent = equity ? 'Ativo negociado à vista.' : 'Na CALL coberta, informe a ação que servirá de cobertura.';
     const code = fields.code.value.trim().toUpperCase();
-    const underlying = fields.under.value || infer(code);
-    const quantity = Math.max(num(fields.contracts.value), 0) * 100;
+    const underlying = equity ? code : (fields.under.value || infer(code));
+    const quantity = Math.max(num(fields.contracts.value), 0) * (equity ? 1 : 100);
     const total = Math.max(num(fields.premium.value), 0) * quantity;
     const strategy = form.querySelector('input[name="Estrategia"]:checked')?.value;
     const isPurchase = strategy === 'Compra';
     if (code.startsWith('CPLE') || !fields.under.value) fields.under.value = underlying;
     summaryCode.textContent = code || 'Nova operação';
-    summaryDetails.textContent = `${underlying || 'Ativo'} • ${quantity || 0} ações • Strike ${brl(num(fields.strike.value))}`;
-    summaryValueLabel.textContent = isPurchase ? 'Débito bruto estimado' : 'Prêmio bruto estimado';
+    summaryDetails.textContent = equity ? `${underlying} • ${quantity} unidades • Mercado à vista` : `${underlying || 'Ativo'} • ${quantity || 0} ações • Strike ${brl(num(fields.strike.value))}`;
+    summaryValueLabel.textContent = equity ? (isPurchase ? 'Valor bruto da compra' : 'Valor bruto da venda') : isPurchase ? 'Débito bruto estimado' : 'Prêmio bruto estimado';
     summaryPremium.textContent = brl(total);
     summaryPremium.classList.toggle('is-debit', isPurchase);
     updateRoiPreview();
@@ -195,6 +217,7 @@ document.addEventListener('DOMContentLoaded', () => {
   fields.code.addEventListener('input', () => {
     clearTimeout(lookupTimer);
     const sequence = ++lookupSequence;
+    if (isEquity()) return;
     if (fields.code.value.trim().toUpperCase().startsWith('CPLE') || !fields.under.value) fields.under.value = infer(fields.code.value);
     updateSummary();
     lookupTimer = setTimeout(async () => {
@@ -220,6 +243,18 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 450);
   });
 
+  document.addEventListener('brokerage-import-reset', () => {
+    clearTimeout(lookupTimer);
+    ++lookupSequence;
+    clearTimeout(previewTimer);
+    ++previewSequence;
+    ++averageCostSequence;
+  });
+  document.addEventListener('brokerage-trade-applied', () => {
+    clearTimeout(lookupTimer);
+    ++lookupSequence;
+  });
+
   const openModal = () => {
     window.segmentedDates?.enhance(fields.expiry);
     modal.hidden = false;
@@ -228,6 +263,17 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => fields.code.focus(), 50);
   };
   const closeModal = () => {
+    if (saveButton.disabled) return;
+    window.brokerageNoteImport?.finish?.();
+    clearTimeout(lookupTimer);
+    clearTimeout(previewTimer);
+    ++lookupSequence;
+    ++previewSequence;
+    ++averageCostSequence;
+    form.reset();
+    hint.textContent = 'Digite o código para preencher os dados disponíveis';
+    saveButton.textContent = saveLabel();
+    updateSummary();
     modal.hidden = true;
     modal.setAttribute('aria-hidden', 'true');
     document.body.style.overflow = '';
@@ -312,6 +358,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
       window.brokerageNoteImport?.finish?.();
+      saveButton.disabled = false;
       closeModal();
       form.reset();
       fields.contracts.value = '1';

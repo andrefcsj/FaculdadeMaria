@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const operationForm = document.getElementById('newOperationForm');
   if (!input || !result || !operationForm) return;
 
+  let importSequence = 0;
   let note = null;
   let selectedTrade = null;
   let selectedIndex = -1;
@@ -13,9 +14,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const q = id => document.getElementById(id);
   const brl = value => new Intl.NumberFormat('pt-BR', {style: 'currency', currency: 'BRL'}).format(Number(value) || 0);
 
+  const isEquity = trade => ['equity_purchase', 'equity_sale'].includes(trade?.event_type);
+
   function tradeLabel(trade) {
     const done = processedTrades.has(Number(trade.trade_index)) ? '✓ ' : '';
-    return `${done}${trade.option_code} • ${trade.side} • ${trade.quantity} opções • ${brl(trade.gross_value)}`;
+    return `${done}${trade.option_code} • ${trade.side} • ${trade.quantity} ${isEquity(trade) ? 'unidades' : 'opções'} • ${brl(trade.gross_value)}`;
   }
 
   function refreshOptions() {
@@ -38,7 +41,9 @@ document.addEventListener('DOMContentLoaded', () => {
       ? `Encerramento confirmado para ${selectedTrade.option_code}. Ao salvar, a posição será fechada.`
       : candidate
         ? `Possível encerramento ${candidate.match_type}. Confira as quantidades antes de continuar.`
-        : `Confira strike e vencimento de ${selectedTrade.option_code} antes de salvar.`;
+        : isEquity(selectedTrade)
+          ? `Confira a negociação à vista de ${selectedTrade.option_code}. A carteira e o caixa serão atualizados.`
+          : `Confira strike e vencimento de ${selectedTrade.option_code} antes de salvar.`;
     footer.textContent = `${prefix}${progress} ${message}${remaining > 1 ? ' As demais negociações serão apresentadas em seguida.' : ''}`.trim();
   }
 
@@ -57,7 +62,8 @@ document.addEventListener('DOMContentLoaded', () => {
     q('newOptionHint').textContent = 'Buscando os dados desta opção...';
 
     q('newOptionCode').value = selectedTrade.option_code;
-    q('newContracts').value = selectedTrade.contracts;
+    q('newContracts').value = isEquity(selectedTrade) ? selectedTrade.quantity : selectedTrade.contracts;
+    if (isEquity(selectedTrade)) q('newUnderlying').value = selectedTrade.underlying_asset;
     q('newPremium').value = brl(selectedTrade.unit_price);
     q('newCosts').value = brl(selectedTrade.allocated_costs);
     q('newIrrf').value = brl(selectedTrade.allocated_irrf);
@@ -80,7 +86,7 @@ document.addEventListener('DOMContentLoaded', () => {
     q('newOptionCode').dispatchEvent(new Event('change', {bubbles: true}));
     q('newPremium').dispatchEvent(new Event('change', {bubbles: true}));
     document.dispatchEvent(new CustomEvent('brokerage-trade-applied', {
-      detail: {optionCode: selectedTrade.option_code, tradeIndex: selectedTrade.trade_index, tradeDate: note.trade_date}
+      detail: {optionCode: selectedTrade.option_code, tradeIndex: selectedTrade.trade_index, tradeDate: note.trade_date, eventType: selectedTrade.event_type, underlyingAsset: selectedTrade.underlying_asset}
     }));
 
     const candidate = selectedTrade.closure_candidate;
@@ -99,6 +105,10 @@ document.addEventListener('DOMContentLoaded', () => {
   input.addEventListener('change', async () => {
     const file = input.files?.[0];
     if (!file) return;
+    window.brokerageNoteImport.finish();
+    operationForm.reset();
+    q('newOptionCode').dispatchEvent(new Event('change', {bubbles: true}));
+    const sequence = ++importSequence;
     result.hidden = false;
     result.innerHTML = '<strong>Lendo nota BTG/Necton...</strong>';
     const body = new FormData();
@@ -106,6 +116,7 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       const response = await fetch('/api/notas-corretagem/analisar', {method: 'POST', body});
       const data = await response.json();
+      if (sequence !== importSequence) return;
       if (!response.ok || !data.ok) throw new Error(data.error || 'Não foi possível ler a nota.');
       note = data.note;
       processedTrades.clear();
@@ -118,6 +129,7 @@ document.addEventListener('DOMContentLoaded', () => {
       q('brokerageTradeSelect').addEventListener('change', event => applyTrade(event.target.value));
       applyTrade(0);
     } catch (error) {
+      if (sequence !== importSequence) return;
       note = null;
       selectedTrade = null;
       result.innerHTML = `<strong>Não foi possível importar:</strong> ${error.message}`;
@@ -125,6 +137,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   window.brokerageNoteImport = {
+    isEquity: () => isEquity(selectedTrade),
     preparePayload(payload) {
       if (!note || !selectedTrade) return payload;
       const prepared = {
@@ -148,6 +161,8 @@ document.addEventListener('DOMContentLoaded', () => {
       return `Salvar negociação ${processedTrades.size + 1} de ${note.trades.length}`;
     },
     finish() {
+      ++importSequence;
+      document.dispatchEvent(new Event('brokerage-import-reset'));
       note = null;
       selectedTrade = null;
       selectedIndex = -1;

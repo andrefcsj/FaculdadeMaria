@@ -18,10 +18,10 @@
         </div>
         <div class="new-op-grid">
           <label>Ativo subjacente<input id="newUnderlying" placeholder="Ex.: CPLE3"><small id="newCoverageHint">Na CALL coberta, informe a ação que servirá de cobertura.</small></label>
-          <label>Código da opção<input id="newOptionCode" required autocomplete="off" placeholder="Ex.: PETRT123"><small id="newOptionHint">Digite o código para preencher os dados disponíveis</small></label>
+          <label><span id="newCodeLabel">Código da opção</span><input id="newOptionCode" required autocomplete="off" placeholder="Ex.: PETRT123"><small id="newOptionHint">Digite o código para preencher os dados disponíveis</small></label>
           <label>Strike<input id="newStrike" class="new-money" required inputmode="decimal" placeholder="R$ 0,00"></label>
-          <label>Quantidade<input id="newContracts" required inputmode="numeric" value="1"><small>Contratos cadastrados</small></label>
-          <label>Prêmio unitário<input id="newPremium" class="new-money" required inputmode="decimal" placeholder="R$ 0,00"></label>
+          <label>Quantidade<input id="newContracts" required inputmode="numeric" value="1"><small id="newQuantityHint">Contratos cadastrados</small></label>
+          <label><span id="newPriceLabel">Prêmio unitário</span><input id="newPremium" class="new-money" required inputmode="decimal" placeholder="R$ 0,00"></label>
           <label>Vencimento<input id="newExpiry" type="date" required></label>
           <label>Cotação atual<input id="newSpot" class="new-money" inputmode="decimal" placeholder="R$ 0,00"></label>
           <label>Custos<input id="newCosts" class="new-money" inputmode="decimal" value="R$ 0,00"></label>

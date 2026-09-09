@@ -12,6 +12,7 @@ from services.brokerage_note_service import imported_note_exists, option_closure
 from services.operation_close_service import calculate_operation_close
 from services.closed_operations_service import save_closure_metadata
 from services.operation_preferences_service import normalize_exercise_interest, save_operation_metadata
+from services.equity_note_import_service import import_equity_trades
 from services.equity_position_service import create_put_assignment_lot, exercise_covered_call, save_equity_lot, validate_covered_call
 from services.exercise_probability_service import estimate_exercise_probability, estimate_operation_exercise_probability
 
@@ -246,6 +247,11 @@ def register(app, legacy, market_path):
             note_payload = payload.get("Nota_corretagem") if isinstance(payload.get("Nota_corretagem"), dict) else None
             if note_payload and imported_note_exists(legacy, note_payload):
                 raise ValueError("Esta negociação da nota já foi importada.")
+            if note_payload and note_payload.get("trade", {}).get("event_type") in {"equity_purchase", "equity_sale"}:
+                trade = note_payload["trade"]
+                if str(trade.get("option_code", "")).upper() != option_code:
+                    raise ValueError("O ativo não corresponde à negociação da nota.")
+                return jsonify(import_equity_trades(legacy, note_payload, [trade]))
             if payload.get("Encerrar_operacao_id"):
                 if not note_payload:
                     raise ValueError("A nota de recompra é obrigatória para o encerramento automático.")
