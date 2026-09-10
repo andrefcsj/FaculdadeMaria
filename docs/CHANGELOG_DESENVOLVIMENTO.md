@@ -15,6 +15,13 @@ Seu objetivo é oferecer uma visão cronológica e legível da evolução oficia
 
 ---
 
+## 2026-09-09 — Importação de ativos à vista e cancelamento
+
+- Cadastro de notas à vista sem strike/vencimento, usando a carteira de ativos e a quantidade real.
+- Cancelamento limpa nota, campos e progresso; respostas pendentes não restauram o rascunho.
+- Testes de API e navegador cobrem LFTB11, duplicidade, notas mistas e respostas atrasadas.
+- Detalhes: `SPRINT_IMPORTACAO_ATIVOS_CANCELAMENTO.md`.
+
 ## 2026-08-20 — Atualização centralizada de mercado e Dashboard da carteira
 
 Status: `Implementado`

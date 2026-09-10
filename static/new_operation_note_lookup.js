@@ -1,4 +1,5 @@
 let brokerageLookupSequence = 0;
+document.addEventListener('brokerage-import-reset', () => { ++brokerageLookupSequence; });
 
 document.addEventListener('brokerage-trade-applied', async event => {
   const code = String(event.detail?.optionCode || '').trim().toUpperCase();
@@ -20,6 +21,13 @@ document.addEventListener('brokerage-trade-applied', async event => {
   if (spot) spot.value = '';
   if (under) under.value = '';
   if (hint) hint.textContent = 'Buscando strike e vencimento da opção importada...';
+
+  if (['equity_purchase', 'equity_sale'].includes(event.detail?.eventType)) {
+    if (under) under.value = event.detail.underlyingAsset || code;
+    if (hint) hint.textContent = 'Negociação à vista: não possui strike nem vencimento.';
+    strike?.dispatchEvent(new Event('change', {bubbles: true}));
+    return;
+  }
 
   try {
     const query = tradeDate ? `?trade_date=${encodeURIComponent(tradeDate)}` : '';

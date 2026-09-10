@@ -93,7 +93,8 @@ class CashAndDarfTests(unittest.TestCase):
         self.assertEqual(client.get("/novos-aportes").status_code,200)
         self.assertEqual(client.get("/darfs-pagos").status_code,200)
         html=client.get("/").get_data(as_text=True)
-        self.assertLess(html.index("Cadastrar Operação"),html.index("Operações Abertas"))
+        self.assertIn('href="/operacoes-abertas"', html)
+        self.assertIn('id="newOperationModal"', html)
         self.assertIn("Novos Aportes",html);self.assertIn("DARFs Pagos",html)
 
 
