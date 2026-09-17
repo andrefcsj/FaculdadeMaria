@@ -1,4 +1,5 @@
 import unittest
+from unittest.mock import patch
 
 from app import app
 
@@ -51,6 +52,26 @@ class PremiumNavigationTests(unittest.TestCase):
         self.assertIn("Prêmio integral", page)
         self.assertIn("Prêmio líquido", page)
         self.assertIn("Totais do período", page)
+
+    def test_premium_filters_route_and_validation(self):
+        from tests.test_premium_history_service import PremiumHistoryServiceTests
+        fixture = PremiumHistoryServiceTests()
+        fixture.setUp()
+        with patch("app.legacy.load_all", return_value=(fixture.operations, [], {})):
+            response = self.client.get("/premios-recebidos?asset=PETR4&period=range&start_date=2026-08-12&end_date=2026-08-12")
+            self.assertEqual(response.status_code, 200)
+            page = response.get_data(as_text=True)
+            self.assertIn('name="asset"', page)
+            self.assertIn('value="PETR4" selected', page)
+            self.assertIn("PETRT500", page)
+            self.assertNotIn("BBDCT20", page)
+            self.assertIn("R$ 303,50", page)
+            invalid = self.client.get("/premios-recebidos?start_date=2026-09-01&end_date=2026-08-01").get_data(as_text=True)
+            self.assertIn('role="alert"', invalid)
+            self.assertIn("A data final deve ser igual ou posterior", invalid)
+            empty = self.client.get("/premios-recebidos?asset=PETR4&month=2025-01").get_data(as_text=True)
+            self.assertIn("Nenhum prêmio encontrado", empty)
+            self.assertNotIn("PETRT500", empty)
 
 
 if __name__ == "__main__":

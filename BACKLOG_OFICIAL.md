@@ -54,3 +54,7 @@
 
 Toda nova ideia aprovada pelo Product Owner deverá ser registrada neste
 documento antes de entrar em uma Sprint.
+
+## Entrega solicitada — 17/09/2026
+
+- Filtros por ação e período no histórico de prêmios recebidos, com totais filtrados.

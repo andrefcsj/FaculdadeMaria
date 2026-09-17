@@ -62,3 +62,12 @@ da CVM e confirmação manual de preços intraday.
 -   O Radar deve buscar oportunidades novas, nunca listar operações
     abertas.
 -   O Decision Engine permanece como núcleo do sistema.
+
+## Sprint — Filtros de prêmios recebidos (17/09/2026)
+
+- Consulta por ação combinada com mês, ano ou intervalo de datas inclusivo.
+- Intervalos aceitam somente início ou somente fim; usam a data de abertura da venda.
+- Resumo de valores bruto/líquido e quantidade acompanha os resultados filtrados.
+- Validação de datas e estado vazio sem retorno indevido ao histórico completo.
+- Links existentes com `month` e `year` continuam compatíveis.
+- Validação: 14 testes e 14 subcasos aprovados; fluxo conferido no Chromium com PETR4, intervalo inclusivo, mês vazio e limpeza dos filtros.
