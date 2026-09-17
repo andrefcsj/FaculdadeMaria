@@ -259,6 +259,10 @@ def premios_recebidos():
         operations,
         selected_month=request.args.get("month", "").strip(),
         selected_year=request.args.get("year", "").strip(),
+        selected_asset=request.args.get("asset", "").strip(),
+        start_date=request.args.get("start_date", "").strip(),
+        end_date=request.args.get("end_date", "").strip(),
+        period=request.args.get("period", "").strip(),
     )
     return render_template("premios_recebidos.html", premium_history=premium_history)
 
