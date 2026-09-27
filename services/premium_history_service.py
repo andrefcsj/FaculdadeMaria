@@ -25,6 +25,7 @@ def build_premium_history(
     legacy: Any,
     operations: Sequence[Mapping[str, object]],
     *,
+    closures: Mapping[str, Mapping[str, object]] | None = None,
     selected_month: str = "",
     selected_year: str = "",
     selected_asset: str = "",
@@ -32,8 +33,16 @@ def build_premium_history(
     end_date: str = "",
     period: str = "",
 ) -> dict[str, object]:
-    """Deriva o relatório diretamente das operações, sem duplicar persistência."""
+    """Deriva créditos de venda e o caixa líquido após o encerramento.
+
+    ``gross`` preserva o crédito bruto que ocorreu na abertura. ``net`` é o
+    resultado que permaneceu no caixa da operação: em uma recompra, usa o
+    resultado realizado, que já inclui o débito de recompra e eventuais custos
+    de fechamento importados da nota. Exercícios mantêm somente o prêmio da
+    opção — a movimentação das ações não deve inflar este relatório.
+    """
     contract_size = _number(legacy.load_config().get("Tamanho contrato opcoes", 100), 100)
+    closures = closures or {}
     candidates = []
     for operation in operations:
         strategy = str(operation.get("Estratégia", "Venda")).strip().lower()
@@ -45,9 +54,27 @@ def build_premium_history(
         gross = _number(operation.get("Premio_bruto"))
         if not gross:
             gross = _number(operation.get("Premio_opcao_n", operation.get("Premio_opcao"))) * quantity
-        net = _number(operation.get("Premio_liquido"), gross)
+        opening_net = _number(operation.get("Premio_liquido"), gross)
         if gross <= 0:
             continue
+        operation_id = str(operation.get("ID", ""))
+        closure = closures.get(operation_id, {})
+        is_closed = str(operation.get("Status", "")).strip().lower() == "encerrada"
+        method = str(closure.get("method", "")).strip().lower()
+        # Resultado_realizado é a fonte de verdade em recompras: ele é o
+        # prêmio líquido de abertura menos recompra e custos de fechamento.
+        # Em exercício, o resultado pode incluir a liquidação das ações e não
+        # pertence ao relatório de prêmios; em cancelamento não há caixa retido.
+        if method == "recompra":
+            net = _number(operation.get("Resultado_realizado"))
+        elif method == "cancelada":
+            net = 0.0
+        elif is_closed and not method:
+            # Registros históricos sem metadados de fechamento mantêm a
+            # compatibilidade usando o resultado já gravado.
+            net = _number(operation.get("Resultado_realizado"))
+        else:
+            net = opening_net
         asset = _underlying(legacy, operation)
         candidates.append({
             "date": opened_at.isoformat(),
@@ -59,6 +86,10 @@ def build_premium_history(
             "quantity": quantity,
             "gross": gross,
             "net": net,
+            "opening_net": opening_net,
+            "status": "Encerrada" if is_closed else "Aberta",
+            "close_method": method,
+            "close_date": str(closure.get("close_date", "")),
         })
 
     months = tuple(sorted({row["month"] for row in candidates}, reverse=True))
@@ -117,5 +148,6 @@ def build_premium_history(
         "selected_year": effective_year,
         "total_quantity": sum(int(row["quantity"]) for row in rows),
         "total_gross": sum(float(row["gross"]) for row in rows),
+        "total_opening_net": sum(float(row["opening_net"]) for row in rows),
         "total_net": sum(float(row["net"]) for row in rows),
     }

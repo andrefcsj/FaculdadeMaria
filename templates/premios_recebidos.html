@@ -1,12 +1,12 @@
 {% extends 'base.html' %}
 {% block title %}Prêmios Recebidos | FaculdadeMaria{% endblock %}
 {% block page_title %}PRÊMIOS RECEBIDOS{% endblock %}
-{% block page_subtitle %}Histórico bruto e líquido das vendas de opções{% endblock %}
+{% block page_subtitle %}Créditos de venda e caixa líquido das opções{% endblock %}
 {% macro brl(value) -%}R$ {{ '{:,.2f}'.format(value|float)|replace(',', 'X')|replace('.', ',')|replace('X', '.') }}{%- endmacro %}
 {% block content %}
 <div class="premium-history-page">
   <section class="premium-history-hero">
-    <div><span>HISTÓRICO FINANCEIRO</span><h1>Todos os prêmios recebidos</h1><p>Valores derivados automaticamente das operações cadastradas. O líquido já desconta custos, taxas, corretagens e IRRF informados na entrada.</p></div>
+    <div><span>HISTÓRICO FINANCEIRO</span><h1>Prêmios e caixa líquido das opções</h1><p>O crédito bruto registra a venda. O valor líquido no caixa desconta custos de abertura e, em operações encerradas, a recompra e os custos informados no fechamento.</p></div>
     <a href="/">← Voltar ao Dashboard</a>
   </section>
 
@@ -39,8 +39,8 @@
   {% else %}
   <div class="premium-result-heading"><strong>{{ premium_history.selected_asset or 'Todas as ações' }} · {% if premium_history.period == 'month' %}{{ premium_history.selected_month|month_br }}{% elif premium_history.period == 'year' %}{{ premium_history.selected_year }}{% elif premium_history.period == 'range' %}{{ premium_history.start_date|date_br if premium_history.start_date else 'Início do histórico' }} até {{ premium_history.end_date|date_br if premium_history.end_date else 'Fim do histórico' }}{% else %}Todo o histórico{% endif %}</strong><span>{{ premium_history.rows|length }} lançamento(s)</span></div>
   <section class="premium-summary" aria-label="Totais dos resultados filtrados">
-    <div><span>Prêmio integral</span><strong>{{ brl(premium_history.total_gross) }}</strong></div>
-    <div class="premium-summary-net"><span>Prêmio líquido</span><strong>{{ brl(premium_history.total_net) }}</strong></div>
+    <div><span>Crédito bruto nas vendas</span><strong>{{ brl(premium_history.total_gross) }}</strong></div>
+    <div class="premium-summary-net"><span>Valor líquido no caixa</span><strong>{{ brl(premium_history.total_net) }}</strong></div>
     <div><span>Quantidade de opções</span><strong>{{ premium_history.total_quantity }}</strong></div>
   </section>
   {% endif %}
@@ -49,8 +49,8 @@
     {% if premium_history.errors %}<div class="premium-history-empty"><strong>Revise o período informado</strong><p>Corrija os filtros acima para consultar os prêmios.</p></div>
     {% elif premium_history.rows %}
     <table class="premium-history-table">
-      <thead><tr><th>Data</th><th>Ativo</th><th>Código da opção</th><th>Quantidade de opções</th><th>Prêmio integral</th><th>Prêmio líquido</th></tr></thead>
-      <tbody>{% for row in premium_history.rows %}<tr><td>{{ row.date|date_br }}</td><td><span class="premium-history-asset"><img src="{{ row.logo_url }}" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='grid'"><i style="display:none">{{ row.asset[:2] }}</i><strong>{{ row.asset }}</strong></span></td><td><strong>{{ row.option_code }}</strong></td><td>{{ row.quantity }}</td><td>{{ brl(row.gross) }}</td><td class="premium-history-net">{{ brl(row.net) }}</td></tr>{% endfor %}</tbody>
+      <thead><tr><th>Abertura</th><th>Ativo</th><th>Código da opção</th><th>Quantidade de opções</th><th>Crédito bruto</th><th>Valor líquido no caixa</th></tr></thead>
+      <tbody>{% for row in premium_history.rows %}<tr><td>{{ row.date|date_br }}</td><td><span class="premium-history-asset"><img src="{{ row.logo_url }}" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='grid'"><i style="display:none">{{ row.asset[:2] }}</i><strong>{{ row.asset }}</strong></span></td><td><strong>{{ row.option_code }}</strong></td><td>{{ row.quantity }}</td><td>{{ brl(row.gross) }}</td><td class="premium-history-net">{{ brl(row.net) }}{% if row.status == 'Encerrada' %}<small>Encerrada{{ ' · ' + row.close_method|replace('_', ' ')|title if row.close_method else '' }}</small>{% else %}<small>Operação aberta</small>{% endif %}</td></tr>{% endfor %}</tbody>
       <tfoot><tr><th colspan="3">Totais do período</th><th>{{ premium_history.total_quantity }}</th><th>{{ brl(premium_history.total_gross) }}</th><th>{{ brl(premium_history.total_net) }}</th></tr></tfoot>
     </table>
     {% else %}<div class="premium-history-empty"><strong>Nenhum prêmio encontrado</strong><p>Altere os filtros ou cadastre uma nova venda de opção.</p></div>{% endif %}

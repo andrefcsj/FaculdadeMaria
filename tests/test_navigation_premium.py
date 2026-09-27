@@ -48,9 +48,9 @@ class PremiumNavigationTests(unittest.TestCase):
 
     def test_premium_history_page_is_available(self):
         page = self.client.get("/premios-recebidos").get_data(as_text=True)
-        self.assertIn("Todos os prêmios recebidos", page)
-        self.assertIn("Prêmio integral", page)
-        self.assertIn("Prêmio líquido", page)
+        self.assertIn("Prêmios e caixa líquido das opções", page)
+        self.assertIn("Crédito bruto nas vendas", page)
+        self.assertIn("Valor líquido no caixa", page)
         self.assertIn("Totais do período", page)
 
     def test_premium_filters_route_and_validation(self):

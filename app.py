@@ -254,9 +254,11 @@ def rolagem_inteligente():
 @app.get("/premios-recebidos")
 def premios_recebidos():
     operations, _closed, _config = legacy.load_all()
+    from services.closed_operations_service import load_closure_metadata
     premium_history = build_premium_history(
         legacy,
         operations,
+        closures=load_closure_metadata(legacy),
         selected_month=request.args.get("month", "").strip(),
         selected_year=request.args.get("year", "").strip(),
         selected_asset=request.args.get("asset", "").strip(),

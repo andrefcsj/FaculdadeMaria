@@ -97,6 +97,31 @@ class PremiumHistoryServiceTests(unittest.TestCase):
         self.assertEqual(result["rows"], ())
         self.assertEqual(result["assets"], ("PETR3",))
 
+    def test_equal_value_repurchase_leaves_no_cash_in_premium_history(self):
+        operation = {
+            "ID": "42", "Data abertura": "2026-09-10", "Ativo": "PETRU999",
+            "Estratégia": "Venda", "Status": "Encerrada", "Contratos": 1,
+            "Premio_bruto": 100, "Premio_liquido": 98, "Resultado_realizado": 0,
+        }
+        result = build_premium_history(
+            LegacyStub, [operation], closures={"42": {"method": "recompra", "close_date": "2026-09-11"}}
+        )
+        self.assertEqual(result["total_gross"], 100)
+        self.assertEqual(result["total_opening_net"], 98)
+        self.assertEqual(result["total_net"], 0)
+        self.assertEqual(result["rows"][0]["status"], "Encerrada")
+
+    def test_assignment_does_not_mix_equity_sale_result_into_option_premium(self):
+        operation = {
+            "ID": "43", "Data abertura": "2026-09-10", "Ativo": "PETRU999",
+            "Estratégia": "Venda Coberta", "Status": "Encerrada", "Contratos": 1,
+            "Premio_bruto": 100, "Premio_liquido": 98, "Resultado_realizado": 2500,
+        }
+        result = build_premium_history(
+            LegacyStub, [operation], closures={"43": {"method": "exercida"}}
+        )
+        self.assertEqual(result["total_net"], 98)
+
 
 if __name__ == "__main__":
     unittest.main()
