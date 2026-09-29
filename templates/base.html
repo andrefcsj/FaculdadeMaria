@@ -59,7 +59,7 @@
 <svg viewBox="0 0 24 24">
 <path d="M3 12h4l2-7 4 14 3-8h5M3 21h18"/>
 </svg>Simulador de Payoff</a>
-<a href="/estrategias/comparador-call-coberta" class="{% if request.path=='/estrategias/comparador-call-coberta' %}active{% endif %}">
+<a href="#comparador-call-coberta" data-open-covered-call-comparator>
 <svg viewBox="0 0 24 24"><path d="M4 19V5M4 19h16M8 15l3-4 3 2 5-7"/><circle cx="8" cy="15" r="1"/><circle cx="11" cy="11" r="1"/><circle cx="14" cy="13" r="1"/></svg>Comparador de CALL</a>
 </div>
     <div class="nav-group">
@@ -216,7 +216,7 @@
   <main class="content">{% block content %}{% endblock %}</main>
 </section>
 </div>
-{% include 'components/new_operation_modal.html' %}{% include 'components/calculation_simulator_modal.html' %}
+{% include 'components/new_operation_modal.html' %}{% include 'components/calculation_simulator_modal.html' %}{% include 'components/covered_call_comparator_modal.html' %}
 {% include 'components/quick_roi_modal.html' %}
 <input type="checkbox" id="themeToggle" hidden>
 <script src="{{ url_for('static', filename='theme.js', v='20260819.1') }}">
@@ -235,5 +235,6 @@
 </script>
 <script src="{{ url_for('static', filename='calculation_simulator.js', v='20260819.1') }}">
 </script>
+<script src="{{ url_for('static', filename='covered_call_comparator_modal.js', v='20260929.2') }}"></script>
 </body>
 </html>
