@@ -32,6 +32,7 @@ from services.equity_portfolio_extension import register as register_equity_port
 from services.premium_history_service import build_premium_history
 from services.jade_lizard_extension import register as register_jade_lizard
 from services.payoff_simulator_extension import register as register_payoff_simulator
+from services.covered_call_comparator_extension import register as register_covered_call_comparator
 from services.income_tax_extension import register as register_income_tax
 from services.roi_calculator_extension import register as register_roi_calculator
 from services.covered_call_scanner_service import scan_covered_calls
@@ -279,6 +280,7 @@ register_paid_darfs(app, legacy)
 register_equity_portfolio(app, legacy)
 register_jade_lizard(app, legacy)
 register_payoff_simulator(app, legacy)
+register_covered_call_comparator(app, legacy)
 register_income_tax(app, legacy)
 register_roi_calculator(app, legacy)
 

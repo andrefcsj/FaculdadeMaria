@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% block title %}Comparador de CALL Coberta | FaculdadeMaria{% endblock %}
+{% block page_title %}Comparador de CALL Coberta{% endblock %}
+{% block page_subtitle %}Compare renda, margem e potencial de valorização antes de vender uma CALL{% endblock %}
+{% block head %}<link rel="stylesheet" href="{{ url_for('static', filename='covered_call_comparator.css', v='20260929.1') }}">{% endblock %}
+{% block page_actions %}<button class="ccc-clear" id="cccClear" type="button">Limpar dados</button>{% endblock %}
+{% block content %}
+<div class="ccc-page">
+  <section class="ccc-intro"><div><span class="ccc-eyebrow">ESTRATÉGIA DE RENDA</span><h2>Escolha a CALL que faz sentido para sua posição</h2><p>Os resultados usam somente os dados informados abaixo. A comparação pondera prêmio, saída efetiva, retorno e espaço até o strike.</p></div><button id="cccCompareTop" type="button" class="ccc-primary">Comparar estratégias <span>→</span></button></section>
+  <form id="coveredCallForm" novalidate>
+    <section class="ccc-card ccc-position"><header><div><span class="ccc-step">1</span><div><h3>Dados da posição</h3><p>Informe as ações que servirão de cobertura.</p></div></div></header><div class="ccc-fields ccc-fields--position"><label>Ativo<input id="cccAsset" maxlength="7" placeholder="Ex.: PETR4" autocomplete="off" required></label><label>Quantidade de ações<input id="cccQuantity" type="number" min="100" step="100" placeholder="Ex.: 100" required></label><label>Preço médio<input id="cccAverage" inputmode="decimal" placeholder="Ex.: 48,23" required></label><label>Preço atual<input id="cccSpot" inputmode="decimal" placeholder="Ex.: 49,12" required></label><label>Vencimento de referência<input id="cccExpiry" type="date"></label></div></section>
+    <section class="ccc-options-head"><div><span class="ccc-step">2</span><div><h3>Alternativas de CALL</h3><p>Cadastre de 2 a 5 opções. Cada contrato representa 100 ações.</p></div></div><button id="cccAddOption" type="button" class="ccc-secondary">＋ Adicionar CALL</button></section>
+    <div id="cccOptions" class="ccc-options"></div>
+    <p id="cccError" class="ccc-error" hidden></p>
+    <div class="ccc-actions"><button id="cccCompare" type="submit" class="ccc-primary">Comparar estratégias <span>→</span></button><small>Simulação no vencimento, sem impostos, taxas ou exercício antecipado.</small></div>
+  </form>
+  <section id="cccResults" hidden aria-live="polite">
+    <section class="ccc-summary" id="cccSummary"></section>
+    <section class="ccc-card ccc-table-card"><header><div><span class="ccc-step">3</span><div><h3>Tabela comparativa</h3><p>Indicadores calculados por alternativa.</p></div></div></header><div class="ccc-table-wrap"><table id="cccTable"></table></div></section>
+    <section class="ccc-card ccc-scenarios"><header><div><span class="ccc-step">4</span><div><h3>Cenários no vencimento</h3><p>Resultado financeiro total: ações + CALL vendida.</p></div></div></header><div id="cccScenarioTable" class="ccc-table-wrap"></div><div class="ccc-chart-wrap"><canvas id="cccChart"></canvas></div></section>
+    <section class="ccc-analysis"><div class="ccc-analysis__heading"><span class="ccc-step">5</span><div><h3>Análise da Estratégia</h3><p>Critérios objetivos, com os trade-offs explícitos.</p></div></div><div id="cccAnalysis" class="ccc-analysis__body"></div></section>
+  </section>
+</div>
+<template id="cccOptionTemplate"><article class="ccc-card ccc-option"><header><div><span class="ccc-option-label">CALL</span><div><h3 class="ccc-option-title">Alternativa</h3><p>Dados da opção vendida.</p></div></div><button type="button" class="ccc-remove" aria-label="Remover CALL">×</button></header><div class="ccc-fields"><label>Código da opção<input data-field="code" maxlength="14" placeholder="Ex.: PETRA492" autocomplete="off"></label><label>Strike<input data-field="strike" inputmode="decimal" placeholder="Ex.: 48,92" required></label><label>Prêmio recebido<input data-field="premium" inputmode="decimal" placeholder="Ex.: 1,02" required></label><label>Contratos<input data-field="contracts" type="number" min="1" step="1" value="1" required></label><label>Vencimento<input data-field="expiry" type="date"></label></div></article></template>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script><script src="{{ url_for('static', filename='covered_call_comparator.js', v='20260929.1') }}"></script>
+{% endblock %}
