@@ -35,20 +35,21 @@
 <rect x="14" y="14" width="7" height="7" rx="1"/>
 </svg>Dashboard</a>
 </div>
+    <div class="nav-group nav-group--tools">
+<span class="nav-group__title">CALCULADORAS E SIMULADORES</span>
+<a href="#roi-rapido" data-open-quick-roi><svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 12h2M14 12h2M8 16h2"/></svg>Calculadora de ROI</a>
+<a href="#simulador-calculos" data-open-calculation-simulator><svg viewBox="0 0 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 12h2M14 12h2M8 16h2"/></svg>Simulador de Cálculos</a>
+<a href="#comparador-call-coberta" data-open-covered-call-comparator><svg viewBox="0 0 24"><path d="M4 19V5M4 19h16M8 15l3-4 3 2 5-7"/><circle cx="8" cy="15" r="1"/><circle cx="11" cy="11" r="1"/></svg>Comparador de CALL</a>
+<a href="#comparador-put" data-open-covered-put-comparator><svg viewBox="0 0 24"><path d="M4 5v14M4 19h16M8 9l3 4 3-2 5 5"/><circle cx="8" cy="9" r="1"/><circle cx="11" cy="13" r="1"/></svg>Comparador de PUT</a>
+</div>
     <div class="nav-group nav-group--strategies">
 <span class="nav-group__title">ESTRATÉGIAS</span>
-<a href="#roi-rapido" data-open-quick-roi><svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h8M8 12h2M14 12h2M8 16h2M14 16h2"/></svg>Calculadora de ROI</a>
 <a href="/calculadora-roi" class="{% if request.path=='/calculadora-roi' %}active{% endif %}">
 <svg viewBox="0 0 24 24">
 <circle cx="8" cy="8" r="3"/>
 <circle cx="16" cy="16" r="3"/>
 <path d="m18 5-12 14"/>
 </svg>Grade de opções</a>
-<a href="#simulador-calculos" data-open-calculation-simulator>
-<svg viewBox="0 0 24 24">
-<rect x="4" y="3" width="16" height="18" rx="2"/>
-<path d="M8 7h8M8 12h2M14 12h2M8 16h2M14 16h2"/>
-</svg>SIMULADOR de Cálculos</a>
 <a href="/estrategias/jade-lizard" class="{% if request.path=='/estrategias/jade-lizard' %}active{% endif %}">
 <svg viewBox="0 0 24 24">
 <path d="M3 19h18M5 17l4-8 4 5 3-8 3 11"/>
@@ -62,7 +63,7 @@
 <a href="#comparador-call-coberta" data-open-covered-call-comparator>
 <svg viewBox="0 0 24 24"><path d="M4 19V5M4 19h16M8 15l3-4 3 2 5-7"/><circle cx="8" cy="15" r="1"/><circle cx="11" cy="11" r="1"/><circle cx="14" cy="13" r="1"/></svg>Comparador de CALL</a>
 </div>
-    <div class="nav-group">
+    <div class="nav-group nav-group--operations">
 <span class="nav-group__title">OPERAÇÕES</span>
 <a href="/operacoes-abertas" class="{% if request.path=='/operacoes-abertas' %}active{% endif %}">
 <svg viewBox="0 0 24 24">
@@ -77,7 +78,7 @@
 <svg viewBox="0 0 24 24">
 <path d="M4 12h16M12 4v16"/>
 <circle cx="12" cy="12" r="9"/>
-</svg>Novos Aportes</a>
+</svg>Aportes</a>
 <a href="/carteira">
 <svg viewBox="0 0 24 24">
 <path d="M4 19V5h16v14H4Z"/>
@@ -216,7 +217,7 @@
   <main class="content">{% block content %}{% endblock %}</main>
 </section>
 </div>
-{% include 'components/new_operation_modal.html' %}{% include 'components/calculation_simulator_modal.html' %}{% include 'components/covered_call_comparator_modal.html' %}
+{% include 'components/new_operation_modal.html' %}{% include 'components/calculation_simulator_modal.html' %}{% include 'components/covered_call_comparator_modal.html' %}{% include 'components/put_comparator_modal.html' %}
 {% include 'components/quick_roi_modal.html' %}
 <input type="checkbox" id="themeToggle" hidden>
 <script src="{{ url_for('static', filename='theme.js', v='20260819.1') }}">
@@ -237,5 +238,6 @@
 </script>
 <script src="{{ url_for('static', filename='covered_call_comparator_modal.js', v='20260929.2') }}"></script>
 <script src="{{ url_for('static', filename='covered_call_comparator_market.js', v='20260929.1') }}"></script>
+<script src="{{ url_for('static', filename='put_comparator_modal.js', v='20260929.1') }}"></script>
 </body>
 </html>

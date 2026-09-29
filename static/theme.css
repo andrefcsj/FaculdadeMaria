@@ -186,6 +186,13 @@ padding:22px;
 
 /* ===== Cortex v5.0 ===== */
 body{overflow-x:hidden;}
+body.app-shell .nav-group--tools{padding:8px 5px 7px;border:1px solid #cfe2ff;border-radius:16px;background:linear-gradient(145deg,#eef6ff,#e1eeff)}
+body.app-shell .nav-group--tools:hover{background:#d9eaff;border-color:#b9d6ff;box-shadow:0 8px 22px rgba(35,105,202,.13)}
+body.app-shell .nav-group--tools .nav-group__title{color:#2164b2!important}
+body.app-shell .nav-group--tools a:hover{background:#cde3ff!important;color:#15539a!important}
+body.app-shell .nav-group--tools a.active{background:#bddbff!important;color:#0e4e98!important}
+body.app-shell .nav-group--tools a.active:before{background:#1d73d4}
+body.app-shell .nav-group--strategies a[data-open-covered-call-comparator],body.app-shell .nav-group--operations a[href="/carteira"],body.app-shell .nav-group--operations a[href="/notas-importadas"]{display:none!important}
 .dashboard-grid{
  grid-template-columns:1.2fr 1fr;
 }
