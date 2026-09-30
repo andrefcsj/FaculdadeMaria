@@ -19,3 +19,4 @@ cloudflare/python-poc/python_modules/
 cloudflare/flask-poc/.venv/
 cloudflare/flask-poc/.venv-workers/
 cloudflare/flask-poc/python_modules/
+cloudflare/pilot/generated/
