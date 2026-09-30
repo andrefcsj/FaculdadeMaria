@@ -1,0 +1,15 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "faculdademaria-flask-pilot",
+  "main": "src/worker.py",
+  "compatibility_date": "2026-09-30",
+  "compatibility_flags": ["python_workers"],
+  "workers_dev": true,
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "faculdademaria-pilot",
+      "database_id": "84058aa8-f377-40f3-9015-f1e1fc3d71b7"
+    }
+  ]
+}

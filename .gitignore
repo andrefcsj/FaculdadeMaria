@@ -13,3 +13,6 @@ data/market/
 backups/
 http_cache.sqlite
 .wrangler/
+cloudflare/python-poc/.venv/
+cloudflare/python-poc/.venv-workers/
+cloudflare/python-poc/python_modules/
