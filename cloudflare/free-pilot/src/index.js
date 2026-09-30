@@ -32,7 +32,7 @@ async function sessionCookie(env) {
 }
 
 async function isAuthenticated(request, env) {
-  const token = request.headers.get("Cookie")?.match(/(?:^|;\s*)fm_session=([^;]+)/)?.[1];
+  const token = request.headers.get("Authorization")?.replace(/^Bearer\s+/i, "") || request.headers.get("Cookie")?.match(/(?:^|;\s*)fm_session=([^;]+)/)?.[1];
   if (!token || !env.SESSION_SECRET) return false;
   const [payload, signature] = token.split(".");
   if (!payload || !signature) return false;
@@ -62,7 +62,7 @@ async function api(request, env, path) {
     const body = await request.json().catch(() => ({}));
     if (!env.ADMIN_PIN || String(body.pin ?? "") !== env.ADMIN_PIN) return unauthorized();
     const token = await sessionCookie(env);
-    return json({ ok: true }, 200, { "set-cookie": `fm_session=${token}; HttpOnly; Secure; SameSite=Strict; Path=${BASE}; Max-Age=43200` });
+    return json({ ok: true, token }, 200, { "set-cookie": `fm_session=${token}; HttpOnly; Secure; SameSite=Strict; Path=${BASE}; Max-Age=43200` });
   }
   if (path === "/api/session" && request.method === "DELETE") {
     return json({ ok: true }, 200, { "set-cookie": `fm_session=; HttpOnly; Secure; SameSite=Strict; Path=${BASE}; Max-Age=0` });
