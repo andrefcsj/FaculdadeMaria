@@ -56,6 +56,19 @@ def delete_operation(operation_id: int) -> bool:
     return int(result.meta.changes) == 1
 
 
+def update_operation(operation_id: int, payload: dict[str, Any]) -> bool:
+    fields = [field for field in OPERATION_FIELDS if field in payload]
+    if not fields:
+        return False
+    values = [str(payload[field]) for field in fields]
+    result = _run(
+        "UPDATE operacoes SET " + ", ".join(f"{field} = ?" for field in fields) + " WHERE id = ?",
+        *values,
+        operation_id,
+    )
+    return int(result.meta.changes) == 1
+
+
 def list_config() -> list[dict[str, Any]]:
     return _rows(_run("SELECT parametro, valor FROM config ORDER BY parametro"))
 

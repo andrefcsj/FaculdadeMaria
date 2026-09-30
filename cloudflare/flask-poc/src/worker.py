@@ -13,6 +13,7 @@ from d1_repository import (
     list_closed_operations,
     list_config,
     list_operations,
+    update_operation,
 )
 from cloudflare_http import get_status
 
@@ -115,6 +116,17 @@ def delete_operation_api(operation_id: int):
     if not delete_operation(operation_id):
         return {"error": "operation not found"}, 404
     return "", 204
+
+
+@app.put("/api/operations/<int:operation_id>")
+@pilot_access_required
+def update_operation_api(operation_id: int):
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        return {"error": "JSON object required"}, 400
+    if not update_operation(operation_id, payload):
+        return {"error": "operation not found or no editable fields"}, 404
+    return {"id": operation_id}, 200
 
 
 @app.get("/api/config")
