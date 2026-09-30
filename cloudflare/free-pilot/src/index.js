@@ -104,7 +104,7 @@ export default {
     const path = url.pathname.slice(BASE.length);
     if (path.startsWith("/api/")) return api(request, env, path);
     const assetUrl = new URL(request.url);
-    assetUrl.pathname = path === "/" ? "/index.html" : path;
+    assetUrl.pathname = path === "/" ? "/free-pilot/index.html" : path;
     return env.ASSETS.fetch(assetUrl);
   },
 };
