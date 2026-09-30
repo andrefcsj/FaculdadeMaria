@@ -1,0 +1,20 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "faculdademaria-pilot",
+  "main": "src/index.js",
+  "compatibility_date": "2026-09-30",
+  "workers_dev": true,
+  "routes": [
+    {
+      "pattern": "faculdademaria-pilot.radarpulse.com.br",
+      "custom_domain": true
+    }
+  ],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "faculdademaria-pilot",
+      "database_id": "84058aa8-f377-40f3-9015-f1e1fc3d71b7"
+    }
+  ]
+}
