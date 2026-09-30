@@ -1,7 +1,6 @@
 from flask import Flask, request, url_for
 from functools import wraps
 from hmac import compare_digest
-from urllib.request import Request, urlopen
 from io import BytesIO
 from pyodide.ffi import run_sync
 from pypdf import PdfReader
@@ -9,6 +8,7 @@ from reportlab.pdfgen import canvas
 from workers import wsgi
 
 from d1_repository import list_closed_operations, list_config, list_operations
+from cloudflare_http import get_status
 
 
 app = Flask(__name__)
@@ -110,18 +110,17 @@ def pdf_compatibility():
 
 @app.get("/api/outbound-probe")
 def outbound_probe():
-    """Valida a forma de acesso HTTP síncrona usada pelos serviços atuais."""
-    request_outbound = Request(
-        "https://www.cloudflare.com/cdn-cgi/trace",
-        headers={"User-Agent": "FaculdadeMaria-Cloudflare-Pilot/1.0"},
-    )
+    """Valida o adaptador fetch para as integrações de mercado."""
     try:
-        with urlopen(request_outbound, timeout=5) as response:
-            return {"http_status": response.status, "status": "ok"}
+        status = get_status(
+            "https://www.cloudflare.com/cdn-cgi/trace",
+            {"User-Agent": "FaculdadeMaria-Cloudflare-Pilot/1.0"},
+        )
+        return {"http_status": status, "status": "ok"}
     except Exception:
         return {
-            "status": "requires-cloudflare-fetch-adapter",
-            "message": "O padrão urllib atual não é compatível diretamente com o Worker.",
+            "status": "outbound-probe-failed",
+            "message": "O adaptador fetch não concluiu a chamada externa.",
         }, 501
 
 

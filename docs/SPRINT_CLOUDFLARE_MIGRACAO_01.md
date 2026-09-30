@@ -54,7 +54,8 @@ O projeto não deve depender de armazenamento local no Worker. A proposta de des
   não substitui a homologação dos fluxos de DARF e importação de notas.
 - O acesso atual por `urllib.request.urlopen` falhou no runtime do Worker. As
   integrações SLDX, B3, CVM e Yahoo precisam ser adaptadas ao `fetch` do
-  Cloudflare (ou cliente HTTP compatível) antes da migração dessas rotas.
+  Cloudflare (ou cliente HTTP compatível) antes da migração dessas rotas. O
+  adaptador nativo `fetch` foi validado em seguida com HTTP 200.
 - O pipeline do repositório foi executado em Python 3.12: 300 testes passaram;
   há duas falhas pré-existentes de texto/expectativa de interface, sem relação
   com os arquivos desta sprint.
