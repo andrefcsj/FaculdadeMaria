@@ -52,6 +52,9 @@ O projeto não deve depender de armazenamento local no Worker. A proposta de des
 - `reportlab` gerou um PDF real no Worker e `pypdf` o releu com sucesso; a
   prova retornou um documento de uma página. Isso valida as bibliotecas, mas
   não substitui a homologação dos fluxos de DARF e importação de notas.
+- O acesso atual por `urllib.request.urlopen` falhou no runtime do Worker. As
+  integrações SLDX, B3, CVM e Yahoo precisam ser adaptadas ao `fetch` do
+  Cloudflare (ou cliente HTTP compatível) antes da migração dessas rotas.
 - O pipeline do repositório foi executado em Python 3.12: 300 testes passaram;
   há duas falhas pré-existentes de texto/expectativa de interface, sem relação
   com os arquivos desta sprint.

@@ -31,3 +31,7 @@ Os endpoints que leem dados (`/api/operations`, `/api/config` e
 `/api/closed-operations`) exigem o secret `PILOT_ACCESS_TOKEN` no cabeçalho
 `Authorization: Bearer ...`. Isso é obrigatório antes de enviar qualquer dado
 real de homologação ao D1.
+
+`/api/outbound-probe` valida o padrão de HTTP síncrono empregado atualmente por
+integrações de mercado, sem utilizar tokens nem chamar nenhum fornecedor do
+projeto.

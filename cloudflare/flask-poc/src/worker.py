@@ -1,6 +1,7 @@
 from flask import Flask, request, url_for
 from functools import wraps
 from hmac import compare_digest
+from urllib.request import Request, urlopen
 from io import BytesIO
 from pyodide.ffi import run_sync
 from pypdf import PdfReader
@@ -105,6 +106,23 @@ def pdf_compatibility():
         "reportlab": canvas.Canvas.__module__,
         "status": "generated-and-read",
     }
+
+
+@app.get("/api/outbound-probe")
+def outbound_probe():
+    """Valida a forma de acesso HTTP síncrona usada pelos serviços atuais."""
+    request_outbound = Request(
+        "https://www.cloudflare.com/cdn-cgi/trace",
+        headers={"User-Agent": "FaculdadeMaria-Cloudflare-Pilot/1.0"},
+    )
+    try:
+        with urlopen(request_outbound, timeout=5) as response:
+            return {"http_status": response.status, "status": "ok"}
+    except Exception:
+        return {
+            "status": "requires-cloudflare-fetch-adapter",
+            "message": "O padrão urllib atual não é compatível diretamente com o Worker.",
+        }, 501
 
 
 Default = wsgi.entrypoint(PrefixMiddleware(app, "/faculdademaria"))
