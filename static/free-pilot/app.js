@@ -61,7 +61,7 @@ function kindLabel(kind) {
 function renderExtra() {
   const cash = state.cash || [],
     credit = cash
-      .filter((x) => ["aporte", "ajuste_credito"].includes(x.kind))
+      .filter((x) => ["aporte", "ajuste_credito", "venda_acoes"].includes(x.kind))
       .reduce((s, x) => s + num(x.amount), 0),
     debit = cash
       .filter((x) => ["retirada", "ajuste_debito"].includes(x.kind))
@@ -133,8 +133,11 @@ function render() {
     premium = open.reduce(
       (s, x) => s + num(x.contratos) * num(x.premio_opcao) * size,
       0,
-    );
-  $("#capital-total").textContent = money(cfg("Capital total inicial"));
+    ),
+    cash = (state.cash || []).reduce((sum, item) => sum + (["aporte", "ajuste_credito", "venda_acoes"].includes(item.kind) ? num(item.amount) : -num(item.amount)), 0),
+    equityCost = (state.equities || []).reduce((sum, item) => sum + num(item.cash_cost_total), 0),
+    patrimony = cfg("Capital total inicial") + cash;
+  $("#capital-total").textContent = money(patrimony);
   $("#capital-committed").textContent = money(capital);
   $("#premiums-open").textContent = money(premium);
   $("#roi-average").textContent =
