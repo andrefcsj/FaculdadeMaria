@@ -56,6 +56,9 @@ O projeto não deve depender de armazenamento local no Worker. A proposta de des
   integrações SLDX, B3, CVM e Yahoo precisam ser adaptadas ao `fetch` do
   Cloudflare (ou cliente HTTP compatível) antes da migração dessas rotas. O
   adaptador nativo `fetch` foi validado em seguida com HTTP 200.
+- Após a proteção por secret do Worker, uma carga local de homologação foi
+  importada no D1 isolado e conferida pela tela autenticada: 4 operações, 4
+  configurações e 4 operações fechadas. A mesma rota responde 401 sem token.
 - O pipeline do repositório foi executado em Python 3.12: 300 testes passaram;
   há duas falhas pré-existentes de texto/expectativa de interface, sem relação
   com os arquivos desta sprint.
