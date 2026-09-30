@@ -9,6 +9,13 @@ from flask import request
 from pyodide.ffi import run_sync
 
 
+OPERATION_FIELDS = (
+    "data_abertura", "ativo", "tipo", "estrategia", "status", "contratos",
+    "strike", "premio_opcao", "custos", "irrf", "vencimento",
+    "cotacao_atual", "resultado_realizado",
+)
+
+
 def _run(sql: str, *params: object):
     statement = request.environ["workers.env"].DB.prepare(sql)
     if params:
@@ -32,6 +39,21 @@ def list_operations() -> list[dict[str, Any]]:
         """
     )
     return _rows(result)
+
+
+def create_operation(payload: dict[str, Any]) -> int:
+    values = [str(payload.get(field, "")) for field in OPERATION_FIELDS]
+    result = _run(
+        "INSERT INTO operacoes (" + ", ".join(OPERATION_FIELDS) + ") VALUES ("
+        + ", ".join("?" for _ in OPERATION_FIELDS) + ")",
+        *values,
+    )
+    return int(result.meta.last_row_id)
+
+
+def delete_operation(operation_id: int) -> bool:
+    result = _run("DELETE FROM operacoes WHERE id = ?", operation_id)
+    return int(result.meta.changes) == 1
 
 
 def list_config() -> list[dict[str, Any]]:

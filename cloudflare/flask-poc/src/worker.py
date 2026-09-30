@@ -7,7 +7,13 @@ from pypdf import PdfReader
 from reportlab.pdfgen import canvas
 from workers import wsgi
 
-from d1_repository import list_closed_operations, list_config, list_operations
+from d1_repository import (
+    create_operation,
+    delete_operation,
+    list_closed_operations,
+    list_config,
+    list_operations,
+)
 from cloudflare_http import get_status
 
 
@@ -91,6 +97,24 @@ def d1_health():
 @pilot_access_required
 def operations():
     return {"operations": list_operations()}
+
+
+@app.post("/api/operations")
+@pilot_access_required
+def create_operation_api():
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        return {"error": "JSON object required"}, 400
+    operation_id = create_operation(payload)
+    return {"id": operation_id}, 201
+
+
+@app.delete("/api/operations/<int:operation_id>")
+@pilot_access_required
+def delete_operation_api(operation_id: int):
+    if not delete_operation(operation_id):
+        return {"error": "operation not found"}, 404
+    return "", 204
 
 
 @app.get("/api/config")

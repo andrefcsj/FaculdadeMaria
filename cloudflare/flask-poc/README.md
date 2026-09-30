@@ -32,6 +32,10 @@ Os endpoints que leem dados (`/api/operations`, `/api/config` e
 `Authorization: Bearer ...`. Isso é obrigatório antes de enviar qualquer dado
 real de homologação ao D1.
 
+`POST /api/operations` e `DELETE /api/operations/<id>` usam a mesma proteção e
+permitem validar a escrita de operações no banco-piloto. Eles não são ligados à
+produção e não substituem ainda os formulários originais.
+
 `/api/outbound-probe` valida o padrão de HTTP síncrono empregado atualmente por
 integrações de mercado, sem utilizar tokens nem chamar nenhum fornecedor do
 projeto.
