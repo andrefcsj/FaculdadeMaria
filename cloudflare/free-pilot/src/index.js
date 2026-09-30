@@ -57,6 +57,37 @@ function operationPayload(row) {
   };
 }
 
+function money(value) {
+  const normalized = String(value ?? "0").replace(/R\$|\s/g, "").replace(/\.(?=\d{3}(?:\D|$))/g, "").replace(",", ".");
+  const amount = Number(normalized);
+  return Number.isFinite(amount) ? amount : 0;
+}
+
+function recordId() {
+  return crypto.randomUUID().replace(/-/g, "");
+}
+
+async function dashboardData(env) {
+  const [operations, config, closed, cash, notes, darfs, profile] = await Promise.all([
+    env.DB.prepare("SELECT id, data_abertura, ativo, tipo, estrategia, status, contratos, strike, premio_opcao, custos, irrf, vencimento, cotacao_atual, resultado_realizado FROM operacoes ORDER BY id").all(),
+    env.DB.prepare("SELECT parametro, valor FROM config ORDER BY parametro").all(),
+    env.DB.prepare("SELECT closed_id, payload, closed_at FROM closed_operations ORDER BY closed_at DESC").all(),
+    env.DB.prepare("SELECT event_id, payload, event_date, created_at FROM cash_ledger ORDER BY event_date DESC, created_at DESC").all(),
+    env.DB.prepare("SELECT note_key, payload, imported_at FROM brokerage_notes ORDER BY imported_at DESC").all(),
+    env.DB.prepare("SELECT darf_id, payload, competence, payment_date FROM paid_darfs ORDER BY payment_date DESC").all(),
+    env.DB.prepare("SELECT payload FROM taxpayer_profile WHERE profile_id = 1").first(),
+  ]);
+  return {
+    operations: operations.results,
+    config: config.results,
+    closed: closed.results.map(row => ({ ...JSON.parse(row.payload), closed_id: row.closed_id, closed_at: row.closed_at })),
+    cash: cash.results.map(row => ({ ...JSON.parse(row.payload), id: row.event_id, date: row.event_date })),
+    notes: notes.results.map(row => ({ ...JSON.parse(row.payload), key: row.note_key })),
+    darfs: darfs.results.map(row => ({ ...JSON.parse(row.payload), id: row.darf_id })),
+    taxpayer: profile ? JSON.parse(profile.payload) : {},
+  };
+}
+
 async function api(request, env, path) {
   if (path === "/api/session" && request.method === "POST") {
     const body = await request.json().catch(() => ({}));
@@ -70,12 +101,7 @@ async function api(request, env, path) {
   if (!await isAuthenticated(request, env)) return unauthorized();
 
   if (path === "/api/dashboard" && request.method === "GET") {
-    const [operations, config, closed] = await Promise.all([
-      env.DB.prepare("SELECT id, data_abertura, ativo, tipo, estrategia, status, contratos, strike, premio_opcao, custos, irrf, vencimento, cotacao_atual, resultado_realizado FROM operacoes ORDER BY id").all(),
-      env.DB.prepare("SELECT parametro, valor FROM config ORDER BY parametro").all(),
-      env.DB.prepare("SELECT closed_id, payload, closed_at FROM closed_operations ORDER BY closed_at DESC").all(),
-    ]);
-    return json({ operations: operations.results, config: config.results, closed: closed.results.map((row) => ({ ...JSON.parse(row.payload), closed_id: row.closed_id, closed_at: row.closed_at })) });
+    return json(await dashboardData(env));
   }
   if (path === "/api/operations" && request.method === "POST") {
     const item = operationPayload(await request.json().catch(() => ({})));
@@ -87,6 +113,76 @@ async function api(request, env, path) {
   const match = path.match(/^\/api\/operations\/(\d+)$/);
   if (match && request.method === "DELETE") {
     const result = await env.DB.prepare("DELETE FROM operacoes WHERE id = ?").bind(Number(match[1])).run();
+    return result.meta.changes ? new Response(null, { status: 204 }) : json({ error: "not found" }, 404);
+  }
+  if (match && request.method === "PUT") {
+    const item = operationPayload(await request.json().catch(() => ({})));
+    if (!item.ativo || !item.data_abertura) return json({ error: "ativo e data_abertura são obrigatórios" }, 400);
+    const fields = Object.keys(item);
+    const result = await env.DB.prepare(`UPDATE operacoes SET ${fields.map(field => `${field} = ?`).join(", ")} WHERE id = ?`).bind(...fields.map(field => item[field]), Number(match[1])).run();
+    return result.meta.changes ? json({ ok: true }) : json({ error: "not found" }, 404);
+  }
+  const closeMatch = path.match(/^\/api\/operations\/(\d+)\/close$/);
+  if (closeMatch && request.method === "POST") {
+    const operation = await env.DB.prepare("SELECT id, data_abertura, ativo, tipo, estrategia, status, contratos, strike, premio_opcao, custos, irrf, vencimento, cotacao_atual, resultado_realizado FROM operacoes WHERE id = ?").bind(Number(closeMatch[1])).first();
+    if (!operation) return json({ error: "not found" }, 404);
+    const body = await request.json().catch(() => ({}));
+    const result = money(body.resultado_final);
+    const closedAt = String(body.data_fechamento || new Date().toISOString().slice(0, 10));
+    const payload = { ...operation, "Data fechamento": closedAt, Resultado_final: result, Lucro_tributavel: result, Observacoes: String(body.observacoes || "").slice(0, 300) };
+    await env.DB.batch([
+      env.DB.prepare("INSERT INTO closed_operations (closed_id, payload, closed_at) VALUES (?, ?, ?)").bind(recordId(), JSON.stringify(payload), closedAt),
+      env.DB.prepare("DELETE FROM operacoes WHERE id = ?").bind(Number(closeMatch[1])),
+    ]);
+    return json({ ok: true });
+  }
+  const reopenMatch = path.match(/^\/api\/closed\/(.+)\/reopen$/);
+  if (reopenMatch && request.method === "POST") {
+    const closed = await env.DB.prepare("SELECT payload FROM closed_operations WHERE closed_id = ?").bind(reopenMatch[1]).first();
+    if (!closed) return json({ error: "not found" }, 404);
+    const item = operationPayload(JSON.parse(closed.payload));
+    const fields = Object.keys(item);
+    await env.DB.batch([
+      env.DB.prepare(`INSERT INTO operacoes (${fields.join(", ")}) VALUES (${fields.map(() => "?").join(", ")})`).bind(...fields.map(field => item[field])),
+      env.DB.prepare("DELETE FROM closed_operations WHERE closed_id = ?").bind(reopenMatch[1]),
+    ]);
+    return json({ ok: true });
+  }
+  if (path === "/api/cash" && request.method === "POST") {
+    const body = await request.json().catch(() => ({}));
+    const kind = String(body.kind || "aporte");
+    const amount = money(body.amount);
+    if (!new Set(["aporte", "retirada", "ajuste_credito", "ajuste_debito"]).has(kind) || amount <= 0) return json({ error: "Informe uma movimentação e um valor maior que zero." }, 400);
+    const record = { kind, amount: String(amount), date: String(body.date || new Date().toISOString().slice(0, 10)), description: String(body.description || "").trim().slice(0, 180), created_at: new Date().toISOString() };
+    const id = recordId();
+    await env.DB.prepare("INSERT INTO cash_ledger (event_id, payload, event_date) VALUES (?, ?, ?)").bind(id, JSON.stringify(record), record.date).run();
+    return json({ ok: true, id }, 201);
+  }
+  const cashMatch = path.match(/^\/api\/cash\/(.+)$/);
+  if (cashMatch && request.method === "DELETE") {
+    const result = await env.DB.prepare("DELETE FROM cash_ledger WHERE event_id = ?").bind(cashMatch[1]).run();
+    return result.meta.changes ? new Response(null, { status: 204 }) : json({ error: "not found" }, 404);
+  }
+  if (path === "/api/config" && request.method === "PUT") {
+    const body = await request.json().catch(() => ({}));
+    const values = Array.isArray(body.values) ? body.values : [];
+    if (!values.length || values.some(row => !String(row.parametro || "").trim())) return json({ error: "Configuração inválida." }, 400);
+    await env.DB.batch(values.map(row => env.DB.prepare("INSERT INTO config (parametro, valor) VALUES (?, ?) ON CONFLICT(parametro) DO UPDATE SET valor = excluded.valor").bind(String(row.parametro).trim().slice(0, 120), String(row.valor ?? "").trim().slice(0, 120))));
+    return json({ ok: true });
+  }
+  if (path === "/api/darfs" && request.method === "POST") {
+    const body = await request.json().catch(() => ({}));
+    const amount = money(body.amount);
+    const competence = String(body.competence || "");
+    if (!/^\d{4}-\d{2}$/.test(competence) || amount <= 0) return json({ error: "Informe competência e valor válidos." }, 400);
+    const record = { competence, payment_date: String(body.payment_date || new Date().toISOString().slice(0, 10)), due_date: String(body.due_date || ""), revenue_code: "6015", amount: String(amount), description: String(body.description || "").trim().slice(0, 180) };
+    const id = recordId();
+    await env.DB.prepare("INSERT INTO paid_darfs (darf_id, payload, competence, payment_date) VALUES (?, ?, ?, ?)").bind(id, JSON.stringify(record), record.competence, record.payment_date).run();
+    return json({ ok: true, id }, 201);
+  }
+  const darfMatch = path.match(/^\/api\/darfs\/(.+)$/);
+  if (darfMatch && request.method === "DELETE") {
+    const result = await env.DB.prepare("DELETE FROM paid_darfs WHERE darf_id = ?").bind(darfMatch[1]).run();
     return result.meta.changes ? new Response(null, { status: 204 }) : json({ error: "not found" }, 404);
   }
   if (path === "/api/backup" && request.method === "GET") {
