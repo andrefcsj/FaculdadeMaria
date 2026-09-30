@@ -8,3 +8,5 @@ Este diretório contém exclusivamente a prova de conectividade da migração.
 - subdomínio próprio, sem alterar `www.radarpulse.com.br` ou acessar dados de produção.
 
 O endpoint `/health` confirma que o Worker e o D1 estão ativos. A aplicação Flask só será introduzida após a camada de persistência ter sido adaptada e testada.
+
+As migrações D1 ficam em `migrations/`. A primeira cria somente a estrutura das tabelas do sistema, sem importar dados operacionais.
