@@ -1,4 +1,4 @@
-from flask import Flask, request, url_for
+from flask import Flask, render_template_string, request, url_for
 from functools import wraps
 from hmac import compare_digest
 from io import BytesIO
@@ -45,7 +45,6 @@ def pilot_access_required(view):
     return wrapped
 
 
-@app.get("/")
 @app.get("/health")
 def health():
     return {
@@ -54,6 +53,27 @@ def health():
         "framework": "flask",
         "status": "ok",
     }
+
+
+@app.get("/")
+@pilot_access_required
+def pilot_dashboard():
+    operations = list_operations()
+    config = list_config()
+    closed = list_closed_operations()
+    return render_template_string(
+        """<!doctype html>
+        <html lang="pt-BR"><meta charset="utf-8"><title>FaculdadeMaria — Homologação</title>
+        <body><main><h1>FaculdadeMaria — homologação Cloudflare</h1>
+        <p>Este ambiente é isolado; o Render continua sendo a produção.</p>
+        <ul><li>Operações abertas/importadas: {{ operations|length }}</li>
+        <li>Configurações: {{ config|length }}</li>
+        <li>Operações fechadas: {{ closed|length }}</li></ul>
+        <p><a href="{{ url_for('health') }}">Health check</a></p></main></body></html>""",
+        operations=operations,
+        config=config,
+        closed=closed,
+    )
 
 
 @app.get("/api/d1-health")
