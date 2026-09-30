@@ -166,6 +166,41 @@ async function dashboardData(env) {
   };
 }
 
+async function backupData(env) {
+  const [dashboard, preferences, quotes, marketQuotes, closureMetadata] =
+    await Promise.all([
+      dashboardData(env),
+      env.DB.prepare(
+        "SELECT operation_id, exercise_interest, underlying_asset, updated_at FROM operation_preferences ORDER BY operation_id",
+      ).all(),
+      env.DB.prepare(
+        "SELECT option_code, price, quoted_at, updated_at FROM manual_option_quotes ORDER BY option_code",
+      ).all(),
+      env.DB.prepare(
+        "SELECT quote_kind, symbol, price, source, quoted_at FROM api_market_quotes ORDER BY quote_kind, symbol",
+      ).all(),
+      env.DB.prepare(
+        "SELECT operation_id, payload, updated_at FROM operation_closure_metadata ORDER BY operation_id",
+      ).all(),
+    ]);
+  return {
+    format: "faculdademaria-cloudflare-backup",
+    version: 1,
+    exported_at: new Date().toISOString(),
+    data: {
+      ...dashboard,
+      operation_preferences: preferences.results,
+      manual_option_quotes: quotes.results,
+      api_market_quotes: marketQuotes.results,
+      operation_closure_metadata: closureMetadata.results.map((row) => ({
+        ...JSON.parse(row.payload),
+        operation_id: row.operation_id,
+        updated_at: row.updated_at,
+      })),
+    },
+  };
+}
+
 async function api(request, env, path) {
   if (path === "/api/session" && request.method === "POST") {
     const body = await request.json().catch(() => ({}));
@@ -535,12 +570,7 @@ async function api(request, env, path) {
       : json({ error: "not found" }, 404);
   }
   if (path === "/api/backup" && request.method === "GET") {
-    const data = await api(
-      new Request(request.url, { headers: request.headers }),
-      env,
-      "/api/dashboard",
-    );
-    return new Response(data.body, {
+    return new Response(JSON.stringify(await backupData(env)), {
       headers: {
         "content-type": "application/json; charset=utf-8",
         "content-disposition":
