@@ -1,6 +1,6 @@
 # Sprint CF-01 — Preparação segura para migração ao Cloudflare
 
-**Status:** Em andamento  
+**Status:** Piloto técnico aprovado; portabilidade completa em andamento  
 **Branch:** `cloudflare-migration-prep`  
 **Objetivo:** preparar uma migração reversível para Cloudflare, sem alterar a produção atual no Render.
 
@@ -39,6 +39,38 @@ O projeto não deve depender de armazenamento local no Worker. A proposta de des
 | Segredos (`SLDX_API_TOKEN`, PIN administrativo) | Secrets do Worker | nunca versionados nem expostos ao navegador |
 | Dados de mercado temporários | D1 ou R2, conforme acesso | expiração e atualização validadas |
 | PostgreSQL/Neon | mantido somente durante transição | desligado apenas após a migração completa de dados |
+
+## Evidências do piloto (30/09/2026)
+
+- Banco D1 isolado `faculdademaria-pilot` criado com o esquema inicial, sem
+  dados de produção.
+- Worker Python e Worker Flask publicados separadamente, sem rota no domínio
+  de produção. O endpoint Flask e a consulta Flask → D1 foram testados com
+  HTTP 200.
+- A camada inicial de leitura de operações e configurações no D1 respondeu
+  corretamente. Uma escrita de teste foi conferida pela aplicação e removida.
+- `reportlab` gerou um PDF real no Worker e `pypdf` o releu com sucesso; a
+  prova retornou um documento de uma página. Isso valida as bibliotecas, mas
+  não substitui a homologação dos fluxos de DARF e importação de notas.
+- O pipeline do repositório foi executado em Python 3.12: 300 testes passaram;
+  há duas falhas pré-existentes de texto/expectativa de interface, sem relação
+  com os arquivos desta sprint.
+
+## Limites de plano e decisão de custo
+
+O plano gratuito é adequado para este piloto, mas **não deve ser assumido como
+destino seguro da aplicação completa**. Workers Free limita cada requisição a
+10 ms de CPU e a 100 mil requisições/dia. A aplicação atual usa Flask,
+processamento de PDF, geração de relatórios e cálculos de carteira, que precisam
+ser medidos contra esse limite e provavelmente requererão Workers Paid.
+
+D1 Free inclui 5 milhões de linhas lidas/dia, 100 mil linhas escritas/dia e
+5 GB totais. R2 possui franquia mensal, mas exige concluir a adesão de cobrança
+da conta antes de criar buckets, mesmo que o uso permaneça na franquia.
+
+Nenhuma mudança de plano nem cobrança foi realizada nesta sprint. A decisão de
+habilitar Workers Paid (mínimo atual de US$ 5/mês) só será tomada após a medição
+da aplicação completa e autorização explícita.
 
 ## Itens que exigem protótipo obrigatório
 

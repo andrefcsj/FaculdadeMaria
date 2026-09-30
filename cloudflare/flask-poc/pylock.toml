@@ -8,6 +8,14 @@ version = "1.9.0"
 wheels = [{ url = "https://files.pythonhosted.org/packages/10/cb/f2ad4230dc2eb1a74edf38f1a38b9b52277f75bef262d8908e60d957e13c/blinker-1.9.0-py3-none-any.whl", upload-time = 2024-11-08T17:25:46Z, size = 8458, hashes = { sha256 = "ba0efaa9080b619ff2f3459d1d500c57bddea4a6b424b60a91141db6fd2f08bc" } }]
 
 [[packages]]
+name = "charset-normalizer"
+version = "3.5.2"
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/f7/4c/070b38bdb5f49a70199fce923ec0726a49536a63ab262abbfcaaf351110b/charset_normalizer-3.5.2-cp314-cp314-pyemscripten_2026_0_wasm32.whl", upload-time = 2026-09-30T04:36:54Z, size = 143570, hashes = { sha256 = "ee43c17b173d46a3212baa6ead3ae258eeabdae48c263a01ccf0218c366dd655" } },
+    { url = "https://files.pythonhosted.org/packages/fc/ad/d07d7862a62ffa6d79d68074d14823243dd235a77c45262acbf6adeb28bf/charset_normalizer-3.5.2-py3-none-any.whl", upload-time = 2026-09-30T04:39:21Z, size = 68872, hashes = { sha256 = "b6b751274acb69d77b3323d6b7dbaa3c7fdfc1eb829b7eb61d262f32e1af9685" } },
+]
+
+[[packages]]
 name = "click"
 version = "8.5.0"
 wheels = [{ url = "https://files.pythonhosted.org/packages/58/50/6c0d534c5f134586a8e1ba4e330569e32f057e33372ae556463212fb4cd3/click-8.5.0-py3-none-any.whl", upload-time = 2026-08-26T13:33:12Z, size = 125251, hashes = { sha256 = "255bc9599cf7748b4b1a446ccc735421bd08a2ae529a8b88597d3de5664ee360" } }]
@@ -34,6 +42,21 @@ wheels = [
 name = "markupsafe"
 version = "3.0.3"
 wheels = [{ url = "https://cdn.jsdelivr.net/pyodide/v314.0.7/full/markupsafe-3.0.3-cp314-cp314-pyemscripten_2026_0_wasm32.whl", hashes = { sha256 = "b44c364dc0d19e4210ce68ab77833c2b5d608f78fe6966263add4fc1fa667d97" } }]
+
+[[packages]]
+name = "pillow"
+version = "12.2.0"
+wheels = [{ url = "https://cdn.jsdelivr.net/pyodide/v314.0.7/full/pillow-12.2.0-cp314-cp314-pyemscripten_2026_0_wasm32.whl", hashes = { sha256 = "e29838b7a756e4ee0f27a9cfa9a387ee0dfa2e9dd44be2dd595130b9f9d93ac3" } }]
+
+[[packages]]
+name = "pypdf"
+version = "6.10.0"
+wheels = [{ url = "https://files.pythonhosted.org/packages/55/f2/7ebe366f633f30a6ad105f650f44f24f98cb1335c4157d21ae47138b3482/pypdf-6.10.0-py3-none-any.whl", upload-time = 2026-04-10T09:34:54Z, size = 334459, hashes = { sha256 = "90005e959e1596c6e6c84c8b0ad383285b3e17011751cedd17f2ce8fcdfc86de" } }]
+
+[[packages]]
+name = "reportlab"
+version = "4.4.3"
+wheels = [{ url = "https://files.pythonhosted.org/packages/52/c8/aaf4e08679e7b1dc896ad30de0d0527f0fd55582c2e6deee4f2cc899bf9f/reportlab-4.4.3-py3-none-any.whl", upload-time = 2025-07-23T11:18:20Z, size = 1953896, hashes = { sha256 = "df905dc5ec5ddaae91fc9cb3371af863311271d555236410954961c5ee6ee1b5" } }]
 
 [[packages]]
 name = "werkzeug"

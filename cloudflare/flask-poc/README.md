@@ -19,3 +19,6 @@ do Cloudflare Workers.
 assíncrono do D1. Os endpoints `/api/operations` e `/api/config` usam a primeira
 camada de leitura reutilizável. Durante a homologação, o banco permanece vazio;
 dados reais só serão copiados por uma importação explicitamente auditada.
+
+`/api/pdf-compatibility` gera um PDF em memória com ReportLab e o abre com
+PyPDF. Ele existe apenas como teste de compatibilidade do runtime.
