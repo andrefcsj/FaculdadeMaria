@@ -51,7 +51,6 @@ def build_sql(data_dir: Path) -> str:
     closed = _read_csv(data_dir / "fechadas.csv")
     statements = [
         "-- Gerado localmente por export_local_data.py; revisar antes de aplicar.",
-        "BEGIN TRANSACTION;",
     ]
 
     for row in operations:
@@ -80,7 +79,7 @@ def build_sql(data_dir: Path) -> str:
             "closed_at = excluded.closed_at;"
         )
 
-    statements.extend(["COMMIT;", ""])
+    statements.append("")
     return "\n".join(statements)
 
 

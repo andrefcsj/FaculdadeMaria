@@ -32,5 +32,5 @@ def test_build_sql_preserves_csv_records_and_escapes_quotes(tmp_path):
     assert "'PETR4'" in sql
     assert "Capital d''água" in sql
     assert "INSERT INTO closed_operations" in sql
-    assert "BEGIN TRANSACTION;" in sql
-    assert sql.rstrip().endswith("COMMIT;")
+    assert "BEGIN TRANSACTION;" not in sql
+    assert "COMMIT;" not in sql

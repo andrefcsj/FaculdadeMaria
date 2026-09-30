@@ -27,6 +27,9 @@ npx wrangler d1 execute faculdademaria-pilot --remote \
   --file cloudflare/pilot/generated/import.sql
 ```
 
+O SQL não inclui `BEGIN`/`COMMIT`: a API de importação do D1 gerencia a
+execução e rejeita transações SQL explícitas nesse formato.
+
 O comando acima só poderá ser usado depois de comparar os dados e confirmar a
 origem correta (CSV ou base PostgreSQL de produção). Nesta fase nenhum dado
 real é enviado automaticamente.
