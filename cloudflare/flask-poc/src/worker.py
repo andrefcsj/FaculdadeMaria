@@ -5,7 +5,7 @@ from pypdf import PdfReader
 from reportlab.pdfgen import canvas
 from workers import wsgi
 
-from d1_repository import list_config, list_operations
+from d1_repository import list_closed_operations, list_config, list_operations
 
 
 app = Flask(__name__)
@@ -41,6 +41,11 @@ def operations():
 @app.get("/api/config")
 def config():
     return {"config": list_config()}
+
+
+@app.get("/api/closed-operations")
+def closed_operations():
+    return {"closed_operations": list_closed_operations()}
 
 
 @app.get("/api/pdf-compatibility")

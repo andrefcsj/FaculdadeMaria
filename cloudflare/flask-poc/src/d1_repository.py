@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from typing import Any
 
 from flask import request
@@ -35,3 +36,16 @@ def list_operations() -> list[dict[str, Any]]:
 
 def list_config() -> list[dict[str, Any]]:
     return _rows(_run("SELECT parametro, valor FROM config ORDER BY parametro"))
+
+
+def list_closed_operations() -> list[dict[str, Any]]:
+    rows = _rows(
+        _run(
+            "SELECT closed_id, payload, closed_at FROM closed_operations "
+            "ORDER BY closed_at DESC, closed_id"
+        )
+    )
+    return [
+        {"closed_id": row["closed_id"], "closed_at": row["closed_at"], **json.loads(row["payload"])}
+        for row in rows
+    ]
