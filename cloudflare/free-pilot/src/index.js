@@ -106,6 +106,9 @@ export default {
     const assetUrl = new URL(request.url);
     assetUrl.pathname = path === "/" ? "/free-pilot/index.html" : path;
     assetUrl.search = "";
-    return env.ASSETS.fetch(assetUrl);
+    const response = await env.ASSETS.fetch(assetUrl);
+    const headers = new Headers(response.headers);
+    headers.set("Cache-Control", "no-store");
+    return new Response(response.body, { status: response.status, headers });
   },
 };
