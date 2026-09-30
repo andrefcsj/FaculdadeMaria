@@ -40,6 +40,27 @@ O projeto não deve depender de armazenamento local no Worker. A proposta de des
 | Dados de mercado temporários | D1 ou R2, conforme acesso | expiração e atualização validadas |
 | PostgreSQL/Neon | mantido somente durante transição | desligado apenas após a migração completa de dados |
 
+## Revisão de arquitetura: Cloudflare Free
+
+Por decisão do produto, a versão de destino não pode gerar cobrança. A rota de
+migração passa a ser uma interface estática + Worker JavaScript leve, ambos no
+plano Free, em vez de portar o monólito Flask/Python para Workers.
+
+| Recurso | Decisão Free |
+| --- | --- |
+| Interface | assets estáticos com JavaScript no navegador |
+| API e autenticação | Worker JavaScript leve + secret/cookie assinado |
+| Dados | D1 Free |
+| PDF/DARF em arquivo | removido; o navegador pode imprimir quando necessário |
+| Backup | download manual de JSON; sem R2 |
+| Cálculos e relatórios | navegador, evitando CPU do Worker |
+| Mercado | `fetch` leve sob demanda e cache, quando essa etapa for portada |
+
+O Worker `faculdademaria-free-pilot` foi publicado no subdomínio isolado
+`free-pilot.radarpulse.com.br`, sob `/faculdademaria/`. Ele iniciou em 2 ms e
+foi validado com login, leitura do D1, criação/exclusão de operação e download
+de backup. Nenhuma alteração foi feita no Render ou em `www`.
+
 ## Evidências do piloto (30/09/2026)
 
 - Banco D1 isolado `faculdademaria-pilot` criado com o esquema inicial, sem

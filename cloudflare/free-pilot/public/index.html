@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FaculdadeMaria</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main>
+    <section id="login" class="card"><h1>FaculdadeMaria</h1><p>Ambiente Cloudflare gratuito</p><form id="login-form"><label>PIN <input name="pin" type="password" required autofocus></label><button>Entrar</button><p id="login-error" class="error"></p></form></section>
+    <section id="app" hidden>
+      <header><div><h1>FaculdadeMaria</h1><p>Cloudflare Free · sem PDF · backup manual</p></div><button id="logout">Sair</button></header>
+      <section class="cards"><article><b id="open-count">0</b><span>Operações</span></article><article><b id="closed-count">0</b><span>Fechadas</span></article><article><b id="config-count">0</b><span>Configurações</span></article></section>
+      <section class="card"><div class="section-head"><h2>Operações</h2><button id="backup">Baixar backup</button></div><form id="operation-form" class="operation-form"><input name="data_abertura" type="date" required><input name="ativo" placeholder="Ativo" required><select name="tipo"><option>PUT</option><option>CALL</option></select><input name="estrategia" placeholder="Estratégia" value="Venda"><input name="contratos" type="number" min="1" value="1"><input name="strike" type="number" step="0.01" placeholder="Strike"><input name="premio_opcao" type="number" step="0.01" placeholder="Prêmio"><input name="vencimento" type="date"><button>Adicionar</button></form><div class="scroll"><table><thead><tr><th>Data</th><th>Ativo</th><th>Tipo</th><th>Estratégia</th><th>Strike</th><th>Prêmio</th><th></th></tr></thead><tbody id="operations"></tbody></table></div></section>
+      <p id="message" role="status"></p>
+    </section>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>
