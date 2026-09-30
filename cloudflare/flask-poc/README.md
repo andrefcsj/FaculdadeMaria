@@ -22,3 +22,7 @@ dados reais só serão copiados por uma importação explicitamente auditada.
 
 `/api/pdf-compatibility` gera um PDF em memória com ReportLab e o abre com
 PyPDF. Ele existe apenas como teste de compatibilidade do runtime.
+
+O Worker só aceita requisições sob `/faculdademaria/`. A middleware preserva o
+prefixo em `url_for`, que é a base para migrar as rotas reais sem links que
+escapem para a raiz de `www.radarpulse.com.br`.

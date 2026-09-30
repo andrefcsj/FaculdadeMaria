@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask, request, url_for
 from io import BytesIO
 from pyodide.ffi import run_sync
 from pypdf import PdfReader
@@ -9,6 +9,23 @@ from d1_repository import list_closed_operations, list_config, list_operations
 
 
 app = Flask(__name__)
+
+
+class PrefixMiddleware:
+    """Monta o Flask em um subcaminho sem duplicar todas as rotas."""
+
+    def __init__(self, application, prefix: str):
+        self.application = application
+        self.prefix = prefix.rstrip("/")
+
+    def __call__(self, environ, start_response):
+        path = environ.get("PATH_INFO", "")
+        if path == self.prefix or path.startswith(self.prefix + "/"):
+            environ["SCRIPT_NAME"] = environ.get("SCRIPT_NAME", "") + self.prefix
+            environ["PATH_INFO"] = path[len(self.prefix):] or "/"
+            return self.application(environ, start_response)
+        start_response("404 Not Found", [("Content-Type", "application/json")])
+        return [b'{"error":"use /faculdademaria/"}']
 
 
 @app.get("/")
@@ -48,6 +65,11 @@ def closed_operations():
     return {"closed_operations": list_closed_operations()}
 
 
+@app.get("/api/routing-check")
+def routing_check():
+    return {"health_url": url_for("health")}
+
+
 @app.get("/api/pdf-compatibility")
 def pdf_compatibility():
     output = BytesIO()
@@ -65,4 +87,4 @@ def pdf_compatibility():
     }
 
 
-Default = wsgi.entrypoint(app)
+Default = wsgi.entrypoint(PrefixMiddleware(app, "/faculdademaria"))
