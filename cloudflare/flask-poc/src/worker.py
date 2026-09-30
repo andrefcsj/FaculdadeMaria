@@ -2,6 +2,8 @@ from flask import Flask, request
 from pyodide.ffi import run_sync
 from workers import wsgi
 
+from d1_repository import list_config, list_operations
+
 
 app = Flask(__name__)
 
@@ -26,6 +28,16 @@ def d1_health():
         "database": "d1",
         "status": "ok" if result.success else "degraded",
     }
+
+
+@app.get("/api/operations")
+def operations():
+    return {"operations": list_operations()}
+
+
+@app.get("/api/config")
+def config():
+    return {"config": list_config()}
 
 
 Default = wsgi.entrypoint(app)
