@@ -26,3 +26,8 @@ PyPDF. Ele existe apenas como teste de compatibilidade do runtime.
 O Worker só aceita requisições sob `/faculdademaria/`. A middleware preserva o
 prefixo em `url_for`, que é a base para migrar as rotas reais sem links que
 escapem para a raiz de `www.radarpulse.com.br`.
+
+Os endpoints que leem dados (`/api/operations`, `/api/config` e
+`/api/closed-operations`) exigem o secret `PILOT_ACCESS_TOKEN` no cabeçalho
+`Authorization: Bearer ...`. Isso é obrigatório antes de enviar qualquer dado
+real de homologação ao D1.

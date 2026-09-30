@@ -1,4 +1,6 @@
 from flask import Flask, request, url_for
+from functools import wraps
+from hmac import compare_digest
 from io import BytesIO
 from pyodide.ffi import run_sync
 from pypdf import PdfReader
@@ -28,6 +30,20 @@ class PrefixMiddleware:
         return [b'{"error":"use /faculdademaria/"}']
 
 
+def pilot_access_required(view):
+    """Evita que dados de homologação sejam expostos no Worker público."""
+
+    @wraps(view)
+    def wrapped(*args, **kwargs):
+        supplied = request.headers.get("Authorization", "").removeprefix("Bearer ")
+        expected = str(request.environ["workers.env"].PILOT_ACCESS_TOKEN)
+        if not expected or not compare_digest(supplied, expected):
+            return {"error": "unauthorized"}, 401
+        return view(*args, **kwargs)
+
+    return wrapped
+
+
 @app.get("/")
 @app.get("/health")
 def health():
@@ -51,21 +67,25 @@ def d1_health():
 
 
 @app.get("/api/operations")
+@pilot_access_required
 def operations():
     return {"operations": list_operations()}
 
 
 @app.get("/api/config")
+@pilot_access_required
 def config():
     return {"config": list_config()}
 
 
 @app.get("/api/closed-operations")
+@pilot_access_required
 def closed_operations():
     return {"closed_operations": list_closed_operations()}
 
 
 @app.get("/api/routing-check")
+@pilot_access_required
 def routing_check():
     return {"health_url": url_for("health")}
 
