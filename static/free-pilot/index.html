@@ -1,10 +1,369 @@
 <!doctype html>
-<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Dashboard Executivo | FaculdadeMaria</title><link rel="stylesheet" href="theme.css"><link rel="stylesheet" href="free-pilot/free-pilot.css?v=4"></head>
-<body class="app-shell">
-<section id="login" class="free-login"><div class="free-login__card"><b>FM</b><h1>FaculdadeMaria</h1><p>Opções Inteligentes</p><form id="login-form"><label>PIN de acesso<input name="pin" type="password" required autofocus></label><button>Entrar no sistema</button><p id="login-error" role="alert" aria-live="polite"></p></form></div></section>
-<div id="app" class="layout" hidden>
-<aside class="sidebar executive-sidebar"><a class="premium-brand" href="#dashboard" data-screen="dashboard"><span><strong>FaculdadeMaria</strong><small>Opções Inteligentes</small></span></a><nav class="executive-nav"><div class="nav-group"><span class="nav-group__title">VISÃO GERAL</span><a href="#dashboard" data-screen="dashboard" class="active">▦ Dashboard</a></div><div class="nav-group"><span class="nav-group__title">OPERAÇÕES</span><a href="#open" data-screen="open">▣ Operações Abertas</a><a href="#closed" data-screen="closed">✓ Operações Fechadas</a><a href="#cash" data-screen="cash">＋ Aportes</a><a href="#notes" data-screen="notes">▤ Notas Importadas</a></div><div class="nav-group"><span class="nav-group__title">GESTÃO</span><a href="#tax" data-screen="tax">▤ Apuração de IR</a><a href="#history" data-screen="closed">⌁ Histórico</a></div><div class="nav-group"><span class="nav-group__title">SISTEMA</span><a href="#settings" data-screen="settings">⚙ Configurações</a><a href="#backup" id="backup">▣ Backup completo</a></div></nav></aside>
-<section class="app-stage"><header class="premium-topbar"><div class="premium-topbar__title"><div><h1 id="page-title">DASHBOARD EXECUTIVO</h1><p id="page-subtitle">Visão geral da sua carteira de opções</p></div></div><div class="premium-topbar__actions"><span id="last-updated">Agora</span><button id="logout">Sair</button></div></header><main class="content">
-<section id="dashboard-screen" class="screen executive-dashboard"><section class="exec-kpis"><article class="exec-kpi exec-kpi--patrimony"><small>PATRIMÔNIO INICIAL</small><strong id="capital-total">R$ 0,00</strong><p>Capital configurado + aportes</p></article><article class="exec-kpi exec-kpi--blue"><small>CAPITAL COMPROMETIDO</small><strong id="capital-committed">R$ 0,00</strong><p>PUTs abertas em garantia</p></article><article class="exec-kpi exec-kpi--premium"><small>PRÊMIOS EM ABERTO</small><strong id="premiums-open">R$ 0,00</strong><p>Prêmio bruto das operações abertas</p></article><article class="exec-kpi exec-kpi--roi"><small>ROI MÉDIO</small><strong id="roi-average">0,00%</strong><p>Por operação aberta</p></article></section><div class="exec-grid exec-grid--primary"><section class="exec-panel"><header class="exec-panel__header"><div><h2>Operações abertas</h2></div><a href="#open" data-screen="open">Abrir central</a></header><div class="free-table"><table><thead><tr><th>Ativo</th><th>Tipo</th><th>Estratégia</th><th>Strike</th><th>Prêmio</th><th>Vencimento</th></tr></thead><tbody id="dashboard-operations"></tbody></table></div></section><section class="exec-panel"><header class="exec-panel__header"><div><h2>Próximos vencimentos</h2></div></header><div id="expiries" class="expiry-list"></div></section></div></section>
-<section id="open-screen" class="screen" hidden><section class="exec-panel"><header class="exec-panel__header"><h2>Operações Abertas</h2></header><form id="operation-form" class="free-operation-form"><input name="data_abertura" type="date" required><input name="ativo" placeholder="Ativo" required><select name="tipo"><option>PUT</option><option>CALL</option></select><input name="estrategia" value="Wheel"><input name="contratos" type="number" min="1" value="1"><input name="strike" type="number" step="0.01" placeholder="Strike" required><input name="premio_opcao" type="number" step="0.01" placeholder="Prêmio" required><input name="vencimento" type="date" required><button>Adicionar operação</button></form><div class="free-table"><table><thead><tr><th>Data</th><th>Ativo</th><th>Tipo</th><th>Estratégia</th><th>Strike</th><th>Prêmio</th><th>Vencimento</th><th></th></tr></thead><tbody id="open-operations"></tbody></table></div></section></section>
-<section id="closed-screen" class="screen" hidden><section class="exec-panel"><h2>Operações Fechadas</h2><div class="free-table"><table><thead><tr><th>Data</th><th>Ativo</th><th>Tipo</th><th>Estratégia</th><th>Resultado</th><th></th></tr></thead><tbody id="closed-operations"></tbody></table></div></section></section><section id="cash-screen" class="screen" hidden><section class="exec-kpis"><article class="exec-kpi exec-kpi--patrimony"><small>SALDO DO LIVRO-CAIXA</small><strong id="cash-balance">R$ 0,00</strong><p>Aportes e retiradas registrados</p></article><article class="exec-kpi exec-kpi--blue"><small>APORTES</small><strong id="cash-contributions">R$ 0,00</strong><p>Entradas manuais acumuladas</p></article><article class="exec-kpi exec-kpi--premium"><small>RETIRADAS</small><strong id="cash-withdrawals">R$ 0,00</strong><p>Saídas manuais acumuladas</p></article></section><section class="exec-panel"><header class="exec-panel__header"><h2>Registrar movimentação</h2></header><form id="cash-form" class="free-operation-form"><select name="kind"><option value="aporte">Novo aporte</option><option value="retirada">Retirada</option><option value="ajuste_credito">Crédito manual</option><option value="ajuste_debito">Débito manual</option></select><input name="amount" type="number" min="0.01" step="0.01" placeholder="Valor" required><input name="date" type="date" required><input name="description" placeholder="Descrição"><button>Registrar</button></form><div class="free-table"><table><thead><tr><th>Data</th><th>Movimentação</th><th>Descrição</th><th>Valor</th><th></th></tr></thead><tbody id="cash-rows"></tbody></table></div></section></section><section id="notes-screen" class="screen" hidden><section class="exec-panel"><h2>Notas importadas</h2><p class="free-help">A leitura automática de PDF foi retirada para manter o plano gratuito. As notas já existentes e seus lançamentos estruturados continuam visíveis aqui.</p><div class="free-table"><table><thead><tr><th>Data</th><th>Nota</th><th>Operação</th><th>Crédito/Débito</th><th>Custos</th></tr></thead><tbody id="notes-rows"></tbody></table></div></section></section><section id="tax-screen" class="screen" hidden><section class="exec-kpis"><article class="exec-kpi exec-kpi--premium"><small>RESULTADO FECHADO</small><strong id="tax-result">R$ 0,00</strong><p>Operações encerradas no piloto</p></article><article class="exec-kpi exec-kpi--roi"><small>IR ESTIMADO</small><strong id="tax-estimate">R$ 0,00</strong><p>Alíquota das configurações</p></article><article class="exec-kpi exec-kpi--blue"><small>DARFS PAGAS</small><strong id="tax-paid">R$ 0,00</strong><p>Registros de pagamento</p></article></section><section class="exec-panel"><header class="exec-panel__header"><h2>Registrar DARF paga</h2></header><form id="darf-form" class="free-operation-form"><input name="competence" type="month" required><input name="payment_date" type="date" required><input name="amount" type="number" min="0.01" step="0.01" placeholder="Valor pago" required><input name="description" placeholder="Descrição"><button>Registrar pagamento</button></form><div class="free-table"><table><thead><tr><th>Competência</th><th>Pagamento</th><th>Valor</th><th>Descrição</th><th></th></tr></thead><tbody id="darf-rows"></tbody></table></div></section></section><section id="settings-screen" class="screen" hidden><section class="exec-panel"><header class="exec-panel__header"><h2>Configurações</h2><button id="save-config">Salvar configurações</button></header><form id="settings-list" class="free-settings"></form></section></section><section id="notice-screen" class="screen" hidden><section class="exec-panel"><h2>Em evolução</h2><p>Esta função ainda será portada para o ambiente gratuito.</p></section></section><p id="message"></p></main></section></div><script src="free-pilot/app.js?v=5"></script></body></html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Dashboard Executivo | FaculdadeMaria</title>
+    <link rel="stylesheet" href="theme.css" />
+    <link rel="stylesheet" href="free-pilot/free-pilot.css?v=4" />
+  </head>
+  <body class="app-shell">
+    <section id="login" class="free-login">
+      <div class="free-login__card">
+        <b>FM</b>
+        <h1>FaculdadeMaria</h1>
+        <p>Opções Inteligentes</p>
+        <form id="login-form">
+          <label
+            >PIN de acesso<input
+              name="pin"
+              type="password"
+              required
+              autofocus /></label
+          ><button>Entrar no sistema</button>
+          <p id="login-error" role="alert" aria-live="polite"></p>
+        </form>
+      </div>
+    </section>
+    <div id="app" class="layout" hidden>
+      <aside class="sidebar executive-sidebar">
+        <a class="premium-brand" href="#dashboard" data-screen="dashboard"
+          ><span
+            ><strong>FaculdadeMaria</strong
+            ><small>Opções Inteligentes</small></span
+          ></a
+        >
+        <nav class="executive-nav">
+          <div class="nav-group">
+            <span class="nav-group__title">VISÃO GERAL</span
+            ><a href="#dashboard" data-screen="dashboard" class="active"
+              >▦ Dashboard</a
+            >
+          </div>
+          <div class="nav-group">
+            <span class="nav-group__title">OPERAÇÕES</span
+            ><a href="#open" data-screen="open">▣ Operações Abertas</a
+            ><a href="#closed" data-screen="closed">✓ Operações Fechadas</a
+            ><a href="#equity" data-screen="equity">◉ Carteira de Ações</a
+            ><a href="#cash" data-screen="cash">＋ Aportes</a
+            ><a href="#notes" data-screen="notes">▤ Notas Importadas</a>
+          </div>
+          <div class="nav-group">
+            <span class="nav-group__title">GESTÃO</span
+            ><a href="#tax" data-screen="tax">▤ Apuração de IR</a
+            ><a href="#history" data-screen="closed">⌁ Histórico</a>
+          </div>
+          <div class="nav-group">
+            <span class="nav-group__title">SISTEMA</span
+            ><a href="#settings" data-screen="settings">⚙ Configurações</a
+            ><a href="#backup" id="backup">▣ Backup completo</a>
+          </div>
+        </nav>
+      </aside>
+      <section class="app-stage">
+        <header class="premium-topbar">
+          <div class="premium-topbar__title">
+            <div>
+              <h1 id="page-title">DASHBOARD EXECUTIVO</h1>
+              <p id="page-subtitle">Visão geral da sua carteira de opções</p>
+            </div>
+          </div>
+          <div class="premium-topbar__actions">
+            <span id="last-updated">Agora</span
+            ><button id="logout">Sair</button>
+          </div>
+        </header>
+        <main class="content">
+          <section id="dashboard-screen" class="screen executive-dashboard">
+            <section class="exec-kpis">
+              <article class="exec-kpi exec-kpi--patrimony">
+                <small>PATRIMÔNIO INICIAL</small
+                ><strong id="capital-total">R$ 0,00</strong>
+                <p>Capital configurado + aportes</p>
+              </article>
+              <article class="exec-kpi exec-kpi--blue">
+                <small>CAPITAL COMPROMETIDO</small
+                ><strong id="capital-committed">R$ 0,00</strong>
+                <p>PUTs abertas em garantia</p>
+              </article>
+              <article class="exec-kpi exec-kpi--premium">
+                <small>PRÊMIOS EM ABERTO</small
+                ><strong id="premiums-open">R$ 0,00</strong>
+                <p>Prêmio bruto das operações abertas</p>
+              </article>
+              <article class="exec-kpi exec-kpi--roi">
+                <small>ROI MÉDIO</small><strong id="roi-average">0,00%</strong>
+                <p>Por operação aberta</p>
+              </article>
+            </section>
+            <div class="exec-grid exec-grid--primary">
+              <section class="exec-panel">
+                <header class="exec-panel__header">
+                  <div><h2>Operações abertas</h2></div>
+                  <a href="#open" data-screen="open">Abrir central</a>
+                </header>
+                <div class="free-table">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Ativo</th>
+                        <th>Tipo</th>
+                        <th>Estratégia</th>
+                        <th>Strike</th>
+                        <th>Prêmio</th>
+                        <th>Vencimento</th>
+                      </tr>
+                    </thead>
+                    <tbody id="dashboard-operations"></tbody>
+                  </table>
+                </div>
+              </section>
+              <section class="exec-panel">
+                <header class="exec-panel__header">
+                  <div><h2>Próximos vencimentos</h2></div>
+                </header>
+                <div id="expiries" class="expiry-list"></div>
+              </section>
+            </div>
+          </section>
+          <section id="open-screen" class="screen" hidden>
+            <section class="exec-panel">
+              <header class="exec-panel__header">
+                <h2>Operações Abertas</h2>
+              </header>
+              <form id="operation-form" class="free-operation-form">
+                <input name="data_abertura" type="date" required /><input
+                  name="ativo"
+                  placeholder="Ativo"
+                  required
+                /><select name="tipo">
+                  <option>PUT</option>
+                  <option>CALL</option></select
+                ><input name="estrategia" value="Wheel" /><input
+                  name="contratos"
+                  type="number"
+                  min="1"
+                  value="1"
+                /><input
+                  name="strike"
+                  type="number"
+                  step="0.01"
+                  placeholder="Strike"
+                  required
+                /><input
+                  name="premio_opcao"
+                  type="number"
+                  step="0.01"
+                  placeholder="Prêmio"
+                  required
+                /><input name="vencimento" type="date" required /><button>
+                  Adicionar operação
+                </button>
+              </form>
+              <div class="free-table">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Data</th>
+                      <th>Ativo</th>
+                      <th>Tipo</th>
+                      <th>Estratégia</th>
+                      <th>Strike</th>
+                      <th>Prêmio</th>
+                      <th>Vencimento</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody id="open-operations"></tbody>
+                </table>
+              </div>
+            </section>
+          </section>
+          <section id="closed-screen" class="screen" hidden>
+            <section class="exec-panel">
+              <h2>Operações Fechadas</h2>
+              <div class="free-table">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Data</th>
+                      <th>Ativo</th>
+                      <th>Tipo</th>
+                      <th>Estratégia</th>
+                      <th>Resultado</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody id="closed-operations"></tbody>
+                </table>
+              </div>
+            </section>
+          </section>
+          <section id="equity-screen" class="screen" hidden>
+            <section class="exec-kpis">
+              <article class="exec-kpi exec-kpi--patrimony"><small>AÇÕES EM CARTEIRA</small><strong id="equity-quantity">0</strong><p>Quantidade mantida na corretora</p></article>
+              <article class="exec-kpi exec-kpi--blue"><small>VALOR ALOCADO</small><strong id="equity-cost">R$ 0,00</strong><p>Custo financeiro das posições</p></article>
+              <article class="exec-kpi exec-kpi--premium"><small>AÇÕES LIVRES</small><strong id="equity-available">0</strong><p>Disponíveis para negociação</p></article>
+            </section>
+            <section class="exec-panel">
+              <header class="exec-panel__header"><h2>Carteira de ações</h2></header>
+              <form id="equity-form" class="free-operation-form"><input name="asset" placeholder="Código da ação" required><input name="quantity" type="number" min="1" placeholder="Quantidade" required><input name="average_price" type="number" min="0.01" step="0.01" placeholder="Preço médio fiscal" required><input name="acquisition_date" type="date" required><button>Adicionar ação</button></form>
+              <div class="free-table"><table><thead><tr><th>Ação</th><th>Quantidade</th><th>PM fiscal</th><th>Custo financeiro</th><th>Data</th><th>Ações</th></tr></thead><tbody id="equity-rows"></tbody></table></div>
+              <p class="free-help">O preço médio fiscal permanece separado do custo gerencial. A importação de PDF foi removida da versão gratuita.</p>
+            </section>
+          </section>
+          <section id="cash-screen" class="screen" hidden>
+            <section class="exec-kpis">
+              <article class="exec-kpi exec-kpi--patrimony">
+                <small>SALDO DO LIVRO-CAIXA</small
+                ><strong id="cash-balance">R$ 0,00</strong>
+                <p>Aportes e retiradas registrados</p>
+              </article>
+              <article class="exec-kpi exec-kpi--blue">
+                <small>APORTES</small
+                ><strong id="cash-contributions">R$ 0,00</strong>
+                <p>Entradas manuais acumuladas</p>
+              </article>
+              <article class="exec-kpi exec-kpi--premium">
+                <small>RETIRADAS</small
+                ><strong id="cash-withdrawals">R$ 0,00</strong>
+                <p>Saídas manuais acumuladas</p>
+              </article>
+            </section>
+            <section class="exec-panel">
+              <header class="exec-panel__header">
+                <h2>Registrar movimentação</h2>
+              </header>
+              <form id="cash-form" class="free-operation-form">
+                <select name="kind">
+                  <option value="aporte">Novo aporte</option>
+                  <option value="retirada">Retirada</option>
+                  <option value="ajuste_credito">Crédito manual</option>
+                  <option value="ajuste_debito">Débito manual</option></select
+                ><input
+                  name="amount"
+                  type="number"
+                  min="0.01"
+                  step="0.01"
+                  placeholder="Valor"
+                  required
+                /><input name="date" type="date" required /><input
+                  name="description"
+                  placeholder="Descrição"
+                /><button>Registrar</button>
+              </form>
+              <div class="free-table">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Data</th>
+                      <th>Movimentação</th>
+                      <th>Descrição</th>
+                      <th>Valor</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody id="cash-rows"></tbody>
+                </table>
+              </div>
+            </section>
+          </section>
+          <section id="notes-screen" class="screen" hidden>
+            <section class="exec-panel">
+              <h2>Notas importadas</h2>
+              <p class="free-help">
+                A leitura automática de PDF foi retirada para manter o plano
+                gratuito. As notas já existentes e seus lançamentos estruturados
+                continuam visíveis aqui.
+              </p>
+              <div class="free-table">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Data</th>
+                      <th>Nota</th>
+                      <th>Operação</th>
+                      <th>Crédito/Débito</th>
+                      <th>Custos</th>
+                    </tr>
+                  </thead>
+                  <tbody id="notes-rows"></tbody>
+                </table>
+              </div>
+            </section>
+          </section>
+          <section id="tax-screen" class="screen" hidden>
+            <section class="exec-kpis">
+              <article class="exec-kpi exec-kpi--premium">
+                <small>RESULTADO FECHADO</small
+                ><strong id="tax-result">R$ 0,00</strong>
+                <p>Operações encerradas no piloto</p>
+              </article>
+              <article class="exec-kpi exec-kpi--roi">
+                <small>IR ESTIMADO</small
+                ><strong id="tax-estimate">R$ 0,00</strong>
+                <p>Alíquota das configurações</p>
+              </article>
+              <article class="exec-kpi exec-kpi--blue">
+                <small>DARFS PAGAS</small><strong id="tax-paid">R$ 0,00</strong>
+                <p>Registros de pagamento</p>
+              </article>
+            </section>
+            <section class="exec-panel">
+              <header class="exec-panel__header">
+                <h2>Registrar DARF paga</h2>
+              </header>
+              <form id="darf-form" class="free-operation-form">
+                <input name="competence" type="month" required /><input
+                  name="payment_date"
+                  type="date"
+                  required
+                /><input
+                  name="amount"
+                  type="number"
+                  min="0.01"
+                  step="0.01"
+                  placeholder="Valor pago"
+                  required
+                /><input name="description" placeholder="Descrição" /><button>
+                  Registrar pagamento
+                </button>
+              </form>
+              <div class="free-table">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Competência</th>
+                      <th>Pagamento</th>
+                      <th>Valor</th>
+                      <th>Descrição</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody id="darf-rows"></tbody>
+                </table>
+              </div>
+            </section>
+          </section>
+          <section id="settings-screen" class="screen" hidden>
+            <section class="exec-panel">
+              <header class="exec-panel__header">
+                <h2>Configurações</h2>
+                <button id="save-config">Salvar configurações</button>
+              </header>
+              <form id="settings-list" class="free-settings"></form>
+            </section>
+          </section>
+          <section id="notice-screen" class="screen" hidden>
+            <section class="exec-panel">
+              <h2>Em evolução</h2>
+              <p>Esta função ainda será portada para o ambiente gratuito.</p>
+            </section>
+          </section>
+          <p id="message"></p>
+        </main>
+      </section>
+    </div>
+    <script src="free-pilot/app.js?v=5"></script>
+  </body>
+</html>
