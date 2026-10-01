@@ -55,6 +55,10 @@
             ><a href="#history" data-screen="closed">⌁ Histórico</a>
           </div>
           <div class="nav-group">
+            <span class="nav-group__title">FERRAMENTAS</span
+            ><a href="#simulators" data-screen="simulators">◈ Simuladores</a>
+          </div>
+          <div class="nav-group">
             <span class="nav-group__title">SISTEMA</span
             ><a href="#settings" data-screen="settings">⚙ Configurações</a
             ><a href="#backup" id="backup">▣ Backup completo</a>
@@ -369,6 +373,86 @@
                 importação de PDF foi removida da versão gratuita.
               </p>
             </section>
+          </section>
+          <section id="simulators-screen" class="screen" hidden>
+            <div class="exec-grid exec-grid--primary">
+              <section class="exec-panel">
+                <header class="exec-panel__header">
+                  <h2>Calculadora de ROI</h2>
+                </header>
+                <form id="roi-form" class="free-operation-form">
+                  <input
+                    name="strike"
+                    type="number"
+                    step="0.01"
+                    placeholder="Strike"
+                    required
+                  /><input
+                    name="premium"
+                    type="number"
+                    step="0.01"
+                    placeholder="Prêmio por ação"
+                    required
+                  /><input
+                    name="contracts"
+                    type="number"
+                    min="1"
+                    value="1"
+                    placeholder="Contratos"
+                    required
+                  /><input
+                    name="days"
+                    type="number"
+                    min="1"
+                    value="30"
+                    placeholder="Dias até vencimento"
+                    required
+                  /><button>Calcular ROI</button>
+                </form>
+                <div id="roi-result" class="free-simulator-result">
+                  Informe os dados da opção para calcular.
+                </div>
+              </section>
+              <section class="exec-panel">
+                <header class="exec-panel__header">
+                  <h2>Simulador de payoff</h2>
+                </header>
+                <form id="payoff-form" class="free-operation-form">
+                  <select name="type">
+                    <option value="PUT">PUT vendida</option>
+                    <option value="CALL">CALL vendida</option></select
+                  ><input
+                    name="strike"
+                    type="number"
+                    step="0.01"
+                    placeholder="Strike"
+                    required
+                  /><input
+                    name="premium"
+                    type="number"
+                    step="0.01"
+                    placeholder="Prêmio por ação"
+                    required
+                  /><input
+                    name="contracts"
+                    type="number"
+                    min="1"
+                    value="1"
+                    placeholder="Contratos"
+                    required
+                  /><input
+                    name="price"
+                    type="number"
+                    step="0.01"
+                    placeholder="Preço no vencimento"
+                    required
+                  /><button>Simular payoff</button>
+                </form>
+                <div id="payoff-result" class="free-simulator-result">
+                  Informe o cenário de vencimento.
+                </div>
+              </section>
+            </div>
           </section>
           <section id="cash-screen" class="screen" hidden>
             <section class="exec-kpis">

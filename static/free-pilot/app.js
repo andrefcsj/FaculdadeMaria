@@ -401,6 +401,7 @@ function screen(name) {
       "PRÊMIOS RECEBIDOS",
       "Histórico de créditos e resultado por ciclo",
     ],
+    simulators: ["SIMULADORES", "ROI e payoff de opções no vencimento"],
     equity: [
       "CARTEIRA DE AÇÕES",
       "Ações reconhecidas por exercício ou inclusão manual",
@@ -541,6 +542,34 @@ $("#darf-form").onsubmit = async (e) => {
   } catch (err) {
     $("#message").textContent = err.message;
   }
+};
+$("#roi-form").onsubmit = (e) => {
+  e.preventDefault();
+  const data = Object.fromEntries(new FormData(e.target)),
+    size = cfg("Tamanho contrato opcoes", 100),
+    capital = num(data.strike) * num(data.contracts) * size,
+    credit = num(data.premium) * num(data.contracts) * size,
+    roi = capital ? (credit / capital) * 100 : 0,
+    monthly = num(data.days) ? (roi / num(data.days)) * 30 : 0;
+  $("#roi-result").innerHTML =
+    `<strong>${money(credit)} de prêmio bruto</strong><span>Capital necessário: ${money(capital)} · ROI do ciclo: ${roi.toFixed(2).replace(".", ",")}% · Equivalente mensal: ${monthly.toFixed(2).replace(".", ",")}%</span>`;
+};
+$("#payoff-form").onsubmit = (e) => {
+  e.preventDefault();
+  const data = Object.fromEntries(new FormData(e.target)),
+    size = cfg("Tamanho contrato opcoes", 100),
+    contracts = num(data.contracts),
+    strike = num(data.strike),
+    premium = num(data.premium),
+    price = num(data.price),
+    intrinsic =
+      data.type === "PUT"
+        ? Math.max(strike - price, 0)
+        : Math.max(price - strike, 0),
+    result = (premium - intrinsic) * contracts * size,
+    breakEven = data.type === "PUT" ? strike - premium : strike + premium;
+  $("#payoff-result").innerHTML =
+    `<strong class="${result >= 0 ? "positive" : "negative"}">${money(result)} no vencimento</strong><span>Valor intrínseco: ${money(intrinsic)} por ação · Ponto de equilíbrio: ${money(breakEven)} · ${data.type} vendida com ${contracts} contrato(s).</span>`;
 };
 $("#save-config").onclick = async () => {
   try {

@@ -207,3 +207,22 @@
   font-size: 10px;
   color: #65758a;
 }
+.free-simulator-result {
+  display: grid;
+  gap: 7px;
+  min-height: 55px;
+  margin-top: 12px;
+  padding: 15px;
+  border: 1px solid #cbd9e8;
+  border-radius: 10px;
+  background: #f7fafc;
+  color: #3d5066;
+}
+.free-simulator-result strong {
+  font-size: 18px;
+  color: #162a43;
+}
+.free-simulator-result span {
+  font-size: 12px;
+  line-height: 1.5;
+}
