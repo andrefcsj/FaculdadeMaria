@@ -178,6 +178,72 @@
                 </table>
               </div>
             </section>
+            <dialog id="edit-operation-dialog" class="free-dialog">
+              <form id="edit-operation-form" method="dialog">
+                <header>
+                  <div>
+                    <small>OPERAÇÃO ABERTA</small>
+                    <h2>Editar operação</h2>
+                  </div>
+                  <button type="button" data-close-edit>×</button>
+                </header>
+                <input name="id" type="hidden" />
+                <div class="free-dialog__grid">
+                  <label
+                    >Data<input
+                      name="data_abertura"
+                      type="date"
+                      required /></label
+                  ><label>Ativo<input name="ativo" required /></label
+                  ><label
+                    >Tipo<select name="tipo">
+                      <option>PUT</option>
+                      <option>CALL</option>
+                    </select></label
+                  ><label>Estratégia<input name="estrategia" required /></label
+                  ><label
+                    >Contratos<input
+                      name="contratos"
+                      type="number"
+                      min="1"
+                      required /></label
+                  ><label
+                    >Strike<input
+                      name="strike"
+                      type="number"
+                      step="0.01"
+                      required /></label
+                  ><label
+                    >Prêmio<input
+                      name="premio_opcao"
+                      type="number"
+                      step="0.01"
+                      required /></label
+                  ><label
+                    >Custos<input
+                      name="custos"
+                      type="number"
+                      step="0.01" /></label
+                  ><label
+                    >IRRF<input name="irrf" type="number" step="0.01" /></label
+                  ><label
+                    >Vencimento<input
+                      name="vencimento"
+                      type="date"
+                      required /></label
+                  ><label
+                    >Cotação atual<input
+                      name="cotacao_atual"
+                      type="number"
+                      step="0.01"
+                  /></label>
+                </div>
+                <footer>
+                  <button type="button" data-close-edit>Cancelar</button
+                  ><button>Salvar alterações</button>
+                </footer>
+              </form>
+            </dialog>
           </section>
           <section id="closed-screen" class="screen" hidden>
             <section class="exec-panel">
@@ -201,15 +267,67 @@
           </section>
           <section id="equity-screen" class="screen" hidden>
             <section class="exec-kpis">
-              <article class="exec-kpi exec-kpi--patrimony"><small>AÇÕES EM CARTEIRA</small><strong id="equity-quantity">0</strong><p>Quantidade mantida na corretora</p></article>
-              <article class="exec-kpi exec-kpi--blue"><small>VALOR ALOCADO</small><strong id="equity-cost">R$ 0,00</strong><p>Custo financeiro das posições</p></article>
-              <article class="exec-kpi exec-kpi--premium"><small>AÇÕES LIVRES</small><strong id="equity-available">0</strong><p>Disponíveis para negociação</p></article>
+              <article class="exec-kpi exec-kpi--patrimony">
+                <small>AÇÕES EM CARTEIRA</small
+                ><strong id="equity-quantity">0</strong>
+                <p>Quantidade mantida na corretora</p>
+              </article>
+              <article class="exec-kpi exec-kpi--blue">
+                <small>VALOR ALOCADO</small
+                ><strong id="equity-cost">R$ 0,00</strong>
+                <p>Custo financeiro das posições</p>
+              </article>
+              <article class="exec-kpi exec-kpi--premium">
+                <small>AÇÕES LIVRES</small
+                ><strong id="equity-available">0</strong>
+                <p>Disponíveis para negociação</p>
+              </article>
             </section>
             <section class="exec-panel">
-              <header class="exec-panel__header"><h2>Carteira de ações</h2></header>
-              <form id="equity-form" class="free-operation-form"><input name="asset" placeholder="Código da ação" required><input name="quantity" type="number" min="1" placeholder="Quantidade" required><input name="average_price" type="number" min="0.01" step="0.01" placeholder="Preço médio fiscal" required><input name="acquisition_date" type="date" required><button>Adicionar ação</button></form>
-              <div class="free-table"><table><thead><tr><th>Ação</th><th>Quantidade</th><th>PM fiscal</th><th>Custo financeiro</th><th>Data</th><th>Ações</th></tr></thead><tbody id="equity-rows"></tbody></table></div>
-              <p class="free-help">O preço médio fiscal permanece separado do custo gerencial. A importação de PDF foi removida da versão gratuita.</p>
+              <header class="exec-panel__header">
+                <h2>Carteira de ações</h2>
+              </header>
+              <form id="equity-form" class="free-operation-form">
+                <input
+                  name="asset"
+                  placeholder="Código da ação"
+                  required
+                /><input
+                  name="quantity"
+                  type="number"
+                  min="1"
+                  placeholder="Quantidade"
+                  required
+                /><input
+                  name="average_price"
+                  type="number"
+                  min="0.01"
+                  step="0.01"
+                  placeholder="Preço médio fiscal"
+                  required
+                /><input name="acquisition_date" type="date" required /><button>
+                  Adicionar ação
+                </button>
+              </form>
+              <div class="free-table">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Ação</th>
+                      <th>Quantidade</th>
+                      <th>PM fiscal</th>
+                      <th>Custo financeiro</th>
+                      <th>Data</th>
+                      <th>Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody id="equity-rows"></tbody>
+                </table>
+              </div>
+              <p class="free-help">
+                O preço médio fiscal permanece separado do custo gerencial. A
+                importação de PDF foi removida da versão gratuita.
+              </p>
             </section>
           </section>
           <section id="cash-screen" class="screen" hidden>

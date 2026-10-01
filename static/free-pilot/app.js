@@ -44,7 +44,7 @@ function rows(target, list, closed = false) {
       .map((x) =>
         closed
           ? `<tr><td>${escape(x["Data fechamento"] || x.closed_at || "—")}</td><td>${escape(x.ativo || x.Ativo)}</td><td>${escape(x.tipo || x.Tipo)}</td><td>${escape(x.estrategia || x["Estratégia"])}</td><td>${money(x.Resultado_final || x.resultado_final || x.Lucro_tributavel)}</td><td><button data-reopen="${escape(x.closed_id)}">Reabrir</button></td></tr>`
-          : `<tr><td>${escape(x.data_abertura)}</td><td>${escape(x.ativo)}</td><td>${escape(x.tipo)}</td><td>${escape(x.estrategia)}</td><td>${money(x.strike)}</td><td>${money(x.premio_opcao)}</td><td>${escape(x.vencimento)}</td>${target === "#open-operations" ? `<td><button data-close="${x.id}">Fechar</button><button data-remove="${x.id}">Excluir</button></td>` : ""}</tr>`,
+          : `<tr><td>${escape(x.data_abertura)}</td><td>${escape(x.ativo)}</td><td>${escape(x.tipo)}</td><td>${escape(x.estrategia)}</td><td>${money(x.strike)}</td><td>${money(x.premio_opcao)}</td><td>${escape(x.vencimento)}</td>${target === "#open-operations" ? `<td><button data-edit="${x.id}">Editar</button><button data-close="${x.id}">Fechar</button><button data-remove="${x.id}">Excluir</button></td>` : ""}</tr>`,
       )
       .join("") || "<tr><td colspan=8>Nenhum registro.</td></tr>";
 }
@@ -61,7 +61,9 @@ function kindLabel(kind) {
 function renderExtra() {
   const cash = state.cash || [],
     credit = cash
-      .filter((x) => ["aporte", "ajuste_credito", "venda_acoes"].includes(x.kind))
+      .filter((x) =>
+        ["aporte", "ajuste_credito", "venda_acoes"].includes(x.kind),
+      )
       .reduce((s, x) => s + num(x.amount), 0),
     debit = cash
       .filter((x) => ["retirada", "ajuste_debito"].includes(x.kind))
@@ -108,20 +110,38 @@ function renderExtra() {
         `<label><strong>${escape(x.parametro)}</strong><input data-config="${escape(x.parametro)}" value="${escape(x.valor)}"></label>`,
     )
     .join("");
-  const lots = state.equities || [], grouped = new Map();
+  const lots = state.equities || [],
+    grouped = new Map();
   for (const lot of lots) {
     const asset = String(lot.asset || "").toUpperCase();
     if (!asset) continue;
-    const item = grouped.get(asset) || { asset, quantity: 0, cost: 0, date: lot.acquisition_date || "" };
-    item.quantity += num(lot.available_quantity ?? lot.quantity); item.cost += num(lot.cash_cost_total);
-    if (!item.date || String(lot.acquisition_date) < item.date) item.date = lot.acquisition_date || item.date;
+    const item = grouped.get(asset) || {
+      asset,
+      quantity: 0,
+      cost: 0,
+      date: lot.acquisition_date || "",
+    };
+    item.quantity += num(lot.available_quantity ?? lot.quantity);
+    item.cost += num(lot.cash_cost_total);
+    if (!item.date || String(lot.acquisition_date) < item.date)
+      item.date = lot.acquisition_date || item.date;
     grouped.set(asset, item);
   }
   const equities = [...grouped.values()].filter((item) => item.quantity > 0);
-  $("#equity-quantity").textContent = String(equities.reduce((sum, item) => sum + item.quantity, 0));
+  $("#equity-quantity").textContent = String(
+    equities.reduce((sum, item) => sum + item.quantity, 0),
+  );
   $("#equity-available").textContent = $("#equity-quantity").textContent;
-  $("#equity-cost").textContent = money(equities.reduce((sum, item) => sum + item.cost, 0));
-  $("#equity-rows").innerHTML = equities.map((item) => `<tr><td><strong>${escape(item.asset)}</strong></td><td>${item.quantity}</td><td>${money(item.cost / item.quantity)}</td><td>${money(item.cost)}</td><td>${escape(item.date || "—")}</td><td><button data-equity-edit="${escape(item.asset)}">Editar</button><button data-equity-sell="${escape(item.asset)}">Vender</button><button data-equity-delete="${escape(item.asset)}">Excluir</button></td></tr>`).join("") || "<tr><td colspan=6>Nenhuma ação registrada.</td></tr>";
+  $("#equity-cost").textContent = money(
+    equities.reduce((sum, item) => sum + item.cost, 0),
+  );
+  $("#equity-rows").innerHTML =
+    equities
+      .map(
+        (item) =>
+          `<tr><td><strong>${escape(item.asset)}</strong></td><td>${item.quantity}</td><td>${money(item.cost / item.quantity)}</td><td>${money(item.cost)}</td><td>${escape(item.date || "—")}</td><td><button data-equity-edit="${escape(item.asset)}">Editar</button><button data-equity-sell="${escape(item.asset)}">Vender</button><button data-equity-delete="${escape(item.asset)}">Excluir</button></td></tr>`,
+      )
+      .join("") || "<tr><td colspan=6>Nenhuma ação registrada.</td></tr>";
 }
 function render() {
   const open = opened(),
@@ -134,8 +154,18 @@ function render() {
       (s, x) => s + num(x.contratos) * num(x.premio_opcao) * size,
       0,
     ),
-    cash = (state.cash || []).reduce((sum, item) => sum + (["aporte", "ajuste_credito", "venda_acoes"].includes(item.kind) ? num(item.amount) : -num(item.amount)), 0),
-    equityCost = (state.equities || []).reduce((sum, item) => sum + num(item.cash_cost_total), 0),
+    cash = (state.cash || []).reduce(
+      (sum, item) =>
+        sum +
+        (["aporte", "ajuste_credito", "venda_acoes"].includes(item.kind)
+          ? num(item.amount)
+          : -num(item.amount)),
+      0,
+    ),
+    equityCost = (state.equities || []).reduce(
+      (sum, item) => sum + num(item.cash_cost_total),
+      0,
+    ),
     patrimony = cfg("Capital total inicial") + cash;
   $("#capital-total").textContent = money(patrimony);
   $("#capital-committed").textContent = money(capital);
@@ -181,6 +211,22 @@ function render() {
         }
       }),
   );
+  document.querySelectorAll("[data-edit]").forEach(
+    (button) =>
+      (button.onclick = () => {
+        const operation = state.operations.find(
+          (item) => String(item.id) === String(button.dataset.edit),
+        );
+        if (!operation) return;
+        const form = $("#edit-operation-form");
+        for (const [name, value] of Object.entries(operation)) {
+          const field = form.elements[name];
+          if (field) field.value = value ?? "";
+        }
+        form.elements.id.value = operation.id;
+        $("#edit-operation-dialog").showModal();
+      }),
+  );
   document.querySelectorAll("[data-reopen]").forEach(
     (b) =>
       (b.onclick = async () => {
@@ -210,9 +256,71 @@ function render() {
         }
       }),
   );
-  document.querySelectorAll("[data-equity-delete]").forEach((b) => (b.onclick = async () => { if (confirm(`Excluir ${b.dataset.equityDelete} da carteira?`)) { await request(`/equities/${b.dataset.equityDelete}`, { method: "DELETE" }); await load(); } }));
-  document.querySelectorAll("[data-equity-edit]").forEach((b) => (b.onclick = async () => { const current = (state.equities || []).filter((x) => x.asset === b.dataset.equityEdit); const quantity = prompt("Quantidade da posição:", String(current.reduce((sum, x) => sum + num(x.available_quantity ?? x.quantity), 0))); if (quantity === null) return; const cost = current.reduce((sum, x) => sum + num(x.cash_cost_total), 0); const average = prompt("Preço médio fiscal:", String(cost / Math.max(1, num(quantity)))); if (average === null) return; await request(`/equities/${b.dataset.equityEdit}`, { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify({ quantity, average_price: average, acquisition_date: current[0]?.acquisition_date }) }); await load(); }));
-  document.querySelectorAll("[data-equity-sell]").forEach((b) => (b.onclick = async () => { const quantity = prompt(`Quantidade de ${b.dataset.equitySell} a vender:`); if (quantity === null) return; const sale_price = prompt("Preço de venda por ação:"); if (sale_price === null) return; await request(`/equities/${b.dataset.equitySell}/sell`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ quantity, sale_price }) }); await load(); }));
+  document.querySelectorAll("[data-equity-delete]").forEach(
+    (b) =>
+      (b.onclick = async () => {
+        if (confirm(`Excluir ${b.dataset.equityDelete} da carteira?`)) {
+          await request(`/equities/${b.dataset.equityDelete}`, {
+            method: "DELETE",
+          });
+          await load();
+        }
+      }),
+  );
+  document.querySelectorAll("[data-equity-edit]").forEach(
+    (b) =>
+      (b.onclick = async () => {
+        const current = (state.equities || []).filter(
+          (x) => x.asset === b.dataset.equityEdit,
+        );
+        const quantity = prompt(
+          "Quantidade da posição:",
+          String(
+            current.reduce(
+              (sum, x) => sum + num(x.available_quantity ?? x.quantity),
+              0,
+            ),
+          ),
+        );
+        if (quantity === null) return;
+        const cost = current.reduce(
+          (sum, x) => sum + num(x.cash_cost_total),
+          0,
+        );
+        const average = prompt(
+          "Preço médio fiscal:",
+          String(cost / Math.max(1, num(quantity))),
+        );
+        if (average === null) return;
+        await request(`/equities/${b.dataset.equityEdit}`, {
+          method: "PUT",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            quantity,
+            average_price: average,
+            acquisition_date: current[0]?.acquisition_date,
+          }),
+        });
+        await load();
+      }),
+  );
+  document.querySelectorAll("[data-equity-sell]").forEach(
+    (b) =>
+      (b.onclick = async () => {
+        const quantity = prompt(
+          `Quantidade de ${b.dataset.equitySell} a vender:`,
+        );
+        if (quantity === null) return;
+        const sale_price = prompt("Preço de venda por ação:");
+        if (sale_price === null) return;
+        await request(`/equities/${b.dataset.equitySell}/sell`, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ quantity, sale_price }),
+        });
+        await load();
+      }),
+  );
 }
 async function load() {
   state = await (await request("/dashboard")).json();
@@ -229,7 +337,10 @@ function screen(name) {
     dashboard: ["DASHBOARD EXECUTIVO", "Visão geral da sua carteira de opções"],
     open: ["OPERAÇÕES ABERTAS", "Posições ativas e gerenciamento"],
     closed: ["OPERAÇÕES FECHADAS", "Histórico de resultados"],
-    equity: ["CARTEIRA DE AÇÕES", "Ações reconhecidas por exercício ou inclusão manual"],
+    equity: [
+      "CARTEIRA DE AÇÕES",
+      "Ações reconhecidas por exercício ou inclusão manual",
+    ],
     cash: ["APORTES REALIZADOS", "Livro-caixa e evolução do saldo"],
     notes: ["NOTAS IMPORTADAS", "Créditos, custos e acompanhamento das notas"],
     tax: ["APURAÇÃO DE IR", "Memória gerencial de renda variável"],
@@ -298,14 +409,45 @@ $("#operation-form").onsubmit = async (e) => {
     $("#message").textContent = err.message;
   }
 };
+document
+  .querySelectorAll("[data-close-edit]")
+  .forEach(
+    (button) => (button.onclick = () => $("#edit-operation-dialog").close()),
+  );
+$("#edit-operation-form").onsubmit = async (e) => {
+  e.preventDefault();
+  const form = e.target,
+    id = form.elements.id.value;
+  try {
+    const data = Object.fromEntries(new FormData(form));
+    delete data.id;
+    await request(`/operations/${id}`, {
+      method: "PUT",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    $("#edit-operation-dialog").close();
+    await load();
+  } catch (err) {
+    $("#message").textContent = err.message;
+  }
+};
 $("#equity-form").onsubmit = async (e) => {
   e.preventDefault();
   try {
-    await request("/equities", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(Object.fromEntries(new FormData(e.target))) });
+    await request("/equities", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(Object.fromEntries(new FormData(e.target))),
+    });
     e.target.reset();
-    e.target.elements.acquisition_date.value = new Date().toISOString().slice(0, 10);
+    e.target.elements.acquisition_date.value = new Date()
+      .toISOString()
+      .slice(0, 10);
     await load();
-  } catch (err) { $("#message").textContent = err.message; }
+  } catch (err) {
+    $("#message").textContent = err.message;
+  }
 };
 $("#cash-form").onsubmit = async (e) => {
   e.preventDefault();
