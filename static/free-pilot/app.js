@@ -142,6 +142,66 @@ function renderExtra() {
           `<tr><td><strong>${escape(item.asset)}</strong></td><td>${item.quantity}</td><td>${money(item.cost / item.quantity)}</td><td>${money(item.cost)}</td><td>${escape(item.date || "—")}</td><td><button data-equity-edit="${escape(item.asset)}">Editar</button><button data-equity-sell="${escape(item.asset)}">Vender</button><button data-equity-delete="${escape(item.asset)}">Excluir</button></td></tr>`,
       )
       .join("") || "<tr><td colspan=6>Nenhuma ação registrada.</td></tr>";
+  const monthly = new Map(),
+    addPremium = (date, premium, closedResult = 0) => {
+      const month = String(date || "").slice(0, 7) || "Sem data";
+      const row = monthly.get(month) || {
+        month,
+        count: 0,
+        premium: 0,
+        result: 0,
+      };
+      row.count += 1;
+      row.premium += num(premium);
+      row.result += num(closedResult);
+      monthly.set(month, row);
+    };
+  state.operations.forEach((item) =>
+    addPremium(
+      item.data_abertura,
+      num(item.premio_opcao) *
+        num(item.contratos) *
+        cfg("Tamanho contrato opcoes", 100) -
+        num(item.custos) -
+        num(item.irrf),
+    ),
+  );
+  (state.closed || []).forEach((item) =>
+    addPremium(
+      item["Data fechamento"] || item.closed_at,
+      item.Premio_liquido || item.premio_opcao,
+      item.Resultado_final || item.resultado_final,
+    ),
+  );
+  const premiumRows = [...monthly.values()].sort((a, b) =>
+    a.month.localeCompare(b.month),
+  );
+  const received = premiumRows.reduce((sum, row) => sum + row.premium, 0),
+    closedResult = premiumRows.reduce((sum, row) => sum + row.result, 0),
+    costs = state.operations.reduce(
+      (sum, item) => sum + num(item.custos) + num(item.irrf),
+      0,
+    );
+  $("#premium-total").textContent = money(received);
+  $("#premium-costs").textContent = money(costs);
+  $("#premium-retained").textContent = money(received + closedResult - costs);
+  $("#premium-rows").innerHTML =
+    premiumRows
+      .slice()
+      .reverse()
+      .map(
+        (row) =>
+          `<tr><td>${escape(row.month)}</td><td>${row.count}</td><td>${money(row.premium)}</td><td>${money(row.result)}</td></tr>`,
+      )
+      .join("") || "<tr><td colspan=4>Nenhum prêmio registrado.</td></tr>";
+  const top = Math.max(...premiumRows.map((row) => Math.abs(row.premium)), 1);
+  $("#premium-chart").innerHTML =
+    premiumRows
+      .map(
+        (row) =>
+          `<div><i style="height:${Math.max(5, (Math.abs(row.premium) / top) * 130)}px"></i><strong>${money(row.premium)}</strong><small>${escape(row.month)}</small></div>`,
+      )
+      .join("") || "Sem dados para o gráfico.";
 }
 function render() {
   const open = opened(),
@@ -337,6 +397,10 @@ function screen(name) {
     dashboard: ["DASHBOARD EXECUTIVO", "Visão geral da sua carteira de opções"],
     open: ["OPERAÇÕES ABERTAS", "Posições ativas e gerenciamento"],
     closed: ["OPERAÇÕES FECHADAS", "Histórico de resultados"],
+    premiums: [
+      "PRÊMIOS RECEBIDOS",
+      "Histórico de créditos e resultado por ciclo",
+    ],
     equity: [
       "CARTEIRA DE AÇÕES",
       "Ações reconhecidas por exercício ou inclusão manual",

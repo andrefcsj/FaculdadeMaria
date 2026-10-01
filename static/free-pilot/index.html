@@ -50,6 +50,7 @@
           </div>
           <div class="nav-group">
             <span class="nav-group__title">GESTÃO</span
+            ><a href="#premiums" data-screen="premiums">R$ Prêmios recebidos</a
             ><a href="#tax" data-screen="tax">▤ Apuração de IR</a
             ><a href="#history" data-screen="closed">⌁ Histórico</a>
           </div>
@@ -261,6 +262,45 @@
                     </tr>
                   </thead>
                   <tbody id="closed-operations"></tbody>
+                </table>
+              </div>
+            </section>
+          </section>
+          <section id="premiums-screen" class="screen" hidden>
+            <section class="exec-kpis">
+              <article class="exec-kpi exec-kpi--premium">
+                <small>PRÊMIOS RECEBIDOS</small
+                ><strong id="premium-total">R$ 0,00</strong>
+                <p>Créditos brutos de operações</p>
+              </article>
+              <article class="exec-kpi exec-kpi--blue">
+                <small>RECOMPRA E CUSTOS</small
+                ><strong id="premium-costs">R$ 0,00</strong>
+                <p>Custos e saídas registradas</p>
+              </article>
+              <article class="exec-kpi exec-kpi--roi">
+                <small>PRÊMIO RETIDO</small
+                ><strong id="premium-retained">R$ 0,00</strong>
+                <p>Resultado dos ciclos encerrados e abertos</p>
+              </article>
+            </section>
+            <section class="exec-panel">
+              <header class="exec-panel__header">
+                <h2>Histórico mensal de prêmios</h2>
+                <span class="exec-tag">DADOS DO PILOTO</span>
+              </header>
+              <div id="premium-chart" class="free-bars"></div>
+              <div class="free-table">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Mês</th>
+                      <th>Operações</th>
+                      <th>Prêmios recebidos</th>
+                      <th>Resultado fechado</th>
+                    </tr>
+                  </thead>
+                  <tbody id="premium-rows"></tbody>
                 </table>
               </div>
             </section>

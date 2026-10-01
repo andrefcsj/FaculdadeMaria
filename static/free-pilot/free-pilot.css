@@ -176,3 +176,34 @@
     grid-template-columns: 1fr 1fr;
   }
 }
+.free-bars {
+  display: flex;
+  align-items: end;
+  gap: 12px;
+  min-height: 170px;
+  margin: 8px 0 22px;
+  padding: 12px 4px;
+  border-bottom: 1px solid #dce4ec;
+}
+.free-bars > div {
+  flex: 1;
+  display: grid;
+  gap: 6px;
+  align-items: end;
+  text-align: center;
+  min-width: 54px;
+}
+.free-bars i {
+  display: block;
+  min-height: 4px;
+  border-radius: 8px 8px 0 0;
+  background: linear-gradient(180deg, #24bf70, #176aee);
+}
+.free-bars strong {
+  font-size: 11px;
+  color: #263a52;
+}
+.free-bars small {
+  font-size: 10px;
+  color: #65758a;
+}
