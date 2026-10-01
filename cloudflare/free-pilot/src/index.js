@@ -201,6 +201,167 @@ async function backupData(env) {
   };
 }
 
+async function restoreBackup(env, backup) {
+  if (
+    backup?.format !== "faculdademaria-cloudflare-backup" ||
+    backup?.version !== 1 ||
+    !backup?.data ||
+    typeof backup.data !== "object"
+  )
+    throw new Error("Arquivo de backup inválido.");
+  const data = backup.data,
+    list = (name) => (Array.isArray(data[name]) ? data[name] : []);
+  const total = [
+    "operations",
+    "config",
+    "closed",
+    "cash",
+    "notes",
+    "darfs",
+    "equities",
+    "operation_preferences",
+    "manual_option_quotes",
+    "api_market_quotes",
+    "operation_closure_metadata",
+  ].reduce((sum, name) => sum + list(name).length, 0);
+  if (total > 5000)
+    throw new Error("O backup excede o limite seguro de 5.000 registros.");
+  const statements = [
+    "operacoes",
+    "config",
+    "closed_operations",
+    "cash_ledger",
+    "brokerage_notes",
+    "paid_darfs",
+    "equity_lots",
+    "operation_preferences",
+    "manual_option_quotes",
+    "api_market_quotes",
+    "operation_closure_metadata",
+    "taxpayer_profile",
+  ].map((table) => env.DB.prepare(`DELETE FROM ${table}`));
+  for (const row of list("operations"))
+    statements.push(
+      env.DB.prepare(
+        "INSERT INTO operacoes (id, data_abertura, ativo, tipo, estrategia, status, contratos, strike, premio_opcao, custos, irrf, vencimento, cotacao_atual, resultado_realizado) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      ).bind(
+        row.id,
+        row.data_abertura,
+        row.ativo,
+        row.tipo,
+        row.estrategia,
+        row.status,
+        row.contratos,
+        row.strike,
+        row.premio_opcao,
+        row.custos,
+        row.irrf,
+        row.vencimento,
+        row.cotacao_atual,
+        row.resultado_realizado,
+      ),
+    );
+  for (const row of list("config"))
+    statements.push(
+      env.DB.prepare(
+        "INSERT INTO config (parametro, valor) VALUES (?, ?)",
+      ).bind(row.parametro, row.valor),
+    );
+  for (const row of list("closed")) {
+    const { closed_id, closed_at, ...payload } = row;
+    statements.push(
+      env.DB.prepare(
+        "INSERT INTO closed_operations (closed_id, payload, closed_at) VALUES (?, ?, ?)",
+      ).bind(
+        closed_id || recordId(),
+        JSON.stringify(payload),
+        closed_at || payload["Data fechamento"] || "",
+      ),
+    );
+  }
+  for (const row of list("cash")) {
+    const { id, date, ...payload } = row;
+    statements.push(
+      env.DB.prepare(
+        "INSERT INTO cash_ledger (event_id, payload, event_date) VALUES (?, ?, ?)",
+      ).bind(
+        id || recordId(),
+        JSON.stringify(payload),
+        date || payload.date || "",
+      ),
+    );
+  }
+  for (const row of list("notes")) {
+    const { key, ...payload } = row;
+    statements.push(
+      env.DB.prepare(
+        "INSERT INTO brokerage_notes (note_key, payload) VALUES (?, ?)",
+      ).bind(key || recordId(), JSON.stringify(payload)),
+    );
+  }
+  for (const row of list("darfs")) {
+    const { id, ...payload } = row;
+    statements.push(
+      env.DB.prepare(
+        "INSERT INTO paid_darfs (darf_id, payload, competence, payment_date) VALUES (?, ?, ?, ?)",
+      ).bind(
+        id || recordId(),
+        JSON.stringify(payload),
+        payload.competence || "",
+        payload.payment_date || "",
+      ),
+    );
+  }
+  for (const row of list("equities")) {
+    const { lot_id, ...payload } = row;
+    statements.push(
+      env.DB.prepare(
+        "INSERT INTO equity_lots (lot_id, payload) VALUES (?, ?)",
+      ).bind(lot_id || "manual:" + recordId(), JSON.stringify(payload)),
+    );
+  }
+  for (const row of list("operation_preferences"))
+    statements.push(
+      env.DB.prepare(
+        "INSERT INTO operation_preferences (operation_id, exercise_interest, underlying_asset, updated_at) VALUES (?, ?, ?, ?)",
+      ).bind(
+        row.operation_id,
+        row.exercise_interest,
+        row.underlying_asset,
+        row.updated_at,
+      ),
+    );
+  for (const row of list("manual_option_quotes"))
+    statements.push(
+      env.DB.prepare(
+        "INSERT INTO manual_option_quotes (option_code, price, quoted_at, updated_at) VALUES (?, ?, ?, ?)",
+      ).bind(row.option_code, row.price, row.quoted_at, row.updated_at),
+    );
+  for (const row of list("api_market_quotes"))
+    statements.push(
+      env.DB.prepare(
+        "INSERT INTO api_market_quotes (quote_kind, symbol, price, source, quoted_at) VALUES (?, ?, ?, ?, ?)",
+      ).bind(row.quote_kind, row.symbol, row.price, row.source, row.quoted_at),
+    );
+  for (const row of list("operation_closure_metadata")) {
+    const { operation_id, updated_at, ...payload } = row;
+    statements.push(
+      env.DB.prepare(
+        "INSERT INTO operation_closure_metadata (operation_id, payload, updated_at) VALUES (?, ?, ?)",
+      ).bind(operation_id, JSON.stringify(payload), updated_at),
+    );
+  }
+  if (data.taxpayer && Object.keys(data.taxpayer).length)
+    statements.push(
+      env.DB.prepare(
+        "INSERT INTO taxpayer_profile (profile_id, payload) VALUES (1, ?)",
+      ).bind(JSON.stringify(data.taxpayer)),
+    );
+  for (let index = 0; index < statements.length; index += 100)
+    await env.DB.batch(statements.slice(index, index + 100));
+  return total;
+}
+
 async function api(request, env, path) {
   if (path === "/api/session" && request.method === "POST") {
     const body = await request.json().catch(() => ({}));
@@ -577,6 +738,19 @@ async function api(request, env, path) {
           "attachment; filename=faculdademaria-backup.json",
       },
     });
+  }
+  if (path === "/api/restore" && request.method === "POST") {
+    try {
+      return json({
+        ok: true,
+        restored: await restoreBackup(env, await request.json()),
+      });
+    } catch (error) {
+      return json(
+        { error: error.message || "Não foi possível restaurar o backup." },
+        400,
+      );
+    }
   }
   return json({ error: "not found" }, 404);
 }
