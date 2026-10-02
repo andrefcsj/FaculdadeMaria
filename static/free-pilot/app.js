@@ -105,6 +105,30 @@ function renderExtra() {
           `<tr><td>${escape(x.competence)}</td><td>${escape(x.payment_date)}</td><td>${money(x.amount)}</td><td>${escape(x.description || "—")}</td><td><button data-darf-delete="${escape(x.id)}">Excluir</button></td></tr>`,
       )
       .join("") || "<tr><td colspan=5>Nenhuma DARF registrada.</td></tr>";
+  const taxMonths = new Map();
+  (state.closed || []).forEach((item) => {
+    const competence = String(item["Data fechamento"] || item.closed_at || "").slice(0, 7);
+    if (!/^\d{4}-\d{2}$/.test(competence)) return;
+    const row = taxMonths.get(competence) || { competence, result: 0, paid: 0 };
+    row.result += num(item.Resultado_final || item.resultado_final || item.Lucro_tributavel);
+    taxMonths.set(competence, row);
+  });
+  (state.darfs || []).forEach((item) => {
+    const competence = String(item.competence || "");
+    if (!/^\d{4}-\d{2}$/.test(competence)) return;
+    const row = taxMonths.get(competence) || { competence, result: 0, paid: 0 };
+    row.paid += num(item.amount);
+    taxMonths.set(competence, row);
+  });
+  const rate = Math.max(0, cfg("Aliquota IR opcoes", 0.15));
+  $("#tax-month-rows").innerHTML = [...taxMonths.values()]
+    .sort((a, b) => b.competence.localeCompare(a.competence))
+    .map((row) => {
+      const estimated = Math.max(0, row.result) * rate,
+        balance = estimated - row.paid;
+      return `<tr><td><strong>${escape(row.competence)}</strong></td><td class="${row.result < 0 ? "negative" : "positive"}">${money(row.result)}</td><td>${money(estimated)}</td><td>${money(row.paid)}</td><td class="${balance > 0 ? "negative" : "positive"}">${money(balance)}</td></tr>`;
+    })
+    .join("") || "<tr><td colspan=5>Nenhuma competência registrada.</td></tr>";
   $("#settings-list").innerHTML = state.config
     .map(
       (x) =>
