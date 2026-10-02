@@ -542,6 +542,22 @@
                 </div>
               </section>
             </div>
+            <section class="exec-panel">
+              <header class="exec-panel__header">
+                <div><h2>Comparador de CALL e PUT</h2><p>Compare duas alternativas antes de lançar uma operação.</p></div>
+              </header>
+              <form id="compare-form" class="free-operation-form">
+                <select name="type"><option value="PUT">PUT vendida</option><option value="CALL">CALL coberta</option></select>
+                <input name="spot" type="number" min="0.01" step="0.01" placeholder="Cotação atual" required />
+                <input name="contracts" type="number" min="1" value="1" placeholder="Contratos" required />
+                <input name="strike_a" type="number" min="0.01" step="0.01" placeholder="Strike A" required />
+                <input name="premium_a" type="number" min="0" step="0.01" placeholder="Prêmio A" required />
+                <input name="strike_b" type="number" min="0.01" step="0.01" placeholder="Strike B" required />
+                <input name="premium_b" type="number" min="0" step="0.01" placeholder="Prêmio B" required />
+                <button>Comparar alternativas</button>
+              </form>
+              <div id="compare-result" class="free-simulator-result">Informe duas opções para comparar retorno, capital e margem até o strike.</div>
+            </section>
           </section>
           <section id="radar-screen" class="screen" hidden>
             <div class="exec-grid exec-grid--primary">

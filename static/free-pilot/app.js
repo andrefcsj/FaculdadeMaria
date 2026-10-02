@@ -804,6 +804,29 @@ $("#roll-form").onsubmit = (e) => {
   $("#roll-result").innerHTML =
     `<strong class="${netCredit >= 0 ? "positive" : "negative"}">${money(netCredit)} de crédito líquido na rolagem</strong><span>PUT atual: ${escape(operation.ativo)} a ${money(originalStrike)} · Nova garantia: ${money(newGuarantee)} · Crédito acumulado das duas etapas: ${money(accumulatedCredit)} · Novo vencimento: ${escape(data.new_expiry)}.</span>`;
 };
+$("#compare-form").onsubmit = (e) => {
+  e.preventDefault();
+  const data = Object.fromEntries(new FormData(e.target)),
+    size = cfg("Tamanho contrato opcoes", 100),
+    contracts = num(data.contracts),
+    spot = num(data.spot),
+    isPut = data.type === "PUT";
+  const option = (label, strikeValue, premiumValue) => {
+    const strike = num(strikeValue), premium = num(premiumValue);
+    const capital = (isPut ? strike : spot) * contracts * size;
+    const credit = premium * contracts * size;
+    const roi = capital ? (credit / capital) * 100 : 0;
+    const margin = isPut ? ((spot - strike) / spot) * 100 : ((strike - spot) / spot) * 100;
+    return { label, strike, premium, capital, credit, roi, margin };
+  };
+  const first = option("Alternativa A", data.strike_a, data.premium_a),
+    second = option("Alternativa B", data.strike_b, data.premium_b),
+    preferred = first.roi >= second.roi ? first : second;
+  const card = (item) =>
+    `<span><b>${item.label}</b> · strike ${money(item.strike)} · prêmio ${money(item.premium)} · capital ${money(item.capital)} · ROI ${item.roi.toFixed(2).replace(".", ",")}% · margem ${item.margin.toFixed(2).replace(".", ",")}%</span>`;
+  $("#compare-result").innerHTML =
+    `<strong>${preferred.label} tem o maior ROI bruto</strong>${card(first)}${card(second)}<span>Comparação gerencial: confirme liquidez, custos, tributação e risco antes de operar.</span>`;
+};
 $("#save-config").onclick = async () => {
   try {
     const values = [...document.querySelectorAll("[data-config]")].map(
