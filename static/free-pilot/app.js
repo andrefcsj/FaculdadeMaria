@@ -269,31 +269,37 @@ function renderExtra() {
     .join("") || "<tr><td colspan=4>Nenhuma cotação manual registrada.</td></tr>";
 }
 function render() {
-  const open = opened(),
-    size = cfg("Tamanho contrato opcoes", 100),
-    capital = open.reduce(
-      (s, x) => s + num(x.contratos) * num(x.strike) * size,
-      0,
-    ),
-    premium = open.reduce(
-      (s, x) => s + num(x.contratos) * num(x.premio_opcao) * size,
-      0,
-    ),
-    cash = (state.cash || []).reduce(
-      (sum, item) =>
-        sum +
-        (["aporte", "ajuste_credito", "venda_acoes"].includes(item.kind)
-          ? num(item.amount)
-          : -num(item.amount)),
-      0,
-    ),
-    equityCost = (state.equities || []).reduce(
-      (sum, item) => sum + num(item.cash_cost_total),
-      0,
-    ),
-    patrimony = cfg("Capital total inicial") + cash,
-    available = patrimony - capital - equityCost,
-    monthKey = new Date().toISOString().slice(0, 7),
+  const open = opened(), size = cfg("Tamanho contrato opcoes", 100);
+  const preferencesByOperation = new Map((state.operation_preferences || []).map((item) => [String(item.operation_id), item]));
+  const equityCostByAsset = new Map();
+  (state.equities || []).forEach((lot) => {
+    const asset = String(lot.asset || "").toUpperCase();
+    equityCostByAsset.set(asset, (equityCostByAsset.get(asset) || 0) + num(lot.cash_cost_total));
+  });
+  const putCapital = open.filter((item) => String(item.tipo).toUpperCase() === "PUT")
+    .reduce((sum, item) => sum + num(item.contratos) * num(item.strike) * size, 0);
+  const coveredCapital = open.filter((item) => String(item.tipo).toUpperCase() === "CALL" && /cobert/i.test(String(item.estrategia)))
+    .reduce((sum, item) => sum + (equityCostByAsset.get(String(preferencesByOperation.get(String(item.id))?.underlying_asset || "").toUpperCase()) || 0), 0);
+  const capital = putCapital + coveredCapital;
+  const premium = open.reduce((sum, item) => sum + num(item.premio_opcao) * num(item.contratos) * size - num(item.custos) - num(item.irrf), 0);
+  const eventCash = (state.cash || []).reduce((sum, item) => sum + (["aporte", "ajuste_credito", "venda_acoes"].includes(item.kind) ? num(item.amount) : -num(item.amount)), 0);
+  const noteCash = (state.notes || []).reduce((sum, note) => sum + (String(note.cash_direction || "C").toUpperCase() === "C" ? 1 : -1) * num(note.net_cash), 0);
+  const hasOpeningNote = (operation) => (state.notes || []).some((note) => {
+    const trade = note.trade || {};
+    const sameOperation = String(note.operation_id || "") === String(operation.id) || String(trade.option_code || "").toUpperCase() === String(operation.ativo || "").toUpperCase();
+    const noteSide = String(trade.side || (String(note.cash_direction || "C").toUpperCase() === "C" ? "Venda" : "Compra")).toLowerCase();
+    return sameOperation && noteSide === String(operation.estrategia || "Venda").toLowerCase();
+  });
+  const manualOperationCash = [...(state.operations || []), ...(state.closed || [])].reduce((sum, item) => {
+    if (hasOpeningNote(item)) return sum;
+    const signed = num(item.premio_opcao) * num(item.contratos) * size - num(item.custos) - num(item.irrf);
+    return sum + (/^venda$/i.test(String(item.estrategia || "Venda")) ? signed : -signed);
+  }, 0);
+  const brokerCash = eventCash + noteCash + manualOperationCash;
+  const equityCost = [...equityCostByAsset.values()].reduce((sum, cost) => sum + cost, 0);
+  const patrimony = brokerCash + equityCost;
+  const available = brokerCash - putCapital;
+  const monthKey = new Date().toISOString().slice(0, 7),
     monthlyPremium = [...(state.operations || []), ...(state.closed || [])]
       .filter((item) => String(item.data_abertura || item.data_fechamento || "").slice(0, 7) === monthKey)
       .reduce(
