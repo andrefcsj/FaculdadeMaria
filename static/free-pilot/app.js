@@ -158,11 +158,13 @@ function renderExtra() {
     const item = grouped.get(asset) || {
       asset,
       quantity: 0,
-      cost: 0,
+      fiscalCost: 0,
+      managerialCost: 0,
       date: lot.acquisition_date || "",
     };
     item.quantity += num(lot.available_quantity ?? lot.quantity);
-    item.cost += num(lot.cash_cost_total);
+    item.fiscalCost += num(lot.tax_cost_total ?? lot.cash_cost_total);
+    item.managerialCost += num(lot.cash_cost_total ?? lot.tax_cost_total);
     if (!item.date || String(lot.acquisition_date) < item.date)
       item.date = lot.acquisition_date || item.date;
     grouped.set(asset, item);
@@ -173,15 +175,15 @@ function renderExtra() {
   );
   $("#equity-available").textContent = $("#equity-quantity").textContent;
   $("#equity-cost").textContent = money(
-    equities.reduce((sum, item) => sum + item.cost, 0),
+    equities.reduce((sum, item) => sum + item.fiscalCost, 0),
   );
   $("#equity-rows").innerHTML =
     equities
       .map(
         (item) =>
-          `<tr><td><strong>${escape(item.asset)}</strong></td><td>${item.quantity}</td><td>${money(item.cost / item.quantity)}</td><td>${money(item.cost)}</td><td>${escape(item.date || "—")}</td><td><button data-equity-edit="${escape(item.asset)}">Editar</button><button data-equity-sell="${escape(item.asset)}">Vender</button><button data-equity-delete="${escape(item.asset)}">Excluir</button></td></tr>`,
+          `<tr><td><strong>${escape(item.asset)}</strong></td><td>${item.quantity}</td><td>${money(item.fiscalCost / item.quantity)}</td><td>${money(item.managerialCost / item.quantity)}</td><td>${money(item.fiscalCost)}</td><td>${escape(item.date || "—")}</td><td><button data-equity-edit="${escape(item.asset)}">Editar</button><button data-equity-sell="${escape(item.asset)}">Vender</button><button data-equity-delete="${escape(item.asset)}">Excluir</button></td></tr>`,
       )
-      .join("") || "<tr><td colspan=6>Nenhuma ação registrada.</td></tr>";
+      .join("") || "<tr><td colspan=7>Nenhuma ação registrada.</td></tr>";
   const monthly = new Map(),
     addPremium = (date, premium, closedResult = 0) => {
       const month = String(date || "").slice(0, 7) || "Sem data";
