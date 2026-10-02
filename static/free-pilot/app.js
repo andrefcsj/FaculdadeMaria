@@ -885,12 +885,13 @@ $("#note-pdf-form").onsubmit = async (e) => {
     if (!date) throw Error("A data do pregão não foi reconhecida.");
     const [day, month, year] = date.split("/");
     const tradeDate = `${year}-${month}-${day}`;
-    const noteNumber = (text.match(/(?:NOTA DE CORRETAGEM|NR\.\s*NOTA)[^\d]*(\d{5,})/i) || [])[1] || `LOCAL-${tradeDate}`;
-    const pattern = /1-BOVESPA\s+([CV])\s+(?:OP(?:Ç|C)[AÃ]O(?:\s+DE\s+(VENDA|COMPRA))?\s+(?:\d{2}\/\d{2}\s+)?)?([A-Z0-9]{5,})\s+(\d+)\s+([0-9.,]+)\s+([0-9.,]+)\s+([CD])/gi;
+    const noteNumber = (text.match(/NOTA DE CORRETAGEM\s+(\d{5,})/i) || text.match(/(?:NR\.\s*NOTA)[^\d]*(\d{5,})/i) || [])[1] || `LOCAL-${tradeDate}`;
+    // Formato definitivo BTG/Necton: prazo e espécie (ON/PN) aparecem antes da quantidade.
+    const pattern = /1-BOVESPA\s+([CV])\s+OP(?:Ç|C)[AÃ]O\s+DE\s+(VENDA|COMPRA)\s+(\d{2}\/\d{2})\s+([A-Z0-9]{5,})\s+(?:[A-Z]{1,3}(?:\s+[A-Z])?\s+)?(\d+)\s+([0-9.,]+)\s+([0-9.,]+)\s+([CD])/gi;
     const trades = [...text.matchAll(pattern)].map((match) => ({
       side: match[1].toUpperCase() === "V" ? "Venda" : "Compra",
-      market: String(match[2] || "Opção").toLowerCase().includes("compra") ? "Opção de compra" : "Opção de venda",
-      option_code: match[3].toUpperCase(), quantity: Number(match[4]), unit_price: parseBrNumber(match[5]), gross_value: parseBrNumber(match[6]), cash_direction: match[7].toUpperCase(),
+      market: String(match[2]).toLowerCase().includes("compra") ? "Opção de compra" : "Opção de venda",
+      expiry_month: match[3], option_code: match[4].toUpperCase(), quantity: Number(match[5]), unit_price: parseBrNumber(match[6]), gross_value: parseBrNumber(match[7]), cash_direction: match[8].toUpperCase(),
     }));
     if (!trades.length) throw Error("Nenhuma negociação foi reconhecida. Use uma nota BTG/Necton definitiva com texto selecionável.");
     const digest = Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", await file.arrayBuffer()))).map((byte) => byte.toString(16).padStart(2, "0")).join("");
