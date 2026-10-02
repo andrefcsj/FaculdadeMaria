@@ -371,9 +371,15 @@ function render() {
   (state.equities || []).forEach((lot) => {
     const asset = String(lot.asset || "").toUpperCase();
     if (!asset) return;
-    const row = groupedEquities.get(asset) || { asset, quantity: 0, cost: 0 };
+    const row = groupedEquities.get(asset) || {
+      asset,
+      quantity: 0,
+      fiscalCost: 0,
+      managerialCost: 0,
+    };
     row.quantity += num(lot.available_quantity ?? lot.quantity);
-    row.cost += num(lot.tax_cost_total ?? lot.cash_cost_total);
+    row.fiscalCost += num(lot.tax_cost_total ?? lot.cash_cost_total);
+    row.managerialCost += num(lot.cash_cost_total ?? lot.tax_cost_total);
     groupedEquities.set(asset, row);
   });
   const portfolio = [...groupedEquities.values()].filter((row) => row.quantity > 0);
@@ -381,8 +387,9 @@ function render() {
     '<div class="equity-composition__head"><span>Ação</span><span>Quantidade</span><span>PM fiscal</span><span>PM gerencial</span></div>' +
     (portfolio
       .map((row) => {
-        const average = row.cost / row.quantity;
-        return `<a class="equity-composition__row" href="#equity" data-screen="equity"><span><i>${escape(row.asset.slice(0, 2))}</i><strong>${escape(row.asset)}</strong></span><b>${row.quantity}</b><span>${money(average)}</span><span>${money(average)}</span></a>`;
+        const fiscalAverage = row.fiscalCost / row.quantity;
+        const managerialAverage = row.managerialCost / row.quantity;
+        return `<a class="equity-composition__row" href="#equity" data-screen="equity"><span><i>${escape(row.asset.slice(0, 2))}</i><strong>${escape(row.asset)}</strong></span><b>${row.quantity}</b><span>${money(fiscalAverage)}</span><span>${money(managerialAverage)}</span></a>`;
       })
       .join("") || '<div class="exec-empty"><strong>Carteira sem ações registradas</strong></div>');
   const currentTaxMonth = [...new Set((state.closed || []).map((row) => String(row["Data fechamento"] || row.closed_at || "").slice(0, 7)).filter(Boolean))].sort().pop();
