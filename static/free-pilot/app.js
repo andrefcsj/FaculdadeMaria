@@ -620,8 +620,12 @@ async function load() {
   state = await (await request("/dashboard")).json();
   render();
   const now = new Date();
-  $("#topbar-date").textContent = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "long", year: "numeric" }).format(now);
-  $("#last-updated").textContent = now.toLocaleString("pt-BR");
+  $("#topbar-date").textContent = new Intl.DateTimeFormat("pt-BR", {
+    day: "2-digit", month: "long", year: "numeric", timeZone: "America/Sao_Paulo",
+  }).format(now);
+  $("#last-updated").textContent = `${new Intl.DateTimeFormat("pt-BR", {
+    weekday: "long", hour: "2-digit", minute: "2-digit", timeZone: "America/Sao_Paulo",
+  }).format(now)} (Brasília)`;
 }
 function screen(name) {
   document.querySelectorAll(".screen").forEach((x) => (x.hidden = true));
