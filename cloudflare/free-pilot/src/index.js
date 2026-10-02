@@ -110,7 +110,7 @@ function recordId() {
 }
 
 async function dashboardData(env) {
-  const [operations, config, closed, cash, notes, darfs, profile, equities, quotes, marketQuotes] =
+  const [operations, config, closed, cash, notes, darfs, profile, equities, quotes, marketQuotes, preferences] =
     await Promise.all([
       env.DB.prepare(
         "SELECT id, data_abertura, ativo, tipo, estrategia, status, contratos, strike, premio_opcao, custos, irrf, vencimento, cotacao_atual, resultado_realizado FROM operacoes ORDER BY id",
@@ -142,6 +142,9 @@ async function dashboardData(env) {
       env.DB.prepare(
         "SELECT quote_kind, symbol, price, source, quoted_at FROM api_market_quotes ORDER BY quote_kind, symbol",
       ).all(),
+      env.DB.prepare(
+        "SELECT operation_id, exercise_interest, underlying_asset, updated_at FROM operation_preferences ORDER BY operation_id",
+      ).all(),
     ]);
   return {
     operations: operations.results,
@@ -171,6 +174,7 @@ async function dashboardData(env) {
     })),
     manual_option_quotes: quotes.results,
     api_market_quotes: marketQuotes.results,
+    operation_preferences: preferences.results,
   };
 }
 

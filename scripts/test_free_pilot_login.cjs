@@ -34,7 +34,7 @@ const assert = require('node:assert/strict');
       await page.locator('#login-form button').click();
       await page.locator('#login').waitFor({ state: 'hidden' });
       assert.equal(await page.locator('#app').isVisible(), true);
-      assert.ok(await page.locator('#dashboard-operations tr').count() > 0);
+      assert.ok(await page.locator('#dashboard-operations .dashboard-positions__row').count() > 0);
       await page.locator('a[data-screen=closed]').first().click();
       assert.equal(await page.locator('#closed-screen').isVisible(), true);
       assert.equal(await page.locator('#dashboard-screen').isVisible(), false);

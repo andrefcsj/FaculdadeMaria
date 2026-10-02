@@ -359,7 +359,29 @@ function render() {
       .join("");
   if ([...rollSelect.options].some((option) => option.value === selectedRoll))
     rollSelect.value = selectedRoll;
-  rows("#dashboard-operations", open);
+  const preferences = new Map(
+    (state.operation_preferences || []).map((item) => [String(item.operation_id), item]),
+  );
+  const optionQuotes = new Map(
+    (state.api_market_quotes || [])
+      .filter((quote) => quote.quote_kind === "option")
+      .map((quote) => [String(quote.symbol).toUpperCase(), num(quote.price)]),
+  );
+  (state.manual_option_quotes || []).forEach((quote) =>
+    optionQuotes.set(String(quote.option_code).toUpperCase(), num(quote.price)),
+  );
+  const positionHead = "<div class=\"dashboard-positions__head\"><span>Ativo</span><span>Opção</span><span>Tipo</span><span>Estratégia</span><span>Qtd.</span><span>Strike</span><span>Prêmio</span><span>Cotação</span><span>Vencimento</span><span>Resultado</span><span></span></div>";
+  $("#dashboard-operations").innerHTML = positionHead +
+    (open.map((item) => {
+      const preference = preferences.get(String(item.id));
+      const underlying = String(preference?.underlying_asset || item.ativo || "—").toUpperCase();
+      const quote = optionQuotes.get(String(item.ativo).toUpperCase());
+      const current = quote === undefined ? null : quote;
+      const estimated = current === null ? null : (num(item.premio_opcao) - current) * num(item.contratos) * size - num(item.custos) - num(item.irrf);
+      const type = String(item.tipo).toUpperCase();
+      const strategy = String(item.estrategia || "Venda");
+      return `<a class=\"dashboard-positions__row ${type === "CALL" ? "dashboard-positions__row--call" : ""}\" href=\"#open\" data-screen=\"open\"><span class=\"dashboard-asset\"><i>${escape(underlying.slice(0, 2))}</i><strong>${escape(underlying)}</strong></span><strong>${escape(item.ativo)}</strong><em class=\"dashboard-type dashboard-type--${type === "CALL" ? "call" : "put"}\">${escape(type)}</em><em class=\"dashboard-strategy dashboard-strategy--${/cobert/i.test(strategy) ? "covered" : "sale"}\">${escape(strategy)}</em><span>${escape(item.contratos)}</span><span>${money(item.strike)}</span><b>${money(item.premio_opcao)}</b><span>${current === null ? "—" : money(current)}</span><span>${escape(String(item.vencimento || "—").split("-").reverse().join("/"))}</span><span class=\"${estimated === null ? "" : estimated >= 0 ? "dashboard-money--positive" : "negative"}\">${estimated === null ? "—" : money(estimated)}</span><small>Abrir</small></a>`;
+    }).join("") || '<div class="exec-empty"><strong>Nenhuma operação aberta.</strong><p>Cadastre uma operação para acompanhá-la aqui.</p></div>');
   rows("#open-operations", open);
   rows("#closed-operations", state.closed, true);
   $("#expiries").innerHTML =
