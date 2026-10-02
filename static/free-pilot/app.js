@@ -98,7 +98,7 @@ function renderExtra() {
     (state.notes || [])
       .map(
         (x) =>
-          `<tr><td>${escape(x.trade_date || "—")}</td><td>${escape(x.note_number || "—")}</td><td>${escape(x.trade?.option_code || "—")}</td><td>${money((String(x.cash_direction || "C").toUpperCase() === "C" ? 1 : -1) * num(x.net_cash))}</td><td>${money(x.operational_costs)}</td><td><button data-note-delete="${escape(x.key)}">Excluir</button></td></tr>`,
+          `<tr><td>${escape(x.trade_date || "—")}</td><td>${escape(x.note_number || "—")}</td><td>${escape(x.trade?.option_code || "—")}</td><td>${money((String(x.cash_direction || "C").toUpperCase() === "C" ? 1 : -1) * num(x.net_cash))}</td><td>${money(x.operational_costs)}</td><td>${String(x.trade?.side).toLowerCase() === "venda" ? `<button data-note-create="${escape(x.key)}">Preparar operação</button>` : ""}<button data-note-delete="${escape(x.key)}">Excluir</button></td></tr>`,
       )
       .join("") ||
     "<tr><td colspan=6>Nenhuma nota estruturada no piloto.</td></tr>";
@@ -619,6 +619,26 @@ function render() {
           await request(`/quotes/${button.dataset.quoteDelete}`, { method: "DELETE" });
           await load();
         }
+      }),
+  );
+  document.querySelectorAll("[data-note-create]").forEach(
+    (button) =>
+      (button.onclick = () => {
+        const note = (state.notes || []).find((item) => String(item.key) === String(button.dataset.noteCreate));
+        const trade = note?.trade;
+        if (!trade) return;
+        screen("open");
+        const form = $("#operation-form");
+        form.elements.data_abertura.value = String(note.trade_date || "");
+        form.elements.ativo.value = String(trade.option_code || "");
+        form.elements.tipo.value = String(trade.market || "").toLowerCase().includes("compra") ? "CALL" : "PUT";
+        form.elements.estrategia.value = "Venda";
+        form.elements.contratos.value = Math.max(1, num(trade.quantity) / cfg("Tamanho contrato opcoes", 100));
+        form.elements.premio_opcao.value = String(trade.unit_price || "");
+        form.elements.custos.value = String(trade.allocated_costs || note.operational_costs || "0");
+        form.elements.irrf.value = String(trade.allocated_irrf || note.irrf || "0");
+        $("#message").textContent = `Operação ${trade.option_code} preparada a partir da nota. Confira strike e vencimento antes de adicionar.`;
+        form.elements.strike.focus();
       }),
   );
 }
