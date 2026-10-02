@@ -386,6 +386,19 @@ async function api(request, env, path) {
   if (path === "/api/dashboard" && request.method === "GET") {
     return json(await dashboardData(env));
   }
+  if (path === "/api/notes" && request.method === "POST") {
+    const body = await request.json().catch(() => ({}));
+    const key = String(body.key || "").trim().slice(0, 160);
+    const payload = body.payload;
+    if (!key || !payload || typeof payload !== "object")
+      return json({ error: "Lançamento de nota inválido." }, 400);
+    const result = await env.DB.prepare(
+      "INSERT INTO brokerage_notes (note_key, payload, imported_at) VALUES (?, ?, ?) ON CONFLICT(note_key) DO NOTHING",
+    )
+      .bind(key, JSON.stringify(payload), new Date().toISOString())
+      .run();
+    return json({ ok: true, imported: result.meta.changes > 0 }, 201);
+  }
   if (path === "/api/quotes" && request.method === "POST") {
     const body = await request.json().catch(() => ({}));
     const optionCode = String(body.option_code || "").trim().toUpperCase();

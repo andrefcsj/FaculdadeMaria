@@ -13,6 +13,21 @@ const num = (v) => Number(String(v ?? 0).replace(",", ".")) || 0,
     n.textContent = v ?? "";
     return n.innerHTML;
   };
+let pdfjsModule;
+async function pdfText(file) {
+  if (file.size > 5 * 1024 * 1024) throw Error("A nota deve ter no máximo 5 MB.");
+  if (!pdfjsModule) {
+    pdfjsModule = await import("https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.min.mjs");
+    pdfjsModule.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs";
+  }
+  const pdf = await pdfjsModule.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise;
+  const pages = await Promise.all([...Array(pdf.numPages)].map(async (_, index) => {
+    const content = await (await pdf.getPage(index + 1)).getTextContent();
+    return content.items.map((item) => item.str).join(" ");
+  }));
+  return pages.join("\n");
+}
+const parseBrNumber = (value) => Number(String(value).replace(/\./g, "").replace(",", ".")) || 0;
 async function request(path, options = {}) {
   const headers = new Headers(options.headers || {});
   if (sessionToken) headers.set("Authorization", `Bearer ${sessionToken}`);
@@ -781,6 +796,41 @@ $("#quote-form").onsubmit = async (e) => {
     await load();
   } catch (err) {
     $("#message").textContent = err.message;
+  }
+};
+$("#note-pdf-form").onsubmit = async (e) => {
+  e.preventDefault();
+  const file = e.target.elements.pdf.files[0], result = $("#note-pdf-result");
+  if (!file) return;
+  result.textContent = "Lendo o texto da nota neste navegador…";
+  try {
+    const text = await pdfText(file), normalized = text.toUpperCase().replace(/\s+/g, " ");
+    if (!normalized.includes("NOTA DE CORRETAGEM") || (!normalized.includes("BTG PACTUAL") && !normalized.includes("NECTON")))
+      throw Error("Envie uma nota de corretagem BTG/Necton com texto pesquisável.");
+    const date = (text.match(/(\d{2}\/\d{2}\/\d{4})/) || [])[1];
+    if (!date) throw Error("A data do pregão não foi reconhecida.");
+    const [day, month, year] = date.split("/");
+    const tradeDate = `${year}-${month}-${day}`;
+    const noteNumber = (text.match(/(?:NOTA DE CORRETAGEM|NR\.\s*NOTA)[^\d]*(\d{5,})/i) || [])[1] || `LOCAL-${tradeDate}`;
+    const pattern = /1-BOVESPA\s+([CV])\s+(?:OP(?:Ç|C)[AÃ]O(?:\s+DE\s+(VENDA|COMPRA))?\s+(?:\d{2}\/\d{2}\s+)?)?([A-Z0-9]{5,})\s+(\d+)\s+([0-9.,]+)\s+([0-9.,]+)\s+([CD])/gi;
+    const trades = [...text.matchAll(pattern)].map((match) => ({
+      side: match[1].toUpperCase() === "V" ? "Venda" : "Compra",
+      market: String(match[2] || "Opção").toLowerCase().includes("compra") ? "Opção de compra" : "Opção de venda",
+      option_code: match[3].toUpperCase(), quantity: Number(match[4]), unit_price: parseBrNumber(match[5]), gross_value: parseBrNumber(match[6]), cash_direction: match[7].toUpperCase(),
+    }));
+    if (!trades.length) throw Error("Nenhuma negociação foi reconhecida. Use uma nota BTG/Necton definitiva com texto selecionável.");
+    const digest = Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", await file.arrayBuffer()))).map((byte) => byte.toString(16).padStart(2, "0")).join("");
+    let imported = 0;
+    for (const [index, trade] of trades.entries()) {
+      const payload = { key: `${digest}:${index}`, broker: normalized.includes("NECTON") ? "Necton" : "BTG Pactual", note_number: noteNumber, trade_date: tradeDate, trade, net_cash: String(trade.cash_direction === "C" ? trade.gross_value : -trade.gross_value), operational_costs: "0", cash_direction: trade.cash_direction, imported_at: new Date().toISOString() };
+      const response = await request("/notes", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ key: payload.key, payload }) });
+      const saved = await response.json();
+      if (saved.imported) imported += 1;
+    }
+    await load(); e.target.reset();
+    result.textContent = `${imported} lançamento(s) importado(s) localmente. O PDF não foi armazenado.`;
+  } catch (err) {
+    result.textContent = err.message || "Não foi possível ler esta nota.";
   }
 };
 $("#roll-form").onsubmit = (e) => {

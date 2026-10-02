@@ -641,10 +641,13 @@
             <section class="exec-panel">
               <h2>Notas importadas</h2>
               <p class="free-help">
-                A leitura automática de PDF foi retirada para manter o plano
-                gratuito. As notas já existentes e seus lançamentos estruturados
-                continuam visíveis aqui.
+                A leitura ocorre localmente no navegador: o PDF não é enviado nem armazenado.
               </p>
+              <form id="note-pdf-form" class="free-operation-form">
+                <input name="pdf" type="file" accept="application/pdf,.pdf" required />
+                <button>Importar nota BTG/Necton</button>
+              </form>
+              <p id="note-pdf-result" class="free-help" aria-live="polite"></p>
               <div class="free-table">
                 <table>
                   <thead>
