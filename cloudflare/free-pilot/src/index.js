@@ -399,6 +399,17 @@ async function api(request, env, path) {
       .run();
     return json({ ok: true, imported: result.meta.changes > 0 }, 201);
   }
+  const noteMatch = path.match(/^\/api\/notes\/(.+)$/);
+  if (noteMatch && request.method === "DELETE") {
+    const result = await env.DB.prepare(
+      "DELETE FROM brokerage_notes WHERE note_key = ?",
+    )
+      .bind(decodeURIComponent(noteMatch[1]))
+      .run();
+    return result.meta.changes
+      ? new Response(null, { status: 204 })
+      : json({ error: "not found" }, 404);
+  }
   if (path === "/api/quotes" && request.method === "POST") {
     const body = await request.json().catch(() => ({}));
     const optionCode = String(body.option_code || "").trim().toUpperCase();

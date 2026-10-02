@@ -98,10 +98,10 @@ function renderExtra() {
     (state.notes || [])
       .map(
         (x) =>
-          `<tr><td>${escape(x.trade_date || "—")}</td><td>${escape(x.note_number || "—")}</td><td>${escape(x.trade?.option_code || "—")}</td><td>${money((String(x.cash_direction || "C").toUpperCase() === "C" ? 1 : -1) * num(x.net_cash))}</td><td>${money(x.operational_costs)}</td></tr>`,
+          `<tr><td>${escape(x.trade_date || "—")}</td><td>${escape(x.note_number || "—")}</td><td>${escape(x.trade?.option_code || "—")}</td><td>${money((String(x.cash_direction || "C").toUpperCase() === "C" ? 1 : -1) * num(x.net_cash))}</td><td>${money(x.operational_costs)}</td><td><button data-note-delete="${escape(x.key)}">Excluir</button></td></tr>`,
       )
       .join("") ||
-    "<tr><td colspan=5>Nenhuma nota estruturada no piloto.</td></tr>";
+    "<tr><td colspan=6>Nenhuma nota estruturada no piloto.</td></tr>";
   const result = (state.closed || []).reduce(
       (s, x) =>
         s + num(x.Resultado_final || x.resultado_final || x.Lucro_tributavel),
@@ -484,6 +484,17 @@ function render() {
       (b.onclick = async () => {
         if (confirm("Excluir esta DARF?")) {
           await request(`/darfs/${b.dataset.darfDelete}`, { method: "DELETE" });
+          await load();
+        }
+      }),
+  );
+  document.querySelectorAll("[data-note-delete]").forEach(
+    (button) =>
+      (button.onclick = async () => {
+        if (confirm("Excluir este lançamento de nota no piloto?")) {
+          await request(`/notes/${encodeURIComponent(button.dataset.noteDelete)}`, {
+            method: "DELETE",
+          });
           await load();
         }
       }),
