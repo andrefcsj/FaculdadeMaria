@@ -488,6 +488,21 @@ function screen(name) {
 }
 async function restore() {
   await load();
+  const today = new Date().toISOString().slice(0, 10),
+    month = today.slice(0, 7),
+    now = new Date().toISOString().slice(0, 16);
+  const defaults = [
+    ["#operation-form [name=data_abertura]", today],
+    ["#equity-form [name=acquisition_date]", today],
+    ["#cash-form [name=date]", today],
+    ["#darf-form [name=payment_date]", today],
+    ["#darf-form [name=competence]", month],
+    ["#quote-form [name=quoted_at]", now],
+  ];
+  defaults.forEach(([selector, value]) => {
+    const field = $(selector);
+    if (!field.value) field.value = value;
+  });
   $("#login").hidden = true;
   $("#app").hidden = false;
   window.scrollTo(0, 0);
