@@ -82,24 +82,55 @@
           <section id="dashboard-screen" class="screen executive-dashboard">
             <section class="exec-kpis">
               <article class="exec-kpi exec-kpi--patrimony">
+                <span class="exec-kpi__icon">◆</span>
                 <small>PATRIMÔNIO</small
                 ><strong id="capital-total">R$ 0,00</strong>
-                <p>Capital configurado, aportes e retiradas</p>
+                <p>Capital inicial, aportes e ajustes</p>
+                <div class="exec-kpi__insight"><i></i><span>Base do piloto</span></div>
               </article>
               <article class="exec-kpi exec-kpi--blue">
+                <span class="exec-kpi__icon">◌</span>
+                <small>SALDO PARA OPERAR</small
+                ><strong id="available-to-trade">R$ 0,00</strong>
+                <p>Patrimônio menos garantias e ações</p>
+                <div class="exec-kpi__insight"><i></i><span>Disponibilidade estimada</span></div>
+              </article>
+              <article class="exec-kpi exec-kpi--commitment">
+                <span class="exec-kpi__icon">⌁</span>
                 <small>CAPITAL COMPROMETIDO</small
                 ><strong id="capital-committed">R$ 0,00</strong>
                 <p>PUTs abertas em garantia</p>
+                <div class="exec-kpi__insight"><i></i><span>Garantias ativas</span></div>
               </article>
               <article class="exec-kpi exec-kpi--premium">
+                <span class="exec-kpi__icon">+</span>
                 <small>PRÊMIOS EM ABERTO</small
                 ><strong id="premiums-open">R$ 0,00</strong>
                 <p>Prêmio bruto das operações abertas</p>
+                <div class="exec-kpi__insight"><i></i><span>Antes de custos e tributos</span></div>
+              </article>
+              <article class="exec-kpi exec-kpi--month">
+                <span class="exec-kpi__icon">▣</span>
+                <small>PRÊMIOS DO MÊS</small
+                ><strong id="premiums-month">R$ 0,00</strong>
+                <p>Operações registradas neste mês</p>
+                <div class="exec-kpi__insight"><i></i><span id="month-reference">Mês corrente</span></div>
               </article>
               <article class="exec-kpi exec-kpi--roi">
+                <span class="exec-kpi__icon">↗</span>
                 <small>ROI MÉDIO</small><strong id="roi-average">0,00%</strong>
                 <p>Por operação aberta</p>
+                <div class="exec-kpi__insight"><i></i><span>Sobre capital comprometido</span></div>
               </article>
+            </section>
+            <section class="exec-ai exec-ai--positive">
+              <div class="exec-ai__mark">FM</div>
+              <div>
+                <span>LEITURA DO PILOTO</span>
+                <h2 id="dashboard-insight-title">Carteira pronta para acompanhar</h2>
+                <p id="dashboard-insight">Os valores abaixo são calculados apenas com os lançamentos deste piloto.</p>
+              </div>
+              <a href="#open" data-screen="open">Ver operações →</a>
             </section>
             <div class="exec-grid exec-grid--primary">
               <section class="exec-panel">
@@ -111,6 +142,7 @@
                   <table>
                     <thead>
                       <tr>
+                        <th>Data</th>
                         <th>Ativo</th>
                         <th>Tipo</th>
                         <th>Estratégia</th>

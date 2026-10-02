@@ -226,12 +226,37 @@ function render() {
       (sum, item) => sum + num(item.cash_cost_total),
       0,
     ),
-    patrimony = cfg("Capital total inicial") + cash;
+    patrimony = cfg("Capital total inicial") + cash,
+    available = patrimony - capital - equityCost,
+    monthKey = new Date().toISOString().slice(0, 7),
+    monthlyPremium = [...(state.operations || []), ...(state.closed || [])]
+      .filter((item) => String(item.data_abertura || item.data_fechamento || "").slice(0, 7) === monthKey)
+      .reduce(
+        (sum, item) =>
+          sum +
+          num(item.contratos) *
+            num(item.premio_opcao ?? item.Premio_liquido) *
+            size,
+        0,
+      );
   $("#capital-total").textContent = money(patrimony);
+  $("#available-to-trade").textContent = money(available);
   $("#capital-committed").textContent = money(capital);
   $("#premiums-open").textContent = money(premium);
+  $("#premiums-month").textContent = money(monthlyPremium);
+  $("#month-reference").textContent = new Intl.DateTimeFormat("pt-BR", {
+    month: "long",
+    year: "numeric",
+  }).format(new Date());
   $("#roi-average").textContent =
     `${capital ? ((premium / capital) * 100).toFixed(2).replace(".", ",") : "0,00"}%`;
+  const insightTitle = open.length
+    ? `${open.length} operação${open.length === 1 ? "" : "ões"} aberta${open.length === 1 ? "" : "s"} para acompanhar`
+    : "Nenhuma operação aberta no momento";
+  $("#dashboard-insight-title").textContent = insightTitle;
+  $("#dashboard-insight").textContent = open.length
+    ? `Há ${money(capital)} em garantias e ${money(premium)} em prêmios brutos nas posições abertas. Saldo estimado para novas operações: ${money(available)}.`
+    : `O piloto está sem posições abertas. O saldo estimado para operar é ${money(available)}.`;
   rows("#dashboard-operations", open);
   rows("#open-operations", open);
   rows("#closed-operations", state.closed, true);
