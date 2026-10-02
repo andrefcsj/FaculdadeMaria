@@ -311,6 +311,15 @@ function render() {
   }).format(new Date());
   $("#roi-average").textContent =
     `${capital ? ((premium / capital) * 100).toFixed(2).replace(".", ",") : "0,00"}%`;
+  const nextExpiry = open
+    .filter((item) => item.vencimento)
+    .slice()
+    .sort((a, b) => String(a.vencimento).localeCompare(String(b.vencimento)))[0];
+  $("#open-count").textContent = String(open.length);
+  $("#open-capital").textContent = money(capital);
+  $("#open-premium").textContent = money(premium);
+  $("#open-next-expiry").textContent = nextExpiry ? String(nextExpiry.vencimento).split("-").reverse().join("/") : "—";
+  $("#open-next-label").textContent = nextExpiry ? `${nextExpiry.ativo} · ${nextExpiry.tipo}` : "Sem posições abertas";
   const closedRows = state.closed || [];
   const resultOf = (item) =>
     num(item.Resultado_final || item.resultado_final || item.Lucro_tributavel);
