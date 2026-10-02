@@ -243,10 +243,12 @@ function renderExtra() {
       )
     .join("") || "Sem dados para o gráfico.";
   const quotes = new Map(
-    (state.manual_option_quotes || []).map((quote) => [
-      String(quote.option_code).toUpperCase(),
-      quote,
-    ]),
+    (state.api_market_quotes || [])
+      .filter((quote) => quote.quote_kind === "option")
+      .map((quote) => [String(quote.symbol).toUpperCase(), quote]),
+  );
+  (state.manual_option_quotes || []).forEach((quote) =>
+    quotes.set(String(quote.option_code).toUpperCase(), quote),
   );
   $("#radar-operations").innerHTML = opened()
     .map((operation) => {
@@ -401,7 +403,12 @@ function render() {
   $("#dashboard-attention").innerHTML = expired
     ? `<span class="exec-empty__mark">!</span><strong>${expired} vencimento${expired === 1 ? "" : "s"} para revisar</strong><p>Confira as posições cuja data de vencimento já passou.</p>`
     : '<span class="exec-empty__mark">◇</span><strong>Tudo sob controle</strong><p>Nenhum vencimento atrasado foi encontrado.</p>';
-  const quoteByCode = new Map((state.manual_option_quotes || []).map((quote) => [String(quote.option_code).toUpperCase(), num(quote.price)]));
+  const quoteByCode = new Map((state.api_market_quotes || [])
+    .filter((quote) => quote.quote_kind === "option")
+    .map((quote) => [String(quote.symbol).toUpperCase(), num(quote.price)]));
+  (state.manual_option_quotes || []).forEach((quote) =>
+    quoteByCode.set(String(quote.option_code).toUpperCase(), num(quote.price)),
+  );
   $("#dashboard-today").innerHTML = '<div class="today-table__head"><span>Opção</span><span>Seu valor</span><span>Valor atual</span><span>Resultado</span><span>Situação</span></div>' +
     (open.map((item) => {
       const quote = quoteByCode.get(String(item.ativo).toUpperCase());
