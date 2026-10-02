@@ -222,7 +222,10 @@
                   step="0.01"
                   placeholder="Prêmio"
                   required
-                /><input name="vencimento" type="date" required /><button>
+                /><input name="custos" type="number" min="0" step="0.01" value="0" placeholder="Custos" />
+                <input name="irrf" type="number" min="0" step="0.01" value="0" placeholder="IRRF" />
+                <input name="cotacao_atual" type="number" min="0" step="0.01" value="0" placeholder="Cotação atual" />
+                <input name="vencimento" type="date" required /><button>
                   Adicionar operação
                 </button>
               </form>
