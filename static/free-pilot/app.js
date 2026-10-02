@@ -202,7 +202,28 @@ function renderExtra() {
         (row) =>
           `<div><i style="height:${Math.max(5, (Math.abs(row.premium) / top) * 130)}px"></i><strong>${money(row.premium)}</strong><small>${escape(row.month)}</small></div>`,
       )
-      .join("") || "Sem dados para o gráfico.";
+    .join("") || "Sem dados para o gráfico.";
+  const quotes = new Map(
+    (state.manual_option_quotes || []).map((quote) => [
+      String(quote.option_code).toUpperCase(),
+      quote,
+    ]),
+  );
+  $("#radar-operations").innerHTML = opened()
+    .map((operation) => {
+      const quote = quotes.get(String(operation.ativo).toUpperCase());
+      const opening = num(operation.premio_opcao);
+      const current = quote ? num(quote.price) : null;
+      const estimated = current === null ? null : (opening - current) * num(operation.contratos) * cfg("Tamanho contrato opcoes", 100);
+      return `<tr><td><strong>${escape(operation.ativo)}</strong></td><td>${money(opening)}</td><td>${current === null ? "Sem cotação" : money(current)}</td><td class="${estimated === null ? "" : estimated >= 0 ? "positive" : "negative"}">${estimated === null ? "—" : money(estimated)}</td></tr>`;
+    })
+    .join("") || "<tr><td colspan=4>Nenhuma posição aberta para monitorar.</td></tr>";
+  $("#quote-rows").innerHTML = (state.manual_option_quotes || [])
+    .map(
+      (quote) =>
+        `<tr><td><strong>${escape(quote.option_code)}</strong></td><td>${money(quote.price)}</td><td>${escape(String(quote.quoted_at).replace("T", " "))}</td><td><button data-quote-delete="${escape(quote.option_code)}">Excluir</button></td></tr>`,
+    )
+    .join("") || "<tr><td colspan=4>Nenhuma cotação manual registrada.</td></tr>";
 }
 function render() {
   const open = opened(),
@@ -420,6 +441,15 @@ function render() {
         await load();
       }),
   );
+  document.querySelectorAll("[data-quote-delete]").forEach(
+    (button) =>
+      (button.onclick = async () => {
+        if (confirm(`Excluir a cotação de ${button.dataset.quoteDelete}?`)) {
+          await request(`/quotes/${button.dataset.quoteDelete}`, { method: "DELETE" });
+          await load();
+        }
+      }),
+  );
 }
 async function load() {
   state = await (await request("/dashboard")).json();
@@ -441,6 +471,7 @@ function screen(name) {
       "Histórico de créditos e resultado por ciclo",
     ],
     simulators: ["SIMULADORES", "ROI e payoff de opções no vencimento"],
+    radar: ["RADAR DE POSIÇÕES", "Acompanhamento manual e gratuito das suas opções abertas"],
     equity: [
       "CARTEIRA DE AÇÕES",
       "Ações reconhecidas por exercício ou inclusão manual",
@@ -609,6 +640,21 @@ $("#payoff-form").onsubmit = (e) => {
     breakEven = data.type === "PUT" ? strike - premium : strike + premium;
   $("#payoff-result").innerHTML =
     `<strong class="${result >= 0 ? "positive" : "negative"}">${money(result)} no vencimento</strong><span>Valor intrínseco: ${money(intrinsic)} por ação · Ponto de equilíbrio: ${money(breakEven)} · ${data.type} vendida com ${contracts} contrato(s).</span>`;
+};
+$("#quote-form").onsubmit = async (e) => {
+  e.preventDefault();
+  try {
+    await request("/quotes", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(Object.fromEntries(new FormData(e.target))),
+    });
+    e.target.reset();
+    e.target.elements.quoted_at.value = new Date().toISOString().slice(0, 16);
+    await load();
+  } catch (err) {
+    $("#message").textContent = err.message;
+  }
 };
 $("#roll-form").onsubmit = (e) => {
   e.preventDefault();

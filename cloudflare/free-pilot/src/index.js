@@ -110,7 +110,7 @@ function recordId() {
 }
 
 async function dashboardData(env) {
-  const [operations, config, closed, cash, notes, darfs, profile, equities] =
+  const [operations, config, closed, cash, notes, darfs, profile, equities, quotes] =
     await Promise.all([
       env.DB.prepare(
         "SELECT id, data_abertura, ativo, tipo, estrategia, status, contratos, strike, premio_opcao, custos, irrf, vencimento, cotacao_atual, resultado_realizado FROM operacoes ORDER BY id",
@@ -135,6 +135,9 @@ async function dashboardData(env) {
       ).first(),
       env.DB.prepare(
         "SELECT lot_id, payload, created_at FROM equity_lots ORDER BY created_at",
+      ).all(),
+      env.DB.prepare(
+        "SELECT option_code, price, quoted_at, updated_at FROM manual_option_quotes ORDER BY option_code",
       ).all(),
     ]);
   return {
@@ -163,6 +166,7 @@ async function dashboardData(env) {
       ...JSON.parse(row.payload),
       lot_id: row.lot_id,
     })),
+    manual_option_quotes: quotes.results,
   };
 }
 
@@ -381,6 +385,31 @@ async function api(request, env, path) {
 
   if (path === "/api/dashboard" && request.method === "GET") {
     return json(await dashboardData(env));
+  }
+  if (path === "/api/quotes" && request.method === "POST") {
+    const body = await request.json().catch(() => ({}));
+    const optionCode = String(body.option_code || "").trim().toUpperCase();
+    const price = money(body.price);
+    if (!/^[A-Z0-9]{4,16}$/.test(optionCode) || price < 0)
+      return json({ error: "Informe código e cotação válidos." }, 400);
+    const quotedAt = String(body.quoted_at || new Date().toISOString().slice(0, 16));
+    await env.DB.prepare(
+      "INSERT INTO manual_option_quotes (option_code, price, quoted_at, updated_at) VALUES (?, ?, ?, ?) ON CONFLICT(option_code) DO UPDATE SET price = excluded.price, quoted_at = excluded.quoted_at, updated_at = excluded.updated_at",
+    )
+      .bind(optionCode, price, quotedAt, new Date().toISOString())
+      .run();
+    return json({ ok: true }, 201);
+  }
+  const quoteMatch = path.match(/^\/api\/quotes\/([A-Z0-9]{4,16})$/);
+  if (quoteMatch && request.method === "DELETE") {
+    const result = await env.DB.prepare(
+      "DELETE FROM manual_option_quotes WHERE option_code = ?",
+    )
+      .bind(quoteMatch[1])
+      .run();
+    return result.meta.changes
+      ? new Response(null, { status: 204 })
+      : json({ error: "not found" }, 404);
   }
   if (path === "/api/operations" && request.method === "POST") {
     const item = operationPayload(await request.json().catch(() => ({})));

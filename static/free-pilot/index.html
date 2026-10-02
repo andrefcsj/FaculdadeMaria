@@ -56,7 +56,8 @@
           </div>
           <div class="nav-group">
             <span class="nav-group__title">FERRAMENTAS</span
-            ><a href="#simulators" data-screen="simulators">◈ Simuladores</a>
+            ><a href="#simulators" data-screen="simulators">◈ Simuladores</a
+            ><a href="#radar" data-screen="radar">◉ Radar de posições</a>
           </div>
           <div class="nav-group">
             <span class="nav-group__title">SISTEMA</span
@@ -504,6 +505,28 @@
                 </div>
               </section>
             </div>
+          </section>
+          <section id="radar-screen" class="screen" hidden>
+            <div class="exec-grid exec-grid--primary">
+              <section class="exec-panel">
+                <header class="exec-panel__header"><div><h2>Cotações manuais</h2><p>Registre a última cotação da opção para acompanhar suas posições.</p></div></header>
+                <form id="quote-form" class="free-operation-form">
+                  <input name="option_code" placeholder="Código da opção" required />
+                  <input name="price" type="number" step="0.01" min="0" placeholder="Cotação por ação" required />
+                  <input name="quoted_at" type="datetime-local" required />
+                  <button>Salvar cotação</button>
+                </form>
+                <p class="free-help">Sem integração paga: as cotações são inseridas por você e ficam no backup completo.</p>
+              </section>
+              <section class="exec-panel">
+                <header class="exec-panel__header"><div><h2>Radar das posições abertas</h2><p>Comparação entre prêmio de abertura e última cotação registrada.</p></div></header>
+                <div class="free-table"><table><thead><tr><th>Opção</th><th>Prêmio inicial</th><th>Última cotação</th><th>Resultado estimado</th></tr></thead><tbody id="radar-operations"></tbody></table></div>
+              </section>
+            </div>
+            <section class="exec-panel">
+              <header class="exec-panel__header"><h2>Últimas cotações registradas</h2></header>
+              <div class="free-table"><table><thead><tr><th>Código</th><th>Cotação</th><th>Data/hora</th><th></th></tr></thead><tbody id="quote-rows"></tbody></table></div>
+            </section>
           </section>
           <section id="cash-screen" class="screen" hidden>
             <section class="exec-kpis">
