@@ -43,7 +43,7 @@ function rows(target, list, closed = false) {
     list
       .map((x) =>
         closed
-          ? `<tr><td>${escape(x["Data fechamento"] || x.closed_at || "—")}</td><td>${escape(x.ativo || x.Ativo)}</td><td>${escape(x.tipo || x.Tipo)}</td><td>${escape(x.estrategia || x["Estratégia"])}</td><td>${money(x.Resultado_final || x.resultado_final || x.Lucro_tributavel)}</td><td><button data-reopen="${escape(x.closed_id)}">Reabrir</button></td></tr>`
+          ? `<tr><td>${escape(x["Data fechamento"] || x.closed_at || "—")}</td><td>${escape(x.ativo || x.Ativo)}</td><td>${escape(x.tipo || x.Tipo)}</td><td>${escape(x.estrategia || x["Estratégia"])}</td><td>${money(x.premio_opcao || x.Premio_liquido)}</td><td class="${num(x.Resultado_final || x.resultado_final || x.Lucro_tributavel) < 0 ? "negative" : "positive"}">${money(x.Resultado_final || x.resultado_final || x.Lucro_tributavel)}</td><td>${escape(x.Observacoes || x.observacoes || "—")}</td><td><button data-reopen="${escape(x.closed_id)}">Reabrir</button></td></tr>`
           : `<tr><td>${escape(x.data_abertura)}</td><td>${escape(x.ativo)}</td><td>${escape(x.tipo)}</td><td>${escape(x.estrategia)}</td><td>${money(x.strike)}</td><td>${money(x.premio_opcao)}</td><td>${escape(x.vencimento)}</td>${target === "#open-operations" ? `<td><button data-edit="${x.id}">Editar</button><button data-close="${x.id}">Fechar</button><button data-remove="${x.id}">Excluir</button></td>` : ""}</tr>`,
       )
       .join("") || "<tr><td colspan=8>Nenhum registro.</td></tr>";
@@ -296,6 +296,21 @@ function render() {
   }).format(new Date());
   $("#roi-average").textContent =
     `${capital ? ((premium / capital) * 100).toFixed(2).replace(".", ",") : "0,00"}%`;
+  const closedRows = state.closed || [];
+  const resultOf = (item) =>
+    num(item.Resultado_final || item.resultado_final || item.Lucro_tributavel);
+  const best = closedRows.length
+    ? closedRows.reduce((current, item) => (resultOf(item) > resultOf(current) ? item : current))
+    : null;
+  const worst = closedRows.length
+    ? closedRows.reduce((current, item) => (resultOf(item) < resultOf(current) ? item : current))
+    : null;
+  $("#closed-count").textContent = String(closedRows.length);
+  $("#closed-total").textContent = money(closedRows.reduce((sum, item) => sum + resultOf(item), 0));
+  $("#closed-best").textContent = money(best ? resultOf(best) : 0);
+  $("#closed-worst").textContent = money(worst ? resultOf(worst) : 0);
+  $("#closed-best-label").textContent = best ? String(best.ativo || best.Ativo || "—") : "Sem histórico";
+  $("#closed-worst-label").textContent = worst ? String(worst.ativo || worst.Ativo || "—") : "Sem histórico";
   const insightTitle = open.length
     ? `${open.length} operação${open.length === 1 ? "" : "ões"} aberta${open.length === 1 ? "" : "s"} para acompanhar`
     : "Nenhuma operação aberta no momento";

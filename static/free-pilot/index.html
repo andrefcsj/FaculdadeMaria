@@ -324,6 +324,12 @@
             </dialog>
           </section>
           <section id="closed-screen" class="screen" hidden>
+            <section class="exec-kpis">
+              <article class="exec-kpi exec-kpi--patrimony"><span class="exec-kpi__icon">✓</span><small>OPERAÇÕES FECHADAS</small><strong id="closed-count">0</strong><p>Ciclos já encerrados no piloto</p></article>
+              <article class="exec-kpi exec-kpi--premium"><span class="exec-kpi__icon">+</span><small>RESULTADO ACUMULADO</small><strong id="closed-total">R$ 0,00</strong><p>Resultado informado nos fechamentos</p></article>
+              <article class="exec-kpi exec-kpi--blue"><span class="exec-kpi__icon">↑</span><small>MELHOR RESULTADO</small><strong id="closed-best">R$ 0,00</strong><p id="closed-best-label">Sem histórico</p></article>
+              <article class="exec-kpi exec-kpi--orange"><span class="exec-kpi__icon">↓</span><small>PIOR RESULTADO</small><strong id="closed-worst">R$ 0,00</strong><p id="closed-worst-label">Sem histórico</p></article>
+            </section>
             <section class="exec-panel">
               <h2>Operações Fechadas</h2>
               <div class="free-table">
@@ -334,7 +340,9 @@
                       <th>Ativo</th>
                       <th>Tipo</th>
                       <th>Estratégia</th>
+                      <th>Prêmio</th>
                       <th>Resultado</th>
+                      <th>Observações</th>
                       <th></th>
                     </tr>
                   </thead>
