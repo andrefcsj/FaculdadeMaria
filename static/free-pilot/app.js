@@ -715,14 +715,42 @@ $("#save-config").onclick = async () => {
     $("#message").textContent = err.message;
   }
 };
-$("#backup").onclick = async (e) => {
-  e.preventDefault();
+async function downloadBackup() {
   const r = await request("/backup"),
     a = document.createElement("a");
   a.href = URL.createObjectURL(await r.blob());
   a.download = "faculdademaria-backup.json";
   a.click();
   URL.revokeObjectURL(a.href);
+}
+$("#backup").onclick = async (e) => {
+  e.preventDefault();
+  await downloadBackup();
+};
+$("#backup-settings").onclick = downloadBackup;
+$("#restore-form").onsubmit = async (e) => {
+  e.preventDefault();
+  const file = e.target.elements.backup_file.files[0];
+  if (!file) return;
+  if (!confirm("Restaurar este backup substituirá os dados atuais apenas no piloto do Cloudflare. Deseja continuar?"))
+    return;
+  try {
+    const backup = JSON.parse(await file.text());
+    const response = await request("/restore", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(backup),
+    });
+    const result = await response.json();
+    await load();
+    e.target.reset();
+    $("#message").textContent = `${result.restored} registro(s) restaurado(s) no piloto.`;
+  } catch (err) {
+    $("#message").textContent =
+      err instanceof SyntaxError
+        ? "O arquivo selecionado não é um JSON de backup válido."
+        : err.message;
+  }
 };
 $("#logout").onclick = async () => {
   await request("/session", { method: "DELETE" });

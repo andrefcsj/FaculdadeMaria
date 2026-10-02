@@ -690,6 +690,20 @@
               </header>
               <form id="settings-list" class="free-settings"></form>
             </section>
+            <section class="exec-panel">
+              <header class="exec-panel__header">
+                <div>
+                  <h2>Backup e restauração</h2>
+                  <p>O backup contém operações, caixa, ações, DARFs, notas e cotações manuais.</p>
+                </div>
+                <button id="backup-settings" type="button">Baixar backup</button>
+              </header>
+              <form id="restore-form" class="free-operation-form">
+                <input name="backup_file" type="file" accept="application/json,.json" required />
+                <button>Restaurar backup</button>
+              </form>
+              <p class="free-help"><strong>Atenção:</strong> restaurar substitui apenas os dados deste piloto no Cloudflare. O sistema do Render não é alterado.</p>
+            </section>
           </section>
           <section id="notice-screen" class="screen" hidden>
             <section class="exec-panel">
