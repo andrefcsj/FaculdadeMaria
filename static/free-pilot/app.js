@@ -316,19 +316,17 @@ function render() {
   );
   document.querySelectorAll("[data-close]").forEach(
     (b) =>
-      (b.onclick = async () => {
-        const value = prompt(
-          "Resultado final da operação (positivo ou negativo):",
-          "0",
+      (b.onclick = () => {
+        const operation = state.operations.find(
+          (item) => String(item.id) === String(b.dataset.close),
         );
-        if (value !== null && confirm("Fechar esta operação?")) {
-          await request(`/operations/${b.dataset.close}/close`, {
-            method: "POST",
-            headers: { "content-type": "application/json" },
-            body: JSON.stringify({ resultado_final: value }),
-          });
-          await load();
-        }
+        if (!operation) return;
+        const form = $("#close-operation-form");
+        form.reset();
+        form.elements.operation_id.value = operation.id;
+        form.elements.data_fechamento.value = new Date().toISOString().slice(0, 10);
+        $("#close-operation-title").textContent = `Fechar ${operation.ativo} · ${operation.tipo}`;
+        $("#close-operation-dialog").showModal();
       }),
   );
   document.querySelectorAll("[data-edit]").forEach(
@@ -549,6 +547,12 @@ document
   .forEach(
     (button) => (button.onclick = () => $("#edit-operation-dialog").close()),
   );
+document
+  .querySelectorAll("[data-close-operation]")
+  .forEach(
+    (button) =>
+      (button.onclick = () => $("#close-operation-dialog").close()),
+  );
 $("#edit-operation-form").onsubmit = async (e) => {
   e.preventDefault();
   const form = e.target,
@@ -562,6 +566,24 @@ $("#edit-operation-form").onsubmit = async (e) => {
       body: JSON.stringify(data),
     });
     $("#edit-operation-dialog").close();
+    await load();
+  } catch (err) {
+    $("#message").textContent = err.message;
+  }
+};
+$("#close-operation-form").onsubmit = async (e) => {
+  e.preventDefault();
+  const form = e.target,
+    id = form.elements.operation_id.value;
+  try {
+    const data = Object.fromEntries(new FormData(form));
+    delete data.operation_id;
+    await request(`/operations/${id}/close`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    $("#close-operation-dialog").close();
     await load();
   } catch (err) {
     $("#message").textContent = err.message;

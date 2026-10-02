@@ -301,6 +301,27 @@
                 </footer>
               </form>
             </dialog>
+            <dialog id="close-operation-dialog" class="free-dialog">
+              <form id="close-operation-form">
+                <header>
+                  <div>
+                    <small>ENCERRAMENTO DE OPERAÇÃO</small>
+                    <h2 id="close-operation-title">Fechar operação</h2>
+                  </div>
+                  <button type="button" data-close-operation>×</button>
+                </header>
+                <input name="operation_id" type="hidden" />
+                <div class="free-dialog__grid">
+                  <label>Data de fechamento<input name="data_fechamento" type="date" required /></label>
+                  <label>Resultado final<input name="resultado_final" type="number" step="0.01" placeholder="Positivo ou negativo" required /></label>
+                  <label>Observações<input name="observacoes" maxlength="300" placeholder="Opcional" /></label>
+                </div>
+                <footer>
+                  <button type="button" data-close-operation>Cancelar</button>
+                  <button>Confirmar fechamento</button>
+                </footer>
+              </form>
+            </dialog>
           </section>
           <section id="closed-screen" class="screen" hidden>
             <section class="exec-panel">
