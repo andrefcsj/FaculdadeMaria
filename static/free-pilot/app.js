@@ -557,7 +557,9 @@ function render() {
 async function load() {
   state = await (await request("/dashboard")).json();
   render();
-  $("#last-updated").textContent = new Date().toLocaleString("pt-BR");
+  const now = new Date();
+  $("#topbar-date").textContent = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "long", year: "numeric" }).format(now);
+  $("#last-updated").textContent = now.toLocaleString("pt-BR");
 }
 function screen(name) {
   document.querySelectorAll(".screen").forEach((x) => (x.hidden = true));
@@ -937,6 +939,7 @@ $("#logout").onclick = async () => {
   $("#app").hidden = true;
   $("#login").hidden = false;
 };
+$("#sidebar-toggle").onclick = () => $(".layout").classList.toggle("sidebar-collapsed");
 const magic = new URLSearchParams(location.hash.slice(1)).get("pin");
 if (magic) {
   history.replaceState(null, "", location.pathname + location.search);
