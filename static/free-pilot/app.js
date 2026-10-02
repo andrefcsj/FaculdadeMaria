@@ -341,7 +341,58 @@ function render() {
           `<div><span class=expiry-day>${Math.max(0, Math.ceil((new Date(`${x.vencimento}T00:00:00`) - new Date()) / 86400000))}<small> dias</small></span><p><strong>${escape(x.ativo)}</strong><small>${escape(x.vencimento)}</small></p></div>`,
       )
       .join("") || "Agenda livre";
+  const groupedEquities = new Map();
+  (state.equities || []).forEach((lot) => {
+    const asset = String(lot.asset || "").toUpperCase();
+    if (!asset) return;
+    const row = groupedEquities.get(asset) || { asset, quantity: 0, cost: 0 };
+    row.quantity += num(lot.available_quantity ?? lot.quantity);
+    row.cost += num(lot.tax_cost_total ?? lot.cash_cost_total);
+    groupedEquities.set(asset, row);
+  });
+  const portfolio = [...groupedEquities.values()].filter((row) => row.quantity > 0);
+  $("#dashboard-portfolio").innerHTML =
+    '<div class="equity-composition__head"><span>Ação</span><span>Quantidade</span><span>PM fiscal</span><span>PM gerencial</span></div>' +
+    (portfolio
+      .map((row) => {
+        const average = row.cost / row.quantity;
+        return `<a class="equity-composition__row" href="#equity" data-screen="equity"><span><i>${escape(row.asset.slice(0, 2))}</i><strong>${escape(row.asset)}</strong></span><b>${row.quantity}</b><span>${money(average)}</span><span>${money(average)}</span></a>`;
+      })
+      .join("") || '<div class="exec-empty"><strong>Carteira sem ações registradas</strong></div>');
+  const currentTaxMonth = [...new Set((state.closed || []).map((row) => String(row["Data fechamento"] || row.closed_at || "").slice(0, 7)).filter(Boolean))].sort().pop();
+  const monthlyResult = (state.closed || [])
+    .filter((row) => String(row["Data fechamento"] || row.closed_at || "").slice(0, 7) === currentTaxMonth)
+    .reduce((sum, row) => sum + num(row.Resultado_final || row.resultado_final || row.Lucro_tributavel), 0);
+  const estimatedTax = Math.max(0, monthlyResult) * Math.max(0, cfg("Aliquota IR opcoes", 0.15));
+  $("#dashboard-tax-title").textContent = estimatedTax > 0 ? "DARF aguardando conferência" : "Apuração gerencial disponível";
+  $("#dashboard-tax-copy").textContent = currentTaxMonth
+    ? `Competência ${currentTaxMonth}: resultado fechado de ${money(monthlyResult)} e IR gerencial estimado de ${money(estimatedTax)}.`
+    : "Confira os fechamentos e a memória mensal antes de registrar uma DARF.";
+  const puts = open.filter((item) => String(item.tipo).toUpperCase() === "PUT");
+  $("#dashboard-roll").innerHTML = puts.length
+    ? `<span class="exec-empty__mark">↻</span><strong>${puts.length} PUT${puts.length === 1 ? "" : "s"} aberta${puts.length === 1 ? "" : "s"}</strong><p>Use o simulador para comparar uma possível rolagem.</p>`
+    : '<span class="exec-empty__mark">◇</span><strong>Nenhuma revisão imediata</strong><p>Não existem PUTs abertas para analisar.</p>';
+  const expired = open.filter((item) => new Date(`${item.vencimento}T00:00:00`) < new Date()).length;
+  $("#dashboard-attention-count").textContent = String(expired);
+  $("#dashboard-attention").innerHTML = expired
+    ? `<span class="exec-empty__mark">!</span><strong>${expired} vencimento${expired === 1 ? "" : "s"} para revisar</strong><p>Confira as posições cuja data de vencimento já passou.</p>`
+    : '<span class="exec-empty__mark">◇</span><strong>Tudo sob controle</strong><p>Nenhum vencimento atrasado foi encontrado.</p>';
+  const quoteByCode = new Map((state.manual_option_quotes || []).map((quote) => [String(quote.option_code).toUpperCase(), num(quote.price)]));
+  $("#dashboard-today").innerHTML = '<div class="today-table__head"><span>Opção</span><span>Seu valor</span><span>Valor atual</span><span>Resultado</span><span>Situação</span></div>' +
+    (open.map((item) => {
+      const quote = quoteByCode.get(String(item.ativo).toUpperCase());
+      const outcome = quote === undefined ? null : (num(item.premio_opcao) - quote) * num(item.contratos) * size;
+      return `<a href="#radar" data-screen="radar" class="today-table__row"><strong>${escape(item.ativo)}</strong><span>${money(item.premio_opcao)}</span><span>${quote === undefined ? "—" : money(quote)}</span><span class="${outcome === null ? "" : outcome >= 0 ? "positive" : "negative"}">${outcome === null ? "—" : money(outcome)}</span><b class="today-status ${outcome === null ? "today-status--unknown" : outcome >= 0 ? "today-status--safe" : "today-status--exercised"}">${outcome === null ? "Sem cotação" : outcome >= 0 ? "Favorável" : "Revisar"}</b></a>`;
+    }).join("") || '<div class="exec-empty">Nenhuma operação aberta.</div>');
+  $("#dashboard-expiries").innerHTML = $("#expiries").innerHTML;
   renderExtra();
+  document.querySelectorAll(".executive-dashboard [data-screen]").forEach(
+    (link) =>
+      (link.onclick = (event) => {
+        event.preventDefault();
+        screen(link.dataset.screen);
+      }),
+  );
   document.querySelectorAll("[data-remove]").forEach(
     (b) =>
       (b.onclick = async () => {

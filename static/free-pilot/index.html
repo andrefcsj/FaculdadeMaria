@@ -133,6 +133,27 @@
               </div>
               <a href="#open" data-screen="open">Ver operações →</a>
             </section>
+            <section id="dashboard-tax-notice" class="exec-ai exec-ai--attention">
+              <div class="exec-ai__mark">FM</div>
+              <div><span>MEMÓRIA FISCAL</span><h2 id="dashboard-tax-title">Apuração gerencial disponível</h2><p id="dashboard-tax-copy">Confira os fechamentos e a memória mensal antes de registrar uma DARF.</p></div>
+              <a href="#tax" data-screen="tax">Ver apuração →</a>
+            </section>
+            <div class="exec-grid exec-grid--primary">
+              <section class="exec-panel exec-panel--portfolio">
+                <header class="exec-panel__header"><div><span>◉</span><h2>Composição da carteira</h2></div><a href="#equity" data-screen="equity">Ver carteira</a></header>
+                <div id="dashboard-portfolio" class="equity-composition"></div>
+              </section>
+              <section class="exec-panel exec-panel--opportunities">
+                <header class="exec-panel__header"><div><span>✦</span><h2>Melhores oportunidades do dia</h2></div><span class="exec-tag">RADAR MANUAL</span></header>
+                <div class="exec-empty"><span class="exec-empty__mark">◇</span><strong>Consulte o Radar de posições</strong><p>Na versão gratuita, oportunidades e cotações são acompanhadas manualmente, sem depender de uma API paga.</p><a href="#radar" data-screen="radar" class="exec-link">Analisar posições →</a></div>
+              </section>
+            </div>
+            <div class="exec-grid exec-grid--quad">
+              <section class="exec-panel"><header class="exec-panel__header"><div><span>↻</span><h2>PUTs com potencial de rolagem</h2></div><a href="#simulators" data-screen="simulators">Analisar</a></header><div id="dashboard-roll" class="exec-empty"></div></section>
+              <section class="exec-panel exec-panel--attention"><header class="exec-panel__header"><div><span>!</span><h2>Atenção necessária</h2></div><span id="dashboard-attention-count" class="exec-count">0</span></header><div id="dashboard-attention" class="exec-empty"></div></section>
+              <section class="exec-panel exec-panel--today"><header class="exec-panel__header"><div><span>◇</span><h2>Se fosse hoje</h2></div><span class="exec-tag">CENÁRIO MANUAL</span></header><div id="dashboard-today" class="today-table"></div><p class="today-note">A estimativa usa apenas a última cotação manual registrada; não é recomendação nem garantia de exercício.</p></section>
+              <section class="exec-panel"><header class="exec-panel__header"><div><span>◷</span><h2>Próximos vencimentos</h2></div><a href="#open" data-screen="open">Detalhes</a></header><div id="dashboard-expiries" class="expiry-list"></div></section>
+            </div>
             <div class="exec-grid exec-grid--primary">
               <section class="exec-panel">
                 <header class="exec-panel__header">
