@@ -55,6 +55,7 @@ function kindLabel(kind) {
       retirada: "Retirada",
       ajuste_credito: "Crédito manual",
       ajuste_debito: "Débito manual",
+      venda_acoes: "Venda de ações",
     }[kind] || kind
   );
 }
@@ -75,7 +76,7 @@ function renderExtra() {
     cash
       .map(
         (x) =>
-          `<tr><td>${escape(x.date)}</td><td>${escape(kindLabel(x.kind))}</td><td>${escape(x.description || "—")}</td><td class="${["aporte", "ajuste_credito"].includes(x.kind) ? "positive" : "negative"}">${money((["aporte", "ajuste_credito"].includes(x.kind) ? 1 : -1) * num(x.amount))}</td><td><button data-cash-delete="${escape(x.id)}">Excluir</button></td></tr>`,
+          `<tr><td>${escape(x.date)}</td><td>${escape(kindLabel(x.kind))}</td><td>${escape(x.description || "—")}</td><td class="${["aporte", "ajuste_credito", "venda_acoes"].includes(x.kind) ? "positive" : "negative"}">${money((["aporte", "ajuste_credito", "venda_acoes"].includes(x.kind) ? 1 : -1) * num(x.amount))}</td><td><button data-cash-delete="${escape(x.id)}">Excluir</button></td></tr>`,
       )
       .join("") || "<tr><td colspan=5>Nenhuma movimentação.</td></tr>";
   $("#notes-rows").innerHTML =
@@ -257,6 +258,19 @@ function render() {
   $("#dashboard-insight").textContent = open.length
     ? `Há ${money(capital)} em garantias e ${money(premium)} em prêmios brutos nas posições abertas. Saldo estimado para novas operações: ${money(available)}.`
     : `O piloto está sem posições abertas. O saldo estimado para operar é ${money(available)}.`;
+  const rollSelect = $("#roll-operation");
+  const selectedRoll = rollSelect.value;
+  rollSelect.innerHTML =
+    '<option value="">Selecione uma PUT aberta</option>' +
+    open
+      .filter((item) => String(item.tipo).toUpperCase() === "PUT")
+      .map(
+        (item) =>
+          `<option value="${escape(item.id)}">${escape(item.ativo)} · strike ${money(item.strike)} · vence ${escape(item.vencimento)}</option>`,
+      )
+      .join("");
+  if ([...rollSelect.options].some((option) => option.value === selectedRoll))
+    rollSelect.value = selectedRoll;
   rows("#dashboard-operations", open);
   rows("#open-operations", open);
   rows("#closed-operations", state.closed, true);
@@ -595,6 +609,27 @@ $("#payoff-form").onsubmit = (e) => {
     breakEven = data.type === "PUT" ? strike - premium : strike + premium;
   $("#payoff-result").innerHTML =
     `<strong class="${result >= 0 ? "positive" : "negative"}">${money(result)} no vencimento</strong><span>Valor intrínseco: ${money(intrinsic)} por ação · Ponto de equilíbrio: ${money(breakEven)} · ${data.type} vendida com ${contracts} contrato(s).</span>`;
+};
+$("#roll-form").onsubmit = (e) => {
+  e.preventDefault();
+  const data = Object.fromEntries(new FormData(e.target)),
+    operation = opened().find((item) => String(item.id) === data.operation_id),
+    size = cfg("Tamanho contrato opcoes", 100);
+  if (!operation) {
+    $("#roll-result").textContent = "Selecione uma PUT aberta válida.";
+    return;
+  }
+  const contracts = num(operation.contratos),
+    originalPremium = num(operation.premio_opcao),
+    buyback = num(data.buyback),
+    newPremium = num(data.new_premium),
+    newStrike = num(data.new_strike),
+    netCredit = (newPremium - buyback) * contracts * size,
+    accumulatedCredit = (originalPremium - buyback + newPremium) * contracts * size,
+    newGuarantee = newStrike * contracts * size,
+    originalStrike = num(operation.strike);
+  $("#roll-result").innerHTML =
+    `<strong class="${netCredit >= 0 ? "positive" : "negative"}">${money(netCredit)} de crédito líquido na rolagem</strong><span>PUT atual: ${escape(operation.ativo)} a ${money(originalStrike)} · Nova garantia: ${money(newGuarantee)} · Crédito acumulado das duas etapas: ${money(accumulatedCredit)} · Novo vencimento: ${escape(data.new_expiry)}.</span>`;
 };
 $("#save-config").onclick = async () => {
   try {

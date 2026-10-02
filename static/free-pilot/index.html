@@ -162,6 +162,25 @@
                 <div id="expiries" class="expiry-list"></div>
               </section>
             </div>
+            <section class="exec-panel free-roll-panel">
+              <header class="exec-panel__header">
+                <div>
+                  <h2>Rolagem inteligente</h2>
+                  <p>Compare uma PUT aberta com a próxima operação, sem consulta de mercado.</p>
+                </div>
+              </header>
+              <form id="roll-form" class="free-operation-form">
+                <select name="operation_id" id="roll-operation" required>
+                  <option value="">Selecione uma PUT aberta</option>
+                </select>
+                <input name="buyback" type="number" step="0.01" min="0" placeholder="Recompra por ação" required />
+                <input name="new_strike" type="number" step="0.01" min="0" placeholder="Novo strike" required />
+                <input name="new_premium" type="number" step="0.01" min="0" placeholder="Novo prêmio por ação" required />
+                <input name="new_expiry" type="date" required />
+                <button>Comparar rolagem</button>
+              </form>
+              <div id="roll-result" class="free-simulator-result">Selecione uma PUT aberta para simular a rolagem.</div>
+            </section>
           </section>
           <section id="open-screen" class="screen" hidden>
             <section class="exec-panel">
