@@ -125,6 +125,10 @@ function renderExtra() {
       )
       .join("") ||
     "<tr><td colspan=6>Nenhuma nota estruturada no piloto.</td></tr>";
+  const notes = state.notes || [];
+  $("#notes-count").textContent = String(notes.length);
+  $("#notes-credit").textContent = money(notes.reduce((sum, item) => sum + (String(item.cash_direction || "C").toUpperCase() === "C" ? num(item.net_cash) : 0), 0));
+  $("#notes-costs").textContent = money(notes.reduce((sum, item) => sum + num(item.operational_costs) + num(item.irrf), 0));
   const result = (state.closed || []).reduce(
       (s, x) =>
         s + num(x.Resultado_final || x.resultado_final || x.Lucro_tributavel),
