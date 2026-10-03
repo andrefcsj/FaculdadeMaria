@@ -401,7 +401,7 @@ async function api(request, env, path) {
     if (!key || !payload || typeof payload !== "object")
       return json({ error: "Lançamento de nota inválido." }, 400);
     const result = await env.DB.prepare(
-      "INSERT INTO brokerage_notes (note_key, payload, imported_at) VALUES (?, ?, ?) ON CONFLICT(note_key) DO NOTHING",
+      "INSERT INTO brokerage_notes (note_key, payload, imported_at) VALUES (?, ?, ?) ON CONFLICT(note_key) DO UPDATE SET payload = excluded.payload, imported_at = excluded.imported_at",
     )
       .bind(key, JSON.stringify(payload), new Date().toISOString())
       .run();
