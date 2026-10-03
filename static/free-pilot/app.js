@@ -952,6 +952,11 @@ $("#note-pdf-form").onsubmit = async (e) => {
       market: String(match[2]).toLowerCase().includes("compra") ? "Opção de compra" : "Opção de venda",
       expiry_month: match[3], option_code: match[4].toUpperCase(), quantity: Number(match[5]), unit_price: parseBrNumber(match[6]), gross_value: parseBrNumber(match[7]), cash_direction: match[8].toUpperCase(),
     }));
+    const exercisePattern = /1-BOVESPA\s+([CV])\s+(?:EOV|EXERC(?:[ÍI]CIO)?\s+OPC(?:[AÃ]O)?(?:\s+(VENDA|COMPRA))?)\s+([A-Z0-9]+)\s+(\d+)\s+([0-9.,]+)\s+([0-9.,]+)\s+([CD])/gi;
+    for (const match of text.matchAll(exercisePattern)) {
+      const code = match[3].toUpperCase().replace(/E$/, "");
+      trades.push({ side: match[1].toUpperCase() === "V" ? "Venda" : "Compra", market: String(match[2]), option_code: code, quantity: Number(match[4]), unit_price: parseBrNumber(match[5]), gross_value: parseBrNumber(match[6]), cash_direction: match[7].toUpperCase(), event_type: /COMPRA/i.test(match[2]) ? "exercise_call_assignment" : "exercise_put_assignment" });
+    }
     if (!trades.length) throw Error("Nenhuma negociação foi reconhecida. Use uma nota BTG/Necton definitiva com texto selecionável.");
     const totalGross = trades.reduce((sum, trade) => sum + trade.gross_value, 0) || 1;
     const totalCosts = parseBrNumber((text.match(/TOTAL\s+CORRETAGEM\s*\/\s*DESPESAS\s+([0-9.,]+)/i) || [])[1]);
@@ -971,6 +976,10 @@ $("#note-pdf-form").onsubmit = async (e) => {
       const saved = await response.json();
       if (saved.imported) imported += 1;
       const existing = (state.operations || []).find((item) => String(item.ativo).toUpperCase() === trade.option_code && String(item.status).toLowerCase() === "aberta") || operationsCreatedFromThisNote.get(trade.option_code);
+      if (trade.event_type?.startsWith("exercise_") && existing) {
+        await request(`/operations/${existing.id}/exercise`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ data_fechamento: tradeDate, asset: trade.option_code.slice(0, 4), quantity: trade.quantity, exercise_price: trade.unit_price, costs: trade.allocated_costs + trade.allocated_irrf }) });
+        continue;
+      }
       if (trade.side === "Compra" && existing) {
         const result = (num(existing.premio_opcao) - num(trade.unit_price)) * num(existing.contratos) * cfg("Tamanho contrato opcoes", 100) - num(existing.custos) - num(existing.irrf) - num(trade.allocated_costs) - num(trade.allocated_irrf);
         await request(`/operations/${existing.id}/close`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ data_fechamento: tradeDate, resultado_final: result, observacoes: `Recompra reconhecida na nota ${noteNumber}` }) });
