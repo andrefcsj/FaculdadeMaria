@@ -508,6 +508,41 @@ async function api(request, env, path) {
     ]);
     return json({ ok: true });
   }
+  const exerciseMatch = path.match(/^\/api\/operations\/(\d+)\/exercise$/);
+  if (exerciseMatch && request.method === "POST") {
+    const operation = await env.DB.prepare(
+      "SELECT id, data_abertura, ativo, tipo, estrategia, status, contratos, strike, premio_opcao, custos, irrf, vencimento, cotacao_atual, resultado_realizado FROM operacoes WHERE id = ?",
+    ).bind(Number(exerciseMatch[1])).first();
+    if (!operation) return json({ error: "not found" }, 404);
+    const body = await request.json().catch(() => ({}));
+    const quantity = Math.floor(money(body.quantity));
+    const exercisePrice = money(body.exercise_price || operation.strike);
+    const closeDate = String(body.data_fechamento || new Date().toISOString().slice(0, 10));
+    const type = String(operation.tipo).toUpperCase();
+    if (quantity <= 0 || exercisePrice <= 0) return json({ error: "Quantidade e preço de exercício são obrigatórios." }, 400);
+    const premium = money(operation.premio_opcao) * money(operation.contratos) * 100 - money(operation.custos) - money(operation.irrf);
+    const payload = { ...operation, "Data fechamento": closeDate, Resultado_final: type === "PUT" ? premium : premium, Lucro_tributavel: premium, Observacoes: `Exercício de ${type} registrado pela nota` };
+    const statements = [
+      env.DB.prepare("INSERT INTO closed_operations (closed_id, payload, closed_at) VALUES (?, ?, ?)").bind(recordId(), JSON.stringify(payload), closeDate),
+      env.DB.prepare("DELETE FROM operacoes WHERE id = ?").bind(Number(operation.id)),
+    ];
+    if (type === "PUT") {
+      const asset = String(body.asset || operation.ativo.slice(0, 4)).toUpperCase();
+      const costs = money(body.costs);
+      const total = exercisePrice * quantity + costs;
+      const lot = { asset, quantity, available_quantity: quantity, acquisition_date: closeDate, exercise_price: String(exercisePrice), exercise_total: String(exercisePrice * quantity), exercise_costs: String(costs), cash_cost_total: String(total), option_premium_gross: String(premium), option_opening_costs: String(money(operation.custos) + money(operation.irrf)), tax_cost_total: String(total - premium), tax_cost_per_share: String((total - premium) / quantity), source: "Exercício de PUT vendida", source_operation_id: String(operation.id), source_option: operation.ativo, created_at: new Date().toISOString() };
+      statements.push(env.DB.prepare("INSERT INTO equity_lots (lot_id, payload) VALUES (?, ?)").bind(`exercise:${operation.id}`, JSON.stringify(lot)));
+    } else if (type === "CALL") {
+      const asset = String(body.asset || operation.ativo.slice(0, 4)).toUpperCase();
+      // A entrega da CALL reduz primeiro os lotes mais antigos da ação coberta.
+      const lots = await env.DB.prepare("SELECT lot_id, payload FROM equity_lots WHERE json_extract(payload, '$.asset') = ? ORDER BY created_at").bind(asset).all();
+      let remaining = quantity;
+      for (const row of lots.results) { if (!remaining) break; const lot = JSON.parse(row.payload); const available = Number(lot.available_quantity ?? lot.quantity ?? 0); const take = Math.min(available, remaining); lot.available_quantity = available - take; statements.push(env.DB.prepare("UPDATE equity_lots SET payload = ? WHERE lot_id = ?").bind(JSON.stringify(lot), row.lot_id)); remaining -= take; }
+      if (remaining) return json({ error: "A carteira não possui ações suficientes para o exercício da CALL." }, 400);
+    }
+    await env.DB.batch(statements);
+    return json({ ok: true, exercised: type });
+  }
   const reopenMatch = path.match(/^\/api\/closed\/(.+)\/reopen$/);
   if (reopenMatch && request.method === "POST") {
     const closed = await env.DB.prepare(
