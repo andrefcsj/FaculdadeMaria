@@ -953,23 +953,32 @@ $("#note-pdf-form").onsubmit = async (e) => {
       expiry_month: match[3], option_code: match[4].toUpperCase(), quantity: Number(match[5]), unit_price: parseBrNumber(match[6]), gross_value: parseBrNumber(match[7]), cash_direction: match[8].toUpperCase(),
     }));
     if (!trades.length) throw Error("Nenhuma negociação foi reconhecida. Use uma nota BTG/Necton definitiva com texto selecionável.");
+    const totalGross = trades.reduce((sum, trade) => sum + trade.gross_value, 0) || 1;
+    const totalCosts = parseBrNumber((text.match(/TOTAL\s+CORRETAGEM\s*\/\s*DESPESAS\s+([0-9.,]+)/i) || [])[1]);
+    const totalIrrf = parseBrNumber((text.match(/I\.?R\.?R\.?F\.?\s*S\/\s*OPERA[ÇC][ÕO]ES[^0-9]*([0-9.,]+)/i) || [])[1]);
+    trades.forEach((trade) => {
+      const share = trade.gross_value / totalGross;
+      trade.allocated_costs = Number((totalCosts * share).toFixed(2));
+      trade.allocated_irrf = Number((totalIrrf * share).toFixed(2));
+    });
     const digest = Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", await file.arrayBuffer()))).map((byte) => byte.toString(16).padStart(2, "0")).join("");
     let imported = 0;
     const operationsCreatedFromThisNote = new Map();
     for (const [index, trade] of trades.entries()) {
-      const payload = { key: `${digest}:${index}`, broker: normalized.includes("NECTON") ? "Necton" : "BTG Pactual", note_number: noteNumber, trade_date: tradeDate, trade, net_cash: String(trade.cash_direction === "C" ? trade.gross_value : -trade.gross_value), operational_costs: "0", cash_direction: trade.cash_direction, imported_at: new Date().toISOString() };
+      const netCash = trade.cash_direction === "C" ? trade.gross_value - trade.allocated_costs - trade.allocated_irrf : -(trade.gross_value + trade.allocated_costs + trade.allocated_irrf);
+      const payload = { key: `${digest}:${index}`, broker: normalized.includes("NECTON") ? "Necton" : "BTG Pactual", note_number: noteNumber, trade_date: tradeDate, trade, net_cash: String(netCash), operational_costs: String(trade.allocated_costs), irrf: String(trade.allocated_irrf), cash_direction: trade.cash_direction, imported_at: new Date().toISOString() };
       const response = await request("/notes", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ key: payload.key, payload }) });
       const saved = await response.json();
       if (saved.imported) imported += 1;
       const existing = (state.operations || []).find((item) => String(item.ativo).toUpperCase() === trade.option_code && String(item.status).toLowerCase() === "aberta") || operationsCreatedFromThisNote.get(trade.option_code);
       if (trade.side === "Compra" && existing) {
-        const result = (num(existing.premio_opcao) - num(trade.unit_price)) * num(existing.contratos) * cfg("Tamanho contrato opcoes", 100) - num(existing.custos) - num(existing.irrf);
+        const result = (num(existing.premio_opcao) - num(trade.unit_price)) * num(existing.contratos) * cfg("Tamanho contrato opcoes", 100) - num(existing.custos) - num(existing.irrf) - num(trade.allocated_costs) - num(trade.allocated_irrf);
         await request(`/operations/${existing.id}/close`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ data_fechamento: tradeDate, resultado_final: result, observacoes: `Recompra reconhecida na nota ${noteNumber}` }) });
       } else if (trade.side === "Venda" && !existing) {
         const metadata = optionMetadata(trade.option_code, trade.expiry_month);
         if (!metadata.strike || !metadata.expiry) throw Error(`Não foi possível identificar strike ou vencimento de ${trade.option_code}.`);
-        const created = await (await request("/operations", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ data_abertura: tradeDate, ativo: trade.option_code, tipo: metadata.type, estrategia: "Venda", contratos: Math.max(1, trade.quantity / cfg("Tamanho contrato opcoes", 100)), strike: metadata.strike, premio_opcao: trade.unit_price, custos: 0, irrf: 0, vencimento: metadata.expiry, cotacao_atual: 0 }) })).json();
-        operationsCreatedFromThisNote.set(trade.option_code, { id: created.id, ativo: trade.option_code, status: "Aberta", premio_opcao: trade.unit_price, contratos: Math.max(1, trade.quantity / cfg("Tamanho contrato opcoes", 100)), custos: 0, irrf: 0 });
+        const created = await (await request("/operations", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ data_abertura: tradeDate, ativo: trade.option_code, tipo: metadata.type, estrategia: "Venda", contratos: Math.max(1, trade.quantity / cfg("Tamanho contrato opcoes", 100)), strike: metadata.strike, premio_opcao: trade.unit_price, custos: trade.allocated_costs, irrf: trade.allocated_irrf, vencimento: metadata.expiry, cotacao_atual: 0 }) })).json();
+        operationsCreatedFromThisNote.set(trade.option_code, { id: created.id, ativo: trade.option_code, status: "Aberta", premio_opcao: trade.unit_price, contratos: Math.max(1, trade.quantity / cfg("Tamanho contrato opcoes", 100)), custos: trade.allocated_costs, irrf: trade.allocated_irrf });
       }
     }
     await load(); e.target.reset();
