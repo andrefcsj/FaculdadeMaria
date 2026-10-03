@@ -28,6 +28,29 @@ async function pdfText(file) {
   return pages.join("\n");
 }
 const parseBrNumber = (value) => Number(String(value).replace(/\./g, "").replace(",", ".")) || 0;
+function optionMetadata(code, expiryMonth) {
+  const normalized = String(code || "").toUpperCase();
+  const monthLetter = normalized.charAt(4);
+  const type = "ABCDEFGHIJKL".includes(monthLetter) ? "CALL" : "PUT";
+  const digits = (normalized.slice(5).match(/^\d+/) || [""])[0];
+  // Nos códigos B3 desta nota (ex.: BBASJ225W1), os três dígitos representam
+  // o strike com uma casa decimal. Outros formatos seguem para revisão.
+  const strike = digits.length === 3 ? Number(digits) / 10 : 0;
+  const [month, year] = String(expiryMonth || "").split("/").map(Number);
+  let expiry = "";
+  if (month && year) {
+    const last = new Date(2000 + year, month, 0);
+    let fridayCount = 0;
+    for (let day = 1; day <= last.getDate(); day += 1) {
+      const candidate = new Date(2000 + year, month - 1, day);
+      if (candidate.getDay() === 5 && ++fridayCount === 3) {
+        expiry = candidate.toISOString().slice(0, 10);
+        break;
+      }
+    }
+  }
+  return { type, strike, expiry };
+}
 async function request(path, options = {}) {
   const headers = new Headers(options.headers || {});
   if (sessionToken) headers.set("Authorization", `Bearer ${sessionToken}`);
@@ -98,7 +121,7 @@ function renderExtra() {
     (state.notes || [])
       .map(
         (x) =>
-          `<tr><td>${escape(x.trade_date || "—")}</td><td>${escape(x.note_number || "—")}</td><td>${escape(x.trade?.option_code || "—")}</td><td>${money((String(x.cash_direction || "C").toUpperCase() === "C" ? 1 : -1) * num(x.net_cash))}</td><td>${money(x.operational_costs)}</td><td>${String(x.trade?.side).toLowerCase() === "venda" ? `<button data-note-create="${escape(x.key)}">Preparar operação</button>` : ""}<button data-note-delete="${escape(x.key)}">Excluir</button></td></tr>`,
+          `<tr><td>${escape(x.trade_date || "—")}</td><td>${escape(x.note_number || "—")}</td><td>${escape(x.trade?.option_code || "—")}</td><td>${money((String(x.cash_direction || "C").toUpperCase() === "C" ? 1 : -1) * num(x.net_cash))}</td><td>${money(x.operational_costs)}</td><td><button data-note-delete="${escape(x.key)}">Excluir</button></td></tr>`,
       )
       .join("") ||
     "<tr><td colspan=6>Nenhuma nota estruturada no piloto.</td></tr>";
@@ -621,26 +644,6 @@ function render() {
         }
       }),
   );
-  document.querySelectorAll("[data-note-create]").forEach(
-    (button) =>
-      (button.onclick = () => {
-        const note = (state.notes || []).find((item) => String(item.key) === String(button.dataset.noteCreate));
-        const trade = note?.trade;
-        if (!trade) return;
-        screen("open");
-        const form = $("#operation-form");
-        form.elements.data_abertura.value = String(note.trade_date || "");
-        form.elements.ativo.value = String(trade.option_code || "");
-        form.elements.tipo.value = String(trade.market || "").toLowerCase().includes("compra") ? "CALL" : "PUT";
-        form.elements.estrategia.value = "Venda";
-        form.elements.contratos.value = Math.max(1, num(trade.quantity) / cfg("Tamanho contrato opcoes", 100));
-        form.elements.premio_opcao.value = String(trade.unit_price || "");
-        form.elements.custos.value = String(trade.allocated_costs || note.operational_costs || "0");
-        form.elements.irrf.value = String(trade.allocated_irrf || note.irrf || "0");
-        $("#message").textContent = `Operação ${trade.option_code} preparada a partir da nota. Confira strike e vencimento antes de adicionar.`;
-        form.elements.strike.focus();
-      }),
-  );
 }
 async function load() {
   state = await (await request("/dashboard")).json();
@@ -916,14 +919,25 @@ $("#note-pdf-form").onsubmit = async (e) => {
     if (!trades.length) throw Error("Nenhuma negociação foi reconhecida. Use uma nota BTG/Necton definitiva com texto selecionável.");
     const digest = Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", await file.arrayBuffer()))).map((byte) => byte.toString(16).padStart(2, "0")).join("");
     let imported = 0;
+    const operationsCreatedFromThisNote = new Map();
     for (const [index, trade] of trades.entries()) {
       const payload = { key: `${digest}:${index}`, broker: normalized.includes("NECTON") ? "Necton" : "BTG Pactual", note_number: noteNumber, trade_date: tradeDate, trade, net_cash: String(trade.cash_direction === "C" ? trade.gross_value : -trade.gross_value), operational_costs: "0", cash_direction: trade.cash_direction, imported_at: new Date().toISOString() };
       const response = await request("/notes", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ key: payload.key, payload }) });
       const saved = await response.json();
       if (saved.imported) imported += 1;
+      const existing = (state.operations || []).find((item) => String(item.ativo).toUpperCase() === trade.option_code && String(item.status).toLowerCase() === "aberta") || operationsCreatedFromThisNote.get(trade.option_code);
+      if (trade.side === "Compra" && existing) {
+        const result = (num(existing.premio_opcao) - num(trade.unit_price)) * num(existing.contratos) * cfg("Tamanho contrato opcoes", 100) - num(existing.custos) - num(existing.irrf);
+        await request(`/operations/${existing.id}/close`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ data_fechamento: tradeDate, resultado_final: result, observacoes: `Recompra reconhecida na nota ${noteNumber}` }) });
+      } else if (trade.side === "Venda" && !existing) {
+        const metadata = optionMetadata(trade.option_code, trade.expiry_month);
+        if (!metadata.strike || !metadata.expiry) throw Error(`Não foi possível identificar strike ou vencimento de ${trade.option_code}.`);
+        const created = await (await request("/operations", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ data_abertura: tradeDate, ativo: trade.option_code, tipo: metadata.type, estrategia: "Venda", contratos: Math.max(1, trade.quantity / cfg("Tamanho contrato opcoes", 100)), strike: metadata.strike, premio_opcao: trade.unit_price, custos: 0, irrf: 0, vencimento: metadata.expiry, cotacao_atual: 0 }) })).json();
+        operationsCreatedFromThisNote.set(trade.option_code, { id: created.id, ativo: trade.option_code, status: "Aberta", premio_opcao: trade.unit_price, contratos: Math.max(1, trade.quantity / cfg("Tamanho contrato opcoes", 100)), custos: 0, irrf: 0 });
+      }
     }
     await load(); e.target.reset();
-    result.textContent = `${imported} lançamento(s) importado(s) localmente. O PDF não foi armazenado.`;
+    result.textContent = `${imported} lançamento(s) importado(s) e operações atualizadas automaticamente. O PDF não foi armazenado.`;
   } catch (err) {
     result.textContent = err.message || "Não foi possível ler esta nota.";
   }
