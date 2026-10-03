@@ -185,9 +185,9 @@
             <section class="exec-panel">
               <header class="exec-panel__header">
                 <h2>Operações Abertas</h2>
-                <a href="#notes" data-screen="notes">Importar nota →</a>
+                <div><a href="#notes" data-screen="notes">Importar nota →</a><button id="toggle-operation-form" type="button">Cadastrar manualmente</button></div>
               </header>
-              <form id="operation-form" class="free-operation-form">
+              <form id="operation-form" class="free-operation-form" hidden>
                 <input name="data_abertura" type="date" required /><input
                   name="ativo"
                   placeholder="Ativo"
@@ -761,6 +761,6 @@
         </main>
       </section>
     </div>
-    <script src="free-pilot/app.js?v=11"></script>
+    <script src="free-pilot/app.js?v=12"></script>
   </body>
 </html>

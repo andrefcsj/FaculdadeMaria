@@ -745,6 +745,12 @@ document.querySelectorAll("[data-screen]").forEach(
       screen(a.dataset.screen);
     }),
 );
+$("#toggle-operation-form").onclick = () => {
+  const form = $("#operation-form");
+  form.hidden = !form.hidden;
+  $("#toggle-operation-form").textContent = form.hidden ? "Cadastrar manualmente" : "Fechar cadastro";
+  if (!form.hidden) form.elements.ativo.focus();
+};
 $("#operation-form").onsubmit = async (e) => {
   e.preventDefault();
   try {
@@ -754,6 +760,8 @@ $("#operation-form").onsubmit = async (e) => {
       body: JSON.stringify(Object.fromEntries(new FormData(e.target))),
     });
     e.target.reset();
+    e.target.hidden = true;
+    $("#toggle-operation-form").textContent = "Cadastrar manualmente";
     await load();
   } catch (err) {
     $("#message").textContent = err.message;
