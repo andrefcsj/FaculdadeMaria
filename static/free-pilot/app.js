@@ -765,6 +765,12 @@ for (const [buttonId, formId, closed, opened, focus] of [["#toggle-equity-form",
     if (!form.hidden) form.elements[focus].focus();
   };
 }
+$("#toggle-quote-form").onclick = () => {
+  const form = $("#quote-form");
+  form.hidden = !form.hidden;
+  $("#toggle-quote-form").textContent = form.hidden ? "Registrar cotação" : "Fechar cotação";
+  if (!form.hidden) form.elements.option_code.focus();
+};
 $("#operation-form").onsubmit = async (e) => {
   e.preventDefault();
   try {
@@ -918,6 +924,8 @@ $("#quote-form").onsubmit = async (e) => {
     });
     e.target.reset();
     e.target.elements.quoted_at.value = new Date().toISOString().slice(0, 16);
+    e.target.hidden = true;
+    $("#toggle-quote-form").textContent = "Registrar cotação";
     await load();
   } catch (err) {
     $("#message").textContent = err.message;

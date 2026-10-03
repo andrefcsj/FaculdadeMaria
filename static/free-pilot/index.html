@@ -558,8 +558,8 @@
           <section id="radar-screen" class="screen" hidden>
             <div class="exec-grid exec-grid--primary">
               <section class="exec-panel">
-                <header class="exec-panel__header"><div><h2>Cotações manuais</h2><p>Registre a última cotação da opção para acompanhar suas posições.</p></div></header>
-                <form id="quote-form" class="free-operation-form">
+                <header class="exec-panel__header"><div><h2>Cotações manuais</h2><p>Registre a última cotação da opção para acompanhar suas posições.</p></div><button id="toggle-quote-form" type="button">Registrar cotação</button></header>
+                <form id="quote-form" class="free-operation-form" hidden>
                   <input name="option_code" placeholder="Código da opção" required />
                   <input name="price" type="number" step="0.01" min="0" placeholder="Cotação por ação" required />
                   <input name="quoted_at" type="datetime-local" required />
@@ -757,6 +757,6 @@
         </main>
       </section>
     </div>
-    <script src="free-pilot/app.js?v=15"></script>
+    <script src="free-pilot/app.js?v=16"></script>
   </body>
 </html>
