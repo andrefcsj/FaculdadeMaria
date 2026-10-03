@@ -49,6 +49,9 @@
 }
 .free-table {
   overflow: auto;
+  border: 1px solid #e1e8f0;
+  border-radius: 12px;
+  background: #fff;
 }
 .free-table table {
   width: 100%;
@@ -56,16 +59,18 @@
 }
 .free-table th,
 .free-table td {
-  padding: 0.7rem;
-  border-bottom: 1px solid #28445e;
+  padding: 0.82rem 0.75rem;
+  border-bottom: 1px solid #e7edf4;
   text-align: left;
 }
+.free-table th{background:#f7f9fc;color:#728096;font-size:10px;font-weight:850;letter-spacing:.04em;text-transform:uppercase}.free-table td{color:#26354c;font-size:13px}.free-table tr:last-child td{border-bottom:0}.free-table tbody tr:hover{background:#f8fbff}
 .free-table button {
-  background: #e35d69;
-  color: white;
+  background: #fff0f1;
+  color: #c53f50;
   border: 0;
-  border-radius: 6px;
-  padding: 0.4rem;
+  border-radius: 7px;
+  padding: 0.45rem 0.6rem;
+  font-weight:750;
 }
 .free-operation-form {
   display: grid;
