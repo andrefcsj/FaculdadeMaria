@@ -738,9 +738,9 @@
                   <h2>Backup e restauração</h2>
                   <p>O backup contém operações, caixa, ações, DARFs, notas e cotações manuais.</p>
                 </div>
-                <button id="backup-settings" type="button">Baixar backup</button>
+                <div><button id="backup-settings" type="button">Baixar backup</button><button id="toggle-restore-form" type="button">Restaurar backup</button></div>
               </header>
-              <form id="restore-form" class="free-operation-form">
+              <form id="restore-form" class="free-operation-form" hidden>
                 <input name="backup_file" type="file" accept="application/json,.json" required />
                 <button>Restaurar backup</button>
               </form>
@@ -757,6 +757,6 @@
         </main>
       </section>
     </div>
-    <script src="free-pilot/app.js?v=14"></script>
+    <script src="free-pilot/app.js?v=15"></script>
   </body>
 </html>

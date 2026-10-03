@@ -1043,6 +1043,11 @@ $("#backup").onclick = async (e) => {
   await downloadBackup();
 };
 $("#backup-settings").onclick = downloadBackup;
+$("#toggle-restore-form").onclick = () => {
+  const form = $("#restore-form");
+  form.hidden = !form.hidden;
+  $("#toggle-restore-form").textContent = form.hidden ? "Restaurar backup" : "Fechar restauração";
+};
 $("#restore-form").onsubmit = async (e) => {
   e.preventDefault();
   const file = e.target.elements.backup_file.files[0];
@@ -1059,6 +1064,8 @@ $("#restore-form").onsubmit = async (e) => {
     const result = await response.json();
     await load();
     e.target.reset();
+    e.target.hidden = true;
+    $("#toggle-restore-form").textContent = "Restaurar backup";
     $("#message").textContent = `${result.restored} registro(s) restaurado(s) no piloto.`;
   } catch (err) {
     $("#message").textContent =
