@@ -751,6 +751,20 @@ $("#toggle-operation-form").onclick = () => {
   $("#toggle-operation-form").textContent = form.hidden ? "Cadastrar manualmente" : "Fechar cadastro";
   if (!form.hidden) form.elements.ativo.focus();
 };
+$("#toggle-cash-form").onclick = () => {
+  const form = $("#cash-form");
+  form.hidden = !form.hidden;
+  $("#toggle-cash-form").textContent = form.hidden ? "Novo lançamento" : "Fechar lançamento";
+  if (!form.hidden) form.elements.amount.focus();
+};
+for (const [buttonId, formId, closed, opened, focus] of [["#toggle-equity-form", "#equity-form", "Adicionar ação", "Fechar cadastro", "asset"], ["#toggle-darf-form", "#darf-form", "Registrar DARF", "Fechar cadastro", "amount"]]) {
+  $(buttonId).onclick = () => {
+    const form = $(formId);
+    form.hidden = !form.hidden;
+    $(buttonId).textContent = form.hidden ? closed : opened;
+    if (!form.hidden) form.elements[focus].focus();
+  };
+}
 $("#operation-form").onsubmit = async (e) => {
   e.preventDefault();
   try {
@@ -826,6 +840,8 @@ $("#equity-form").onsubmit = async (e) => {
     e.target.elements.acquisition_date.value = new Date()
       .toISOString()
       .slice(0, 10);
+    e.target.hidden = true;
+    $("#toggle-equity-form").textContent = "Adicionar ação";
     await load();
   } catch (err) {
     $("#message").textContent = err.message;
@@ -841,6 +857,8 @@ $("#cash-form").onsubmit = async (e) => {
     });
     e.target.reset();
     e.target.elements.date.value = new Date().toISOString().slice(0, 10);
+    e.target.hidden = true;
+    $("#toggle-cash-form").textContent = "Novo lançamento";
     await load();
   } catch (err) {
     $("#message").textContent = err.message;
@@ -855,6 +873,8 @@ $("#darf-form").onsubmit = async (e) => {
       body: JSON.stringify(Object.fromEntries(new FormData(e.target))),
     });
     e.target.reset();
+    e.target.hidden = true;
+    $("#toggle-darf-form").textContent = "Registrar DARF";
     await load();
   } catch (err) {
     $("#message").textContent = err.message;

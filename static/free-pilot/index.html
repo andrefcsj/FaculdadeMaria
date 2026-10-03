@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Dashboard Executivo | FaculdadeMaria</title>
     <link rel="stylesheet" href="theme.css" />
-    <link rel="stylesheet" href="free-pilot/free-pilot.css?v=4" />
+    <link rel="stylesheet" href="free-pilot/free-pilot.css?v=6" />
   </head>
   <body class="app-shell">
     <section id="login" class="free-login">
@@ -413,8 +413,9 @@
             <section class="exec-panel">
               <header class="exec-panel__header">
                 <h2>Carteira de ações</h2>
+                <button id="toggle-equity-form" type="button">Adicionar ação</button>
               </header>
-              <form id="equity-form" class="free-operation-form">
+              <form id="equity-form" class="free-operation-form" hidden>
                 <input
                   name="asset"
                   placeholder="Código da ação"
@@ -597,8 +598,9 @@
             <section class="exec-panel">
               <header class="exec-panel__header">
                 <h2>Registrar movimentação</h2>
+                <button id="toggle-cash-form" type="button">Novo lançamento</button>
               </header>
-              <form id="cash-form" class="free-operation-form">
+              <form id="cash-form" class="free-operation-form" hidden>
                 <select name="kind">
                   <option value="aporte">Novo aporte</option>
                   <option value="retirada">Retirada</option>
@@ -634,14 +636,7 @@
           </section>
           <section id="notes-screen" class="screen" hidden>
             <section class="exec-panel">
-              <h2>Notas importadas</h2>
-              <p class="free-help">
-                A leitura ocorre localmente no navegador: o PDF não é enviado nem armazenado.
-              </p>
-              <form id="note-pdf-form" class="free-operation-form">
-                <input name="pdf" type="file" accept="application/pdf,.pdf" required />
-                <button>Importar nota BTG/Necton</button>
-              </form>
+              <header class="notes-hero"><div><span>CENTRAL FINANCEIRA</span><h2>Notas de corretagem</h2><p>A leitura acontece neste navegador. O PDF não é enviado nem armazenado.</p></div><form id="note-pdf-form"><label>Selecionar nota BTG/Necton<input name="pdf" type="file" accept="application/pdf,.pdf" required /></label><button>Importar nota</button></form></header>
               <p id="note-pdf-result" class="free-help" aria-live="polite"></p>
               <div class="free-table">
                 <table>
@@ -680,8 +675,9 @@
             <section class="exec-panel">
               <header class="exec-panel__header">
                 <h2>Registrar DARF paga</h2>
+                <button id="toggle-darf-form" type="button">Registrar DARF</button>
               </header>
-              <form id="darf-form" class="free-operation-form">
+              <form id="darf-form" class="free-operation-form" hidden>
                 <input name="competence" type="month" required /><input
                   name="payment_date"
                   type="date"
@@ -761,6 +757,6 @@
         </main>
       </section>
     </div>
-    <script src="free-pilot/app.js?v=12"></script>
+    <script src="free-pilot/app.js?v=14"></script>
   </body>
 </html>
