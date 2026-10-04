@@ -114,6 +114,35 @@ function renderOpenOperations(list, size, preferences, optionQuotes) {
     </tr>`;
   }).join("") || '<tr><td colspan="11" class="premium-empty">Nenhuma operação aberta. Importe uma nota ou cadastre a primeira operação.</td></tr>';
 }
+function renderClosedOperations(list, size, preferences) {
+  const body = $("#closed-operations");
+  body.innerHTML = list.map((item) => {
+    const result = num(item.Resultado_final || item.resultado_final || item.Lucro_tributavel);
+    const contracts = num(item.contratos || item.Contratos || 1);
+    const strike = num(item.strike || item.Strike);
+    const premium = num(item.premio_opcao || item.Premio_liquido);
+    const capital = strike * contracts * size;
+    const roi = capital ? result / capital * 100 : null;
+    const option = item.ativo || item.Ativo || "—";
+    const preference = preferences.get(String(item.operation_id || item.id || ""));
+    const underlying = String(preference?.underlying_asset || item.ativo_subjacente || item.Ativo_subjacente || option).toUpperCase();
+    const type = String(item.tipo || item.Tipo || "").toUpperCase();
+    const opening = item.data_abertura || item.Data_abertura || "—";
+    const closing = item["Data fechamento"] || item.data_fechamento || item.closed_at || "—";
+    const method = String(item.metodo_encerramento || item.Metodo_encerramento || (item.observacoes ? "Fechamento manual" : "Encerrada")).replaceAll("_", " ");
+    const closedId = item.closed_id || item.id;
+    return `<tr class="closed-premium-row ${result < 0 ? "closed-premium-row--loss" : ""}">
+      <td><span class="closed-underlying">${escape(underlying)}</span></td>
+      <td><strong>${escape(option)}</strong><small>${escape(type || "Opção")} · ${escape(item.estrategia || item["Estratégia"] || "Venda")}</small></td>
+      <td class="${result < 0 ? "negative" : "positive"}"><strong>${money(result)}</strong><small>resultado realizado</small></td>
+      <td><b class="closed-roi ${result < 0 ? "negative" : "positive"}">${roi === null ? "—" : `${roi.toFixed(2).replace(".", ",")}%`}</b><small>sobre capital nominal</small></td>
+      <td><strong>${escape(String(opening).split("-").reverse().join("/"))}</strong><small>Fechamento ${escape(String(closing).split("-").reverse().join("/"))}</small></td>
+      <td><strong>${money(strike)}</strong><small>Prêmio unit. ${money(premium)}</small></td>
+      <td><span class="closed-method">${escape(method)}</span><small>${escape(item.Observacoes || item.observacoes || `${contracts} contrato${contracts === 1 ? "" : "s"}`)}</small></td>
+      <td class="closed-reopen"><button data-reopen="${escape(closedId)}">↻ Reabrir operação</button></td>
+    </tr>`;
+  }).join("") || '<tr><td colspan="8" class="premium-empty">Nenhuma operação fechada no histórico.</td></tr>';
+}
 function kindLabel(kind) {
   return (
     {
@@ -448,7 +477,7 @@ function render() {
       return `<a class=\"dashboard-positions__row ${type === "CALL" ? "dashboard-positions__row--call" : ""}\" href=\"#open\" data-screen=\"open\"><span class=\"dashboard-asset\"><img src=\"${iconUrl}\" alt=\"\" onerror=\"this.style.display='none';this.nextElementSibling.style.display='grid'\"><i style=\"display:none\">${escape(underlying.slice(0, 2))}</i><strong>${escape(underlying)}</strong></span><strong>${escape(item.ativo)}</strong><span><em class=\"dashboard-type dashboard-type--${type === "CALL" ? "call" : "put"}\">${escape(type)}</em></span><span><em class=\"dashboard-strategy dashboard-strategy--${/cobert/i.test(strategy) ? "covered" : "sale"}\">${escape(strategy)}</em></span><span>${current === null ? "—" : money(current)}</span><span>${money(item.strike)}</span><span class=\"dashboard-money--positive\">${money(netPremium)}</span><span>${money(capitalAtRisk)}</span><span>${escape(String(item.vencimento || "—").split("-").reverse().join("/"))}${days === null ? "" : `<small>${days}d</small>`}</span><span><em class=\"dashboard-probability dashboard-probability--unavailable\">—</em></span><b>${roi === null ? "—" : `${roi.toFixed(2).replace(".", ",")}%`}</b></a>`;
     }).join("") || '<div class="exec-empty"><strong>Nenhuma operação aberta.</strong><p>Cadastre uma operação para acompanhá-la aqui.</p></div>');
   renderOpenOperations(open, size, preferences, optionQuotes);
-  rows("#closed-operations", state.closed, true);
+  renderClosedOperations(state.closed, size, preferences);
   $("#expiries").innerHTML =
     open
       .map(
