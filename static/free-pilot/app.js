@@ -261,13 +261,11 @@ function renderExtra() {
   $("#equity-cost").textContent = money(
     equities.reduce((sum, item) => sum + item.fiscalCost, 0),
   );
-  $("#equity-rows").innerHTML =
-    equities
-      .map(
-        (item) =>
-          `<tr><td><strong>${escape(item.asset)}</strong></td><td>${item.quantity}</td><td>${money(item.fiscalCost / item.quantity)}</td><td>${money(item.managerialCost / item.quantity)}</td><td>${money(item.fiscalCost)}</td><td>${escape(item.date || "—")}</td><td><button data-equity-edit="${escape(item.asset)}">Editar</button><button data-equity-sell="${escape(item.asset)}">Vender</button><button data-equity-delete="${escape(item.asset)}">Excluir</button></td></tr>`,
-      )
-      .join("") || "<tr><td colspan=7>Nenhuma ação registrada.</td></tr>";
+  $("#equity-rows").innerHTML = equities.map((item) => {
+    const fiscalAverage = item.fiscalCost / item.quantity;
+    const managerialAverage = item.managerialCost / item.quantity;
+    return `<tr class="equity-premium-row"><td><span class="equity-symbol">${escape(item.asset.slice(0, 2))}</span><strong>${escape(item.asset)}</strong><small>Posição em carteira</small></td><td><b>${item.quantity}</b><small>ações disponíveis</small></td><td><strong>${money(fiscalAverage)}</strong><small>custo tributário</small></td><td><strong>${money(managerialAverage)}</strong><small>após ajustes gerenciais</small></td><td class="equity-capital"><strong>${money(item.fiscalCost)}</strong><small>base fiscal total</small></td><td><strong>${escape(item.date ? String(item.date).split("-").reverse().join("/") : "—")}</strong><small>primeiro lote</small></td><td class="equity-actions"><button data-equity-edit="${escape(item.asset)}">Editar</button><button data-equity-sell="${escape(item.asset)}">Vender</button><button data-equity-delete="${escape(item.asset)}">Excluir</button></td></tr>`;
+  }).join("") || "<tr><td colspan=7 class=\"premium-empty\">Nenhuma ação registrada na carteira.</td></tr>";
   const monthly = new Map(),
     addPremium = (date, premium, closedResult = 0) => {
       const month = String(date || "").slice(0, 7) || "Sem data";
