@@ -946,7 +946,7 @@ $("#roi-form").onsubmit = (e) => {
     roi = capital ? (credit / capital) * 100 : 0,
     monthly = num(data.days) ? (roi / num(data.days)) * 30 : 0;
   $("#roi-result").innerHTML =
-    `<strong>${money(credit)} de prêmio bruto</strong><span>Capital necessário: ${money(capital)} · ROI do ciclo: ${roi.toFixed(2).replace(".", ",")}% · Equivalente mensal: ${monthly.toFixed(2).replace(".", ",")}%</span>`;
+    `<strong>${money(credit)} de prêmio bruto</strong><div class="simulator-metrics"><span><small>Capital necessário</small><b>${money(capital)}</b></span><span><small>ROI do ciclo</small><b>${roi.toFixed(2).replace(".", ",")}%</b></span><span><small>Equivalente mensal</small><b>${monthly.toFixed(2).replace(".", ",")}%</b></span></div>`;
 };
 $("#payoff-form").onsubmit = (e) => {
   e.preventDefault();
@@ -963,7 +963,7 @@ $("#payoff-form").onsubmit = (e) => {
     result = (premium - intrinsic) * contracts * size,
     breakEven = data.type === "PUT" ? strike - premium : strike + premium;
   $("#payoff-result").innerHTML =
-    `<strong class="${result >= 0 ? "positive" : "negative"}">${money(result)} no vencimento</strong><span>Valor intrínseco: ${money(intrinsic)} por ação · Ponto de equilíbrio: ${money(breakEven)} · ${data.type} vendida com ${contracts} contrato(s).</span>`;
+    `<strong class="${result >= 0 ? "positive" : "negative"}">${money(result)} no vencimento</strong><div class="simulator-metrics"><span><small>Valor intrínseco</small><b>${money(intrinsic)}</b></span><span><small>Ponto de equilíbrio</small><b>${money(breakEven)}</b></span><span><small>Estratégia</small><b>${escape(data.type)} vendida · ${contracts} contrato(s)</b></span></div>`;
 };
 $("#quote-form").onsubmit = async (e) => {
   e.preventDefault();
@@ -1087,7 +1087,7 @@ $("#compare-form").onsubmit = (e) => {
     second = option("Alternativa B", data.strike_b, data.premium_b),
     preferred = first.roi >= second.roi ? first : second;
   const card = (item) =>
-    `<span><b>${item.label}</b> · strike ${money(item.strike)} · prêmio ${money(item.premium)} · capital ${money(item.capital)} · ROI ${item.roi.toFixed(2).replace(".", ",")}% · margem ${item.margin.toFixed(2).replace(".", ",")}%</span>`;
+    `<span class="compare-option"><b>${item.label}</b><small>Strike ${money(item.strike)} · prêmio ${money(item.premium)} · capital ${money(item.capital)}</small><strong>ROI ${item.roi.toFixed(2).replace(".", ",")}% · margem ${item.margin.toFixed(2).replace(".", ",")}%</strong></span>`;
   $("#compare-result").innerHTML =
     `<strong>${preferred.label} tem o maior ROI bruto</strong>${card(first)}${card(second)}<span>Comparação gerencial: confirme liquidez, custos, tributação e risco antes de operar.</span>`;
 };

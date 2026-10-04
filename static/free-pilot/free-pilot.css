@@ -257,3 +257,4 @@
   font-size: 12px;
   line-height: 1.5;
 }
+.free-simulator-result { border-color:#d7e2ef; background:linear-gradient(135deg,#f8fbff,#f5fbf8); }.free-simulator-result > strong { color:#132c4a; }.simulator-metrics { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; margin-top:4px; }.simulator-metrics span,.compare-option { display:grid; gap:3px; padding:10px; border:1px solid #dce6f1; border-radius:9px; background:#fff; }.simulator-metrics small,.compare-option small { color:#8290a2; font-size:10px; font-weight:700; }.simulator-metrics b,.compare-option strong { color:#17345a; font-size:12px; }.compare-option { margin-top:7px; }.compare-option b { color:#1462d1; font-size:12px; }.compare-option strong { color:#087b45; }@media(max-width:620px){.simulator-metrics{grid-template-columns:1fr}}
