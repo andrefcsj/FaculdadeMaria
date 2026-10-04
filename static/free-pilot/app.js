@@ -174,14 +174,13 @@ function renderExtra() {
           `<tr><td>${escape(x.date)}</td><td>${escape(kindLabel(x.kind))}</td><td>${escape(x.description || "—")}</td><td class="${["aporte", "ajuste_credito", "venda_acoes"].includes(x.kind) ? "positive" : "negative"}">${money((["aporte", "ajuste_credito", "venda_acoes"].includes(x.kind) ? 1 : -1) * num(x.amount))}</td><td><button data-cash-delete="${escape(x.id)}">Excluir</button></td></tr>`,
       )
       .join("") || "<tr><td colspan=5>Nenhuma movimentação.</td></tr>";
-  $("#notes-rows").innerHTML =
-    (state.notes || [])
-      .map(
-        (x) =>
-          `<tr><td>${escape(x.trade_date || "—")}</td><td>${escape(x.note_number || "—")}</td><td>${escape(x.trade?.option_code || "—")}</td><td>${money((String(x.cash_direction || "C").toUpperCase() === "C" ? 1 : -1) * num(x.net_cash))}</td><td>${money(x.operational_costs)}</td><td><button data-note-delete="${escape(x.key)}">Excluir</button></td></tr>`,
-      )
-      .join("") ||
-    "<tr><td colspan=6>Nenhuma nota estruturada no piloto.</td></tr>";
+  $("#notes-rows").innerHTML = (state.notes || []).map((x) => {
+    const credit = String(x.cash_direction || "C").toUpperCase() === "C";
+    const side = String(x.trade?.side || (credit ? "Venda" : "Compra"));
+    const option = x.trade?.option_code || "—";
+    const date = x.trade_date ? String(x.trade_date).split("-").reverse().join("/") : "—";
+    return `<tr class="note-premium-row"><td><strong>Nota ${escape(x.note_number || "—")}</strong><small>${escape(date)}</small></td><td><span class="note-option">${escape(option)}</span><small>${escape(x.trade?.asset_type || "Opção")}</small></td><td><em class="note-side note-side--${credit ? "sale" : "buy"}">${escape(side)}</em></td><td class="${credit ? "positive" : "negative"}"><strong>${money((credit ? 1 : -1) * num(x.net_cash))}</strong><small>${credit ? "crédito da operação" : "débito da operação"}</small></td><td><strong>${money(x.operational_costs)}</strong><small>IRRF ${money(x.irrf)}</small></td><td class="note-actions"><button data-note-delete="${escape(x.key)}">Excluir registro</button></td></tr>`;
+  }).join("") || "<tr><td colspan=6 class=\"premium-empty\">Nenhuma nota estruturada no piloto.</td></tr>";
   const notes = state.notes || [];
   $("#notes-count").textContent = String(notes.length);
   $("#notes-credit").textContent = money(notes.reduce((sum, item) => sum + (String(item.cash_direction || "C").toUpperCase() === "C" ? num(item.net_cash) : 0), 0));
