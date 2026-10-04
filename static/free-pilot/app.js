@@ -196,13 +196,7 @@ function renderExtra() {
   $("#tax-paid").textContent = money(
     (state.darfs || []).reduce((s, x) => s + num(x.amount), 0),
   );
-  $("#darf-rows").innerHTML =
-    (state.darfs || [])
-      .map(
-        (x) =>
-          `<tr><td>${escape(x.competence)}</td><td>${escape(x.payment_date)}</td><td>${money(x.amount)}</td><td>${escape(x.description || "—")}</td><td><button data-darf-delete="${escape(x.id)}">Excluir</button></td></tr>`,
-      )
-      .join("") || "<tr><td colspan=5>Nenhuma DARF registrada.</td></tr>";
+  $("#darf-rows").innerHTML = (state.darfs || []).map((x) => `<tr class="tax-payment-row"><td><strong>${escape(x.competence)}</strong><small>competência informada</small></td><td><strong>${escape(x.payment_date ? String(x.payment_date).split("-").reverse().join("/") : "—")}</strong><small>data do pagamento</small></td><td class="positive"><strong>${money(x.amount)}</strong><small>valor pago</small></td><td>${escape(x.description || "Sem observação")}</td><td><button data-darf-delete="${escape(x.id)}">Excluir registro</button></td></tr>`).join("") || "<tr><td colspan=5 class=\"premium-empty\">Nenhuma DARF registrada.</td></tr>";
   const taxMonths = new Map();
   (state.closed || []).forEach((item) => {
     const competence = String(item["Data fechamento"] || item.closed_at || "").slice(0, 7);
@@ -224,7 +218,8 @@ function renderExtra() {
     .map((row) => {
       const estimated = Math.max(0, row.result) * rate,
         balance = estimated - row.paid;
-      return `<tr><td><strong>${escape(row.competence)}</strong></td><td class="${row.result < 0 ? "negative" : "positive"}">${money(row.result)}</td><td>${money(estimated)}</td><td>${money(row.paid)}</td><td class="${balance > 0 ? "negative" : "positive"}">${money(balance)}</td></tr>`;
+      const status = balance > 0 ? "Saldo a conferir" : balance < 0 ? "Pagamento acima da projeção" : "Em equilíbrio";
+      return `<tr class="tax-memory-row"><td><strong>${escape(row.competence)}</strong><small>memória mensal</small></td><td class="${row.result < 0 ? "negative" : "positive"}"><strong>${money(row.result)}</strong><small>operações fechadas</small></td><td><strong>${money(estimated)}</strong><small>alíquota configurada</small></td><td><strong>${money(row.paid)}</strong><small>DARFs registradas</small></td><td><span class="tax-status tax-status--${balance > 0 ? "pending" : "settled"}">${escape(status)}</span><small class="${balance > 0 ? "negative" : "positive"}">${money(Math.abs(balance))}</small></td></tr>`;
     })
     .join("") || "<tr><td colspan=5>Nenhuma competência registrada.</td></tr>";
   $("#settings-list").innerHTML = state.config
