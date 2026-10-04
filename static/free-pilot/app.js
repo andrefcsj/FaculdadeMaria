@@ -167,13 +167,11 @@ function renderExtra() {
   $("#cash-balance").textContent = money(credit - debit);
   $("#cash-contributions").textContent = money(credit);
   $("#cash-withdrawals").textContent = money(debit);
-  $("#cash-rows").innerHTML =
-    cash
-      .map(
-        (x) =>
-          `<tr><td>${escape(x.date)}</td><td>${escape(kindLabel(x.kind))}</td><td>${escape(x.description || "—")}</td><td class="${["aporte", "ajuste_credito", "venda_acoes"].includes(x.kind) ? "positive" : "negative"}">${money((["aporte", "ajuste_credito", "venda_acoes"].includes(x.kind) ? 1 : -1) * num(x.amount))}</td><td><button data-cash-delete="${escape(x.id)}">Excluir</button></td></tr>`,
-      )
-      .join("") || "<tr><td colspan=5>Nenhuma movimentação.</td></tr>";
+  $("#cash-rows").innerHTML = cash.map((x) => {
+    const incoming = ["aporte", "ajuste_credito", "venda_acoes"].includes(x.kind);
+    const label = kindLabel(x.kind);
+    return `<tr class="cash-premium-row ${incoming ? "cash-premium-row--in" : "cash-premium-row--out"}"><td><strong>${escape(x.date ? String(x.date).split("-").reverse().join("/") : "—")}</strong><small>registro no livro-caixa</small></td><td><span class="cash-kind cash-kind--${incoming ? "in" : "out"}">${escape(label)}</span></td><td>${escape(x.description || "Sem descrição")}</td><td class="${incoming ? "positive" : "negative"}"><strong>${money((incoming ? 1 : -1) * num(x.amount))}</strong><small>${incoming ? "entrada" : "saída"} registrada</small></td><td><button data-cash-delete="${escape(x.id)}">Excluir lançamento</button></td></tr>`;
+  }).join("") || "<tr><td colspan=5 class=\"premium-empty\">Nenhuma movimentação no livro-caixa.</td></tr>";
   $("#notes-rows").innerHTML = (state.notes || []).map((x) => {
     const credit = String(x.cash_direction || "C").toUpperCase() === "C";
     const side = String(x.trade?.side || (credit ? "Venda" : "Compra"));
