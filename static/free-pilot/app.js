@@ -86,6 +86,34 @@ function rows(target, list, closed = false) {
       )
       .join("") || "<tr><td colspan=8>Nenhum registro.</td></tr>";
 }
+function renderOpenOperations(list, size, preferences, optionQuotes) {
+  const body = $("#open-operations");
+  body.innerHTML = list.map((item) => {
+    const preference = preferences.get(String(item.id));
+    const underlying = String(preference?.underlying_asset || item.ativo || "—").toUpperCase();
+    const quote = optionQuotes.get(String(item.ativo || "").toUpperCase());
+    const type = String(item.tipo || "PUT").toUpperCase();
+    const strategy = String(item.estrategia || "Venda");
+    const netPremium = num(item.premio_opcao) * num(item.contratos) * size - num(item.custos) - num(item.irrf);
+    const capitalAtRisk = type === "PUT" ? num(item.strike) * num(item.contratos) * size : 0;
+    const roi = capitalAtRisk ? (netPremium / capitalAtRisk) * 100 : null;
+    const expiry = item.vencimento ? String(item.vencimento).split("-").reverse().join("/") : "—";
+    const days = item.vencimento ? Math.max(0, Math.ceil((new Date(`${item.vencimento}T00:00:00`) - new Date()) / 86400000)) : null;
+    return `<tr class="premium-operation-row premium-operation-row--${type === "CALL" ? "call" : "put"}">
+      <td><span class="premium-underlying">${escape(underlying)}</span></td>
+      <td><strong class="premium-option">${escape(item.ativo)}</strong><small>${escape(item.data_abertura || "")}</small></td>
+      <td><em class="premium-type premium-type--${type === "CALL" ? "call" : "put"}">${escape(type)}</em></td>
+      <td><span class="premium-strategy">${escape(strategy)}</span></td>
+      <td><strong>${money(item.strike)}</strong><small>${num(item.contratos)} contrato${num(item.contratos) === 1 ? "" : "s"}</small></td>
+      <td class="premium-positive">${money(netPremium)}<small>${money(item.premio_opcao)} / ação</small></td>
+      <td>${quote === undefined ? "<span class=\"premium-muted\">Sem cotação</span>" : money(quote)}</td>
+      <td>${capitalAtRisk ? money(capitalAtRisk) : "<span class=\"premium-muted\">Coberta</span>"}</td>
+      <td><strong>${escape(expiry)}</strong>${days === null ? "" : `<small>${days} dias</small>`}</td>
+      <td><b class="premium-roi">${roi === null ? "—" : `${roi.toFixed(2).replace(".", ",")}%`}</b></td>
+      <td class="premium-actions"><button data-edit="${escape(item.id)}">Editar</button><button data-close="${escape(item.id)}">Fechar</button><button data-remove="${escape(item.id)}">Excluir</button></td>
+    </tr>`;
+  }).join("") || '<tr><td colspan="11" class="premium-empty">Nenhuma operação aberta. Importe uma nota ou cadastre a primeira operação.</td></tr>';
+}
 function kindLabel(kind) {
   return (
     {
@@ -419,7 +447,7 @@ function render() {
       const iconUrl = `https://raw.githubusercontent.com/thefintz/icones-b3/main/icones/${encodeURIComponent(underlying)}.png`;
       return `<a class=\"dashboard-positions__row ${type === "CALL" ? "dashboard-positions__row--call" : ""}\" href=\"#open\" data-screen=\"open\"><span class=\"dashboard-asset\"><img src=\"${iconUrl}\" alt=\"\" onerror=\"this.style.display='none';this.nextElementSibling.style.display='grid'\"><i style=\"display:none\">${escape(underlying.slice(0, 2))}</i><strong>${escape(underlying)}</strong></span><strong>${escape(item.ativo)}</strong><span><em class=\"dashboard-type dashboard-type--${type === "CALL" ? "call" : "put"}\">${escape(type)}</em></span><span><em class=\"dashboard-strategy dashboard-strategy--${/cobert/i.test(strategy) ? "covered" : "sale"}\">${escape(strategy)}</em></span><span>${current === null ? "—" : money(current)}</span><span>${money(item.strike)}</span><span class=\"dashboard-money--positive\">${money(netPremium)}</span><span>${money(capitalAtRisk)}</span><span>${escape(String(item.vencimento || "—").split("-").reverse().join("/"))}${days === null ? "" : `<small>${days}d</small>`}</span><span><em class=\"dashboard-probability dashboard-probability--unavailable\">—</em></span><b>${roi === null ? "—" : `${roi.toFixed(2).replace(".", ",")}%`}</b></a>`;
     }).join("") || '<div class="exec-empty"><strong>Nenhuma operação aberta.</strong><p>Cadastre uma operação para acompanhá-la aqui.</p></div>');
-  rows("#open-operations", open);
+  renderOpenOperations(open, size, preferences, optionQuotes);
   rows("#closed-operations", state.closed, true);
   $("#expiries").innerHTML =
     open

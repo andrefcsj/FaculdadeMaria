@@ -72,6 +72,22 @@
   padding: 0.45rem 0.6rem;
   font-weight:750;
 }
+.free-table:has(#open-operations) { border: 0; border-radius: 0; background: transparent; overflow: visible; }
+.free-table:has(#open-operations) table { border-collapse: separate; border-spacing: 0 8px; min-width: 1050px; }
+.free-table:has(#open-operations) th { padding: 0 10px 5px; background: transparent; color: #8795a8; text-align: center; }
+.free-table:has(#open-operations) th:nth-child(1), .free-table:has(#open-operations) th:nth-child(2) { text-align: left; }
+.premium-operation-row td { padding: 12px 10px; border-top: 1px solid #dce5ef; border-bottom: 1px solid #dce5ef; background: #fff; color: #34455d; text-align: center; vertical-align: middle; }
+.premium-operation-row td:first-child { border-left: 4px solid #e44f61; border-radius: 12px 0 0 12px; text-align: left; }
+.premium-operation-row--call td:first-child { border-left-color: #2876e6; }
+.premium-operation-row td:last-child { border-right: 1px solid #dce5ef; border-radius: 0 12px 12px 0; }
+.premium-operation-row:hover td { background: #f8fbff; }
+.premium-operation-row small { display: block; margin-top: 4px; color: #8492a4; font-size: 10px; font-weight: 650; white-space: nowrap; }
+.premium-underlying { display: inline-flex; align-items: center; min-width: 48px; padding: 7px 9px; border-radius: 8px; background: #edf4ff; color: #175dd1; font-size: 11px; font-weight: 900; }
+.premium-option { color: #1d2d43; font-size: 13px; }
+.premium-type, .premium-strategy { display: inline-flex; justify-content: center; padding: 5px 8px; border-radius: 999px; font-size: 10px; font-style: normal; font-weight: 900; }
+.premium-type--put { background: #fee7e9; color: #c63a4c; }.premium-type--call { background: #e2efff; color: #1765d4; }.premium-strategy { background: #fff4d9; color: #a66505; }
+.premium-positive { color: #07834a !important; font-weight: 900; }.premium-roi { color: #087c47; }.premium-muted { color: #8b98a9; font-size: 11px; font-weight: 700; }.premium-actions { white-space: nowrap; }
+.premium-actions button { margin: 2px; padding: 6px 7px; font-size: 10px; }.premium-actions button[data-edit] { background: #e8f1ff; color: #1f62c2; }.premium-actions button[data-close] { background: #e8faef; color: #147442; }.premium-empty { border: 1px dashed #ccd8e6 !important; border-radius: 12px; color: #718096 !important; text-align: center; }
 .free-operation-form {
   display: grid;
   grid-template-columns: repeat(4, minmax(130px, 1fr));
