@@ -1112,6 +1112,8 @@ $("#logout").onclick = async () => {
   $("#login").hidden = false;
 };
 $("#sidebar-toggle").onclick = () => $(".layout").classList.toggle("sidebar-collapsed");
+if (window.matchMedia("(max-width: 760px)").matches)
+  $(".layout").classList.add("sidebar-collapsed");
 const magic = new URLSearchParams(location.hash.slice(1)).get("pin");
 if (magic) {
   history.replaceState(null, "", location.pathname + location.search);
