@@ -332,15 +332,15 @@ function renderExtra() {
       const opening = num(operation.premio_opcao);
       const current = quote ? num(quote.price) : null;
       const estimated = current === null ? null : (opening - current) * num(operation.contratos) * cfg("Tamanho contrato opcoes", 100);
-      return `<tr><td><strong>${escape(operation.ativo)}</strong></td><td>${money(opening)}</td><td>${current === null ? "Sem cotação" : money(current)}</td><td class="${estimated === null ? "" : estimated >= 0 ? "positive" : "negative"}">${estimated === null ? "—" : money(estimated)}</td></tr>`;
+      return `<tr class="radar-premium-row"><td><span class="radar-option">${escape(operation.ativo)}</span><small>${escape(operation.tipo)} · vence ${escape(operation.vencimento || "—")}</small></td><td><strong>${money(opening)}</strong><small>por ação</small></td><td>${current === null ? "<span class=\"premium-muted\">Aguardando cotação</span>" : `<strong>${money(current)}</strong>`}</td><td class="${estimated === null ? "" : estimated >= 0 ? "positive" : "negative"}"><strong>${estimated === null ? "—" : money(estimated)}</strong><small>${estimated === null ? "registre a cotação" : "estimativa gerencial"}</small></td></tr>`;
     })
     .join("") || "<tr><td colspan=4>Nenhuma posição aberta para monitorar.</td></tr>";
   $("#quote-rows").innerHTML = (state.manual_option_quotes || [])
     .map(
       (quote) =>
-        `<tr><td><strong>${escape(quote.option_code)}</strong></td><td>${money(quote.price)}</td><td>${escape(String(quote.quoted_at).replace("T", " "))}</td><td><button data-quote-delete="${escape(quote.option_code)}">Excluir</button></td></tr>`,
+        `<tr class="quote-premium-row"><td><span class="radar-option">${escape(quote.option_code)}</span></td><td><strong>${money(quote.price)}</strong><small>por ação</small></td><td><strong>${escape(String(quote.quoted_at).replace("T", " "))}</strong><small>lançamento manual</small></td><td><button data-quote-delete="${escape(quote.option_code)}">Excluir cotação</button></td></tr>`,
     )
-    .join("") || "<tr><td colspan=4>Nenhuma cotação manual registrada.</td></tr>";
+    .join("") || "<tr><td colspan=4 class=\"premium-empty\">Nenhuma cotação manual registrada.</td></tr>";
 }
 function render() {
   const open = opened(), size = cfg("Tamanho contrato opcoes", 100);
