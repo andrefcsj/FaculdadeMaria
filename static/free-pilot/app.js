@@ -301,15 +301,7 @@ function renderExtra() {
   $("#premium-total").textContent = money(received);
   $("#premium-costs").textContent = money(costs);
   $("#premium-retained").textContent = money(received + closedResult - costs);
-  $("#premium-rows").innerHTML =
-    premiumRows
-      .slice()
-      .reverse()
-      .map(
-        (row) =>
-          `<tr><td>${escape(row.month)}</td><td>${row.count}</td><td>${money(row.premium)}</td><td>${money(row.result)}</td></tr>`,
-      )
-      .join("") || "<tr><td colspan=4>Nenhum prêmio registrado.</td></tr>";
+  $("#premium-rows").innerHTML = premiumRows.slice().reverse().map((row) => `<tr class="premium-history-row"><td><strong>${escape(row.month)}</strong><small>competência do ciclo</small></td><td><span class="premium-count">${row.count}</span><small>operações registradas</small></td><td class="positive"><strong>${money(row.premium)}</strong><small>créditos de opções</small></td><td class="${row.result < 0 ? "negative" : "positive"}"><strong>${money(row.result)}</strong><small>operações fechadas</small></td></tr>`).join("") || "<tr><td colspan=4 class=\"premium-empty\">Nenhum prêmio registrado.</td></tr>";
   const top = Math.max(...premiumRows.map((row) => Math.abs(row.premium)), 1);
   $("#premium-chart").innerHTML =
     premiumRows
