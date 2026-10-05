@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Dashboard Executivo | FaculdadeMaria</title>
     <link rel="stylesheet" href="theme.css" />
-    <link rel="stylesheet" href="free-pilot/free-pilot.css?v=37" />
+    <link rel="stylesheet" href="free-pilot/free-pilot.css?v=38" />
   </head>
   <body class="app-shell">
     <section id="login" class="free-login">
@@ -342,20 +342,21 @@
                 </footer>
               </form>
             </dialog>
-            <dialog id="note-import-dialog" class="free-dialog note-import-dialog" aria-labelledby="note-import-title">
-              <form id="open-note-pdf-form">
-                <header class="note-import-dialog__header">
-                  <div class="note-import-dialog__heading"><i aria-hidden="true">+</i><div><h2 id="note-import-title">Cadastrar Nova Operação</h2><p>Registre uma nova posição sem sair desta tela</p></div></div>
-                  <button type="button" data-close-note-import aria-label="Fechar importação">×</button>
-                </header>
-                <div class="note-import-dialog__body">
-                  <section class="note-import-dialog__card"><div class="note-import-dialog__icon">PDF</div><div><strong>Importar nota BTG/Necton</strong><span>Preenche operações, prêmio e custos automaticamente</span></div><label class="note-import-dialog__pick">Escolher PDF<input name="pdf" type="file" accept="application/pdf,.pdf" required /></label></section>
-                  <span class="note-import-dialog__file" data-note-file-name>Nenhum arquivo selecionado</span>
-                  <p class="note-import-dialog__privacy">A leitura ocorre neste navegador: o PDF não é enviado nem armazenado.</p>
-                  <p class="note-import-dialog__result" data-note-result aria-live="polite"></p>
+            <dialog id="note-import-dialog" class="new-op-modal" aria-labelledby="note-import-title">
+              <form id="new-operation-modal-form">
+                <header class="new-op-modal__header"><div class="new-op-title"><span>＋</span><div><h2 id="note-import-title">Cadastrar Nova Operação</h2><p>Registre uma nova posição sem sair desta tela</p></div></div><button type="button" class="new-op-close" data-close-note-import aria-label="Fechar">×</button></header>
+                <div class="new-op-modal__body">
+                  <section class="brokerage-import"><div><span class="brokerage-import__icon">PDF</span><div><strong>Importar nota BTG/Necton</strong><small>Preencha operação, prêmio e custos automaticamente</small></div></div><div><label class="brokerage-import__button">Escolher nota<input form="open-note-pdf-form" name="pdf" type="file" accept="application/pdf,.pdf" required /></label><button id="trigger-note-import" type="button" class="brokerage-import__submit">Importar nota</button></div></section>
+                  <div class="brokerage-import__result" data-note-result aria-live="polite"></div><p class="brokerage-import__file" data-note-file-name>Nenhum arquivo selecionado · o PDF é lido localmente e não é armazenado.</p>
+                  <div class="new-op-grid new-op-grid--toggles"><div><label class="new-op-label">Operação</label><div class="new-op-segmented"><input id="newVenda" type="radio" name="estrategia" value="Venda" checked><label for="newVenda">Venda</label><input id="newCompra" type="radio" name="estrategia" value="Compra"><label for="newCompra">Compra</label></div></div><div><label class="new-op-label">Tipo</label><div class="new-op-segmented new-op-segmented--type"><input id="newCall" type="radio" name="tipo" value="CALL"><label for="newCall">CALL</label><input id="newPut" type="radio" name="tipo" value="PUT" checked><label for="newPut">PUT</label></div></div></div>
+                  <div class="new-op-grid"><label>Ativo subjacente<input id="newUnderlying" placeholder="Ex.: CPLE3"><small>Na CALL coberta, informe a ação que servirá de cobertura.</small></label><label>Código da opção<input id="newOptionCode" name="ativo" required autocomplete="off" placeholder="Ex.: PETRT123"><small>Digite o código para preencher os dados disponíveis</small></label><label>Strike<input id="newStrike" name="strike" type="number" step="0.01" required placeholder="R$ 0,00"></label><label>Quantidade<input id="newContracts" name="contratos" type="number" min="1" required value="1"><small>Contratos cadastrados</small></label><label>Prêmio unitário<input id="newPremium" name="premio_opcao" type="number" step="0.01" required placeholder="R$ 0,00"></label><label>Vencimento<input id="newExpiry" name="vencimento" type="date" required></label><label>Cotação atual<input id="newSpot" name="cotacao_atual" type="number" step="0.01" value="0" placeholder="R$ 0,00"></label><label>Custos<input id="newCosts" name="custos" type="number" step="0.01" value="0"></label><label>IRRF<input id="newIrrf" name="irrf" type="number" step="0.01" value="0"></label></div>
+                  <section class="new-op-insights"><article class="new-op-insight"><span>Retorno estimado (ROI)</span><strong id="newPreviewRoi" class="is-unavailable">--</strong><small>Preencha strike, prêmio e quantidade.</small></article><article class="new-op-insight"><span>Probabilidade de exercício</span><strong id="newPreviewExercise" class="is-unavailable">--</strong><small>Preencha cotação, strike e vencimento.</small></article></section>
+                  <section class="exercise-interest-box"><div><span>◎</span><div><strong>Tem interesse no exercício?</strong><small>Define se o alerta recomendará exercício ou rolagem quando a opção estiver dentro do dinheiro a 10 dias do vencimento.</small></div></div><div class="exercise-interest-options"><input id="newExerciseYes" type="radio" name="interesse_exercicio" value="true"><label for="newExerciseYes">Sim</label><input id="newExerciseNo" type="radio" name="interesse_exercicio" value="false" checked><label for="newExerciseNo">Não</label></div></section>
+                  <div class="new-op-summary"><div><strong id="newSummaryCode">Nova operação</strong><span id="newSummaryDetails">Ativo · 100 ações · Strike R$ 0,00</span></div><div><span>Prêmio bruto estimado</span><b id="newSummaryPremium">R$ 0,00</b></div></div><input name="data_abertura" id="newOpenDate" type="hidden"><div id="newOperationError" class="new-op-error"></div>
                 </div>
-                <footer><span>Ao concluir, os dados são aplicados automaticamente em todo o sistema.</span><div><button type="button" data-close-note-import>Cancelar</button><button>Importar nota</button></div></footer>
+                <footer class="new-op-modal__footer"><small>A operação será adicionada à carteira em aberto.</small><div><button type="button" class="new-op-secondary" data-close-note-import>Cancelar</button><button type="submit" class="new-op-primary">＋ Cadastrar operação</button></div></footer>
               </form>
+              <form id="open-note-pdf-form"></form>
             </dialog>
           </section>
           <section id="closed-screen" class="screen" hidden>
@@ -809,6 +810,6 @@
       <p class="quick-roi-note">Estimativa gerencial sem custos e impostos.</p><footer><button type="button" id="payoff-modal-reset">Limpar valores</button><button type="button" data-close-payoff>Concluir</button></footer>
     </dialog>
     <dialog id="compare-modal" class="quick-roi payoff-modal" aria-labelledby="compare-modal-title"><header><div><small id="compare-modal-eyebrow">ESTRATÉGIAS · OPÇÕES</small><h2 id="compare-modal-title">Comparador de CALL</h2><p>Compare retorno, capital e margem até o strike antes de operar.</p></div><button type="button" data-close-compare aria-label="Fechar comparador">×</button></header><form id="compare-modal-form" autocomplete="off"><label>Cotação atual (R$)<input name="spot" inputmode="decimal" placeholder="49,12"></label><label>Contratos<input name="contracts" type="number" min="1" value="1"></label><label>Strike A (R$)<input name="strike_a" inputmode="decimal" placeholder="48,00"></label><label>Prêmio A (R$)<input name="premium_a" inputmode="decimal" placeholder="0,80"></label><label>Strike B (R$)<input name="strike_b" inputmode="decimal" placeholder="50,00"></label><label>Prêmio B (R$)<input name="premium_b" inputmode="decimal" placeholder="0,55"></label></form><div class="quick-roi-results" aria-live="polite"><section><small>ALTERNATIVA A</small><strong id="compare-modal-a">—</strong><span id="compare-modal-a-detail">Preencha os valores.</span></section><section><small>ALTERNATIVA B</small><strong id="compare-modal-b">—</strong><span id="compare-modal-b-detail">Preencha os valores.</span></section></div><p class="quick-roi-note" id="compare-modal-note">O resultado mostra prêmio e margem por contrato, sem custos ou impostos.</p><footer><button type="button" id="compare-modal-reset">Limpar valores</button><button type="button" data-close-compare>Concluir</button></footer></dialog>
-    <script src="free-pilot/app.js?v=50"></script>
+    <script src="free-pilot/app.js?v=51"></script>
   </body>
 </html>

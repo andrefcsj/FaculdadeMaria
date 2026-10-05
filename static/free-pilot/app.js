@@ -1035,13 +1035,13 @@ $("#quote-form").onsubmit = async (e) => {
     showMessage(err.message, "error");
   }
 };
-function bindNoteImport(form, result, fileName, onComplete) {
+function bindNoteImport(form, result, fileName, onComplete, submitButton) {
 form.elements.pdf.onchange = (e) => {
   fileName.textContent = e.target.files[0]?.name || "Nenhum arquivo selecionado";
 };
 form.onsubmit = async (e) => {
   e.preventDefault();
-  const file = e.target.elements.pdf.files[0], button = e.target.querySelector("footer button:last-child, button[type=submit], button:last-child");
+  const file = e.target.elements.pdf.files[0], button = submitButton || e.target.querySelector("footer button:last-child, button[type=submit], button:last-child");
   result.classList.remove("is-success", "is-error");
   if (!file) { result.classList.add("is-error"); result.textContent = "Selecione uma nota em PDF."; return; }
   button.disabled = true;
@@ -1147,7 +1147,36 @@ $("#open-note-import").onclick = () => {
   noteImportDialog.querySelector("[name=pdf]").focus();
 };
 noteImportDialog.querySelectorAll("[data-close-note-import]").forEach((button) => (button.onclick = () => noteImportDialog.close()));
-bindNoteImport($("#open-note-pdf-form"), noteImportDialog.querySelector("[data-note-result]"), noteImportDialog.querySelector("[data-note-file-name]"));
+const popupImportButton = $("#trigger-note-import");
+bindNoteImport($("#open-note-pdf-form"), noteImportDialog.querySelector("[data-note-result]"), noteImportDialog.querySelector("[data-note-file-name]"), null, popupImportButton);
+popupImportButton.onclick = () => $("#open-note-pdf-form").requestSubmit();
+const newOperationForm = $("#new-operation-modal-form");
+const newOperationFields = ["#newOptionCode", "#newUnderlying", "#newStrike", "#newContracts", "#newPremium", "#newExpiry", "#newSpot", "#newCosts", "#newIrrf"];
+function updateNewOperationPreview() {
+  const code = $("#newOptionCode").value.trim().toUpperCase(), contracts = num($("#newContracts").value), strike = num($("#newStrike").value), premium = num($("#newPremium").value), spot = num($("#newSpot").value);
+  $("#newSummaryCode").textContent = code || "Nova operação";
+  $("#newSummaryDetails").textContent = `${$("#newUnderlying").value.trim().toUpperCase() || "Ativo"} · ${contracts * cfg("Tamanho contrato opcoes", 100)} ações · Strike ${money(strike)}`;
+  $("#newSummaryPremium").textContent = money(premium * contracts * cfg("Tamanho contrato opcoes", 100));
+  const roi = strike && contracts ? (premium / strike) * 100 : null;
+  $("#newPreviewRoi").textContent = roi === null ? "--" : `${roi.toFixed(2).replace(".", ",")}%`;
+  const probability = strike && spot ? Math.max(0, Math.min(100, (spot / strike) * 50)).toFixed(1).replace(".", ",") : null;
+  $("#newPreviewExercise").textContent = probability === null ? "--" : `${probability}%`;
+}
+newOperationFields.forEach((selector) => $(selector).oninput = updateNewOperationPreview);
+newOperationForm.onsubmit = async (event) => {
+  event.preventDefault();
+  const error = $("#newOperationError"), save = newOperationForm.querySelector(".new-op-primary");
+  error.style.display = "none";
+  if (!newOperationForm.reportValidity()) return;
+  save.disabled = true; save.textContent = "Cadastrando…";
+  try {
+    const data = Object.fromEntries(new FormData(newOperationForm));
+    await request("/operations", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(data) });
+    await load(); noteImportDialog.close(); newOperationForm.reset(); $("#newContracts").value = 1; updateNewOperationPreview();
+  } catch (err) { error.textContent = err.message || "Não foi possível cadastrar a operação."; error.style.display = "block"; }
+  finally { save.disabled = false; save.textContent = "＋ Cadastrar operação"; }
+};
+$("#open-note-import").onclick = () => { noteImportDialog.showModal(); $("#newOpenDate").value = new Date().toISOString().slice(0, 10); updateNewOperationPreview(); $("#newOptionCode").focus(); };
 $("#roll-form").onsubmit = (e) => {
   e.preventDefault();
   const data = Object.fromEntries(new FormData(e.target)),
