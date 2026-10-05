@@ -1052,10 +1052,20 @@ async function stageNoteImport(file, result) {
   if (!trades.length) throw Error("Nenhuma negociação foi reconhecida. Use uma nota BTG/Necton definitiva com texto selecionável.");
   stagedNoteImport = { file, noteNumber, trades };
   result.classList.remove("is-error"); result.classList.add("is-success");
-  result.innerHTML = `<strong>Nota ${escape(noteNumber)} reconhecida</strong><span>${trades.length} negociação(ões) encontrada(s). Escolha a posição abaixo; nada será importado até você confirmar.</span><select id="staged-note-trade">${trades.map((trade, index) => `<option value="${index}">${escape(trade.option_code)} · ${escape(trade.side)} · ${trade.quantity} opções · ${money(trade.unit_price)}</option>`).join("")}</select>`;
+  result.innerHTML = `<strong>Nota ${escape(noteNumber)} reconhecida</strong><span>${trades.length} negociação(ões) encontrada(s). Escolha a posição abaixo; nada será importado até você confirmar.</span><select id="staged-note-trade">${trades.map((trade, index) => `<option value="${index}">${escape(trade.option_code)} · ${escape(trade.side)} · ${trade.quantity} opções · ${money(trade.unit_price)}</option>`).join("")}</select><div id="staged-closure-choice" hidden></div>`;
   const select = result.querySelector("#staged-note-trade");
   const apply = () => {
     const trade = trades[Number(select.value)], metadata = optionMetadata(trade.option_code, trade.expiry_month);
+    const candidate = (state.operations || []).find((item) => String(item.status).toLowerCase() === "aberta" && String(item.ativo).toUpperCase() === trade.option_code && ((trade.side === "Compra" && String(item.estrategia).toLowerCase().includes("venda")) || (trade.side === "Venda" && String(item.estrategia).toLowerCase() === "compra")));
+    const choice = result.querySelector("#staged-closure-choice");
+    stagedNoteImport.closureOperationId = null;
+    if (candidate) {
+      choice.hidden = false;
+      choice.innerHTML = `<strong>Encerramento identificado</strong><span>A negociação oposta de ${escape(trade.option_code)} corresponde à posição aberta de ${escape(candidate.data_abertura)}. Deseja encerrar essa posição?</span><div><button type="button" data-confirm-close>Sim, encerrar operação</button><button type="button" data-reject-close>Não, revisar dados</button></div>`;
+      choice.querySelector("[data-confirm-close]").onclick = () => { stagedNoteImport.closureOperationId = String(candidate.id); choice.classList.add("is-confirmed"); choice.querySelector("span").textContent = "Encerramento confirmado. Ao importar, esta posição será movida para Operações Fechadas."; choice.querySelector("div").remove(); $("#trigger-note-import").disabled = false; };
+      choice.querySelector("[data-reject-close]").onclick = () => { stagedNoteImport.closureOperationId = null; choice.classList.remove("is-confirmed"); choice.querySelector("span").textContent = "Nenhuma alteração será feita. Revise os dados ou cancele a importação."; choice.querySelector("div").remove(); $("#trigger-note-import").disabled = true; };
+      $("#trigger-note-import").disabled = true;
+    } else { choice.hidden = true; $("#trigger-note-import").disabled = false; }
     if (!$("#newOptionCode")) return;
     $("#newOptionCode").value = trade.option_code; $("#newUnderlying").value = underlyingForOption(trade.option_code);
     $("#newContracts").value = Math.max(1, trade.quantity / cfg("Tamanho contrato opcoes", 100)); $("#newPremium").value = trade.unit_price;
@@ -1076,6 +1086,7 @@ form.onsubmit = async (e) => {
   e.preventDefault();
   const file = e.target.elements.pdf.files[0], button = submitButton || e.target.querySelector("footer button:last-child, button[type=submit], button:last-child");
   const stagedSelectedIndex = stagedNoteImport?.file === file ? Number(result.querySelector("#staged-note-trade")?.value) : null;
+  const stagedClosureId = stagedNoteImport?.file === file ? stagedNoteImport.closureOperationId : null;
   result.classList.remove("is-success", "is-error");
   if (!file) { result.classList.add("is-error"); result.textContent = "Selecione uma nota em PDF."; return; }
   button.disabled = true;
@@ -1118,6 +1129,8 @@ form.onsubmit = async (e) => {
     const tradesToImport = Number.isInteger(selectedIndex) ? [{ index: selectedIndex, trade: trades[selectedIndex] }] : trades.map((trade, index) => ({ index, trade }));
     for (const { index, trade } of tradesToImport) {
       const netCash = trade.cash_direction === "C" ? trade.gross_value - trade.allocated_costs - trade.allocated_irrf : -(trade.gross_value + trade.allocated_costs + trade.allocated_irrf);
+      const matchedOpen = (state.operations || []).find((item) => String(item.ativo).toUpperCase() === trade.option_code && String(item.status).toLowerCase() === "aberta");
+      if (stagedNoteImport?.file === file && trade.side === "Compra" && matchedOpen && String(stagedClosureId || "") !== String(matchedOpen.id)) throw Error("Confirme o encerramento identificado antes de importar esta recompra.");
       const payload = { key: `${digest}:${index}`, broker: normalized.includes("NECTON") ? "Necton" : "BTG Pactual", note_number: noteNumber, trade_date: tradeDate, trade, net_cash: String(netCash), operational_costs: String(trade.allocated_costs), irrf: String(trade.allocated_irrf), cash_direction: trade.cash_direction, imported_at: new Date().toISOString() };
       const response = await request("/notes", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ key: payload.key, payload }) });
       const saved = await response.json();
@@ -1203,6 +1216,11 @@ newOperationForm.onsubmit = async (event) => {
   event.preventDefault();
   const error = $("#newOperationError"), save = newOperationForm.querySelector(".new-op-primary");
   error.style.display = "none";
+  if (stagedNoteImport?.file === $("#open-note-pdf-form").elements.pdf.files[0]) {
+    const awaitingClosureChoice = noteImportDialog.querySelector("#staged-closure-choice:not([hidden])") && !stagedNoteImport.closureOperationId;
+    if (awaitingClosureChoice) { error.textContent = "Escolha se a negociação deve encerrar a posição aberta antes de confirmar."; error.style.display = "block"; return; }
+    popupImportButton.click(); return;
+  }
   if (!newOperationForm.reportValidity()) return;
   save.disabled = true; save.textContent = "Cadastrando…";
   try {
