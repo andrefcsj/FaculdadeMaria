@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Dashboard Executivo | FaculdadeMaria</title>
     <link rel="stylesheet" href="theme.css" />
-    <link rel="stylesheet" href="free-pilot/free-pilot.css?v=31" />
+    <link rel="stylesheet" href="free-pilot/free-pilot.css?v=32" />
   </head>
   <body class="app-shell">
     <section id="login" class="free-login">
@@ -38,7 +38,7 @@
               >▦ Dashboard</a
             >
           </div>
-          <div class="nav-group nav-group--tools"><span class="nav-group__title">CALCULADORAS E SIMULADORES</span><a href="#simulators" data-screen="simulators">▤ Calculadora de ROI</a><a href="#simulators" data-screen="simulators">▦ Simulador de Cálculos</a><a href="#simulators" data-screen="simulators">⌁ Comparador de CALL</a><a href="#simulators" data-screen="simulators">⌁ Comparador de PUT</a></div>
+          <div class="nav-group nav-group--tools"><span class="nav-group__title">CALCULADORAS E SIMULADORES</span><a href="#roi-rapido" data-open-quick-roi>▤ Calculadora de ROI</a><a href="#simulators" data-screen="simulators">▦ Simulador de Cálculos</a><a href="#simulators" data-screen="simulators">⌁ Comparador de CALL</a><a href="#simulators" data-screen="simulators">⌁ Comparador de PUT</a></div>
           <div class="nav-group nav-group--strategies"><span class="nav-group__title">ESTRATÉGIAS</span><a href="#simulators" data-screen="simulators">% Grade de opções</a><a href="#radar" data-screen="radar">♧ Radar Jade Lizard</a><a href="#simulators" data-screen="simulators">⌁ Simulador de Payoff</a></div>
           <div class="nav-group nav-group--operations"><span class="nav-group__title">OPERAÇÕES</span><a href="#open" data-screen="open">▣ Operações Abertas</a><a href="#closed" data-screen="closed">✓ Operações Fechadas</a><a href="#cash" data-screen="cash">＋ Aportes</a><a href="#notes" data-screen="notes">▤ Notas Importadas</a></div>
           <div class="nav-group"><a href="#equity" data-screen="equity">◉ Carteira de Ações</a><a href="#tax" data-screen="tax">▤ Apuração de IR</a></div>
@@ -779,6 +779,12 @@
         </main>
       </section>
     </div>
-    <script src="free-pilot/app.js?v=43"></script>
+    <dialog id="quick-roi" class="quick-roi" aria-labelledby="quick-roi-title">
+      <header><div><small>CONTAS RÁPIDAS · OPÇÕES</small><h2 id="quick-roi-title">Calculadora de ROI</h2><p>Três valores. Seu retorno e a distância até o strike.</p></div><button type="button" data-close-quick-roi aria-label="Fechar calculadora">×</button></header>
+      <form id="quick-roi-form" autocomplete="off"><label>Strike (R$)<input name="strike" inputmode="decimal" placeholder="41,42" autofocus></label><label>Prêmio por ação (R$)<input name="premium" inputmode="decimal" placeholder="0,55"></label><label>Preço atual da ação (R$)<input name="spot" inputmode="decimal" placeholder="42,70"></label></form>
+      <div class="quick-roi-results" aria-live="polite"><section><small>ROI BRUTO SOBRE O STRIKE</small><strong id="quick-roi-value">—</strong><span>Prêmio ÷ strike × 100</span></section><section><small>DISTÂNCIA DO STRIKE</small><strong id="quick-roi-distance">—</strong><span id="quick-roi-direction">(Strike ÷ preço atual − 1) × 100</span></section></div>
+      <p class="quick-roi-note">Estimativa sem custos ou impostos, não anualizada.</p><footer><button type="button" id="quick-roi-reset">Limpar valores</button><button type="button" data-close-quick-roi>Concluir</button></footer>
+    </dialog>
+    <script src="free-pilot/app.js?v=44"></script>
   </body>
 </html>

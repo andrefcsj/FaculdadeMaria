@@ -802,6 +802,25 @@ document.querySelectorAll("[data-screen]").forEach(
       screen(a.dataset.screen);
     }),
 );
+const quickRoi = $("#quick-roi");
+const quickNumber = (value) => {
+  const raw = String(value || "").trim().replace(/\s|R\$/g, "");
+  const normalized = raw.includes(",") ? raw.replace(/\./g, "").replace(",", ".") : raw;
+  return /^\d+(\.\d+)?$/.test(normalized) ? Number(normalized) : NaN;
+};
+function updateQuickRoi() {
+  const form = $("#quick-roi-form"), strike = quickNumber(form.elements.strike.value), premium = quickNumber(form.elements.premium.value), spot = quickNumber(form.elements.spot.value);
+  const valid = (value) => Number.isFinite(value) && value > 0;
+  const percent = (value) => `${value.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`;
+  $("#quick-roi-value").textContent = valid(strike) && Number.isFinite(premium) && premium >= 0 ? percent((premium / strike) * 100) : "—";
+  const distance = (strike / spot - 1) * 100;
+  $("#quick-roi-distance").textContent = valid(strike) && valid(spot) ? percent(distance) : "—";
+  $("#quick-roi-direction").textContent = $("#quick-roi-distance").textContent === "—" ? "(Strike ÷ preço atual − 1) × 100" : distance < 0 ? "Strike abaixo do preço atual" : distance > 0 ? "Strike acima do preço atual" : "Strike igual ao preço atual";
+}
+document.querySelectorAll("[data-open-quick-roi]").forEach((link) => (link.onclick = (event) => { event.preventDefault(); quickRoi.showModal(); updateQuickRoi(); $("#quick-roi-form").elements.strike.focus(); }));
+quickRoi.querySelectorAll("[data-close-quick-roi]").forEach((button) => (button.onclick = () => quickRoi.close()));
+$("#quick-roi-form").oninput = updateQuickRoi;
+$("#quick-roi-reset").onclick = () => { $("#quick-roi-form").reset(); updateQuickRoi(); $("#quick-roi-form").elements.strike.focus(); };
 $("#toggle-operation-form").onclick = () => {
   const form = $("#operation-form");
   form.hidden = !form.hidden;
