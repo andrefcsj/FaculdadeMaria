@@ -980,7 +980,8 @@ $("#note-pdf-form [name=pdf]").onchange = (e) => {
 $("#note-pdf-form").onsubmit = async (e) => {
   e.preventDefault();
   const file = e.target.elements.pdf.files[0], result = $("#note-pdf-result");
-  if (!file) return;
+  result.classList.remove("is-success", "is-error");
+  if (!file) { result.classList.add("is-error"); result.textContent = "Selecione uma nota em PDF."; return; }
   result.textContent = "Lendo o texto da nota neste navegador…";
   try {
     const text = await pdfText(file), normalized = text.toUpperCase().replace(/\s+/g, " ");
@@ -1037,8 +1038,10 @@ $("#note-pdf-form").onsubmit = async (e) => {
       }
     }
     await load(); e.target.reset(); $("#note-file-name").textContent = "Nenhum arquivo selecionado";
+    result.classList.add("is-success");
     result.textContent = `${imported} lançamento(s) importado(s) e operações atualizadas automaticamente. O PDF não foi armazenado.`;
   } catch (err) {
+    result.classList.add("is-error");
     result.textContent = err.message || "Não foi possível ler esta nota.";
   }
 };
