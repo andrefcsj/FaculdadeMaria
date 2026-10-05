@@ -974,6 +974,9 @@ $("#quote-form").onsubmit = async (e) => {
     $("#message").textContent = err.message;
   }
 };
+$("#note-pdf-form [name=pdf]").onchange = (e) => {
+  $("#note-file-name").textContent = e.target.files[0]?.name || "Nenhum arquivo selecionado";
+};
 $("#note-pdf-form").onsubmit = async (e) => {
   e.preventDefault();
   const file = e.target.elements.pdf.files[0], result = $("#note-pdf-result");
@@ -1033,7 +1036,7 @@ $("#note-pdf-form").onsubmit = async (e) => {
         operationsCreatedFromThisNote.set(trade.option_code, { id: created.id, ativo: trade.option_code, status: "Aberta", premio_opcao: trade.unit_price, contratos: Math.max(1, trade.quantity / cfg("Tamanho contrato opcoes", 100)), custos: trade.allocated_costs, irrf: trade.allocated_irrf });
       }
     }
-    await load(); e.target.reset();
+    await load(); e.target.reset(); $("#note-file-name").textContent = "Nenhum arquivo selecionado";
     result.textContent = `${imported} lançamento(s) importado(s) e operações atualizadas automaticamente. O PDF não foi armazenado.`;
   } catch (err) {
     result.textContent = err.message || "Não foi possível ler esta nota.";
