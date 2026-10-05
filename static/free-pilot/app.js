@@ -1186,6 +1186,20 @@ $("#logout").onclick = async () => {
   $("#app").hidden = true;
   $("#login").hidden = false;
 };
+$("#refresh-panel").onclick = async (event) => {
+  const button = event.currentTarget;
+  button.disabled = true;
+  button.innerHTML = "<span aria-hidden=\"true\">↻</span>Atualizando…";
+  try {
+    await load();
+    showMessage("Painel atualizado com os dados salvos.");
+  } catch (err) {
+    showMessage(err.message || "Não foi possível atualizar o painel.", "error");
+  } finally {
+    button.disabled = false;
+    button.innerHTML = "<span aria-hidden=\"true\">↻</span>Atualizar painel";
+  }
+};
 $("#sidebar-toggle").onclick = () => $(".layout").classList.toggle("sidebar-collapsed");
 if (window.matchMedia("(max-width: 760px)").matches)
   $(".layout").classList.add("sidebar-collapsed");
