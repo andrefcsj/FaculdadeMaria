@@ -806,6 +806,15 @@ document.querySelectorAll("[data-screen]").forEach(
       screen(a.dataset.screen);
     }),
 );
+// Mantém a leitura principal do dashboard lado a lado: carteira e posições abertas.
+const portfolioPanel = document.querySelector(".exec-panel--portfolio");
+const positionsPanel = document.querySelector(".exec-panel--positions");
+const taxNotice = $("#dashboard-tax-notice");
+if (portfolioPanel && positionsPanel && taxNotice) {
+  const portfolioGrid = portfolioPanel.parentElement;
+  portfolioGrid.append(positionsPanel);
+  portfolioGrid.after(taxNotice);
+}
 const quickRoi = $("#quick-roi");
 const quickNumber = (value) => {
   const raw = String(value || "").trim().replace(/\s|R\$/g, "");
