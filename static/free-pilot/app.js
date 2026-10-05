@@ -100,7 +100,7 @@ function renderOpenOperations(list, size, preferences, optionQuotes) {
     const expiry = item.vencimento ? String(item.vencimento).split("-").reverse().join("/") : "—";
     const days = item.vencimento ? Math.max(0, Math.ceil((new Date(`${item.vencimento}T00:00:00`) - new Date()) / 86400000)) : null;
     return `<tr class="premium-operation-row premium-operation-row--${type === "CALL" ? "call" : "put"}">
-      <td><span class="premium-underlying">${escape(underlying)}</span></td>
+      <td><span class="premium-underlying"><img src="https://raw.githubusercontent.com/thefintz/icones-b3/main/icones/${encodeURIComponent(underlying)}.png" alt="" onerror="this.remove()"><b>${escape(underlying)}</b></span></td>
       <td><strong class="premium-option">${escape(item.ativo)}</strong><small>${escape(item.data_abertura || "")}</small></td>
       <td><em class="premium-type premium-type--${type === "CALL" ? "call" : "put"}">${escape(type)}</em></td>
       <td><span class="premium-strategy">${escape(strategy)}</span></td>
@@ -132,7 +132,7 @@ function renderClosedOperations(list, size, preferences) {
     const method = String(item.metodo_encerramento || item.Metodo_encerramento || (item.observacoes ? "Fechamento manual" : "Encerrada")).replaceAll("_", " ");
     const closedId = item.closed_id || item.id;
     return `<tr class="closed-premium-row ${result < 0 ? "closed-premium-row--loss" : ""}">
-      <td><span class="closed-underlying">${escape(underlying)}</span></td>
+      <td><span class="closed-underlying"><img src="https://raw.githubusercontent.com/thefintz/icones-b3/main/icones/${encodeURIComponent(underlying)}.png" alt="" onerror="this.remove()"><b>${escape(underlying)}</b></span></td>
       <td><strong>${escape(option)}</strong><small>${escape(type || "Opção")} · ${escape(item.estrategia || item["Estratégia"] || "Venda")}</small></td>
       <td class="${result < 0 ? "negative" : "positive"}"><strong>${money(result)}</strong><small>resultado realizado</small></td>
       <td><b class="closed-roi ${result < 0 ? "negative" : "positive"}">${roi === null ? "—" : `${roi.toFixed(2).replace(".", ",")}%`}</b><small>sobre capital nominal</small></td>
