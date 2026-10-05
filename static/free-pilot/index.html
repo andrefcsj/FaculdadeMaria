@@ -38,7 +38,7 @@
               >▦ Dashboard</a
             >
           </div>
-          <div class="nav-group nav-group--tools"><span class="nav-group__title">CALCULADORAS E SIMULADORES</span><a href="#roi-rapido" data-open-quick-roi>▤ Calculadora de ROI</a><a href="#simulators" data-screen="simulators">▦ Simulador de Cálculos</a><a href="#simulators" data-screen="simulators">⌁ Comparador de CALL</a><a href="#simulators" data-screen="simulators">⌁ Comparador de PUT</a></div>
+          <div class="nav-group nav-group--tools"><span class="nav-group__title">CALCULADORAS E SIMULADORES</span><a href="#roi-rapido" data-open-quick-roi>▤ Calculadora de ROI</a><a href="#simulador-payoff" data-open-payoff>▦ Simulador de Cálculos</a><a href="#simulators" data-screen="simulators">⌁ Comparador de CALL</a><a href="#simulators" data-screen="simulators">⌁ Comparador de PUT</a></div>
           <div class="nav-group nav-group--strategies"><span class="nav-group__title">ESTRATÉGIAS</span><a href="#simulators" data-screen="simulators">% Grade de opções</a><a href="#radar" data-screen="radar">♧ Radar Jade Lizard</a><a href="#simulators" data-screen="simulators">⌁ Simulador de Payoff</a></div>
           <div class="nav-group nav-group--operations"><span class="nav-group__title">OPERAÇÕES</span><a href="#open" data-screen="open">▣ Operações Abertas</a><a href="#closed" data-screen="closed">✓ Operações Fechadas</a><a href="#cash" data-screen="cash">＋ Aportes</a><a href="#notes" data-screen="notes">▤ Notas Importadas</a></div>
           <div class="nav-group"><a href="#equity" data-screen="equity">◉ Carteira de Ações</a><a href="#tax" data-screen="tax">▤ Apuração de IR</a></div>
@@ -785,6 +785,12 @@
       <div class="quick-roi-results" aria-live="polite"><section><small>ROI BRUTO SOBRE O STRIKE</small><strong id="quick-roi-value">—</strong><span>Prêmio ÷ strike × 100</span></section><section><small>DISTÂNCIA DO STRIKE</small><strong id="quick-roi-distance">—</strong><span id="quick-roi-direction">(Strike ÷ preço atual − 1) × 100</span></section></div>
       <p class="quick-roi-note">Estimativa sem custos ou impostos, não anualizada.</p><footer><button type="button" id="quick-roi-reset">Limpar valores</button><button type="button" data-close-quick-roi>Concluir</button></footer>
     </dialog>
-    <script src="free-pilot/app.js?v=44"></script>
+    <dialog id="payoff-modal" class="quick-roi payoff-modal" aria-labelledby="payoff-modal-title">
+      <header><div><small>SIMULAÇÃO · OPÇÕES</small><h2 id="payoff-modal-title">Simulador de payoff</h2><p>Projete o resultado da opção no vencimento antes de operar.</p></div><button type="button" data-close-payoff aria-label="Fechar simulador">×</button></header>
+      <form id="payoff-modal-form" autocomplete="off"><label>Estratégia<select name="type"><option value="PUT">PUT vendida</option><option value="CALL">CALL vendida</option></select></label><label>Strike (R$)<input name="strike" inputmode="decimal" placeholder="41,42"></label><label>Prêmio por ação (R$)<input name="premium" inputmode="decimal" placeholder="0,55"></label><label>Contratos<input name="contracts" type="number" min="1" value="1"></label><label>Preço no vencimento (R$)<input name="price" inputmode="decimal" placeholder="40,80"></label></form>
+      <div class="quick-roi-results" aria-live="polite"><section><small>RESULTADO NO VENCIMENTO</small><strong id="payoff-modal-result">—</strong><span id="payoff-modal-status">Preencha os valores para simular.</span></section><section><small>PONTO DE EQUILÍBRIO</small><strong id="payoff-modal-break-even">—</strong><span id="payoff-modal-intrinsic">Valor intrínseco: —</span></section></div>
+      <p class="quick-roi-note">Estimativa gerencial sem custos e impostos.</p><footer><button type="button" id="payoff-modal-reset">Limpar valores</button><button type="button" data-close-payoff>Concluir</button></footer>
+    </dialog>
+    <script src="free-pilot/app.js?v=45"></script>
   </body>
 </html>

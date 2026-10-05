@@ -821,6 +821,17 @@ document.querySelectorAll("[data-open-quick-roi]").forEach((link) => (link.oncli
 quickRoi.querySelectorAll("[data-close-quick-roi]").forEach((button) => (button.onclick = () => quickRoi.close()));
 $("#quick-roi-form").oninput = updateQuickRoi;
 $("#quick-roi-reset").onclick = () => { $("#quick-roi-form").reset(); updateQuickRoi(); $("#quick-roi-form").elements.strike.focus(); };
+const payoffModal = $("#payoff-modal");
+function updatePayoffModal() {
+  const form = $("#payoff-modal-form"), data = Object.fromEntries(new FormData(form)), strike = quickNumber(data.strike), premium = quickNumber(data.premium), price = quickNumber(data.price), contracts = num(data.contracts), size = cfg("Tamanho contrato opcoes", 100);
+  if (![strike, premium, price].every(Number.isFinite) || strike <= 0 || premium < 0 || price < 0 || !contracts) { $("#payoff-modal-result").textContent = "—"; $("#payoff-modal-break-even").textContent = "—"; $("#payoff-modal-intrinsic").textContent = "Valor intrínseco: —"; return; }
+  const intrinsic = data.type === "PUT" ? Math.max(strike - price, 0) : Math.max(price - strike, 0), result = (premium - intrinsic) * contracts * size, breakEven = data.type === "PUT" ? strike - premium : strike + premium;
+  $("#payoff-modal-result").textContent = money(result); $("#payoff-modal-result").className = result >= 0 ? "positive" : "negative"; $("#payoff-modal-status").textContent = result >= 0 ? "Cenário favorável à posição vendida." : "Cenário exige atenção no vencimento."; $("#payoff-modal-break-even").textContent = money(breakEven); $("#payoff-modal-intrinsic").textContent = `Valor intrínseco: ${money(intrinsic)}`;
+}
+document.querySelectorAll("[data-open-payoff]").forEach((link) => (link.onclick = (event) => { event.preventDefault(); payoffModal.showModal(); updatePayoffModal(); $("#payoff-modal-form").elements.strike.focus(); }));
+payoffModal.querySelectorAll("[data-close-payoff]").forEach((button) => (button.onclick = () => payoffModal.close()));
+$("#payoff-modal-form").oninput = updatePayoffModal;
+$("#payoff-modal-reset").onclick = () => { $("#payoff-modal-form").reset(); updatePayoffModal(); $("#payoff-modal-form").elements.strike.focus(); };
 $("#toggle-operation-form").onclick = () => {
   const form = $("#operation-form");
   form.hidden = !form.hidden;
