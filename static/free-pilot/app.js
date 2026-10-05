@@ -1022,6 +1022,7 @@ $("#note-pdf-form").onsubmit = async (e) => {
       const response = await request("/notes", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ key: payload.key, payload }) });
       const saved = await response.json();
       if (saved.imported) imported += 1;
+      if (!saved.imported) continue;
       const existing = (state.operations || []).find((item) => String(item.ativo).toUpperCase() === trade.option_code && String(item.status).toLowerCase() === "aberta") || operationsCreatedFromThisNote.get(trade.option_code);
       if (trade.event_type?.startsWith("exercise_") && existing) {
         await request(`/operations/${existing.id}/exercise`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ data_fechamento: tradeDate, asset: trade.option_code.slice(0, 4), quantity: trade.quantity, exercise_price: trade.unit_price, costs: trade.allocated_costs + trade.allocated_irrf }) });
@@ -1047,7 +1048,7 @@ $("#note-pdf-form").onsubmit = async (e) => {
       operationsClosed && `${operationsClosed} recompra(s) fechada(s)`,
       exercises && `${exercises} exercício(s) tratado(s)`,
     ].filter(Boolean);
-    result.textContent = `${imported} lançamento(s) importado(s)${updates.length ? ` · ${updates.join(" · ")}` : ""}. O PDF não foi armazenado.`;
+    result.textContent = imported ? `${imported} lançamento(s) importado(s)${updates.length ? ` · ${updates.join(" · ")}` : ""}. O PDF não foi armazenado.` : "Esta nota já havia sido importada. Nenhuma operação foi reaplicada.";
   } catch (err) {
     result.classList.add("is-error");
     result.textContent = err.message || "Não foi possível ler esta nota.";

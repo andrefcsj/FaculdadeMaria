@@ -400,12 +400,19 @@ async function api(request, env, path) {
     const payload = body.payload;
     if (!key || !payload || typeof payload !== "object")
       return json({ error: "Lançamento de nota inválido." }, 400);
-    const result = await env.DB.prepare(
-      "INSERT INTO brokerage_notes (note_key, payload, imported_at) VALUES (?, ?, ?) ON CONFLICT(note_key) DO UPDATE SET payload = excluded.payload, imported_at = excluded.imported_at",
-    )
-      .bind(key, JSON.stringify(payload), new Date().toISOString())
-      .run();
-    return json({ ok: true, imported: result.meta.changes > 0 }, 201);
+    const existing = await env.DB.prepare(
+      "SELECT note_key FROM brokerage_notes WHERE note_key = ?",
+    ).bind(key).first();
+    if (existing) {
+      await env.DB.prepare(
+        "UPDATE brokerage_notes SET payload = ? WHERE note_key = ?",
+      ).bind(JSON.stringify(payload), key).run();
+      return json({ ok: true, imported: false, duplicate: true });
+    }
+    await env.DB.prepare(
+      "INSERT INTO brokerage_notes (note_key, payload, imported_at) VALUES (?, ?, ?)",
+    ).bind(key, JSON.stringify(payload), new Date().toISOString()).run();
+    return json({ ok: true, imported: true, duplicate: false }, 201);
   }
   const noteMatch = path.match(/^\/api\/notes\/(.+)$/);
   if (noteMatch && request.method === "DELETE") {
