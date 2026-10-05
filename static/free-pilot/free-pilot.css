@@ -23,7 +23,7 @@ body.app-shell .free-operation-form button { min-height:42px; border-radius:9px;
 .manual-entry-intro { grid-column:1 / -1; display:flex; align-items:baseline; gap:10px; padding:1px 2px 4px; color:#31435c; }
 .manual-entry-intro strong { color:#182c49; font-size:13px; }
 .manual-entry-intro span { color:#728096; font-size:11px; font-weight:650; }
-.exec-panel__header > div:last-child { display:flex; align-items:center; gap:9px; flex-wrap:wrap; }.exec-panel__header > div:last-child > a { display:inline-flex; align-items:center; min-height:34px; padding:0 10px; border-radius:8px; background:#eff5ff; color:#195dbb; }.exec-panel__header > div:last-child > button { min-height:34px; padding:0 11px; border:0; border-radius:8px; background:#20c567; color:#082c17; font-size:11px; font-weight:850; cursor:pointer; }
+.exec-panel__header > div:last-child { display:flex; align-items:center; gap:9px; flex-wrap:wrap; }.exec-panel__header > div:last-child > a { display:inline-flex; align-items:center; min-height:36px; padding:0 13px; border-radius:9px; background:#20c567; color:#082c17; font-size:11px; font-weight:850; box-shadow:0 7px 15px rgba(24,177,91,.16); }.exec-panel__header > div:last-child > button { min-height:36px; padding:0 12px; border:1px solid #cfdae7; border-radius:9px; background:#fff; color:#40536c; font-size:11px; font-weight:800; cursor:pointer; }
 @media(max-width:620px){body.app-shell .free-operation-form{padding:11px}.exec-panel__header > div:last-child{width:100%;justify-content:flex-start}.manual-entry-intro{align-items:flex-start;flex-direction:column;gap:3px}}
 .free-login__card {
   width: min(390px, 90vw);
