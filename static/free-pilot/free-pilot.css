@@ -14,6 +14,14 @@ body.app-shell .executive-sidebar .premium-brand small { margin:2px 0 0; padding
 body.app-shell .premium-topbar .sidebar-toggle { border:1px solid #dfe6ee; border-radius:12px; background:#fff; box-shadow:0 2px 6px rgba(18,38,71,.03); }
 body.app-shell .premium-topbar .sidebar-toggle span { background:#617187; }
 body.app-shell .premium-topbar .sidebar-toggle:hover { border-color:#b9cae0; background:#f8fbff; }
+/* Formulários operacionais: mesma superfície clara das centrais do Render. */
+body.app-shell .free-operation-form { margin:14px 0 18px; padding:14px; border:1px solid #dce6f1; border-radius:13px; background:linear-gradient(135deg,#f8fbff,#fff); }
+body.app-shell .free-operation-form input,body.app-shell .free-operation-form select { min-height:42px; box-sizing:border-box; padding:10px 11px; border:1px solid #c8d6e5; border-radius:9px; background:#fff; color:#1d2d43; box-shadow:0 1px 2px rgba(15,42,76,.02); }
+body.app-shell .free-operation-form input::placeholder { color:#8b98a9; }
+body.app-shell .free-operation-form input:focus,body.app-shell .free-operation-form select:focus { outline:0; border-color:#4c8dee; box-shadow:0 0 0 3px rgba(51,123,231,.13); }
+body.app-shell .free-operation-form button { min-height:42px; border-radius:9px; box-shadow:0 7px 15px rgba(24,177,91,.16); }
+.exec-panel__header > div:last-child { display:flex; align-items:center; gap:9px; flex-wrap:wrap; }.exec-panel__header > div:last-child > a { display:inline-flex; align-items:center; min-height:34px; padding:0 10px; border-radius:8px; background:#eff5ff; color:#195dbb; }.exec-panel__header > div:last-child > button { min-height:34px; padding:0 11px; border:0; border-radius:8px; background:#20c567; color:#082c17; font-size:11px; font-weight:850; cursor:pointer; }
+@media(max-width:620px){body.app-shell .free-operation-form{padding:11px}.exec-panel__header > div:last-child{width:100%;justify-content:flex-start}}
 .free-login__card {
   width: min(390px, 90vw);
   padding: 2rem;
