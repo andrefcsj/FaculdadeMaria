@@ -1050,10 +1050,13 @@ async function stageNoteImport(file, result) {
   const pattern = /1-BOVESPA\s+([CV])\s+OP(?:Ç|C)[AÃ]O\s+DE\s+(VENDA|COMPRA)\s+(\d{2}\/\d{2})\s+([A-Z0-9]{5,})\s+(?:[A-Z]{1,3}(?:\s+[A-Z])?\s+)?(\d+)\s+([0-9.,]+)\s+([0-9.,]+)\s+([CD])/gi;
   const trades = [...text.matchAll(pattern)].map((match) => ({ side: match[1].toUpperCase() === "V" ? "Venda" : "Compra", market: String(match[2]).toLowerCase().includes("compra") ? "CALL" : "PUT", expiry_month: match[3], option_code: match[4].toUpperCase(), quantity: Number(match[5]), unit_price: parseBrNumber(match[6]), gross_value: parseBrNumber(match[7]) }));
   if (!trades.length) throw Error("Nenhuma negociação foi reconhecida. Use uma nota BTG/Necton definitiva com texto selecionável.");
-  stagedNoteImport = { file, noteNumber, trades };
+  const processed = stagedNoteImport?.file === file ? stagedNoteImport.processed : new Set();
+  stagedNoteImport = { file, noteNumber, trades, processed };
   result.classList.remove("is-error"); result.classList.add("is-success");
-  result.innerHTML = `<strong>Nota ${escape(noteNumber)} reconhecida</strong><span>${trades.length} negociação(ões) encontrada(s). Escolha a posição abaixo; nada será importado até você confirmar.</span><select id="staged-note-trade">${trades.map((trade, index) => `<option value="${index}">${escape(trade.option_code)} · ${escape(trade.side)} · ${trade.quantity} opções · ${money(trade.unit_price)}</option>`).join("")}</select><div id="staged-closure-choice" hidden></div>`;
+  result.innerHTML = `<strong>Nota ${escape(noteNumber)} reconhecida</strong><span>${trades.length} negociação(ões encontradas). Cada confirmação registra uma linha no histórico; a próxima negociação fica selecionada automaticamente.</span><select id="staged-note-trade">${trades.map((trade, index) => `<option value="${index}" ${processed.has(index) ? "disabled" : ""}>${processed.has(index) ? "✓ " : ""}${escape(trade.option_code)} · ${escape(trade.side)} · ${trade.quantity} opções · ${money(trade.unit_price)}</option>`).join("")}</select><div id="staged-closure-choice" hidden></div>`;
   const select = result.querySelector("#staged-note-trade");
+  const next = trades.findIndex((_, index) => !processed.has(index));
+  if (next >= 0) select.value = String(next);
   const apply = () => {
     const trade = trades[Number(select.value)], metadata = optionMetadata(trade.option_code, trade.expiry_month);
     const candidate = (state.operations || []).find((item) => String(item.status).toLowerCase() === "aberta" && String(item.ativo).toUpperCase() === trade.option_code && ((trade.side === "Compra" && String(item.estrategia).toLowerCase().includes("venda")) || (trade.side === "Venda" && String(item.estrategia).toLowerCase() === "compra")));
@@ -1169,16 +1172,31 @@ form.onsubmit = async (e) => {
         operationsOpened += 1;
       }
     }
-    await load(); e.target.reset(); fileName.textContent = "Nenhum arquivo selecionado";
+    await load();
     result.classList.add("is-success");
     const updates = [
       operationsOpened && `${operationsOpened} posição(ões) aberta(s)`,
       operationsClosed && `${operationsClosed} recompra(s) fechada(s)`,
       exercises && `${exercises} exercício(s) tratado(s)`,
     ].filter(Boolean);
-    result.textContent = imported
-      ? `Leitura concluída: ${tradesToImport.length} negociação(ões) selecionada(s) e ${imported} lançamento(s) importado(s)${updates.length ? ` · ${updates.join(" · ")}` : ""}. O PDF não foi armazenado.`
-      : `Leitura concluída: ${trades.length} negociação(ões) reconhecida(s). Esta nota já havia sido importada; nenhuma operação foi reaplicada.`;
+    if (stagedNoteImport?.file === file && Number.isInteger(selectedIndex)) {
+      stagedNoteImport.processed.add(selectedIndex);
+      const pending = trades.length - stagedNoteImport.processed.size;
+      if (pending) {
+        await stageNoteImport(file, result);
+        const status = document.createElement("span");
+        status.className = "staged-import-status";
+        status.textContent = `${imported ? "Negociação registrada." : "Esta negociação já estava registrada."} Próxima negociação carregada (${pending} restante${pending === 1 ? "" : "s"}).`;
+        result.prepend(status);
+      } else {
+        result.innerHTML = `<strong>Nota ${escape(noteNumber)} concluída</strong><span>Todas as ${trades.length} negociações selecionadas foram registradas. O PDF continua selecionado para consulta.</span>`;
+      }
+    } else {
+      e.target.reset(); fileName.textContent = "Nenhum arquivo selecionado";
+      result.textContent = imported
+        ? `Leitura concluída: ${tradesToImport.length} negociação(ões) selecionada(s) e ${imported} lançamento(s) importado(s)${updates.length ? ` · ${updates.join(" · ")}` : ""}. O PDF não foi armazenado.`
+        : `Leitura concluída: ${trades.length} negociação(ões) reconhecida(s). Esta nota já havia sido importada; nenhuma operação foi reaplicada.`;
+    }
     onComplete?.();
   } catch (err) {
     result.classList.add("is-error");
