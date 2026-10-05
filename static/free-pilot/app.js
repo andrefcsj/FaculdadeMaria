@@ -178,7 +178,7 @@ function renderExtra() {
     const option = x.trade?.option_code || "—";
     const date = x.trade_date ? String(x.trade_date).split("-").reverse().join("/") : "—";
     return `<tr class="note-premium-row"><td><strong>Nota ${escape(x.note_number || "—")}</strong><small>${escape(date)}</small></td><td><span class="note-option">${escape(option)}</span><small>${escape(x.trade?.asset_type || "Opção")}</small></td><td><em class="note-side note-side--${credit ? "sale" : "buy"}">${escape(side)}</em></td><td class="${credit ? "positive" : "negative"}"><strong>${money((credit ? 1 : -1) * num(x.net_cash))}</strong><small>${credit ? "crédito da operação" : "débito da operação"}</small></td><td><strong>${money(x.operational_costs)}</strong><small>IRRF ${money(x.irrf)}</small></td><td class="note-actions"><button data-note-delete="${escape(x.key)}">Excluir registro</button></td></tr>`;
-  }).join("") || "<tr><td colspan=6 class=\"premium-empty\">Nenhuma nota estruturada no piloto.</td></tr>";
+  }).join("") || "<tr><td colspan=6 class=\"premium-empty\">Nenhuma nota estruturada foi registrada.</td></tr>";
   const notes = state.notes || [];
   $("#notes-count").textContent = String(notes.length);
   $("#notes-credit").textContent = money(notes.reduce((sum, item) => sum + (String(item.cash_direction || "C").toUpperCase() === "C" ? num(item.net_cash) : 0), 0));
@@ -417,7 +417,7 @@ function render() {
   $("#dashboard-insight-title").textContent = insightTitle;
   $("#dashboard-insight").textContent = open.length
     ? `Há ${money(capital)} em garantias e ${money(premium)} em prêmios brutos nas posições abertas. Saldo estimado para novas operações: ${money(available)}.`
-    : `O piloto está sem posições abertas. O saldo estimado para operar é ${money(available)}.`;
+    : `Não há posições abertas no momento. O saldo estimado para operar é ${money(available)}.`;
   const rollSelect = $("#roll-operation");
   const selectedRoll = rollSelect.value;
   rollSelect.innerHTML =
@@ -724,8 +724,8 @@ function screen(name) {
     tax: ["APURAÇÃO DE IR", "Memória gerencial de renda variável"],
     settings: ["CONFIGURAÇÕES", "Parâmetros do sistema"],
     notice: [
-      "MIGRAÇÃO EM ANDAMENTO",
-      "Esta tela será preservada no Cloudflare Free",
+      "FUNÇÃO EM EVOLUÇÃO",
+      "Esta área será disponibilizada nesta instalação",
     ],
   };
   $("#page-title").textContent = labels[name][0];

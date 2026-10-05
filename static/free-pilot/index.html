@@ -73,7 +73,7 @@
                 <small>PATRIMÔNIO</small
                 ><strong id="capital-total">R$ 0,00</strong>
                 <p>Capital inicial, aportes e ajustes</p>
-                <div class="exec-kpi__insight"><i></i><span>Base do piloto</span></div>
+                <div class="exec-kpi__insight"><i></i><span>Visão consolidada</span></div>
               </article>
               <article class="exec-kpi exec-kpi--blue">
                 <span class="exec-kpi__icon">◌</span>
@@ -113,9 +113,9 @@
             <section class="exec-ai exec-ai--positive">
               <div class="exec-ai__mark">FM</div>
               <div>
-                <span>LEITURA DO PILOTO</span>
+                <span>LEITURA DA CARTEIRA</span>
                 <h2 id="dashboard-insight-title">Carteira pronta para acompanhar</h2>
-                <p id="dashboard-insight">Os valores abaixo são calculados apenas com os lançamentos deste piloto.</p>
+                <p id="dashboard-insight">Os valores abaixo são calculados com os lançamentos registrados na carteira.</p>
               </div>
               <a href="#open" data-screen="open">Ver operações →</a>
             </section>
@@ -177,7 +177,7 @@
           </section>
           <section id="open-screen" class="screen" hidden>
             <section class="exec-kpis">
-              <article class="exec-kpi exec-kpi--blue"><span class="exec-kpi__icon">▣</span><small>POSIÇÕES ABERTAS</small><strong id="open-count">0</strong><p>Operações ativas no piloto</p></article>
+              <article class="exec-kpi exec-kpi--blue"><span class="exec-kpi__icon">▣</span><small>POSIÇÕES ABERTAS</small><strong id="open-count">0</strong><p>Operações ativas na carteira</p></article>
               <article class="exec-kpi exec-kpi--commitment"><span class="exec-kpi__icon">⌁</span><small>CAPITAL COMPROMETIDO</small><strong id="open-capital">R$ 0,00</strong><p>Garantias das PUTs abertas</p></article>
               <article class="exec-kpi exec-kpi--premium"><span class="exec-kpi__icon">+</span><small>PRÊMIO BRUTO</small><strong id="open-premium">R$ 0,00</strong><p>Antes de custos e tributos</p></article>
               <article class="exec-kpi exec-kpi--roi"><span class="exec-kpi__icon">◷</span><small>PRÓXIMO VENCIMENTO</small><strong id="open-next-expiry">—</strong><p id="open-next-label">Sem posições abertas</p></article>
@@ -330,13 +330,13 @@
           </section>
           <section id="closed-screen" class="screen" hidden>
             <section class="exec-kpis">
-              <article class="exec-kpi exec-kpi--patrimony"><span class="exec-kpi__icon">✓</span><small>OPERAÇÕES FECHADAS</small><strong id="closed-count">0</strong><p>Ciclos já encerrados no piloto</p></article>
+              <article class="exec-kpi exec-kpi--patrimony"><span class="exec-kpi__icon">✓</span><small>OPERAÇÕES FECHADAS</small><strong id="closed-count">0</strong><p>Ciclos já encerrados</p></article>
               <article class="exec-kpi exec-kpi--premium"><span class="exec-kpi__icon">+</span><small>RESULTADO ACUMULADO</small><strong id="closed-total">R$ 0,00</strong><p>Resultado informado nos fechamentos</p></article>
               <article class="exec-kpi exec-kpi--blue"><span class="exec-kpi__icon">↑</span><small>MELHOR RESULTADO</small><strong id="closed-best">R$ 0,00</strong><p id="closed-best-label">Sem histórico</p></article>
               <article class="exec-kpi exec-kpi--orange"><span class="exec-kpi__icon">↓</span><small>PIOR RESULTADO</small><strong id="closed-worst">R$ 0,00</strong><p id="closed-worst-label">Sem histórico</p></article>
             </section>
             <section class="exec-panel">
-              <header class="exec-panel__header"><div><span>✓</span><h2>Operações Fechadas</h2></div><span class="exec-tag">HISTÓRICO DO PILOTO</span></header>
+              <header class="exec-panel__header"><div><span>✓</span><h2>Operações Fechadas</h2></div><span class="exec-tag">HISTÓRICO CONSOLIDADO</span></header>
               <div class="free-table">
                 <table>
                   <thead>
@@ -377,7 +377,7 @@
             <section class="exec-panel">
               <header class="exec-panel__header">
                 <h2>Histórico mensal de prêmios</h2>
-                <span class="exec-tag">DADOS DO PILOTO</span>
+                <span class="exec-tag">HISTÓRICO CONSOLIDADO</span>
               </header>
               <div id="premium-chart" class="free-bars"></div>
               <div class="free-table">
@@ -668,7 +668,7 @@
               <article class="exec-kpi exec-kpi--premium">
                 <small>RESULTADO FECHADO</small
                 ><strong id="tax-result">R$ 0,00</strong>
-                <p>Operações encerradas no piloto</p>
+                <p>Operações encerradas na carteira</p>
               </article>
               <article class="exec-kpi exec-kpi--roi">
                 <small>IR ESTIMADO</small
@@ -720,7 +720,7 @@
               <header class="exec-panel__header">
                 <div>
                   <h2>Memória mensal de IR</h2>
-                  <p>Estimativa gerencial por competência, baseada nos fechamentos e DARFs do piloto.</p>
+                  <p>Estimativa gerencial por competência, baseada nos fechamentos e DARFs registrados.</p>
                 </div>
               </header>
               <div class="free-table">
@@ -765,6 +765,6 @@
         </main>
       </section>
     </div>
-    <script src="free-pilot/app.js?v=31"></script>
+    <script src="free-pilot/app.js?v=32"></script>
   </body>
 </html>
