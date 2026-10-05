@@ -519,8 +519,14 @@ async function api(request, env, path) {
     const exercisePrice = money(body.exercise_price || operation.strike);
     const closeDate = String(body.data_fechamento || new Date().toISOString().slice(0, 10));
     const type = String(operation.tipo).toUpperCase();
+    const contractConfig = await env.DB.prepare(
+      "SELECT valor FROM config WHERE parametro = ?",
+    ).bind("Tamanho contrato opcoes").first();
+    const contractSize = Math.max(1, Math.floor(money(contractConfig?.valor) || 100));
+    const expectedQuantity = Math.round(money(operation.contratos) * contractSize);
     if (quantity <= 0 || exercisePrice <= 0) return json({ error: "Quantidade e preço de exercício são obrigatórios." }, 400);
-    const premium = money(operation.premio_opcao) * money(operation.contratos) * 100 - money(operation.custos) - money(operation.irrf);
+    if (quantity !== expectedQuantity) return json({ error: `A nota informa ${quantity} ações, mas esta posição possui ${expectedQuantity}. Exercício parcial precisa ser conferido antes do encerramento.` }, 400);
+    const premium = money(operation.premio_opcao) * money(operation.contratos) * contractSize - money(operation.custos) - money(operation.irrf);
     const payload = { ...operation, "Data fechamento": closeDate, Resultado_final: type === "PUT" ? premium : premium, Lucro_tributavel: premium, Observacoes: `Exercício de ${type} registrado pela nota` };
     const statements = [
       env.DB.prepare("INSERT INTO closed_operations (closed_id, payload, closed_at) VALUES (?, ?, ?)").bind(recordId(), JSON.stringify(payload), closeDate),
