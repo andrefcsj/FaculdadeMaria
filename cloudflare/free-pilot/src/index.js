@@ -494,26 +494,44 @@ async function api(request, env, path) {
       .first();
     if (!operation) return json({ error: "not found" }, 404);
     const body = await request.json().catch(() => ({}));
+    const totalContracts = money(operation.contratos);
+    const closedContracts = money(body.contratos_fechados || totalContracts);
+    if (closedContracts <= 0 || closedContracts > totalContracts)
+      return json({ error: "Quantidade de contratos para fechamento é inválida." }, 400);
     const result = money(body.resultado_final);
     const closedAt = String(
       body.data_fechamento || new Date().toISOString().slice(0, 10),
     );
+    const fraction = closedContracts / totalContracts;
     const payload = {
       ...operation,
+      contratos: String(closedContracts),
+      custos: String(money(operation.custos) * fraction),
+      irrf: String(money(operation.irrf) * fraction),
       "Data fechamento": closedAt,
       Resultado_final: result,
       Lucro_tributavel: result,
       Observacoes: String(body.observacoes || "").slice(0, 300),
     };
-    await env.DB.batch([
+    const statements = [
       env.DB.prepare(
         "INSERT INTO closed_operations (closed_id, payload, closed_at) VALUES (?, ?, ?)",
       ).bind(recordId(), JSON.stringify(payload), closedAt),
-      env.DB.prepare("DELETE FROM operacoes WHERE id = ?").bind(
-        Number(closeMatch[1]),
-      ),
-    ]);
-    return json({ ok: true });
+    ];
+    if (closedContracts === totalContracts) {
+      statements.push(env.DB.prepare("DELETE FROM operacoes WHERE id = ?").bind(Number(closeMatch[1])));
+    } else {
+      statements.push(
+        env.DB.prepare("UPDATE operacoes SET contratos = ?, custos = ?, irrf = ? WHERE id = ?").bind(
+          totalContracts - closedContracts,
+          money(operation.custos) * (1 - fraction),
+          money(operation.irrf) * (1 - fraction),
+          Number(closeMatch[1]),
+        ),
+      );
+    }
+    await env.DB.batch(statements);
+    return json({ ok: true, partial: closedContracts !== totalContracts });
   }
   const exerciseMatch = path.match(/^\/api\/operations\/(\d+)\/exercise$/);
   if (exerciseMatch && request.method === "POST") {

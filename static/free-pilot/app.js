@@ -1046,8 +1046,23 @@ $("#note-pdf-form").onsubmit = async (e) => {
         continue;
       }
       if (trade.side === "Compra" && existing) {
-        const result = (num(existing.premio_opcao) - num(trade.unit_price)) * num(existing.contratos) * cfg("Tamanho contrato opcoes", 100) - num(existing.custos) - num(existing.irrf) - num(trade.allocated_costs) - num(trade.allocated_irrf);
-        await request(`/operations/${existing.id}/close`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ data_fechamento: tradeDate, resultado_final: result, observacoes: `Recompra reconhecida na nota ${noteNumber}` }) });
+        const contractSize = cfg("Tamanho contrato opcoes", 100);
+        const openContracts = num(existing.contratos);
+        const openQuantity = openContracts * contractSize;
+        const closedContracts = trade.quantity / contractSize;
+        if (trade.quantity > openQuantity || !Number.isInteger(closedContracts))
+          throw Error(`A recompra de ${trade.option_code} não confere com a posição aberta. Nenhuma baixa automática foi feita.`);
+        const fraction = closedContracts / openContracts;
+        const result = (num(existing.premio_opcao) - num(trade.unit_price)) * trade.quantity - num(existing.custos) * fraction - num(existing.irrf) * fraction - num(trade.allocated_costs) - num(trade.allocated_irrf);
+        await request(`/operations/${existing.id}/close`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ data_fechamento: tradeDate, contratos_fechados: closedContracts, resultado_final: result, observacoes: `Recompra reconhecida na nota ${noteNumber}` }) });
+        if (closedContracts < openContracts) {
+          existing.contratos = openContracts - closedContracts;
+          existing.custos = num(existing.custos) * (1 - fraction);
+          existing.irrf = num(existing.irrf) * (1 - fraction);
+        } else {
+          state.operations = (state.operations || []).filter((item) => item.id !== existing.id);
+          operationsCreatedFromThisNote.delete(trade.option_code);
+        }
         operationsClosed += 1;
       } else if (trade.side === "Venda" && !existing) {
         const metadata = optionMetadata(trade.option_code, trade.expiry_month);
