@@ -577,10 +577,18 @@ function render() {
     (b) =>
       (b.onclick = async () => {
         if (confirm("Reabrir esta operação?")) {
-          await request(`/closed/${b.dataset.reopen}/reopen`, {
-            method: "POST",
-          });
-          await load();
+          b.disabled = true;
+          try {
+            await request(`/closed/${b.dataset.reopen}/reopen`, {
+              method: "POST",
+            });
+            await load();
+            $("#message").textContent = "Operação reaberta com sucesso.";
+          } catch (err) {
+            $("#message").textContent = err.message || "Não foi possível reabrir esta operação.";
+          } finally {
+            b.disabled = false;
+          }
         }
       }),
   );
