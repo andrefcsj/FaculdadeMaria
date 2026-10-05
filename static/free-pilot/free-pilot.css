@@ -10,6 +10,10 @@ body.app-shell .executive-sidebar .premium-brand > svg { flex:0 0 38px; width:38
 body.app-shell .executive-sidebar .premium-brand span { align-items:flex-start; }
 body.app-shell .executive-sidebar .premium-brand strong { margin:0; color:#102044; font-size:18px; font-weight:750; letter-spacing:-.55px; }
 body.app-shell .executive-sidebar .premium-brand small { margin:2px 0 0; padding:0; border-radius:0; background:transparent; box-shadow:none; color:#6d7a90; font-size:10px; font-weight:700; letter-spacing:0; }
+/* O controle do menu acompanha o topo leve do Render, sem competir com os indicadores. */
+body.app-shell .premium-topbar .sidebar-toggle { border:1px solid #dfe6ee; border-radius:12px; background:#fff; box-shadow:0 2px 6px rgba(18,38,71,.03); }
+body.app-shell .premium-topbar .sidebar-toggle span { background:#617187; }
+body.app-shell .premium-topbar .sidebar-toggle:hover { border-color:#b9cae0; background:#f8fbff; }
 .free-login__card {
   width: min(390px, 90vw);
   padding: 2rem;
