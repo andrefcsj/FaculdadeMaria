@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Dashboard Executivo | FaculdadeMaria</title>
     <link rel="stylesheet" href="theme.css" />
-    <link rel="stylesheet" href="free-pilot/free-pilot.css?v=35" />
+    <link rel="stylesheet" href="free-pilot/free-pilot.css?v=36" />
   </head>
   <body class="app-shell">
     <section id="login" class="free-login">
@@ -195,7 +195,7 @@
             <section class="exec-panel">
               <header class="exec-panel__header">
                 <h2>Operações Abertas</h2>
-                <div><a href="#notes" data-screen="notes">Importar nota automática →</a><button id="toggle-operation-form" type="button">Cadastrar manualmente</button></div>
+                <div><button id="open-note-import" class="import-note-action" type="button">Importar nota automática →</button><button id="toggle-operation-form" type="button">Cadastrar manualmente</button></div>
               </header>
               <form id="operation-form" class="free-operation-form" hidden>
                 <div class="manual-entry-intro"><strong>Cadastro manual</strong><span>Use apenas quando a operação não vier da importação automática da nota.</span></div>
@@ -340,6 +340,22 @@
                   <button type="button" data-close-operation>Cancelar</button>
                   <button>Confirmar fechamento</button>
                 </footer>
+              </form>
+            </dialog>
+            <dialog id="note-import-dialog" class="free-dialog note-import-dialog" aria-labelledby="note-import-title">
+              <form id="open-note-pdf-form">
+                <header>
+                  <div><small>IMPORTAÇÃO AUTOMÁTICA</small><h2 id="note-import-title">Importar nota BTG/Necton</h2><p>Envie o PDF sem sair de Operações Abertas.</p></div>
+                  <button type="button" data-close-note-import aria-label="Fechar importação">×</button>
+                </header>
+                <div class="note-import-dialog__body">
+                  <div class="note-import-dialog__icon">PDF</div>
+                  <div><strong>Leitura local e automática</strong><span>O PDF não é enviado nem armazenado. Aberturas, recompras e exercícios reconhecidos atualizam o sistema.</span></div>
+                  <label class="note-import-dialog__pick">Selecionar nota PDF<input name="pdf" type="file" accept="application/pdf,.pdf" required /></label>
+                  <span class="note-import-dialog__file" data-note-file-name>Nenhum arquivo selecionado</span>
+                  <p class="note-import-dialog__result" data-note-result aria-live="polite"></p>
+                </div>
+                <footer><button type="button" data-close-note-import>Cancelar</button><button>Importar e atualizar sistema</button></footer>
               </form>
             </dialog>
           </section>
@@ -794,6 +810,6 @@
       <p class="quick-roi-note">Estimativa gerencial sem custos e impostos.</p><footer><button type="button" id="payoff-modal-reset">Limpar valores</button><button type="button" data-close-payoff>Concluir</button></footer>
     </dialog>
     <dialog id="compare-modal" class="quick-roi payoff-modal" aria-labelledby="compare-modal-title"><header><div><small id="compare-modal-eyebrow">ESTRATÉGIAS · OPÇÕES</small><h2 id="compare-modal-title">Comparador de CALL</h2><p>Compare retorno, capital e margem até o strike antes de operar.</p></div><button type="button" data-close-compare aria-label="Fechar comparador">×</button></header><form id="compare-modal-form" autocomplete="off"><label>Cotação atual (R$)<input name="spot" inputmode="decimal" placeholder="49,12"></label><label>Contratos<input name="contracts" type="number" min="1" value="1"></label><label>Strike A (R$)<input name="strike_a" inputmode="decimal" placeholder="48,00"></label><label>Prêmio A (R$)<input name="premium_a" inputmode="decimal" placeholder="0,80"></label><label>Strike B (R$)<input name="strike_b" inputmode="decimal" placeholder="50,00"></label><label>Prêmio B (R$)<input name="premium_b" inputmode="decimal" placeholder="0,55"></label></form><div class="quick-roi-results" aria-live="polite"><section><small>ALTERNATIVA A</small><strong id="compare-modal-a">—</strong><span id="compare-modal-a-detail">Preencha os valores.</span></section><section><small>ALTERNATIVA B</small><strong id="compare-modal-b">—</strong><span id="compare-modal-b-detail">Preencha os valores.</span></section></div><p class="quick-roi-note" id="compare-modal-note">O resultado mostra prêmio e margem por contrato, sem custos ou impostos.</p><footer><button type="button" id="compare-modal-reset">Limpar valores</button><button type="button" data-close-compare>Concluir</button></footer></dialog>
-    <script src="free-pilot/app.js?v=48"></script>
+    <script src="free-pilot/app.js?v=49"></script>
   </body>
 </html>

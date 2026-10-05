@@ -1035,12 +1035,13 @@ $("#quote-form").onsubmit = async (e) => {
     showMessage(err.message, "error");
   }
 };
-$("#note-pdf-form [name=pdf]").onchange = (e) => {
-  $("#note-file-name").textContent = e.target.files[0]?.name || "Nenhum arquivo selecionado";
+function bindNoteImport(form, result, fileName, onComplete) {
+form.elements.pdf.onchange = (e) => {
+  fileName.textContent = e.target.files[0]?.name || "Nenhum arquivo selecionado";
 };
-$("#note-pdf-form").onsubmit = async (e) => {
+form.onsubmit = async (e) => {
   e.preventDefault();
-  const file = e.target.elements.pdf.files[0], result = $("#note-pdf-result"), button = e.target.querySelector("button");
+  const file = e.target.elements.pdf.files[0], button = e.target.querySelector("footer button:last-child, button[type=submit], button:last-child");
   result.classList.remove("is-success", "is-error");
   if (!file) { result.classList.add("is-error"); result.textContent = "Selecione uma nota em PDF."; return; }
   button.disabled = true;
@@ -1119,7 +1120,7 @@ $("#note-pdf-form").onsubmit = async (e) => {
         operationsOpened += 1;
       }
     }
-    await load(); e.target.reset(); $("#note-file-name").textContent = "Nenhum arquivo selecionado";
+    await load(); e.target.reset(); fileName.textContent = "Nenhum arquivo selecionado";
     result.classList.add("is-success");
     const updates = [
       operationsOpened && `${operationsOpened} posição(ões) aberta(s)`,
@@ -1129,6 +1130,7 @@ $("#note-pdf-form").onsubmit = async (e) => {
     result.textContent = imported
       ? `Leitura concluída: ${trades.length} negociação(ões) reconhecida(s) e ${imported} lançamento(s) importado(s)${updates.length ? ` · ${updates.join(" · ")}` : ""}. O PDF não foi armazenado.`
       : `Leitura concluída: ${trades.length} negociação(ões) reconhecida(s). Esta nota já havia sido importada; nenhuma operação foi reaplicada.`;
+    onComplete?.();
   } catch (err) {
     result.classList.add("is-error");
     result.textContent = err.message || "Não foi possível ler esta nota.";
@@ -1137,6 +1139,15 @@ $("#note-pdf-form").onsubmit = async (e) => {
     button.textContent = "Importar nota";
   }
 };
+}
+bindNoteImport($("#note-pdf-form"), $("#note-pdf-result"), $("#note-file-name"));
+const noteImportDialog = $("#note-import-dialog");
+$("#open-note-import").onclick = () => {
+  noteImportDialog.showModal();
+  noteImportDialog.querySelector("[name=pdf]").focus();
+};
+noteImportDialog.querySelectorAll("[data-close-note-import]").forEach((button) => (button.onclick = () => noteImportDialog.close()));
+bindNoteImport($("#open-note-pdf-form"), noteImportDialog.querySelector("[data-note-result]"), noteImportDialog.querySelector("[data-note-file-name]"), () => setTimeout(() => noteImportDialog.close(), 1000));
 $("#roll-form").onsubmit = (e) => {
   e.preventDefault();
   const data = Object.fromEntries(new FormData(e.target)),
