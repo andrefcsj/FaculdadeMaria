@@ -18,6 +18,7 @@
             >PIN de acesso<input
               name="pin"
               type="password"
+              autocomplete="current-password"
               required
               autofocus /></label
           ><button>Entrar no sistema</button>
@@ -758,7 +759,7 @@
                 <input name="backup_file" type="file" accept="application/json,.json" required />
                 <button>Restaurar backup</button>
               </form>
-              <p class="free-help"><strong>Atenção:</strong> restaurar substitui apenas os dados deste piloto no Cloudflare. O sistema do Render não é alterado.</p>
+              <p class="free-help"><strong>Atenção:</strong> restaurar substitui apenas os dados desta instalação no Cloudflare. O sistema do Render não é alterado.</p>
             </section>
           </section>
           <section id="notice-screen" class="screen" hidden>
@@ -771,6 +772,6 @@
         </main>
       </section>
     </div>
-    <script src="free-pilot/app.js?v=40"></script>
+    <script src="free-pilot/app.js?v=41"></script>
   </body>
 </html>

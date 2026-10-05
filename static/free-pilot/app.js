@@ -540,7 +540,7 @@ function render() {
   document.querySelectorAll("[data-remove]").forEach(
     (b) =>
       (b.onclick = async () => {
-        if (confirm("Excluir esta operação no piloto?")) {
+        if (confirm("Excluir esta operação?")) {
           await request(`/operations/${b.dataset.remove}`, {
             method: "DELETE",
           });
@@ -619,7 +619,7 @@ function render() {
   document.querySelectorAll("[data-note-delete]").forEach(
     (button) =>
       (button.onclick = async () => {
-        if (confirm("Excluir este lançamento de nota no piloto?")) {
+        if (confirm("Excluir este lançamento de nota?")) {
           await request(`/notes/${encodeURIComponent(button.dataset.noteDelete)}`, {
             method: "DELETE",
           });
@@ -1155,7 +1155,7 @@ $("#restore-form").onsubmit = async (e) => {
   e.preventDefault();
   const file = e.target.elements.backup_file.files[0];
   if (!file) return;
-  if (!confirm("Restaurar este backup substituirá os dados atuais apenas no piloto do Cloudflare. Deseja continuar?"))
+  if (!confirm("Restaurar este backup substituirá os dados atuais desta instalação no Cloudflare. Deseja continuar?"))
     return;
   try {
     const backup = JSON.parse(await file.text());
@@ -1169,7 +1169,7 @@ $("#restore-form").onsubmit = async (e) => {
     e.target.reset();
     e.target.hidden = true;
     $("#toggle-restore-form").textContent = "Restaurar backup";
-    showMessage(`${result.restored} registro(s) restaurado(s) no piloto.`);
+    showMessage(`${result.restored} registro(s) restaurado(s) nesta instalação.`);
   } catch (err) {
     showMessage(
       err instanceof SyntaxError
