@@ -564,16 +564,27 @@ async function api(request, env, path) {
       .bind(reopenMatch[1])
       .first();
     if (!closed) return json({ error: "not found" }, 404);
-    const item = operationPayload(JSON.parse(closed.payload));
+    const original = JSON.parse(closed.payload);
+    const item = operationPayload(original);
+    const observation = String(original.Observacoes || original.observacoes || "");
+    if (/Exercício de CALL/i.test(observation))
+      return json({ error: "Esta CALL foi exercida e entregou ações da carteira. Reabra-a apenas após conferir a reversão da entrega." }, 400);
     const fields = Object.keys(item);
-    await env.DB.batch([
+    const statements = [
       env.DB.prepare(
         `INSERT INTO operacoes (${fields.join(", ")}) VALUES (${fields.map(() => "?").join(", ")})`,
       ).bind(...fields.map((field) => item[field])),
       env.DB.prepare("DELETE FROM closed_operations WHERE closed_id = ?").bind(
         reopenMatch[1],
       ),
-    ]);
+    ];
+    if (/Exercício de PUT/i.test(observation))
+      statements.push(
+        env.DB.prepare("DELETE FROM equity_lots WHERE lot_id = ?").bind(
+          `exercise:${original.id}`,
+        ),
+      );
+    await env.DB.batch(statements);
     return json({ ok: true });
   }
   if (path === "/api/cash" && request.method === "POST") {
