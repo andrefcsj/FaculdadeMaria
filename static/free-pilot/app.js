@@ -393,6 +393,10 @@ function render() {
   }).format(new Date());
   $("#roi-average").textContent =
     `${capital ? ((premium / capital) * 100).toFixed(2).replace(".", ",") : "0,00"}%`;
+  const commitmentPercent = (capital / Math.max(Math.abs(patrimony), Math.abs(capital), 1)) * 100;
+  const roiPercent = capital ? (premium / capital) * 100 : 0;
+  $("#commitment-meter").style.width = `${Math.min(100, Math.max(0, commitmentPercent)).toFixed(1)}%`;
+  $("#roi-meter").style.width = `${Math.min(100, Math.max(0, (roiPercent / 4) * 100)).toFixed(1)}%`;
   const nextExpiry = open
     .filter((item) => item.vencimento)
     .slice()

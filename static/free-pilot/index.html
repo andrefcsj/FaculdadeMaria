@@ -91,6 +91,7 @@
                 <small>CAPITAL COMPROMETIDO</small
                 ><strong id="capital-committed">R$ 0,00</strong>
                 <p>PUTs abertas em garantia</p>
+                <div class="exec-kpi__meter" aria-label="Percentual do patrimônio comprometido"><i id="commitment-meter"></i></div>
                 <div class="exec-kpi__insight"><i></i><span>Garantias ativas</span></div>
                 <span class="exec-kpi__watermark" aria-hidden="true">PUT</span>
               </article>
@@ -114,6 +115,7 @@
                 <span class="exec-kpi__icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 17 10 12l3 3 6-7M14 8h5v5"/><circle cx="5" cy="17" r="1"/><circle cx="10" cy="12" r="1"/><circle cx="13" cy="15" r="1"/></svg></span>
                 <small>ROI MÉDIO</small><strong id="roi-average">0,00%</strong>
                 <p>Por operação aberta</p>
+                <div class="exec-kpi__meter" aria-label="Progresso da meta mensal de ROI"><i id="roi-meter"></i></div>
                 <div class="exec-kpi__insight"><i></i><span>Sobre capital comprometido</span></div>
                 <span class="exec-kpi__watermark" aria-hidden="true">ROI</span>
               </article>
@@ -792,6 +794,6 @@
       <p class="quick-roi-note">Estimativa gerencial sem custos e impostos.</p><footer><button type="button" id="payoff-modal-reset">Limpar valores</button><button type="button" data-close-payoff>Concluir</button></footer>
     </dialog>
     <dialog id="compare-modal" class="quick-roi payoff-modal" aria-labelledby="compare-modal-title"><header><div><small id="compare-modal-eyebrow">ESTRATÉGIAS · OPÇÕES</small><h2 id="compare-modal-title">Comparador de CALL</h2><p>Compare retorno, capital e margem até o strike antes de operar.</p></div><button type="button" data-close-compare aria-label="Fechar comparador">×</button></header><form id="compare-modal-form" autocomplete="off"><label>Cotação atual (R$)<input name="spot" inputmode="decimal" placeholder="49,12"></label><label>Contratos<input name="contracts" type="number" min="1" value="1"></label><label>Strike A (R$)<input name="strike_a" inputmode="decimal" placeholder="48,00"></label><label>Prêmio A (R$)<input name="premium_a" inputmode="decimal" placeholder="0,80"></label><label>Strike B (R$)<input name="strike_b" inputmode="decimal" placeholder="50,00"></label><label>Prêmio B (R$)<input name="premium_b" inputmode="decimal" placeholder="0,55"></label></form><div class="quick-roi-results" aria-live="polite"><section><small>ALTERNATIVA A</small><strong id="compare-modal-a">—</strong><span id="compare-modal-a-detail">Preencha os valores.</span></section><section><small>ALTERNATIVA B</small><strong id="compare-modal-b">—</strong><span id="compare-modal-b-detail">Preencha os valores.</span></section></div><p class="quick-roi-note" id="compare-modal-note">O resultado mostra prêmio e margem por contrato, sem custos ou impostos.</p><footer><button type="button" id="compare-modal-reset">Limpar valores</button><button type="button" data-close-compare>Concluir</button></footer></dialog>
-    <script src="free-pilot/app.js?v=46"></script>
+    <script src="free-pilot/app.js?v=47"></script>
   </body>
 </html>
