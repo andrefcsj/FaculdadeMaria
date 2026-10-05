@@ -1035,13 +1035,41 @@ $("#quote-form").onsubmit = async (e) => {
     showMessage(err.message, "error");
   }
 };
+let stagedNoteImport;
+async function stageNoteImport(file, result) {
+  const text = await pdfText(file), normalized = text.toUpperCase().replace(/\s+/g, " ");
+  if (!normalized.includes("NOTA DE CORRETAGEM") || (!normalized.includes("BTG PACTUAL") && !normalized.includes("NECTON"))) throw Error("Envie uma nota de corretagem BTG/Necton com texto pesquisável.");
+  const date = (text.match(/(\d{2}\/\d{2}\/\d{4})/) || [])[1];
+  const noteNumber = (text.match(/NOTA DE CORRETAGEM\s+(\d{5,})/i) || text.match(/(?:NR\.\s*NOTA)[^\d]*(\d{5,})/i) || [])[1] || "local";
+  const pattern = /1-BOVESPA\s+([CV])\s+OP(?:Ç|C)[AÃ]O\s+DE\s+(VENDA|COMPRA)\s+(\d{2}\/\d{2})\s+([A-Z0-9]{5,})\s+(?:[A-Z]{1,3}(?:\s+[A-Z])?\s+)?(\d+)\s+([0-9.,]+)\s+([0-9.,]+)\s+([CD])/gi;
+  const trades = [...text.matchAll(pattern)].map((match) => ({ side: match[1].toUpperCase() === "V" ? "Venda" : "Compra", market: String(match[2]).toLowerCase().includes("compra") ? "CALL" : "PUT", expiry_month: match[3], option_code: match[4].toUpperCase(), quantity: Number(match[5]), unit_price: parseBrNumber(match[6]), gross_value: parseBrNumber(match[7]) }));
+  if (!trades.length) throw Error("Nenhuma negociação foi reconhecida. Use uma nota BTG/Necton definitiva com texto selecionável.");
+  stagedNoteImport = { file, noteNumber, trades };
+  result.classList.remove("is-error"); result.classList.add("is-success");
+  result.innerHTML = `<strong>Nota ${escape(noteNumber)} reconhecida</strong><span>${trades.length} negociação(ões) encontrada(s). Escolha a posição abaixo; nada será importado até você confirmar.</span><select id="staged-note-trade">${trades.map((trade, index) => `<option value="${index}">${escape(trade.option_code)} · ${escape(trade.side)} · ${trade.quantity} opções · ${money(trade.unit_price)}</option>`).join("")}</select>`;
+  const select = result.querySelector("#staged-note-trade");
+  const apply = () => {
+    const trade = trades[Number(select.value)], metadata = optionMetadata(trade.option_code, trade.expiry_month);
+    if (!$("#newOptionCode")) return;
+    $("#newOptionCode").value = trade.option_code; $("#newUnderlying").value = trade.option_code.slice(0, 4) + (trade.option_code.match(/[A-Z]{4}(\d)/)?.[1] || "");
+    $("#newContracts").value = Math.max(1, trade.quantity / cfg("Tamanho contrato opcoes", 100)); $("#newPremium").value = trade.unit_price;
+    $("#newStrike").value = metadata.strike || ""; $("#newExpiry").value = metadata.expiry || "";
+    const strategy = trade.side === "Venda" ? "#newVenda" : "#newCompra", type = metadata.type === "CALL" ? "#newCall" : "#newPut";
+    $(strategy).checked = true; $(type).checked = true; updateNewOperationPreview?.();
+  };
+  select.onchange = apply; apply();
+}
 function bindNoteImport(form, result, fileName, onComplete, submitButton) {
-form.elements.pdf.onchange = (e) => {
-  fileName.textContent = e.target.files[0]?.name || "Nenhum arquivo selecionado";
+form.elements.pdf.onchange = async (e) => {
+  const file = e.target.files[0]; fileName.textContent = file?.name || "Nenhum arquivo selecionado";
+  if (!file) return;
+  result.classList.remove("is-success", "is-error"); result.textContent = "Reconhecendo a nota neste navegador…";
+  try { await stageNoteImport(file, result); } catch (err) { result.classList.add("is-error"); result.textContent = err.message || "Não foi possível reconhecer esta nota."; }
 };
 form.onsubmit = async (e) => {
   e.preventDefault();
   const file = e.target.elements.pdf.files[0], button = submitButton || e.target.querySelector("footer button:last-child, button[type=submit], button:last-child");
+  const stagedSelectedIndex = stagedNoteImport?.file === file ? Number(result.querySelector("#staged-note-trade")?.value) : null;
   result.classList.remove("is-success", "is-error");
   if (!file) { result.classList.add("is-error"); result.textContent = "Selecione uma nota em PDF."; return; }
   button.disabled = true;
@@ -1080,7 +1108,9 @@ form.onsubmit = async (e) => {
     const digest = Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", await file.arrayBuffer()))).map((byte) => byte.toString(16).padStart(2, "0")).join("");
     let imported = 0, operationsOpened = 0, operationsClosed = 0, exercises = 0;
     const operationsCreatedFromThisNote = new Map();
-    for (const [index, trade] of trades.entries()) {
+    const selectedIndex = stagedSelectedIndex;
+    const tradesToImport = Number.isInteger(selectedIndex) ? [{ index: selectedIndex, trade: trades[selectedIndex] }] : trades.map((trade, index) => ({ index, trade }));
+    for (const { index, trade } of tradesToImport) {
       const netCash = trade.cash_direction === "C" ? trade.gross_value - trade.allocated_costs - trade.allocated_irrf : -(trade.gross_value + trade.allocated_costs + trade.allocated_irrf);
       const payload = { key: `${digest}:${index}`, broker: normalized.includes("NECTON") ? "Necton" : "BTG Pactual", note_number: noteNumber, trade_date: tradeDate, trade, net_cash: String(netCash), operational_costs: String(trade.allocated_costs), irrf: String(trade.allocated_irrf), cash_direction: trade.cash_direction, imported_at: new Date().toISOString() };
       const response = await request("/notes", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ key: payload.key, payload }) });
@@ -1128,7 +1158,7 @@ form.onsubmit = async (e) => {
       exercises && `${exercises} exercício(s) tratado(s)`,
     ].filter(Boolean);
     result.textContent = imported
-      ? `Leitura concluída: ${trades.length} negociação(ões) reconhecida(s) e ${imported} lançamento(s) importado(s)${updates.length ? ` · ${updates.join(" · ")}` : ""}. O PDF não foi armazenado.`
+      ? `Leitura concluída: ${tradesToImport.length} negociação(ões) selecionada(s) e ${imported} lançamento(s) importado(s)${updates.length ? ` · ${updates.join(" · ")}` : ""}. O PDF não foi armazenado.`
       : `Leitura concluída: ${trades.length} negociação(ões) reconhecida(s). Esta nota já havia sido importada; nenhuma operação foi reaplicada.`;
     onComplete?.();
   } catch (err) {
