@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Dashboard Executivo | FaculdadeMaria</title>
     <link rel="stylesheet" href="theme.css" />
-    <link rel="stylesheet" href="free-pilot/free-pilot.css?v=27" />
+    <link rel="stylesheet" href="free-pilot/free-pilot.css?v=28" />
   </head>
   <body class="app-shell">
     <section id="login" class="free-login">
@@ -189,34 +189,39 @@
                 <div><a href="#notes" data-screen="notes">Importar nota →</a><button id="toggle-operation-form" type="button">Cadastrar manualmente</button></div>
               </header>
               <form id="operation-form" class="free-operation-form" hidden>
-                <input name="data_abertura" type="date" required /><input
+                <div class="manual-entry-intro"><strong>Cadastro manual</strong><span>Use apenas quando a operação não vier da importação automática da nota.</span></div>
+                <input name="data_abertura" type="date" aria-label="Data de abertura" required /><input
                   name="ativo"
                   placeholder="Ativo"
+                  aria-label="Código da opção"
                   required
-                /><select name="tipo">
+                /><select name="tipo" aria-label="Tipo da opção">
                   <option>PUT</option>
                   <option>CALL</option></select
-                ><input name="estrategia" value="Wheel" /><input
+                ><input name="estrategia" value="Wheel" aria-label="Estratégia" /><input
                   name="contratos"
                   type="number"
                   min="1"
                   value="1"
+                  aria-label="Quantidade de contratos"
                 /><input
                   name="strike"
                   type="number"
                   step="0.01"
                   placeholder="Strike"
+                  aria-label="Strike"
                   required
                 /><input
                   name="premio_opcao"
                   type="number"
                   step="0.01"
                   placeholder="Prêmio"
+                  aria-label="Prêmio por ação"
                   required
-                /><input name="custos" type="number" min="0" step="0.01" value="0" placeholder="Custos" />
-                <input name="irrf" type="number" min="0" step="0.01" value="0" placeholder="IRRF" />
-                <input name="cotacao_atual" type="number" min="0" step="0.01" value="0" placeholder="Cotação atual" />
-                <input name="vencimento" type="date" required /><button>
+                /><input name="custos" type="number" min="0" step="0.01" value="0" placeholder="Custos" aria-label="Custos" />
+                <input name="irrf" type="number" min="0" step="0.01" value="0" placeholder="IRRF" aria-label="IRRF" />
+                <input name="cotacao_atual" type="number" min="0" step="0.01" value="0" placeholder="Cotação atual" aria-label="Cotação atual" />
+                <input name="vencimento" type="date" aria-label="Vencimento" required /><button>
                   Adicionar operação
                 </button>
               </form>

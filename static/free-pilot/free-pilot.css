@@ -20,8 +20,11 @@ body.app-shell .free-operation-form input,body.app-shell .free-operation-form se
 body.app-shell .free-operation-form input::placeholder { color:#8b98a9; }
 body.app-shell .free-operation-form input:focus,body.app-shell .free-operation-form select:focus { outline:0; border-color:#4c8dee; box-shadow:0 0 0 3px rgba(51,123,231,.13); }
 body.app-shell .free-operation-form button { min-height:42px; border-radius:9px; box-shadow:0 7px 15px rgba(24,177,91,.16); }
+.manual-entry-intro { grid-column:1 / -1; display:flex; align-items:baseline; gap:10px; padding:1px 2px 4px; color:#31435c; }
+.manual-entry-intro strong { color:#182c49; font-size:13px; }
+.manual-entry-intro span { color:#728096; font-size:11px; font-weight:650; }
 .exec-panel__header > div:last-child { display:flex; align-items:center; gap:9px; flex-wrap:wrap; }.exec-panel__header > div:last-child > a { display:inline-flex; align-items:center; min-height:34px; padding:0 10px; border-radius:8px; background:#eff5ff; color:#195dbb; }.exec-panel__header > div:last-child > button { min-height:34px; padding:0 11px; border:0; border-radius:8px; background:#20c567; color:#082c17; font-size:11px; font-weight:850; cursor:pointer; }
-@media(max-width:620px){body.app-shell .free-operation-form{padding:11px}.exec-panel__header > div:last-child{width:100%;justify-content:flex-start}}
+@media(max-width:620px){body.app-shell .free-operation-form{padding:11px}.exec-panel__header > div:last-child{width:100%;justify-content:flex-start}.manual-entry-intro{align-items:flex-start;flex-direction:column;gap:3px}}
 .free-login__card {
   width: min(390px, 90vw);
   padding: 2rem;
