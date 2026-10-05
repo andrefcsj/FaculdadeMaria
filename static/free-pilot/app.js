@@ -1014,7 +1014,7 @@ $("#note-pdf-form").onsubmit = async (e) => {
       trade.allocated_irrf = Number((totalIrrf * share).toFixed(2));
     });
     const digest = Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", await file.arrayBuffer()))).map((byte) => byte.toString(16).padStart(2, "0")).join("");
-    let imported = 0;
+    let imported = 0, operationsOpened = 0, operationsClosed = 0, exercises = 0;
     const operationsCreatedFromThisNote = new Map();
     for (const [index, trade] of trades.entries()) {
       const netCash = trade.cash_direction === "C" ? trade.gross_value - trade.allocated_costs - trade.allocated_irrf : -(trade.gross_value + trade.allocated_costs + trade.allocated_irrf);
@@ -1025,21 +1025,29 @@ $("#note-pdf-form").onsubmit = async (e) => {
       const existing = (state.operations || []).find((item) => String(item.ativo).toUpperCase() === trade.option_code && String(item.status).toLowerCase() === "aberta") || operationsCreatedFromThisNote.get(trade.option_code);
       if (trade.event_type?.startsWith("exercise_") && existing) {
         await request(`/operations/${existing.id}/exercise`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ data_fechamento: tradeDate, asset: trade.option_code.slice(0, 4), quantity: trade.quantity, exercise_price: trade.unit_price, costs: trade.allocated_costs + trade.allocated_irrf }) });
+        exercises += 1;
         continue;
       }
       if (trade.side === "Compra" && existing) {
         const result = (num(existing.premio_opcao) - num(trade.unit_price)) * num(existing.contratos) * cfg("Tamanho contrato opcoes", 100) - num(existing.custos) - num(existing.irrf) - num(trade.allocated_costs) - num(trade.allocated_irrf);
         await request(`/operations/${existing.id}/close`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ data_fechamento: tradeDate, resultado_final: result, observacoes: `Recompra reconhecida na nota ${noteNumber}` }) });
+        operationsClosed += 1;
       } else if (trade.side === "Venda" && !existing) {
         const metadata = optionMetadata(trade.option_code, trade.expiry_month);
         if (!metadata.strike || !metadata.expiry) throw Error(`Não foi possível identificar strike ou vencimento de ${trade.option_code}.`);
         const created = await (await request("/operations", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ data_abertura: tradeDate, ativo: trade.option_code, tipo: metadata.type, estrategia: "Venda", contratos: Math.max(1, trade.quantity / cfg("Tamanho contrato opcoes", 100)), strike: metadata.strike, premio_opcao: trade.unit_price, custos: trade.allocated_costs, irrf: trade.allocated_irrf, vencimento: metadata.expiry, cotacao_atual: 0 }) })).json();
         operationsCreatedFromThisNote.set(trade.option_code, { id: created.id, ativo: trade.option_code, status: "Aberta", premio_opcao: trade.unit_price, contratos: Math.max(1, trade.quantity / cfg("Tamanho contrato opcoes", 100)), custos: trade.allocated_costs, irrf: trade.allocated_irrf });
+        operationsOpened += 1;
       }
     }
     await load(); e.target.reset(); $("#note-file-name").textContent = "Nenhum arquivo selecionado";
     result.classList.add("is-success");
-    result.textContent = `${imported} lançamento(s) importado(s) e operações atualizadas automaticamente. O PDF não foi armazenado.`;
+    const updates = [
+      operationsOpened && `${operationsOpened} posição(ões) aberta(s)`,
+      operationsClosed && `${operationsClosed} recompra(s) fechada(s)`,
+      exercises && `${exercises} exercício(s) tratado(s)`,
+    ].filter(Boolean);
+    result.textContent = `${imported} lançamento(s) importado(s)${updates.length ? ` · ${updates.join(" · ")}` : ""}. O PDF não foi armazenado.`;
   } catch (err) {
     result.classList.add("is-error");
     result.textContent = err.message || "Não foi possível ler esta nota.";
