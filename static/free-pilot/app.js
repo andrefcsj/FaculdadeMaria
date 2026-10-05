@@ -1147,7 +1147,7 @@ $("#open-note-import").onclick = () => {
   noteImportDialog.querySelector("[name=pdf]").focus();
 };
 noteImportDialog.querySelectorAll("[data-close-note-import]").forEach((button) => (button.onclick = () => noteImportDialog.close()));
-bindNoteImport($("#open-note-pdf-form"), noteImportDialog.querySelector("[data-note-result]"), noteImportDialog.querySelector("[data-note-file-name]"), () => setTimeout(() => noteImportDialog.close(), 1000));
+bindNoteImport($("#open-note-pdf-form"), noteImportDialog.querySelector("[data-note-result]"), noteImportDialog.querySelector("[data-note-file-name]"));
 $("#roll-form").onsubmit = (e) => {
   e.preventDefault();
   const data = Object.fromEntries(new FormData(e.target)),
