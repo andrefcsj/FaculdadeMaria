@@ -223,7 +223,7 @@ function renderExtra() {
   $("#settings-list").innerHTML = state.config
     .map(
       (x) =>
-        `<label><strong>${escape(x.parametro)}</strong><input data-config="${escape(x.parametro)}" value="${escape(x.valor)}"></label>`,
+        `<label><span><strong>${escape(x.parametro)}</strong><small>Parâmetro do ambiente gratuito</small></span><input data-config="${escape(x.parametro)}" value="${escape(x.valor)}"></label>`,
     )
     .join("");
   const lots = state.equities || [],
