@@ -57,6 +57,12 @@ function optionMetadata(code, expiryMonth) {
   }
   return { type, strike, expiry };
 }
+const B3_UNDERLYING = { BBAS: "BBAS3", BBDC: "BBDC4", CPLE: "CPLE3", GOAU: "GOAU4", ITSA: "ITSA4", ITUB: "ITUB4", PETR: "PETR4", VALE: "VALE3" };
+function underlyingForOption(code, preferred = "") {
+  const root = String(code || "").toUpperCase().match(/^[A-Z]{4}/)?.[0] || "";
+  const saved = String(preferred || "").toUpperCase();
+  return saved.startsWith(root) ? saved : (B3_UNDERLYING[root] || saved || root || "—");
+}
 async function request(path, options = {}) {
   const headers = new Headers(options.headers || {});
   if (sessionToken) headers.set("Authorization", `Bearer ${sessionToken}`);
@@ -96,7 +102,7 @@ function renderOpenOperations(list, size, preferences, optionQuotes) {
   const body = $("#open-operations");
   body.innerHTML = list.map((item) => {
     const preference = preferences.get(String(item.id));
-    const underlying = String(preference?.underlying_asset || item.ativo || "—").toUpperCase();
+    const underlying = underlyingForOption(item.ativo, preference?.underlying_asset);
     const quote = optionQuotes.get(String(item.ativo || "").toUpperCase());
     const type = String(item.tipo || "PUT").toUpperCase();
     const strategy = String(item.estrategia || "Venda");
@@ -131,7 +137,7 @@ function renderClosedOperations(list, size, preferences) {
     const roi = capital ? result / capital * 100 : null;
     const option = item.ativo || item.Ativo || "—";
     const preference = preferences.get(String(item.operation_id || item.id || ""));
-    const underlying = String(preference?.underlying_asset || item.ativo_subjacente || item.Ativo_subjacente || option).toUpperCase();
+    const underlying = underlyingForOption(option, preference?.underlying_asset || item.ativo_subjacente || item.Ativo_subjacente);
     const type = String(item.tipo || item.Tipo || "").toUpperCase();
     const opening = item.data_abertura || item.Data_abertura || "—";
     const closing = item["Data fechamento"] || item.data_fechamento || item.closed_at || "—";
@@ -456,7 +462,7 @@ function render() {
   $("#dashboard-operations").innerHTML = positionHead +
     (open.map((item) => {
       const preference = preferences.get(String(item.id));
-      const underlying = String(preference?.underlying_asset || item.ativo || "—").toUpperCase();
+      const underlying = underlyingForOption(item.ativo, preference?.underlying_asset);
       const quote = optionQuotes.get(String(item.ativo).toUpperCase());
       const current = quote === undefined ? null : quote;
       const type = String(item.tipo).toUpperCase();
@@ -1051,7 +1057,7 @@ async function stageNoteImport(file, result) {
   const apply = () => {
     const trade = trades[Number(select.value)], metadata = optionMetadata(trade.option_code, trade.expiry_month);
     if (!$("#newOptionCode")) return;
-    $("#newOptionCode").value = trade.option_code; $("#newUnderlying").value = trade.option_code.slice(0, 4) + (trade.option_code.match(/[A-Z]{4}(\d)/)?.[1] || "");
+    $("#newOptionCode").value = trade.option_code; $("#newUnderlying").value = underlyingForOption(trade.option_code);
     $("#newContracts").value = Math.max(1, trade.quantity / cfg("Tamanho contrato opcoes", 100)); $("#newPremium").value = trade.unit_price;
     $("#newStrike").value = metadata.strike || ""; $("#newExpiry").value = metadata.expiry || "";
     const strategy = trade.side === "Venda" ? "#newVenda" : "#newCompra", type = metadata.type === "CALL" ? "#newCall" : "#newPut";
@@ -1119,7 +1125,7 @@ form.onsubmit = async (e) => {
       if (!saved.imported) continue;
       const existing = (state.operations || []).find((item) => String(item.ativo).toUpperCase() === trade.option_code && String(item.status).toLowerCase() === "aberta") || operationsCreatedFromThisNote.get(trade.option_code);
       if (trade.event_type?.startsWith("exercise_") && existing) {
-        await request(`/operations/${existing.id}/exercise`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ data_fechamento: tradeDate, asset: trade.option_code.slice(0, 4), quantity: trade.quantity, exercise_price: trade.unit_price, costs: trade.allocated_costs + trade.allocated_irrf }) });
+        await request(`/operations/${existing.id}/exercise`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ data_fechamento: tradeDate, asset: underlyingForOption(trade.option_code), quantity: trade.quantity, exercise_price: trade.unit_price, costs: trade.allocated_costs + trade.allocated_irrf }) });
         exercises += 1;
         continue;
       }
@@ -1145,7 +1151,7 @@ form.onsubmit = async (e) => {
       } else if (trade.side === "Venda" && !existing) {
         const metadata = optionMetadata(trade.option_code, trade.expiry_month);
         if (!metadata.strike || !metadata.expiry) throw Error(`Não foi possível identificar strike ou vencimento de ${trade.option_code}.`);
-        const created = await (await request("/operations", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ data_abertura: tradeDate, ativo: trade.option_code, tipo: metadata.type, estrategia: "Venda", contratos: Math.max(1, trade.quantity / cfg("Tamanho contrato opcoes", 100)), strike: metadata.strike, premio_opcao: trade.unit_price, custos: trade.allocated_costs, irrf: trade.allocated_irrf, vencimento: metadata.expiry, cotacao_atual: 0 }) })).json();
+        const created = await (await request("/operations", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ data_abertura: tradeDate, ativo: trade.option_code, tipo: metadata.type, estrategia: "Venda", contratos: Math.max(1, trade.quantity / cfg("Tamanho contrato opcoes", 100)), strike: metadata.strike, premio_opcao: trade.unit_price, custos: trade.allocated_costs, irrf: trade.allocated_irrf, vencimento: metadata.expiry, cotacao_atual: 0, underlying_asset: underlyingForOption(trade.option_code) }) })).json();
         operationsCreatedFromThisNote.set(trade.option_code, { id: created.id, ativo: trade.option_code, status: "Aberta", premio_opcao: trade.unit_price, contratos: Math.max(1, trade.quantity / cfg("Tamanho contrato opcoes", 100)), custos: trade.allocated_costs, irrf: trade.allocated_irrf });
         operationsOpened += 1;
       }
@@ -1200,7 +1206,7 @@ newOperationForm.onsubmit = async (event) => {
   if (!newOperationForm.reportValidity()) return;
   save.disabled = true; save.textContent = "Cadastrando…";
   try {
-    const data = Object.fromEntries(new FormData(newOperationForm));
+    const data = Object.fromEntries(new FormData(newOperationForm)); data.underlying_asset = underlyingForOption(data.ativo, $("#newUnderlying").value);
     await request("/operations", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(data) });
     await load(); noteImportDialog.close(); newOperationForm.reset(); $("#newContracts").value = 1; updateNewOperationPreview();
   } catch (err) { error.textContent = err.message || "Não foi possível cadastrar a operação."; error.style.display = "block"; }

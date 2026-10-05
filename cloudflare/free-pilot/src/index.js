@@ -96,6 +96,13 @@ function operationPayload(row) {
   };
 }
 
+const B3_UNDERLYING = { BBAS: "BBAS3", BBDC: "BBDC4", CPLE: "CPLE3", GOAU: "GOAU4", ITSA: "ITSA4", ITUB: "ITUB4", PETR: "PETR4", VALE: "VALE3" };
+function underlyingForOption(code, preferred = "") {
+  const root = String(code || "").toUpperCase().match(/^[A-Z]{4}/)?.[0] || "";
+  const saved = String(preferred || "").toUpperCase();
+  return saved.startsWith(root) ? saved : (B3_UNDERLYING[root] || saved || root || "");
+}
+
 function money(value) {
   const normalized = String(value ?? "0")
     .replace(/R\$|\s/g, "")
@@ -451,7 +458,8 @@ async function api(request, env, path) {
       : json({ error: "not found" }, 404);
   }
   if (path === "/api/operations" && request.method === "POST") {
-    const item = operationPayload(await request.json().catch(() => ({})));
+    const body = await request.json().catch(() => ({}));
+    const item = operationPayload(body);
     if (!item.ativo || !item.data_abertura)
       return json({ error: "ativo e data_abertura são obrigatórios" }, 400);
     const fields = Object.keys(item);
@@ -460,6 +468,9 @@ async function api(request, env, path) {
     )
       .bind(...fields.map((field) => item[field]))
       .run();
+    const underlying = underlyingForOption(item.ativo, body.underlying_asset);
+    await env.DB.prepare("INSERT INTO operation_preferences (operation_id, exercise_interest, underlying_asset, updated_at) VALUES (?, ?, ?, ?) ON CONFLICT(operation_id) DO UPDATE SET underlying_asset = excluded.underlying_asset, updated_at = excluded.updated_at")
+      .bind(String(result.meta.last_row_id), body.interesse_exercicio === "true" || body.interesse_exercicio === true ? 1 : 0, underlying, new Date().toISOString()).run();
     return json({ id: result.meta.last_row_id }, 201);
   }
   const match = path.match(/^\/api\/operations\/(\d+)$/);
