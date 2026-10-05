@@ -1064,7 +1064,9 @@ $("#note-pdf-form").onsubmit = async (e) => {
       operationsClosed && `${operationsClosed} recompra(s) fechada(s)`,
       exercises && `${exercises} exercício(s) tratado(s)`,
     ].filter(Boolean);
-    result.textContent = imported ? `${imported} lançamento(s) importado(s)${updates.length ? ` · ${updates.join(" · ")}` : ""}. O PDF não foi armazenado.` : "Esta nota já havia sido importada. Nenhuma operação foi reaplicada.";
+    result.textContent = imported
+      ? `Leitura concluída: ${trades.length} negociação(ões) reconhecida(s) e ${imported} lançamento(s) importado(s)${updates.length ? ` · ${updates.join(" · ")}` : ""}. O PDF não foi armazenado.`
+      : `Leitura concluída: ${trades.length} negociação(ões) reconhecida(s). Esta nota já havia sido importada; nenhuma operação foi reaplicada.`;
   } catch (err) {
     result.classList.add("is-error");
     result.textContent = err.message || "Não foi possível ler esta nota.";
