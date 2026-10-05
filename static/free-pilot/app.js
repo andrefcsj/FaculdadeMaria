@@ -1,5 +1,11 @@
 const api = "api",
   $ = (s) => document.querySelector(s);
+function showMessage(text, type = "success") {
+  const message = $("#message");
+  message.textContent = text || "";
+  message.classList.toggle("is-error", type === "error");
+  message.classList.toggle("is-success", type === "success");
+}
 let state = { operations: [], config: [], closed: [] },
   sessionToken = sessionStorage.getItem("fm_session") || "";
 const num = (v) => Number(String(v ?? 0).replace(",", ".")) || 0,
@@ -583,9 +589,9 @@ function render() {
               method: "POST",
             });
             await load();
-            $("#message").textContent = "Operação reaberta com sucesso.";
+            showMessage("Operação reaberta com sucesso.");
           } catch (err) {
-            $("#message").textContent = err.message || "Não foi possível reabrir esta operação.";
+            showMessage(err.message || "Não foi possível reabrir esta operação.", "error");
           } finally {
             b.disabled = false;
           }
@@ -835,7 +841,7 @@ $("#operation-form").onsubmit = async (e) => {
     $("#toggle-operation-form").textContent = "Cadastrar manualmente";
     await load();
   } catch (err) {
-    $("#message").textContent = err.message;
+    showMessage(err.message, "error");
   }
 };
 document
@@ -864,7 +870,7 @@ $("#edit-operation-form").onsubmit = async (e) => {
     $("#edit-operation-dialog").close();
     await load();
   } catch (err) {
-    $("#message").textContent = err.message;
+    showMessage(err.message, "error");
   }
 };
 $("#close-operation-form").onsubmit = async (e) => {
@@ -882,7 +888,7 @@ $("#close-operation-form").onsubmit = async (e) => {
     $("#close-operation-dialog").close();
     await load();
   } catch (err) {
-    $("#message").textContent = err.message;
+    showMessage(err.message, "error");
   }
 };
 $("#equity-form").onsubmit = async (e) => {
@@ -901,7 +907,7 @@ $("#equity-form").onsubmit = async (e) => {
     $("#toggle-equity-form").textContent = "Adicionar ação";
     await load();
   } catch (err) {
-    $("#message").textContent = err.message;
+    showMessage(err.message, "error");
   }
 };
 $("#cash-form").onsubmit = async (e) => {
@@ -918,7 +924,7 @@ $("#cash-form").onsubmit = async (e) => {
     $("#toggle-cash-form").textContent = "Novo lançamento";
     await load();
   } catch (err) {
-    $("#message").textContent = err.message;
+    showMessage(err.message, "error");
   }
 };
 $("#darf-form").onsubmit = async (e) => {
@@ -934,7 +940,7 @@ $("#darf-form").onsubmit = async (e) => {
     $("#toggle-darf-form").textContent = "Registrar DARF";
     await load();
   } catch (err) {
-    $("#message").textContent = err.message;
+    showMessage(err.message, "error");
   }
 };
 $("#roi-form").onsubmit = (e) => {
@@ -979,7 +985,7 @@ $("#quote-form").onsubmit = async (e) => {
     $("#toggle-quote-form").textContent = "Registrar cotação";
     await load();
   } catch (err) {
-    $("#message").textContent = err.message;
+    showMessage(err.message, "error");
   }
 };
 $("#note-pdf-form [name=pdf]").onchange = (e) => {
@@ -1122,9 +1128,9 @@ $("#save-config").onclick = async () => {
       body: JSON.stringify({ values }),
     });
     await load();
-    $("#message").textContent = "Configurações salvas.";
+    showMessage("Configurações salvas.");
   } catch (err) {
-    $("#message").textContent = err.message;
+    showMessage(err.message, "error");
   }
 };
 async function downloadBackup() {
@@ -1163,12 +1169,14 @@ $("#restore-form").onsubmit = async (e) => {
     e.target.reset();
     e.target.hidden = true;
     $("#toggle-restore-form").textContent = "Restaurar backup";
-    $("#message").textContent = `${result.restored} registro(s) restaurado(s) no piloto.`;
+    showMessage(`${result.restored} registro(s) restaurado(s) no piloto.`);
   } catch (err) {
-    $("#message").textContent =
+    showMessage(
       err instanceof SyntaxError
         ? "O arquivo selecionado não é um JSON de backup válido."
-        : err.message;
+        : err.message,
+      "error",
+    );
   }
 };
 $("#logout").onclick = async () => {
