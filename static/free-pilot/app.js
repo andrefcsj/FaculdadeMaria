@@ -1155,27 +1155,49 @@ $("#quote-form").onsubmit = async (e) => {
   }
 };
 let stagedNoteImport;
+function parseBrokerageTrades(text) {
+  const optionPattern = /1-BOVESPA\s+([CV])\s+OP(?:Ç|C)[AÃ]O\s+DE\s+(VENDA|COMPRA)\s+(\d{2}\/\d{2})\s+([A-Z0-9]{5,})\s+(?:[A-Z]{1,3}(?:\s+[A-Z])?\s+)?(\d+)\s+([0-9.,]+)\s+([0-9.,]+)\s+([CD])/gi;
+  const exercisePattern = /1-BOVESPA\s+([CV])\s+(?:EOV|EXERC(?:[ÍI]CIO)?\s+OPC(?:[AÃ]O)?(?:\s+(?:VENDA|COMPRA))?)\s+([A-Z0-9]+)\s+(\d+)\s+([0-9.,]+)\s+([0-9.,]+)\s+([CD])/gi;
+  const options = [...text.matchAll(optionPattern)].map((match) => ({ side: match[1].toUpperCase() === "V" ? "Venda" : "Compra", market: String(match[2]).toLowerCase().includes("compra") ? "Opção de compra" : "Opção de venda", expiry_month: match[3], option_code: match[4].toUpperCase(), quantity: Number(match[5]), unit_price: parseBrNumber(match[6]), gross_value: parseBrNumber(match[7]), cash_direction: match[8].toUpperCase() }));
+  const exercises = [...text.matchAll(exercisePattern)].map((match) => ({ side: match[1].toUpperCase() === "V" ? "Venda" : "Compra", market: "Exercício de opção", option_code: match[2].toUpperCase().replace(/E$/, ""), quantity: Number(match[3]), unit_price: parseBrNumber(match[4]), gross_value: parseBrNumber(match[5]), cash_direction: match[6].toUpperCase(), event_type: "exercise" }));
+  return [...options, ...exercises];
+}
 async function stageNoteImport(file, result) {
   const text = await pdfText(file), normalized = text.toUpperCase().replace(/\s+/g, " ");
   if (!normalized.includes("NOTA DE CORRETAGEM") || (!normalized.includes("BTG PACTUAL") && !normalized.includes("NECTON"))) throw Error("Envie uma nota de corretagem BTG/Necton com texto pesquisável.");
   const date = (text.match(/(\d{2}\/\d{2}\/\d{4})/) || [])[1];
   const noteNumber = (text.match(/NOTA DE CORRETAGEM\s+(\d{5,})/i) || text.match(/(?:NR\.\s*NOTA)[^\d]*(\d{5,})/i) || [])[1] || "local";
-  const pattern = /1-BOVESPA\s+([CV])\s+OP(?:Ç|C)[AÃ]O\s+DE\s+(VENDA|COMPRA)\s+(\d{2}\/\d{2})\s+([A-Z0-9]{5,})\s+(?:[A-Z]{1,3}(?:\s+[A-Z])?\s+)?(\d+)\s+([0-9.,]+)\s+([0-9.,]+)\s+([CD])/gi;
-  const trades = [...text.matchAll(pattern)].map((match) => ({ side: match[1].toUpperCase() === "V" ? "Venda" : "Compra", market: String(match[2]).toLowerCase().includes("compra") ? "CALL" : "PUT", expiry_month: match[3], option_code: match[4].toUpperCase(), quantity: Number(match[5]), unit_price: parseBrNumber(match[6]), gross_value: parseBrNumber(match[7]) }));
+  const trades = parseBrokerageTrades(text);
   if (!trades.length) throw Error("Nenhuma negociação foi reconhecida. Use uma nota BTG/Necton definitiva com texto selecionável.");
   const processed = stagedNoteImport?.file === file ? stagedNoteImport.processed : new Set();
   stagedNoteImport = { file, noteNumber, trades, processed };
   result.classList.remove("is-error"); result.classList.add("is-success");
-  result.innerHTML = `<strong>Nota ${escape(noteNumber)} reconhecida</strong><span>${trades.length} negociação(ões encontradas). Cada confirmação registra uma linha no histórico; a próxima negociação fica selecionada automaticamente.</span><select id="staged-note-trade">${trades.map((trade, index) => `<option value="${index}" ${processed.has(index) ? "disabled" : ""}>${processed.has(index) ? "✓ " : ""}${escape(trade.option_code)} · ${escape(trade.side)} · ${trade.quantity} opções · ${money(trade.unit_price)}</option>`).join("")}</select><div id="staged-closure-choice" hidden></div>`;
+  result.innerHTML = `<strong>Nota ${escape(noteNumber)} reconhecida</strong><span>${trades.length} lançamento(s) encontrado(s). Nenhuma alteração será feita até você confirmar a importação.</span><select id="staged-note-trade">${trades.map((trade, index) => `<option value="${index}" ${processed.has(index) ? "disabled" : ""}>${processed.has(index) ? "✓ " : ""}${trade.event_type === "exercise" ? "EXERCÍCIO · " : ""}${escape(trade.option_code)} · ${escape(trade.side)} · ${trade.quantity} ações/opções · ${money(trade.unit_price)}</option>`).join("")}</select><div id="staged-closure-choice" hidden></div>`;
   const select = result.querySelector("#staged-note-trade");
   const next = trades.findIndex((_, index) => !processed.has(index));
   if (next >= 0) select.value = String(next);
   const apply = () => {
     const trade = trades[Number(select.value)], metadata = optionMetadata(trade.option_code, trade.expiry_month);
-    const candidate = (state.operations || []).find((item) => String(item.status).toLowerCase() === "aberta" && String(item.ativo).toUpperCase() === trade.option_code && ((trade.side === "Compra" && String(item.estrategia).toLowerCase().includes("venda")) || (trade.side === "Venda" && String(item.estrategia).toLowerCase() === "compra")));
+    const candidate = (state.operations || []).find((item) => String(item.status).toLowerCase() === "aberta" && String(item.ativo).toUpperCase() === trade.option_code && (trade.event_type === "exercise" || (trade.side === "Compra" && String(item.estrategia).toLowerCase().includes("venda")) || (trade.side === "Venda" && String(item.estrategia).toLowerCase() === "compra")));
     const choice = result.querySelector("#staged-closure-choice");
     stagedNoteImport.closureOperationId = null;
-    if (candidate) {
+    stagedNoteImport.exerciseOperationId = null;
+    if (trade.event_type === "exercise") {
+      if (!candidate) {
+        choice.hidden = false;
+        choice.innerHTML = `<strong>Exercício precisa de conferência</strong><span>Não foi encontrada uma posição aberta para ${escape(trade.option_code)}. Nenhum lançamento será permitido até a posição ser conferida.</span>`;
+        $("#trigger-note-import").disabled = true;
+      } else {
+        const type = String(candidate.tipo).toUpperCase();
+        const underlying = underlyingForOption(trade.option_code);
+        const action = type === "CALL" ? `entregar ${trade.quantity} ação(ões) de ${escape(underlying)} da carteira` : `adquirir ${trade.quantity} ação(ões) de ${escape(underlying)} para a carteira`;
+        choice.hidden = false;
+        choice.innerHTML = `<strong>Exercício de ${escape(type)} identificado</strong><span>A nota fechará ${escape(trade.option_code)} e irá ${action}, ao preço de ${money(trade.unit_price)}.</span><div><button type="button" data-confirm-exercise>Confirmar exercício</button><button type="button" data-reject-exercise>Não importar agora</button></div>`;
+        choice.querySelector("[data-confirm-exercise]").onclick = () => { stagedNoteImport.exerciseOperationId = String(candidate.id); choice.classList.add("is-confirmed"); choice.querySelector("span").textContent = `Exercício confirmado: a posição será fechada e o ativo será ${type === "CALL" ? "entregue" : "adquirido"} somente ao importar.`; choice.querySelector("div").remove(); $("#trigger-note-import").disabled = false; };
+        choice.querySelector("[data-reject-exercise]").onclick = () => { stagedNoteImport.exerciseOperationId = null; choice.classList.remove("is-confirmed"); choice.querySelector("span").textContent = "Nenhuma alteração será feita. Escolha outra negociação ou cancele a nota."; choice.querySelector("div").remove(); $("#trigger-note-import").disabled = true; };
+        $("#trigger-note-import").disabled = true;
+      }
+    } else if (candidate) {
       choice.hidden = false;
       choice.innerHTML = `<strong>Encerramento identificado</strong><span>A negociação oposta de ${escape(trade.option_code)} corresponde à posição aberta de ${escape(candidate.data_abertura)}. Deseja encerrar essa posição?</span><div><button type="button" data-confirm-close>Sim, encerrar operação</button><button type="button" data-reject-close>Não, revisar dados</button></div>`;
       choice.querySelector("[data-confirm-close]").onclick = () => { stagedNoteImport.closureOperationId = String(candidate.id); choice.classList.add("is-confirmed"); choice.querySelector("span").textContent = "Encerramento confirmado. Ao importar, esta posição será movida para Operações Fechadas."; choice.querySelector("div").remove(); $("#trigger-note-import").disabled = false; };
@@ -1203,6 +1225,7 @@ form.onsubmit = async (e) => {
   const file = e.target.elements.pdf.files[0], button = submitButton || e.target.querySelector("footer button:last-child, button[type=submit], button:last-child");
   const stagedSelectedIndex = stagedNoteImport?.file === file ? Number(result.querySelector("#staged-note-trade")?.value) : null;
   const stagedClosureId = stagedNoteImport?.file === file ? stagedNoteImport.closureOperationId : null;
+  const stagedExerciseId = stagedNoteImport?.file === file ? stagedNoteImport.exerciseOperationId : null;
   result.classList.remove("is-success", "is-error");
   if (!file) { result.classList.add("is-error"); result.textContent = "Selecione uma nota em PDF."; return; }
   button.disabled = true;
@@ -1217,18 +1240,7 @@ form.onsubmit = async (e) => {
     const [day, month, year] = date.split("/");
     const tradeDate = `${year}-${month}-${day}`;
     const noteNumber = (text.match(/NOTA DE CORRETAGEM\s+(\d{5,})/i) || text.match(/(?:NR\.\s*NOTA)[^\d]*(\d{5,})/i) || [])[1] || `LOCAL-${tradeDate}`;
-    // Formato definitivo BTG/Necton: prazo e espécie (ON/PN) aparecem antes da quantidade.
-    const pattern = /1-BOVESPA\s+([CV])\s+OP(?:Ç|C)[AÃ]O\s+DE\s+(VENDA|COMPRA)\s+(\d{2}\/\d{2})\s+([A-Z0-9]{5,})\s+(?:[A-Z]{1,3}(?:\s+[A-Z])?\s+)?(\d+)\s+([0-9.,]+)\s+([0-9.,]+)\s+([CD])/gi;
-    const trades = [...text.matchAll(pattern)].map((match) => ({
-      side: match[1].toUpperCase() === "V" ? "Venda" : "Compra",
-      market: String(match[2]).toLowerCase().includes("compra") ? "Opção de compra" : "Opção de venda",
-      expiry_month: match[3], option_code: match[4].toUpperCase(), quantity: Number(match[5]), unit_price: parseBrNumber(match[6]), gross_value: parseBrNumber(match[7]), cash_direction: match[8].toUpperCase(),
-    }));
-    const exercisePattern = /1-BOVESPA\s+([CV])\s+(?:EOV|EXERC(?:[ÍI]CIO)?\s+OPC(?:[AÃ]O)?(?:\s+(VENDA|COMPRA))?)\s+([A-Z0-9]+)\s+(\d+)\s+([0-9.,]+)\s+([0-9.,]+)\s+([CD])/gi;
-    for (const match of text.matchAll(exercisePattern)) {
-      const code = match[3].toUpperCase().replace(/E$/, "");
-      trades.push({ side: match[1].toUpperCase() === "V" ? "Venda" : "Compra", market: String(match[2]), option_code: code, quantity: Number(match[4]), unit_price: parseBrNumber(match[5]), gross_value: parseBrNumber(match[6]), cash_direction: match[7].toUpperCase(), event_type: /COMPRA/i.test(match[2]) ? "exercise_call_assignment" : "exercise_put_assignment" });
-    }
+    const trades = parseBrokerageTrades(text);
     if (!trades.length) throw Error("Nenhuma negociação foi reconhecida. Use uma nota BTG/Necton definitiva com texto selecionável.");
     const totalGross = trades.reduce((sum, trade) => sum + trade.gross_value, 0) || 1;
     const totalCosts = parseBrNumber((text.match(/TOTAL\s+CORRETAGEM\s*\/\s*DESPESAS\s+([0-9.,]+)/i) || [])[1]);
@@ -1247,13 +1259,14 @@ form.onsubmit = async (e) => {
       const netCash = trade.cash_direction === "C" ? trade.gross_value - trade.allocated_costs - trade.allocated_irrf : -(trade.gross_value + trade.allocated_costs + trade.allocated_irrf);
       const matchedOpen = (state.operations || []).find((item) => String(item.ativo).toUpperCase() === trade.option_code && String(item.status).toLowerCase() === "aberta");
       if (stagedNoteImport?.file === file && trade.side === "Compra" && matchedOpen && String(stagedClosureId || "") !== String(matchedOpen.id)) throw Error("Confirme o encerramento identificado antes de importar esta recompra.");
+      if (stagedNoteImport?.file === file && trade.event_type === "exercise" && (!matchedOpen || String(stagedExerciseId || "") !== String(matchedOpen.id))) throw Error("Confirme o exercício identificado antes de importar esta operação.");
       const payload = { key: `${digest}:${index}`, broker: normalized.includes("NECTON") ? "Necton" : "BTG Pactual", note_number: noteNumber, trade_date: tradeDate, trade, net_cash: String(netCash), operational_costs: String(trade.allocated_costs), irrf: String(trade.allocated_irrf), cash_direction: trade.cash_direction, imported_at: new Date().toISOString() };
       const response = await request("/notes", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ key: payload.key, payload }) });
       const saved = await response.json();
       if (saved.imported) imported += 1;
       if (!saved.imported) continue;
       const existing = (state.operations || []).find((item) => String(item.ativo).toUpperCase() === trade.option_code && String(item.status).toLowerCase() === "aberta") || operationsCreatedFromThisNote.get(trade.option_code);
-      if (trade.event_type?.startsWith("exercise_") && existing) {
+      if (trade.event_type === "exercise" && existing) {
         await request(`/operations/${existing.id}/exercise`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ data_fechamento: tradeDate, asset: underlyingForOption(trade.option_code), quantity: trade.quantity, exercise_price: trade.unit_price, costs: trade.allocated_costs + trade.allocated_irrf }) });
         exercises += 1;
         continue;
