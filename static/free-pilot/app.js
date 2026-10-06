@@ -25,7 +25,8 @@ function showMessage(text, type = "success") {
   message.classList.toggle("is-success", type === "success");
 }
 let state = { operations: [], config: [], closed: [] },
-  sessionToken = sessionStorage.getItem("fm_session") || "";
+  sessionToken = sessionStorage.getItem("fm_session") || "",
+  activePremiumMonth = "";
 const num = (v) => Number(String(v ?? 0).replace(",", ".")) || 0,
   money = (v) =>
     new Intl.NumberFormat("pt-BR", {
@@ -296,37 +297,38 @@ function renderExtra() {
       const result = item.Resultado_final ?? item.resultado_final ?? item.Lucro_tributavel;
       return result === undefined || result === null || result === "" ? openingNetPremium(item) : num(result);
     },
-    addPremium = (date, receivedPremium, retainedPremium) => {
+    addPremium = (date, receivedPremium, retainedPremium, operationCosts = 0) => {
       const month = String(date || "").slice(0, 7) || "Sem data";
       const row = monthly.get(month) || {
         month,
         count: 0,
         received: 0,
         retained: 0,
+        costs: 0,
       };
       row.count += 1;
       row.received += num(receivedPremium);
       row.retained += num(retainedPremium);
+      row.costs += num(operationCosts);
       monthly.set(month, row);
     };
-  state.operations.filter(isPremiumSale).forEach((item) => addPremium(item.data_abertura, openingNetPremium(item), openingNetPremium(item)));
-  (state.closed || []).filter(isPremiumSale).forEach((item) => addPremium(item.data_abertura || item["Data abertura"] || item["Data fechamento"] || item.closed_at, openingNetPremium(item), closedRetainedPremium(item)));
+  state.operations.filter(isPremiumSale).forEach((item) => addPremium(item.data_abertura, openingNetPremium(item), openingNetPremium(item), num(item.custos ?? item.Custos ?? item.Custos_total) + num(item.irrf ?? item.IRRF)));
+  (state.closed || []).filter(isPremiumSale).forEach((item) => addPremium(item.data_abertura || item["Data abertura"] || item["Data fechamento"] || item.closed_at, openingNetPremium(item), closedRetainedPremium(item), num(item.custos ?? item.Custos ?? item.Custos_total) + num(item.irrf ?? item.IRRF)));
   const premiumRows = [...monthly.values()].sort((a, b) =>
     a.month.localeCompare(b.month),
   );
-  const received = premiumRows.reduce((sum, row) => sum + row.received, 0),
-    retained = premiumRows.reduce((sum, row) => sum + row.retained, 0),
-    costs = [...(state.operations || []), ...(state.closed || [])].filter(isPremiumSale).reduce(
-      (sum, item) => sum + num(item.custos ?? item.Custos ?? item.Custos_total) + num(item.irrf ?? item.IRRF),
-      0,
-    );
+  const visiblePremiumRows = activePremiumMonth ? premiumRows.filter((row) => row.month === activePremiumMonth) : premiumRows;
+  const received = visiblePremiumRows.reduce((sum, row) => sum + row.received, 0),
+    retained = visiblePremiumRows.reduce((sum, row) => sum + row.retained, 0),
+    costs = visiblePremiumRows.reduce((sum, row) => sum + row.costs, 0);
+  $("#premium-filter-label").textContent = activePremiumMonth ? `COMPETÊNCIA ${activePremiumMonth.split("-").reverse().join("/")}` : "HISTÓRICO CONSOLIDADO";
   $("#premium-total").textContent = money(received);
   $("#premium-costs").textContent = money(costs);
   $("#premium-retained").textContent = money(retained);
-  $("#premium-rows").innerHTML = premiumRows.slice().reverse().map((row) => `<tr class="premium-history-row"><td><strong>${escape(row.month)}</strong><small>competência do ciclo</small></td><td><span class="premium-count">${row.count}</span><small>operações registradas</small></td><td class="positive"><strong>${money(row.received)}</strong><small>prêmio líquido recebido</small></td><td class="${row.retained < 0 ? "negative" : "positive"}"><strong>${money(row.retained)}</strong><small>retido após encerramentos</small></td></tr>`).join("") || "<tr><td colspan=4 class=\"premium-empty\">Nenhum prêmio registrado.</td></tr>";
-  const top = Math.max(...premiumRows.map((row) => Math.abs(row.retained)), 1);
+  $("#premium-rows").innerHTML = visiblePremiumRows.slice().reverse().map((row) => `<tr class="premium-history-row"><td><strong>${escape(row.month)}</strong><small>competência do ciclo</small></td><td><span class="premium-count">${row.count}</span><small>operações registradas</small></td><td class="positive"><strong>${money(row.received)}</strong><small>prêmio líquido recebido</small></td><td class="${row.retained < 0 ? "negative" : "positive"}"><strong>${money(row.retained)}</strong><small>retido após encerramentos</small></td></tr>`).join("") || "<tr><td colspan=4 class=\"premium-empty\">Nenhum prêmio registrado.</td></tr>";
+  const top = Math.max(...visiblePremiumRows.map((row) => Math.abs(row.retained)), 1);
   $("#premium-chart").innerHTML =
-    premiumRows
+    visiblePremiumRows
       .map(
         (row) =>
           `<div><i style="height:${Math.max(5, (Math.abs(row.retained) / top) * 130)}px"></i><strong>${money(row.retained)}</strong><small>${escape(row.month)}</small></div>`,
@@ -409,6 +411,36 @@ function render() {
   $("#premiums-open").textContent = money(premiumsRetained);
   $("#premiums-received").textContent = money(premiumsReceived);
   $("#premiums-month").textContent = money(monthlyPremium);
+  $("#patrimony-equities").textContent = money(equityCost);
+  $("#patrimony-cash").textContent = money(brokerCash);
+  $("#patrimony-premium").textContent = money(premiumsRetained);
+  $("#patrimony-premium-copy").textContent = `Total recebido: ${money(premiumsReceived)} · recompras já descontadas.`;
+  $("#patrimony-total").textContent = money(patrimony);
+  const formatExpiry = (value) => String(value || "—").includes("-") ? String(value).split("-").reverse().join("/") : String(value || "—");
+  const daysUntil = (value) => value ? Math.max(0, Math.ceil((new Date(`${value}T00:00:00`) - new Date()) / 86400000)) : null;
+  const commitmentGroups = [
+    {
+      title: "PUTS VENDIDAS",
+      items: open.filter((item) => String(item.tipo).toUpperCase() === "PUT").map((item) => ({
+        asset: underlyingForOption(item.ativo, preferencesByOperation.get(String(item.id))?.underlying_asset), option: item.ativo,
+        expiry: item.vencimento, quantity: num(item.contratos) * size, total: num(item.contratos) * num(item.strike) * size,
+      })),
+    },
+    {
+      title: "CALLS COBERTAS",
+      items: open.filter((item) => String(item.tipo).toUpperCase() === "CALL" && /cobert/i.test(String(item.estrategia))).map((item) => {
+        const asset = underlyingForOption(item.ativo, preferencesByOperation.get(String(item.id))?.underlying_asset);
+        return { asset, option: item.ativo, expiry: item.vencimento, quantity: num(item.contratos) * size, total: equityCostByAsset.get(asset) || 0 };
+      }),
+    },
+  ];
+  const commitmentMarkup = commitmentGroups.map((group) => {
+    if (!group.items.length) return "";
+    const subtotal = group.items.reduce((sum, item) => sum + item.total, 0);
+    return `<section class="commitment-group"><header><b>${escape(group.title)}</b><strong>${group.items.length} operação${group.items.length === 1 ? "" : "ões"} · ${money(subtotal)}</strong></header><div class="commitment-head"><span>AÇÃO</span><span>OPÇÃO</span><span>VENCIMENTO</span><span>QTD.</span><span>VALOR TOTAL</span></div>${group.items.map((item) => { const days = daysUntil(item.expiry); return `<div class="commitment-row"><span class="commitment-asset"><img src="https://raw.githubusercontent.com/thefintz/icones-b3/main/icones/${encodeURIComponent(item.asset)}.png" alt="" onerror="this.remove()"><b>${escape(item.asset)}</b></span><strong>${escape(item.option)}</strong><span><b>${escape(formatExpiry(item.expiry))}</b>${days === null ? "" : `<small>${days} dias</small>`}</span><span>${item.quantity}</span><strong class="commitment-value">${money(item.total)}</strong></div>`; }).join("")}</section>`;
+  }).join("");
+  $("#commitment-modal-content").innerHTML = commitmentMarkup || '<div class="commitment-empty"><strong>Nenhum capital está comprometido agora.</strong><span>As PUTs vendidas e as CALLs cobertas aparecerão aqui.</span></div>';
+  $("#commitment-modal-total").textContent = money(capital);
   $("#month-reference").textContent = new Intl.DateTimeFormat("pt-BR", {
     month: "long",
     year: "numeric",
@@ -557,6 +589,19 @@ function render() {
     }).join("") || '<div class="exec-empty">Nenhuma operação aberta.</div>');
   $("#dashboard-expiries").innerHTML = $("#expiries").innerHTML;
   renderExtra();
+  const activateCard = (selector, action) => document.querySelectorAll(selector).forEach((card) => {
+    card.onclick = action;
+    card.onkeydown = (event) => {
+      if (event.key === "Enter" || event.key === " ") { event.preventDefault(); action(); }
+    };
+  });
+  activateCard("[data-open-patrimony]", () => $("#patrimony-modal").showModal());
+  activateCard("[data-open-commitment]", () => $("#commitment-modal").showModal());
+  activateCard("[data-open-premiums]", () => { activePremiumMonth = ""; renderExtra(); screen("premiums"); });
+  activateCard("[data-open-premiums-month]", () => { activePremiumMonth = monthKey; renderExtra(); screen("premiums"); });
+  document.querySelectorAll("[data-close-insight]").forEach((button) => {
+    button.onclick = () => button.closest("dialog")?.close();
+  });
   document.querySelectorAll(".executive-dashboard [data-screen]").forEach(
     (link) =>
       (link.onclick = (event) => {
