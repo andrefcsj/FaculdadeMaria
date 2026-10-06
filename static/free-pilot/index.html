@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Dashboard Executivo | FaculdadeMaria</title>
     <link rel="stylesheet" href="theme.css" />
-    <link rel="stylesheet" href="free-pilot/free-pilot.css?v=47" />
+    <link rel="stylesheet" href="free-pilot/free-pilot.css?v=48" />
   </head>
   <body class="app-shell">
     <section id="login" class="free-login">
@@ -90,10 +90,10 @@
                 <span class="exec-kpi__icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v2"/></svg></span>
                 <small>CAPITAL COMPROMETIDO</small
                 ><strong id="capital-committed">R$ 0,00</strong>
-                <p>PUTs abertas em garantia</p>
+                <p id="commitment-description">Garantias e ações reservadas</p>
                 <div class="exec-kpi__meter" aria-label="Percentual do patrimônio comprometido"><i id="commitment-meter"></i></div>
                 <div class="exec-kpi__insight"><i></i><span>Garantias ativas</span></div>
-                <span class="exec-kpi__watermark" aria-hidden="true">PUT</span>
+                <span class="exec-kpi__watermark" aria-hidden="true">CAP</span>
               </article>
               <article class="exec-kpi exec-kpi--premium exec-kpi--clickable" data-open-premiums role="button" tabindex="0" aria-label="Ver prêmios recebidos">
                 <span class="exec-kpi__icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 7v10M15 9.5c-.6-.7-1.6-1.1-3-1.1-1.7 0-2.8.8-2.8 2 0 3.2 5.6 1.2 5.6 4.2 0 1.2-1.1 2-2.8 2-1.3 0-2.4-.4-3.1-1.1"/></svg></span>
@@ -128,6 +128,11 @@
                 <p id="dashboard-insight">Os valores abaixo são calculados com os lançamentos registrados na carteira.</p>
               </div>
               <a href="#open" data-screen="open">Ver operações →</a>
+            </section>
+            <section class="dashboard-executive-strip" aria-label="Leitura executiva do mês">
+              <div class="dashboard-executive-strip__heading"><span>PAINEL EXECUTIVO</span><h2>Prêmios e capital por competência</h2><p>Leitura visual dos créditos efetivamente registrados e das garantias em aberto.</p></div>
+              <div id="dashboard-premium-bars" class="dashboard-premium-bars" aria-label="Prêmios líquidos por competência"></div>
+              <div class="dashboard-executive-strip__metrics"><div><small>PRÊMIOS NO CICLO</small><strong id="dashboard-cycle-premium">R$ 0,00</strong></div><div><small>CALLS COM COBERTURA</small><strong id="dashboard-covered-calls">0</strong></div><div><small>CAPITAL EM PUTS</small><strong id="dashboard-put-capital">R$ 0,00</strong></div></div>
             </section>
             <div class="exec-grid exec-grid--primary">
               <section class="exec-panel exec-panel--portfolio">
@@ -815,6 +820,6 @@
     <template id="ccxCallTemplate"><article class="ccx-call"><div class="ccx-call-title"><b>CALL <span></span></b><button type="button" data-ccx-remove aria-label="Remover CALL">×</button></div><div class="ccx-grid"><label>Código<input data-ccx="code" placeholder="Ex.: PETRA492"></label><label>Strike (R$)<input data-ccx="strike" inputmode="decimal" placeholder="48,92" required></label><label>Prêmio (R$)<input data-ccx="premium" inputmode="decimal" placeholder="1,02" required></label><label>Contratos<input data-ccx="contracts" type="number" min="1" value="1" required></label><label>Vencimento<input data-ccx="expiry" type="date"></label></div></article></template>
     <div class="ccx-modal" id="putComparatorModal" hidden aria-hidden="true"><button type="button" class="ccx-backdrop" data-close-pcx aria-label="Fechar comparador"></button><section class="ccx-dialog" role="dialog" aria-modal="true" aria-labelledby="pcxTitle"><header class="ccx-header"><span class="ccx-icon">↓</span><div><small>PUT VENDIDA</small><h2 id="pcxTitle">Comparador de PUT</h2><p>Compare prêmio, capital necessário e margem até o strike antes de vender uma PUT.</p></div><button type="button" class="ccx-close" data-close-pcx aria-label="Fechar">×</button></header><div class="ccx-tabs"><span class="active">Comparar PUTs vendidas</span><span>Até 5 alternativas</span></div><div class="ccx-body"><form id="pcxForm" class="ccx-form" novalidate><h3>Dados da estratégia</h3><div class="ccx-grid"><label>Ativo<input id="pcxAsset" maxlength="7" placeholder="Ex.: PETR4" required></label><label>Cotação atual (R$)<input id="pcxSpot" inputmode="decimal" placeholder="Ex.: 49,12" required></label></div><div class="ccx-calls-head"><h3>Alternativas de PUT</h3><button id="pcxAdd" type="button">＋ Adicionar</button></div><div id="pcxPuts"></div><p id="pcxError" class="ccx-error" hidden></p></form><aside class="ccx-results"><div class="ccx-hero" id="pcxHero"><small>MELHOR RELAÇÃO RISCO × RETORNO</small><strong>—</strong><span>Preencha pelo menos duas PUTs para comparar.</span></div><div class="ccx-kpis"><div><small>MAIOR PRÊMIO</small><strong id="pcxPremium">—</strong></div><div><small>MAIOR MARGEM</small><strong id="pcxMargin">—</strong></div><div><small>MENOR PM LÍQUIDO</small><strong id="pcxAverage">—</strong></div><div><small>CAPITAL NECESSÁRIO</small><strong id="pcxCapital">—</strong></div></div><div class="ccx-note"><b>Como decidimos</b><span>Prêmio, desconto no preço de compra, risco de exercício e distância até o strike são avaliados juntos.</span></div></aside></div><section id="pcxDetails" class="ccx-details" hidden><h3>Comparação detalhada</h3><div class="ccx-table-wrap"><table id="pcxTable"></table></div><div class="ccx-conclusion" id="pcxConclusion"></div></section><footer><button id="pcxClear" type="button">Limpar</button><button type="submit" form="pcxForm">Comparar estratégias →</button></footer></section></div>
     <template id="pcxPutTemplate"><article class="ccx-call"><div class="ccx-call-title"><b>PUT <span></span></b><button type="button" data-pcx-remove aria-label="Remover PUT">×</button></div><div class="ccx-grid"><label>Código<input data-pcx="code" placeholder="Ex.: PETRM492"></label><label>Strike (R$)<input data-pcx="strike" inputmode="decimal" required></label><label>Prêmio (R$)<input data-pcx="premium" inputmode="decimal" required></label><label>Contratos<input data-pcx="contracts" type="number" min="1" value="1" required></label><label>Vencimento<input data-pcx="expiry" type="date"></label></div></article></template>
-    <script src="free-pilot/app.js?v=60"></script>
+    <script src="free-pilot/app.js?v=61"></script>
   </body>
 </html>

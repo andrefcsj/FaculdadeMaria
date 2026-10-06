@@ -362,14 +362,32 @@ function render() {
   const open = opened(), size = cfg("Tamanho contrato opcoes", 100);
   const preferencesByOperation = new Map((state.operation_preferences || []).map((item) => [String(item.operation_id), item]));
   const equityCostByAsset = new Map();
+  const equityPositionByAsset = new Map();
   (state.equities || []).forEach((lot) => {
     const asset = String(lot.asset || "").toUpperCase();
     equityCostByAsset.set(asset, (equityCostByAsset.get(asset) || 0) + num(lot.cash_cost_total));
+    const position = equityPositionByAsset.get(asset) || { quantity: 0, cost: 0 };
+    position.quantity += num(lot.available_quantity ?? lot.quantity);
+    position.cost += num(lot.cash_cost_total);
+    equityPositionByAsset.set(asset, position);
   });
-  const putCapital = open.filter((item) => String(item.tipo).toUpperCase() === "PUT")
-    .reduce((sum, item) => sum + num(item.contratos) * num(item.strike) * size, 0);
-  const coveredCapital = open.filter((item) => String(item.tipo).toUpperCase() === "CALL" && /cobert/i.test(String(item.estrategia)))
-    .reduce((sum, item) => sum + (equityCostByAsset.get(String(preferencesByOperation.get(String(item.id))?.underlying_asset || "").toUpperCase()) || 0), 0);
+  const putCommitments = open
+    .filter((item) => String(item.tipo).toUpperCase() === "PUT" && !/^compra$/i.test(String(item.estrategia || "")))
+    .map((item) => ({ ...item, asset: underlyingForOption(item.ativo, preferencesByOperation.get(String(item.id))?.underlying_asset), quantity: num(item.contratos) * size, total: num(item.contratos) * num(item.strike) * size }));
+  const availableCoverageByAsset = new Map([...equityPositionByAsset.entries()].map(([asset, position]) => [asset, position.quantity]));
+  const coveredCallCommitments = open
+    .filter((item) => String(item.tipo).toUpperCase() === "CALL" && !/^compra$/i.test(String(item.estrategia || "")))
+    .map((item) => {
+      const asset = underlyingForOption(item.ativo, preferencesByOperation.get(String(item.id))?.underlying_asset);
+      const position = equityPositionByAsset.get(asset) || { quantity: 0, cost: 0 };
+      const desiredQuantity = num(item.contratos) * size;
+      const coveredQuantity = Math.min(desiredQuantity, Math.max(0, availableCoverageByAsset.get(asset) || 0));
+      availableCoverageByAsset.set(asset, Math.max(0, (availableCoverageByAsset.get(asset) || 0) - coveredQuantity));
+      return { ...item, asset, quantity: coveredQuantity, total: position.quantity ? position.cost * (coveredQuantity / position.quantity) : 0 };
+    })
+    .filter((item) => item.quantity > 0);
+  const putCapital = putCommitments.reduce((sum, item) => sum + item.total, 0);
+  const coveredCapital = coveredCallCommitments.reduce((sum, item) => sum + item.total, 0);
   const capital = putCapital + coveredCapital;
   const isPremiumSale = (item) => String(item.estrategia || item["Estratégia"] || "Venda").trim().toLowerCase() !== "compra" && ["PUT", "CALL"].includes(String(item.tipo || item.Tipo || "").toUpperCase());
   const openingNetPremium = (item) => num(item.premio_opcao ?? item.Premio_opcao ?? item.Premio_liquido) * num(item.contratos ?? item.Contratos ?? 1) * size - num(item.custos ?? item.Custos ?? item.Custos_total) - num(item.irrf ?? item.IRRF);
@@ -394,23 +412,19 @@ function render() {
   const equityCost = [...equityCostByAsset.values()].reduce((sum, cost) => sum + cost, 0);
   const patrimony = brokerCash + equityCost;
   const available = brokerCash - putCapital;
-  const monthKey = new Date().toISOString().slice(0, 7),
-    monthlyPremium = [...(state.operations || []), ...(state.closed || [])]
-      .filter((item) => String(item.data_abertura || item.data_fechamento || "").slice(0, 7) === monthKey)
-      .reduce(
-        (sum, item) =>
-          sum +
-          num(item.contratos) *
-            num(item.premio_opcao ?? item.Premio_liquido) *
-            size,
-        0,
-      );
+  const monthKey = new Date().toISOString().slice(0, 7);
+  const premiumDate = (item) => item.data_abertura || item["Data abertura"] || item.data_fechamento || item["Data fechamento"] || item.closed_at || "";
+  const monthlyPremium = [...(state.operations || []), ...(state.closed || [])]
+    .filter(isPremiumSale)
+    .filter((item) => String(premiumDate(item)).slice(0, 7) === monthKey)
+    .reduce((sum, item) => sum + openingNetPremium(item), 0);
   $("#capital-total").textContent = money(patrimony);
   $("#available-to-trade").textContent = money(available);
   $("#capital-committed").textContent = money(capital);
   $("#premiums-open").textContent = money(premiumsRetained);
   $("#premiums-received").textContent = money(premiumsReceived);
   $("#premiums-month").textContent = money(monthlyPremium);
+  $("#commitment-description").textContent = coveredCallCommitments.length && putCommitments.length ? "CALLs cobertas e PUTs vendidas" : coveredCallCommitments.length ? "Ações reservadas em CALLs cobertas" : putCommitments.length ? "PUTs vendidas em garantia" : "Sem garantias em aberto";
   $("#patrimony-equities").textContent = money(equityCost);
   $("#patrimony-cash").textContent = money(brokerCash);
   $("#patrimony-premium").textContent = money(premiumsRetained);
@@ -421,17 +435,11 @@ function render() {
   const commitmentGroups = [
     {
       title: "PUTS VENDIDAS",
-      items: open.filter((item) => String(item.tipo).toUpperCase() === "PUT").map((item) => ({
-        asset: underlyingForOption(item.ativo, preferencesByOperation.get(String(item.id))?.underlying_asset), option: item.ativo,
-        expiry: item.vencimento, quantity: num(item.contratos) * size, total: num(item.contratos) * num(item.strike) * size,
-      })),
+      items: putCommitments.map((item) => ({ asset: item.asset, option: item.ativo, expiry: item.vencimento, quantity: item.quantity, total: item.total })),
     },
     {
       title: "CALLS COBERTAS",
-      items: open.filter((item) => String(item.tipo).toUpperCase() === "CALL" && /cobert/i.test(String(item.estrategia))).map((item) => {
-        const asset = underlyingForOption(item.ativo, preferencesByOperation.get(String(item.id))?.underlying_asset);
-        return { asset, option: item.ativo, expiry: item.vencimento, quantity: num(item.contratos) * size, total: equityCostByAsset.get(asset) || 0 };
-      }),
+      items: coveredCallCommitments.map((item) => ({ asset: item.asset, option: item.ativo, expiry: item.vencimento, quantity: item.quantity, total: item.total })),
     },
   ];
   const commitmentMarkup = commitmentGroups.map((group) => {
@@ -441,6 +449,18 @@ function render() {
   }).join("");
   $("#commitment-modal-content").innerHTML = commitmentMarkup || '<div class="commitment-empty"><strong>Nenhum capital está comprometido agora.</strong><span>As PUTs vendidas e as CALLs cobertas aparecerão aqui.</span></div>';
   $("#commitment-modal-total").textContent = money(capital);
+  const premiumByMonth = new Map();
+  [...(state.operations || []), ...(state.closed || [])].filter(isPremiumSale).forEach((item) => {
+    const month = String(premiumDate(item)).slice(0, 7);
+    if (!/^\d{4}-\d{2}$/.test(month)) return;
+    premiumByMonth.set(month, (premiumByMonth.get(month) || 0) + openingNetPremium(item));
+  });
+  const premiumBars = [...premiumByMonth.entries()].sort(([a], [b]) => a.localeCompare(b)).slice(-6);
+  const barPeak = Math.max(...premiumBars.map(([, value]) => Math.abs(value)), 1);
+  $("#dashboard-premium-bars").innerHTML = premiumBars.map(([month, value]) => `<div><i style="height:${Math.max(12, Math.round(Math.abs(value) / barPeak * 92))}px" class="${value < 0 ? "is-negative" : ""}"></i><strong>${money(value)}</strong><small>${escape(month.slice(5))}/${escape(month.slice(2, 4))}</small></div>`).join("") || '<p class="dashboard-premium-bars__empty">Ainda não há ciclos com prêmio registrado.</p>';
+  $("#dashboard-cycle-premium").textContent = money(monthlyPremium);
+  $("#dashboard-covered-calls").textContent = String(coveredCallCommitments.length);
+  $("#dashboard-put-capital").textContent = money(putCapital);
   $("#month-reference").textContent = new Intl.DateTimeFormat("pt-BR", {
     month: "long",
     year: "numeric",
