@@ -38,6 +38,13 @@ const num = (v) => Number(String(v ?? 0).replace(",", ".")) || 0,
     n.textContent = v ?? "";
     return n.innerHTML;
   };
+const availableLotQuantity = (lot) => Math.max(0, num(lot.available_quantity ?? lot.quantity));
+const availableLotCost = (lot, field, fallback) => {
+  const originalQuantity = Math.max(0, num(lot.quantity ?? lot.available_quantity));
+  const availableQuantity = availableLotQuantity(lot);
+  const totalCost = num(lot[field] ?? lot[fallback]);
+  return originalQuantity ? totalCost * Math.min(availableQuantity, originalQuantity) / originalQuantity : totalCost;
+};
 let pdfjsModule;
 async function pdfText(file) {
   if (file.size > 5 * 1024 * 1024) throw Error("A nota deve ter no máximo 5 MB.");
@@ -270,9 +277,9 @@ function renderExtra() {
       managerialCost: 0,
       date: lot.acquisition_date || "",
     };
-    item.quantity += num(lot.available_quantity ?? lot.quantity);
-    item.fiscalCost += num(lot.tax_cost_total ?? lot.cash_cost_total);
-    item.managerialCost += num(lot.cash_cost_total ?? lot.tax_cost_total);
+    item.quantity += availableLotQuantity(lot);
+    item.fiscalCost += availableLotCost(lot, "tax_cost_total", "cash_cost_total");
+    item.managerialCost += availableLotCost(lot, "cash_cost_total", "tax_cost_total");
     if (!item.date || String(lot.acquisition_date) < item.date)
       item.date = lot.acquisition_date || item.date;
     grouped.set(asset, item);
@@ -365,10 +372,10 @@ function render() {
   const equityPositionByAsset = new Map();
   (state.equities || []).forEach((lot) => {
     const asset = String(lot.asset || "").toUpperCase();
-    equityCostByAsset.set(asset, (equityCostByAsset.get(asset) || 0) + num(lot.cash_cost_total));
+    equityCostByAsset.set(asset, (equityCostByAsset.get(asset) || 0) + availableLotCost(lot, "cash_cost_total", "tax_cost_total"));
     const position = equityPositionByAsset.get(asset) || { quantity: 0, cost: 0 };
-    position.quantity += num(lot.available_quantity ?? lot.quantity);
-    position.cost += num(lot.cash_cost_total);
+    position.quantity += availableLotQuantity(lot);
+    position.cost += availableLotCost(lot, "cash_cost_total", "tax_cost_total");
     equityPositionByAsset.set(asset, position);
   });
   const putCommitments = open
@@ -562,9 +569,9 @@ function render() {
       fiscalCost: 0,
       managerialCost: 0,
     };
-    row.quantity += num(lot.available_quantity ?? lot.quantity);
-    row.fiscalCost += num(lot.tax_cost_total ?? lot.cash_cost_total);
-    row.managerialCost += num(lot.cash_cost_total ?? lot.tax_cost_total);
+    row.quantity += availableLotQuantity(lot);
+    row.fiscalCost += availableLotCost(lot, "tax_cost_total", "cash_cost_total");
+    row.managerialCost += availableLotCost(lot, "cash_cost_total", "tax_cost_total");
     groupedEquities.set(asset, row);
   });
   const portfolio = [...groupedEquities.values()].filter((row) => row.quantity > 0);
@@ -740,14 +747,14 @@ function render() {
           "Quantidade da posição:",
           String(
             current.reduce(
-              (sum, x) => sum + num(x.available_quantity ?? x.quantity),
+              (sum, x) => sum + availableLotQuantity(x),
               0,
             ),
           ),
         );
         if (quantity === null) return;
         const cost = current.reduce(
-          (sum, x) => sum + num(x.cash_cost_total),
+          (sum, x) => sum + availableLotCost(x, "cash_cost_total", "tax_cost_total"),
           0,
         );
         const average = prompt(
