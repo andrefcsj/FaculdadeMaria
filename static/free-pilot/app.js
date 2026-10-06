@@ -1192,10 +1192,10 @@ async function stageNoteImport(file, result) {
         const underlying = underlyingForOption(trade.option_code);
         const action = type === "CALL" ? `entregar ${trade.quantity} ação(ões) de ${escape(underlying)} da carteira` : `adquirir ${trade.quantity} ação(ões) de ${escape(underlying)} para a carteira`;
         choice.hidden = false;
-        choice.innerHTML = `<strong>Exercício de ${escape(type)} identificado</strong><span>A nota fechará ${escape(trade.option_code)} e irá ${action}, ao preço de ${money(trade.unit_price)}.</span><div><button type="button" data-confirm-exercise>Confirmar exercício</button><button type="button" data-reject-exercise>Não importar agora</button></div>`;
-        choice.querySelector("[data-confirm-exercise]").onclick = () => { stagedNoteImport.exerciseOperationId = String(candidate.id); choice.classList.add("is-confirmed"); choice.querySelector("span").textContent = `Exercício confirmado: a posição será fechada e o ativo será ${type === "CALL" ? "entregue" : "adquirido"} somente ao importar.`; choice.querySelector("div").remove(); $("#trigger-note-import").disabled = false; };
-        choice.querySelector("[data-reject-exercise]").onclick = () => { stagedNoteImport.exerciseOperationId = null; choice.classList.remove("is-confirmed"); choice.querySelector("span").textContent = "Nenhuma alteração será feita. Escolha outra negociação ou cancele a nota."; choice.querySelector("div").remove(); $("#trigger-note-import").disabled = true; };
-        $("#trigger-note-import").disabled = true;
+        stagedNoteImport.exerciseOperationId = String(candidate.id);
+        choice.classList.add("is-confirmed");
+        choice.innerHTML = `<strong>Exercício de ${escape(type)} identificado</strong><span>Ao importar, ${escape(trade.option_code)} será encerrada obrigatoriamente e o sistema irá ${action}. Este valor é liquidação das ações, não é prêmio.</span>`;
+        $("#trigger-note-import").disabled = false;
       }
     } else if (candidate) {
       choice.hidden = false;
@@ -1210,6 +1210,11 @@ async function stageNoteImport(file, result) {
     $("#newStrike").value = metadata.strike || ""; $("#newExpiry").value = metadata.expiry || "";
     const strategy = trade.side === "Venda" ? "#newVenda" : "#newCompra", type = metadata.type === "CALL" ? "#newCall" : "#newPut";
     $(strategy).checked = true; $(type).checked = true; updateNewOperationPreview?.();
+    if (trade.event_type === "exercise") {
+      $("#newSummaryDetails").textContent = `Exercício de ${metadata.type} · ${trade.quantity} ações · ${type === "#newCall" ? "entrega" : "aquisição"} ao preço de ${money(trade.unit_price)}`;
+      $("#newSummaryPremiumLabel").textContent = "Valor da liquidação do exercício";
+      $("#newSummaryPremium").textContent = money(trade.gross_value);
+    } else $("#newSummaryPremiumLabel").textContent = "Prêmio bruto estimado";
   };
   select.onchange = apply; apply();
 }
@@ -1361,7 +1366,7 @@ newOperationForm.onsubmit = async (event) => {
   const error = $("#newOperationError"), save = newOperationForm.querySelector(".new-op-primary");
   error.style.display = "none";
   if (stagedNoteImport?.file === $("#open-note-pdf-form").elements.pdf.files[0]) {
-    const awaitingClosureChoice = noteImportDialog.querySelector("#staged-closure-choice:not([hidden])") && !stagedNoteImport.closureOperationId;
+    const awaitingClosureChoice = noteImportDialog.querySelector("#staged-closure-choice:not([hidden])") && !stagedNoteImport.closureOperationId && !stagedNoteImport.exerciseOperationId;
     if (awaitingClosureChoice) { error.textContent = "Escolha se a negociação deve encerrar a posição aberta antes de confirmar."; error.style.display = "block"; return; }
     popupImportButton.click(); return;
   }
