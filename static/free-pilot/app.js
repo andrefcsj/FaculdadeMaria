@@ -1,5 +1,23 @@
 const api = "api",
   $ = (s) => document.querySelector(s);
+// Padronização de entrada: códigos, ativos e descrições ficam em maiúsculas ao
+// serem gravados; datas, valores, arquivos e o PIN não sofrem alteração.
+const textInputSelector = 'input:not([type]),input[type="text"],input[type="search"],input[type="email"],textarea';
+document.addEventListener("input", (event) => {
+  const field = event.target;
+  if (!field.matches?.(textInputSelector)) return;
+  const start = field.selectionStart, end = field.selectionEnd, upper = field.value.toLocaleUpperCase("pt-BR");
+  if (field.value !== upper) { field.value = upper; if (typeof start === "number") field.setSelectionRange(start, end); }
+});
+document.addEventListener("keydown", (event) => {
+  if (event.key !== "Enter" || event.isComposing || !event.target.matches?.("input, textarea")) return;
+  const field = event.target;
+  if (["button", "submit", "reset", "file", "checkbox", "radio", "hidden"].includes(field.type) || field.tagName === "TEXTAREA") return;
+  const scope = field.closest("form, dialog, .ccx-dialog") || document;
+  const fields = [...scope.querySelectorAll('input:not([type="hidden"]):not([disabled]), select:not([disabled]), textarea:not([disabled])')].filter((item) => item.offsetParent !== null && item.type !== "file");
+  const index = fields.indexOf(field);
+  if (index >= 0 && fields[index + 1]) { event.preventDefault(); fields[index + 1].focus(); }
+});
 function showMessage(text, type = "success") {
   const message = $("#message");
   message.textContent = text || "";
@@ -272,55 +290,46 @@ function renderExtra() {
     return `<tr class="equity-premium-row"><td><span class="equity-symbol"><img src="https://raw.githubusercontent.com/thefintz/icones-b3/main/icones/${encodeURIComponent(item.asset)}.png" alt="" onerror="this.remove()"><b>${escape(item.asset.slice(0, 2))}</b></span><strong>${escape(item.asset)}</strong><small>Posição em carteira</small></td><td><b>${item.quantity}</b><small>ações disponíveis</small></td><td><strong>${money(fiscalAverage)}</strong><small>custo tributário</small></td><td><strong>${money(managerialAverage)}</strong><small>após ajustes gerenciais</small></td><td class="equity-capital"><strong>${money(item.fiscalCost)}</strong><small>base fiscal total</small></td><td><strong>${escape(item.date ? String(item.date).split("-").reverse().join("/") : "—")}</strong><small>primeiro lote</small></td><td class="equity-actions"><button data-equity-edit="${escape(item.asset)}">Editar</button><button data-equity-sell="${escape(item.asset)}">Vender</button><button data-equity-delete="${escape(item.asset)}">Excluir</button></td></tr>`;
   }).join("") || "<tr><td colspan=7 class=\"premium-empty\">Nenhuma ação registrada na carteira.</td></tr>";
   const monthly = new Map(),
-    addPremium = (date, premium, closedResult = 0) => {
+    isPremiumSale = (item) => String(item.estrategia || item["Estratégia"] || "Venda").trim().toLowerCase() !== "compra" && ["PUT", "CALL"].includes(String(item.tipo || item.Tipo || "").toUpperCase()),
+    openingNetPremium = (item) => num(item.premio_opcao ?? item.Premio_opcao ?? item.Premio_liquido) * num(item.contratos ?? item.Contratos ?? 1) * cfg("Tamanho contrato opcoes", 100) - num(item.custos ?? item.Custos ?? item.Custos_total) - num(item.irrf ?? item.IRRF),
+    closedRetainedPremium = (item) => {
+      const result = item.Resultado_final ?? item.resultado_final ?? item.Lucro_tributavel;
+      return result === undefined || result === null || result === "" ? openingNetPremium(item) : num(result);
+    },
+    addPremium = (date, receivedPremium, retainedPremium) => {
       const month = String(date || "").slice(0, 7) || "Sem data";
       const row = monthly.get(month) || {
         month,
         count: 0,
-        premium: 0,
-        result: 0,
+        received: 0,
+        retained: 0,
       };
       row.count += 1;
-      row.premium += num(premium);
-      row.result += num(closedResult);
+      row.received += num(receivedPremium);
+      row.retained += num(retainedPremium);
       monthly.set(month, row);
     };
-  state.operations.forEach((item) =>
-    addPremium(
-      item.data_abertura,
-      num(item.premio_opcao) *
-        num(item.contratos) *
-        cfg("Tamanho contrato opcoes", 100) -
-        num(item.custos) -
-        num(item.irrf),
-    ),
-  );
-  (state.closed || []).forEach((item) =>
-    addPremium(
-      item["Data fechamento"] || item.closed_at,
-      item.Premio_liquido || item.premio_opcao,
-      item.Resultado_final || item.resultado_final,
-    ),
-  );
+  state.operations.filter(isPremiumSale).forEach((item) => addPremium(item.data_abertura, openingNetPremium(item), openingNetPremium(item)));
+  (state.closed || []).filter(isPremiumSale).forEach((item) => addPremium(item.data_abertura || item["Data abertura"] || item["Data fechamento"] || item.closed_at, openingNetPremium(item), closedRetainedPremium(item)));
   const premiumRows = [...monthly.values()].sort((a, b) =>
     a.month.localeCompare(b.month),
   );
-  const received = premiumRows.reduce((sum, row) => sum + row.premium, 0),
-    closedResult = premiumRows.reduce((sum, row) => sum + row.result, 0),
-    costs = state.operations.reduce(
-      (sum, item) => sum + num(item.custos) + num(item.irrf),
+  const received = premiumRows.reduce((sum, row) => sum + row.received, 0),
+    retained = premiumRows.reduce((sum, row) => sum + row.retained, 0),
+    costs = [...(state.operations || []), ...(state.closed || [])].filter(isPremiumSale).reduce(
+      (sum, item) => sum + num(item.custos ?? item.Custos ?? item.Custos_total) + num(item.irrf ?? item.IRRF),
       0,
     );
   $("#premium-total").textContent = money(received);
   $("#premium-costs").textContent = money(costs);
-  $("#premium-retained").textContent = money(received + closedResult - costs);
-  $("#premium-rows").innerHTML = premiumRows.slice().reverse().map((row) => `<tr class="premium-history-row"><td><strong>${escape(row.month)}</strong><small>competência do ciclo</small></td><td><span class="premium-count">${row.count}</span><small>operações registradas</small></td><td class="positive"><strong>${money(row.premium)}</strong><small>créditos de opções</small></td><td class="${row.result < 0 ? "negative" : "positive"}"><strong>${money(row.result)}</strong><small>operações fechadas</small></td></tr>`).join("") || "<tr><td colspan=4 class=\"premium-empty\">Nenhum prêmio registrado.</td></tr>";
-  const top = Math.max(...premiumRows.map((row) => Math.abs(row.premium)), 1);
+  $("#premium-retained").textContent = money(retained);
+  $("#premium-rows").innerHTML = premiumRows.slice().reverse().map((row) => `<tr class="premium-history-row"><td><strong>${escape(row.month)}</strong><small>competência do ciclo</small></td><td><span class="premium-count">${row.count}</span><small>operações registradas</small></td><td class="positive"><strong>${money(row.received)}</strong><small>prêmio líquido recebido</small></td><td class="${row.retained < 0 ? "negative" : "positive"}"><strong>${money(row.retained)}</strong><small>retido após encerramentos</small></td></tr>`).join("") || "<tr><td colspan=4 class=\"premium-empty\">Nenhum prêmio registrado.</td></tr>";
+  const top = Math.max(...premiumRows.map((row) => Math.abs(row.retained)), 1);
   $("#premium-chart").innerHTML =
     premiumRows
       .map(
         (row) =>
-          `<div><i style="height:${Math.max(5, (Math.abs(row.premium) / top) * 130)}px"></i><strong>${money(row.premium)}</strong><small>${escape(row.month)}</small></div>`,
+          `<div><i style="height:${Math.max(5, (Math.abs(row.retained) / top) * 130)}px"></i><strong>${money(row.retained)}</strong><small>${escape(row.month)}</small></div>`,
       )
     .join("") || "Sem dados para o gráfico.";
   const quotes = new Map(
@@ -360,7 +369,12 @@ function render() {
   const coveredCapital = open.filter((item) => String(item.tipo).toUpperCase() === "CALL" && /cobert/i.test(String(item.estrategia)))
     .reduce((sum, item) => sum + (equityCostByAsset.get(String(preferencesByOperation.get(String(item.id))?.underlying_asset || "").toUpperCase()) || 0), 0);
   const capital = putCapital + coveredCapital;
-  const premium = open.reduce((sum, item) => sum + num(item.premio_opcao) * num(item.contratos) * size - num(item.custos) - num(item.irrf), 0);
+  const isPremiumSale = (item) => String(item.estrategia || item["Estratégia"] || "Venda").trim().toLowerCase() !== "compra" && ["PUT", "CALL"].includes(String(item.tipo || item.Tipo || "").toUpperCase());
+  const openingNetPremium = (item) => num(item.premio_opcao ?? item.Premio_opcao ?? item.Premio_liquido) * num(item.contratos ?? item.Contratos ?? 1) * size - num(item.custos ?? item.Custos ?? item.Custos_total) - num(item.irrf ?? item.IRRF);
+  const retainedClosedPremium = (item) => { const result = item.Resultado_final ?? item.resultado_final ?? item.Lucro_tributavel; return result === undefined || result === null || result === "" ? openingNetPremium(item) : num(result); };
+  const premium = open.filter(isPremiumSale).reduce((sum, item) => sum + openingNetPremium(item), 0);
+  const premiumsReceived = [...(state.operations || []), ...(state.closed || [])].filter(isPremiumSale).reduce((sum, item) => sum + openingNetPremium(item), 0);
+  const premiumsRetained = (state.operations || []).filter(isPremiumSale).reduce((sum, item) => sum + openingNetPremium(item), 0) + (state.closed || []).filter(isPremiumSale).reduce((sum, item) => sum + retainedClosedPremium(item), 0);
   const eventCash = (state.cash || []).reduce((sum, item) => sum + (["aporte", "ajuste_credito", "venda_acoes"].includes(item.kind) ? num(item.amount) : -num(item.amount)), 0);
   const noteCash = (state.notes || []).reduce((sum, note) => sum + (String(note.cash_direction || "C").toUpperCase() === "C" ? 1 : -1) * num(note.net_cash), 0);
   const hasOpeningNote = (operation) => (state.notes || []).some((note) => {
@@ -392,7 +406,8 @@ function render() {
   $("#capital-total").textContent = money(patrimony);
   $("#available-to-trade").textContent = money(available);
   $("#capital-committed").textContent = money(capital);
-  $("#premiums-open").textContent = money(premium);
+  $("#premiums-open").textContent = money(premiumsRetained);
+  $("#premiums-received").textContent = money(premiumsReceived);
   $("#premiums-month").textContent = money(monthlyPremium);
   $("#month-reference").textContent = new Intl.DateTimeFormat("pt-BR", {
     month: "long",
