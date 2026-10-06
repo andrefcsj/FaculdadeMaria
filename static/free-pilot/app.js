@@ -123,7 +123,7 @@ function renderOpenOperations(list, size, preferences, optionQuotes) {
       <td>${capitalAtRisk ? money(capitalAtRisk) : "<span class=\"premium-muted\">Coberta</span>"}</td>
       <td><strong>${escape(expiry)}</strong>${days === null ? "" : `<small>${days} dias</small>`}</td>
       <td><b class="premium-roi">${roi === null ? "—" : `${roi.toFixed(2).replace(".", ",")}%`}</b></td>
-      <td class="premium-actions"><button data-edit="${escape(item.id)}">Editar</button><button data-close="${escape(item.id)}">Fechar</button><button data-remove="${escape(item.id)}">Excluir</button></td>
+      <td class="premium-actions"><button data-edit="${escape(item.id)}" aria-label="Editar operação ${escape(item.ativo)}" title="Editar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 16.5V20h3.5L18.4 9.1l-3.5-3.5L4 16.5Z"/><path d="m13.9 6.6 3.5 3.5 1.7-1.7a1.6 1.6 0 0 0 0-2.3l-1.2-1.2a1.6 1.6 0 0 0-2.3 0l-1.7 1.7Z"/></svg></button><button data-close="${escape(item.id)}" aria-label="Fechar operação ${escape(item.ativo)}" title="Fechar"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v2"/></svg></button><button data-remove="${escape(item.id)}" aria-label="Excluir operação ${escape(item.ativo)}" title="Excluir"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M10 11v5m4-5v5M9 7l1-2h4l1 2m-8 0 1 13h8l1-13"/></svg></button></td>
     </tr>`;
   }).join("") || '<tr><td colspan="11" class="premium-empty">Nenhuma operação aberta. Importe uma nota ou cadastre a primeira operação.</td></tr>';
 }
