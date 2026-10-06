@@ -108,7 +108,8 @@ function renderOpenOperations(list, size, preferences, optionQuotes) {
     const strategy = String(item.estrategia || "Venda");
     const netPremium = num(item.premio_opcao) * num(item.contratos) * size - num(item.custos) - num(item.irrf);
     const capitalAtRisk = type === "PUT" ? num(item.strike) * num(item.contratos) * size : 0;
-    const roi = capitalAtRisk ? (netPremium / capitalAtRisk) * 100 : null;
+    const roiBase = num(item.strike) * num(item.contratos) * size;
+    const roi = roiBase ? (netPremium / roiBase) * 100 : null;
     const expiry = item.vencimento ? String(item.vencimento).split("-").reverse().join("/") : "—";
     const days = item.vencimento ? Math.max(0, Math.ceil((new Date(`${item.vencimento}T00:00:00`) - new Date()) / 86400000)) : null;
     return `<tr class="premium-operation-row premium-operation-row--${type === "CALL" ? "call" : "put"}">
@@ -469,7 +470,8 @@ function render() {
       const strategy = String(item.estrategia || "Venda");
       const netPremium = num(item.premio_opcao) * num(item.contratos) * size - num(item.custos) - num(item.irrf);
       const capitalAtRisk = type === "PUT" ? num(item.strike) * num(item.contratos) * size : 0;
-      const roi = capitalAtRisk ? (netPremium / capitalAtRisk) * 100 : null;
+      const roiBase = num(item.strike) * num(item.contratos) * size;
+      const roi = roiBase ? (netPremium / roiBase) * 100 : null;
       const days = item.vencimento ? Math.max(0, Math.ceil((new Date(`${item.vencimento}T00:00:00`) - new Date()) / 86400000)) : null;
       const iconUrl = `https://raw.githubusercontent.com/thefintz/icones-b3/main/icones/${encodeURIComponent(underlying)}.png`;
       return `<a class=\"dashboard-positions__row ${type === "CALL" ? "dashboard-positions__row--call" : ""}\" href=\"#open\" data-screen=\"open\"><span class=\"dashboard-asset\"><img src=\"${iconUrl}\" alt=\"\" onerror=\"this.style.display='none';this.nextElementSibling.style.display='grid'\"><i style=\"display:none\">${escape(underlying.slice(0, 2))}</i><strong>${escape(underlying)}</strong></span><strong>${escape(item.ativo)}</strong><span><em class=\"dashboard-type dashboard-type--${type === "CALL" ? "call" : "put"}\">${escape(type)}</em></span><span><em class=\"dashboard-strategy dashboard-strategy--${/cobert/i.test(strategy) ? "covered" : "sale"}\">${escape(strategy)}</em></span><span>${current === null ? "—" : money(current)}</span><span>${money(item.strike)}</span><span class=\"dashboard-money--positive\">${money(netPremium)}</span><span>${money(capitalAtRisk)}</span><span>${escape(String(item.vencimento || "—").split("-").reverse().join("/"))}${days === null ? "" : `<small>${days}d</small>`}</span><span><em class=\"dashboard-probability dashboard-probability--unavailable\">—</em></span><b>${roi === null ? "—" : `${roi.toFixed(2).replace(".", ",")}%`}</b></a>`;
