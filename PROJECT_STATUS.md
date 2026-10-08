@@ -85,4 +85,4 @@ da CVM e confirmação manual de preços intraday.
 - Cálculos e memória gerencial fiscal revisados; notas e operações atômicas; backup/restauração e reaberturas protegidas contra falhas parciais.
 - Reconciliação PostgreSQL/D1 concluída, preservando os lançamentos posteriores do Cloudflare. Nenhuma operação ou nota de teste inserida na base real.
 - Validação: 164 testes Python, 24 testes JavaScript, 28 casos de paridade e navegador desktop/mobile aprovados.
-- Publicado no piloto; ativação em www.radarpulse.com.br/faculdademaria/ e desligamento do legado aguardam aprovação final. Ver `docs/SPRINT_CLOUDFLARE_CONCLUSAO.md` e `docs/CLOUDFLARE_CORTE_E_REVERSAO.md`.
+- Publicado e validado em www.radarpulse.com.br/faculdademaria/ após aprovação de Andre. Login desktop/mobile, dados financeiros e preservação da rota de contabilidade confirmados. Apenas o desligamento do Render/Neon permanece pendente. Ver `docs/SPRINT_CLOUDFLARE_CONCLUSAO.md` e `docs/CLOUDFLARE_CORTE_E_REVERSAO.md`.

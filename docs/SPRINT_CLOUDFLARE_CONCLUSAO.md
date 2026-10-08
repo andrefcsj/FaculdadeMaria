@@ -1,7 +1,7 @@
 # Sprint CF-02 — Conclusão funcional da migração
 
 Autorização: Andre, em 08/10/2026: “pode iniciar”, após apresentação dos itens 1 a 5.
-Status: em execução. Branch: cloudflare-migration-prep.
+Status: implementação e corte de endereço concluídos; desligamento do legado pendente. Branch: cloudflare-migration-prep.
 
 ## Escopo autorizado
 
@@ -28,7 +28,7 @@ Em andamento: baseline Python, testes da API em SQLite isolado, paridade de cál
 
 ## Resultado da implementação e publicação
 
-Itens 1–4 implementados e validados; item 5 preparado, aguardando aprovação do corte. O desligamento de Render/Neon não foi executado.
+Itens 1–4 implementados e validados; item 5 executado após a aprovação do corte. O desligamento de Render/Neon não foi executado.
 
 - Radar agora consulta novas PUTs, aplica ROI alvo 4%, liquidez, spread, qualidade CVM, concentração e prazo; expõe fatores e dados insuficientes.
 - Scanner usa ações disponíveis e cobertura existente; Jade utiliza códigos, bid/ask e vencimentos reais; rolagem compara custo de recompra e nova venda, sem lançar operações.
@@ -64,3 +64,7 @@ Relatórios e backups: `tmp/migration-2026-10-08/`, fora do Git. Auditoria repro
 - Publicação no domínio do piloto e backup final confirmados por HTTP 200.
 
 Plano de endereço e reversão: `docs/CLOUDFLARE_CORTE_E_REVERSAO.md`. Não declarar migração 100% encerrada antes do corte aprovado e da confirmação do endereço principal.
+
+## Corte aprovado e executado
+
+Andre autorizou ativar o endereço principal em 08/10/2026: “pode sim. vlw”. Publicação no www concluída e conferida em desktop/celular; backups financeiros iguais antes/depois e rota de contabilidade preservada. O endereço principal já é `https://www.radarpulse.com.br/faculdademaria/`. A configuração padrão de publicação inclui a rota ativa; a reversão de rota usa `wrangler.pilot-only.jsonc`. Render e Neon permanecem ativos, aguardando a etapa de desligamento.

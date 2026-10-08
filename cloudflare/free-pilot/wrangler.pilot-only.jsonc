@@ -8,10 +8,6 @@
     {
       "pattern": "free-pilot.radarpulse.com.br",
       "custom_domain": true
-    },
-    {
-      "pattern": "www.radarpulse.com.br/faculdademaria*",
-      "zone_name": "radarpulse.com.br"
     }
   ],
   "assets": {
