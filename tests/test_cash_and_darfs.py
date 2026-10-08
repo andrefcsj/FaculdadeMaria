@@ -95,7 +95,7 @@ class CashAndDarfTests(unittest.TestCase):
         html=client.get("/").get_data(as_text=True)
         self.assertIn('href="/operacoes-abertas"', html)
         self.assertIn('id="newOperationModal"', html)
-        self.assertIn("Novos Aportes",html);self.assertIn("DARFs Pagos",html)
+        self.assertIn('href="/novos-aportes"',html);self.assertIn("Aportes</a>",html);self.assertIn("DARFs Pagos",html)
 
 
 if __name__=="__main__":unittest.main()

@@ -1,0 +1,167 @@
+[
+  {
+    "asset": "PETR4",
+    "root": "PETR",
+    "cnpj": "33.000.167/0001-01",
+    "model": "company",
+    "assignment_eligible": true,
+    "long_term_suitable": true,
+    "quality_score": null,
+    "data_confidence": null,
+    "source": "universo_pessoal"
+  },
+  {
+    "asset": "VALE3",
+    "root": "VALE",
+    "cnpj": "33.592.510/0001-54",
+    "model": "company",
+    "assignment_eligible": true,
+    "long_term_suitable": true,
+    "quality_score": null,
+    "data_confidence": null,
+    "source": "universo_pessoal"
+  },
+  {
+    "asset": "ITUB4",
+    "root": "ITUB",
+    "cnpj": "60.872.504/0001-23",
+    "model": "financial",
+    "assignment_eligible": true,
+    "long_term_suitable": true,
+    "quality_score": null,
+    "data_confidence": null,
+    "source": "universo_pessoal"
+  },
+  {
+    "asset": "BBAS3",
+    "root": "BBAS",
+    "cnpj": "00.000.000/0001-91",
+    "model": "financial",
+    "assignment_eligible": true,
+    "long_term_suitable": true,
+    "quality_score": null,
+    "data_confidence": null,
+    "source": "universo_pessoal"
+  },
+  {
+    "asset": "BBDC4",
+    "root": "BBDC",
+    "cnpj": "60.746.948/0001-12",
+    "model": "financial",
+    "assignment_eligible": true,
+    "long_term_suitable": true,
+    "quality_score": null,
+    "data_confidence": null,
+    "source": "universo_pessoal"
+  },
+  {
+    "asset": "ITSA4",
+    "root": "ITSA",
+    "cnpj": "61.532.644/0001-15",
+    "model": "financial",
+    "assignment_eligible": true,
+    "long_term_suitable": true,
+    "quality_score": null,
+    "data_confidence": null,
+    "source": "universo_pessoal"
+  },
+  {
+    "asset": "B3SA3",
+    "root": "B3SA",
+    "cnpj": "09.346.601/0001-25",
+    "model": "company",
+    "assignment_eligible": true,
+    "long_term_suitable": true,
+    "quality_score": null,
+    "data_confidence": null,
+    "source": "universo_pessoal"
+  },
+  {
+    "asset": "ABEV3",
+    "root": "ABEV",
+    "cnpj": "07.526.557/0001-00",
+    "model": "company",
+    "assignment_eligible": true,
+    "long_term_suitable": true,
+    "quality_score": null,
+    "data_confidence": null,
+    "source": "universo_pessoal"
+  },
+  {
+    "asset": "BBSE3",
+    "root": "BBSE",
+    "cnpj": "17.344.597/0001-94",
+    "model": "financial",
+    "assignment_eligible": true,
+    "long_term_suitable": true,
+    "quality_score": null,
+    "data_confidence": null,
+    "source": "universo_pessoal"
+  },
+  {
+    "asset": "GGBR4",
+    "root": "GGBR",
+    "cnpj": "33.611.500/0001-19",
+    "model": "company",
+    "assignment_eligible": true,
+    "long_term_suitable": true,
+    "quality_score": null,
+    "data_confidence": null,
+    "source": "universo_pessoal"
+  },
+  {
+    "asset": "SUZB3",
+    "root": "SUZB",
+    "cnpj": "16.404.287/0001-55",
+    "model": "company",
+    "assignment_eligible": true,
+    "long_term_suitable": true,
+    "quality_score": null,
+    "data_confidence": null,
+    "source": "universo_pessoal"
+  },
+  {
+    "asset": "PRIO3",
+    "root": "PRIO",
+    "cnpj": "10.629.105/0001-68",
+    "model": "company",
+    "assignment_eligible": true,
+    "long_term_suitable": true,
+    "quality_score": null,
+    "data_confidence": null,
+    "source": "universo_pessoal"
+  },
+  {
+    "asset": "ELET3",
+    "root": "ELET",
+    "cnpj": "00.001.180/0001-26",
+    "model": "company",
+    "assignment_eligible": true,
+    "long_term_suitable": true,
+    "quality_score": null,
+    "data_confidence": null,
+    "source": "universo_pessoal"
+  },
+  {
+    "asset": "CMIG4",
+    "root": "CMIG",
+    "cnpj": "17.155.730/0001-64",
+    "model": "company",
+    "assignment_eligible": true,
+    "long_term_suitable": true,
+    "quality_score": null,
+    "data_confidence": null,
+    "source": "universo_pessoal"
+  },
+  {
+    "asset": "CPLE6",
+    "root": "CPLE",
+    "cnpj": "76.483.817/0001-20",
+    "model": "company",
+    "assignment_eligible": true,
+    "long_term_suitable": true,
+    "quality_score": null,
+    "data_confidence": null,
+    "source": "universo_pessoal"
+  }
+]

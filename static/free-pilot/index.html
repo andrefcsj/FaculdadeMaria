@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Dashboard Executivo | FaculdadeMaria</title>
     <link rel="stylesheet" href="theme.css" />
-    <link rel="stylesheet" href="free-pilot/free-pilot.css?v=48" />
+    <link rel="stylesheet" href="free-pilot/free-pilot.css?v=50" />
   </head>
   <body class="app-shell">
     <section id="login" class="free-login">
@@ -39,11 +39,11 @@
             >
           </div>
           <div class="nav-group nav-group--tools"><span class="nav-group__title">CALCULADORAS E SIMULADORES</span><a href="#roi-rapido" data-open-quick-roi>▤ Calculadora de ROI</a><a href="#simulador-payoff" data-open-payoff>▦ Simular Cálculos</a><a href="#comparador-call" data-open-compare="CALL">⌁ Comparador de CALL</a><a href="#comparador-put" data-open-compare="PUT">⌁ Comparador de PUT</a></div>
-          <div class="nav-group nav-group--strategies"><span class="nav-group__title">ESTRATÉGIAS</span><a href="#simulators" data-screen="simulators">% Grade de opções</a><a href="#radar" data-screen="radar">♧ Radar Jade Lizard</a><a href="#simulador-payoff" data-open-payoff>⌁ Simulador de Payoff</a></div>
+          <div class="nav-group nav-group--strategies"><span class="nav-group__title">ESTRATÉGIAS</span><a href="#simulators" data-screen="simulators">% Grade de opções</a><a href="#jade" data-screen="jade">♧ Radar Jade Lizard</a><a href="#simulador-payoff" data-open-payoff>⌁ Simulador de Payoff</a></div>
           <div class="nav-group nav-group--operations"><span class="nav-group__title">OPERAÇÕES</span><a href="#open" data-screen="open">▣ Operações Abertas</a><a href="#closed" data-screen="closed">✓ Operações Fechadas</a><a href="#cash" data-screen="cash">＋ Aportes</a><a href="#notes" data-screen="notes">▤ Notas Importadas</a></div>
           <div class="nav-group"><a href="#equity" data-screen="equity">◉ Carteira de Ações</a><a href="#tax" data-screen="tax">▤ Apuração de IR</a></div>
           <div class="nav-group"><span class="nav-group__title">GESTÃO</span><a href="#premiums" data-screen="premiums">R$ Prêmios recebidos</a><a href="#history" data-screen="closed">⌁ Histórico</a></div>
-          <div class="nav-group"><span class="nav-group__title">INTELIGÊNCIA</span><a href="#radar" data-screen="radar">◎ Radar de Oportunidades</a><a href="#simulators" data-screen="simulators">↻ Rolagem Inteligente</a></div>
+          <div class="nav-group"><span class="nav-group__title">INTELIGÊNCIA</span><a href="#opportunities" data-screen="opportunities">◎ Radar de Oportunidades</a><a href="#scanner" data-screen="scanner">⌕ Scanner de CALL coberta</a><a href="#roll" data-screen="roll">↻ Rolagem Inteligente</a><a href="#radar" data-screen="radar">◷ Acompanhar posições</a></div>
           <div class="nav-group">
             <span class="nav-group__title">SISTEMA</span
             ><a href="#settings" data-screen="settings">⚙ Configurações</a
@@ -594,6 +594,18 @@
               <div id="compare-result" class="free-simulator-result">Informe duas opções para comparar retorno, capital e margem até o strike.</div>
             </section>
           </section>
+          <section id="opportunities-screen" class="screen" hidden>
+            <section class="exec-panel"><header class="exec-panel__header"><div><h2>Radar de novas oportunidades</h2><p>PUTs do mercado com qualidade, preço líquido, segurança e score explicável.</p></div></header>
+              <div class="migration-toolbar"><label>Ativos a consultar<input id="market-symbols" placeholder="PETR4, VALE3, BBAS3" value="PETR4, VALE3, BBAS3"></label><button type="button" id="market-refresh">Atualizar mercado</button><button type="button" id="market-b3">Atualizar pela B3</button><button type="button" id="market-cvm">Atualizar qualidade CVM</button><label class="migration-upload">Importar CSV<input id="market-csv" type="file" accept=".csv,text/csv"></label></div>
+              <p id="market-message" class="free-help" role="status">Carregue cotações para consultar oportunidades.</p>
+              <form id="radar-filters" class="migration-toolbar"><label>Ativo<input name="asset" placeholder="Todos"></label><label>ROI mínimo (%)<input name="roi" type="number" min="0" step=".1" value="4"></label><label>Prazo mínimo<input name="min_days" type="number" min="0" value="15"></label><label>Prazo máximo<input name="max_days" type="number" min="1" value="60"></label><label>Mostrar<select name="status"><option value="all">Todas, incluindo atenção</option><option value="eligible">Elegíveis</option><option value="watchlist">Em observação</option></select></label></form>
+              <div id="opportunity-cards" class="migration-cards"></div>
+              <p class="free-help">Meta de ROI: 4%. Dados sem qualidade ou liquidez suficiente são sinalizados. Cotações de fechamento não representam preço garantido de execução.</p>
+            </section>
+          </section>
+          <section id="scanner-screen" class="screen" hidden><section class="exec-panel"><header class="exec-panel__header"><div><h2>Scanner de CALL coberta</h2><p>Alternativas do mercado para as ações da sua carteira, com saldo livre e necessidade de substituir cobertura.</p></div><button type="button" id="scanner-refresh">Consultar ações da carteira</button></header><p id="scanner-message" class="free-help" role="status"></p><div id="scanner-cards" class="migration-cards"></div></section></section>
+          <section id="jade-screen" class="screen" hidden><section class="exec-panel"><header class="exec-panel__header"><div><h2>Radar Jade Lizard</h2><p>PUT vendida e spread de CALL com mesmo ativo e vencimento, usando bid/ask das opções reais.</p></div><button type="button" id="jade-refresh">Usar mercado carregado</button></header><p class="free-help">Combinações de 15 a 45 dias, liquidez mínima de 1.000 em cada perna e crédito total maior ou igual à largura do spread. O risco de queda permanece.</p><div id="jade-cards" class="migration-cards"></div></section></section>
+          <section id="roll-screen" class="screen" hidden><section class="exec-panel"><header class="exec-panel__header"><div><h2>Rolagem das posições abertas</h2><p>Compare o custo da recompra com o crédito de uma nova opção. A simulação não lança operações.</p></div></header><form id="roll-simulation-form" class="migration-toolbar"><label>Posição<select name="operation" required></select></label><label>Recompra por ação (R$)<input name="repurchase" type="number" min="0" step=".01" required></label><button>Comparar rolagens</button></form><div id="roll-cards" class="migration-cards"></div></section></section>
           <section id="radar-screen" class="screen" hidden>
             <div class="exec-grid exec-grid--primary">
               <section class="exec-panel">
@@ -604,7 +616,7 @@
                   <input name="quoted_at" type="datetime-local" required />
                   <button>Salvar cotação</button>
                 </form>
-                <p class="free-help">Sem integração paga: as cotações são inseridas por você e ficam no backup completo.</p>
+                <p class="free-help">As cotações manuais têm prioridade sobre o mercado consultado e ficam no backup completo.</p>
               </section>
               <section class="exec-panel">
                 <header class="exec-panel__header"><div><h2>Radar das posições abertas</h2><p>Comparação entre prêmio de abertura e última cotação registrada.</p></div></header>
@@ -710,7 +722,7 @@
               <article class="exec-kpi exec-kpi--roi">
                 <small>IR ESTIMADO</small
                 ><strong id="tax-estimate">R$ 0,00</strong>
-                <p>Alíquota das configurações</p>
+                <p>Saldo gerencial após compensações</p>
               </article>
               <article class="exec-kpi exec-kpi--blue">
                 <small>DARFS PAGAS</small><strong id="tax-paid">R$ 0,00</strong>
@@ -756,17 +768,17 @@
             <section class="exec-panel">
               <header class="exec-panel__header">
                 <div>
-                  <h2>Memória mensal de IR</h2>
+                  <h2>Memória mensal de IR</h2><button type="button" id="tax-print">Imprimir memória</button>
                   <p>Estimativa gerencial por competência, baseada nos fechamentos e DARFs registrados.</p>
                 </div>
               </header>
               <div class="free-table">
                 <table>
-                  <thead><tr><th>Competência</th><th>Resultado realizado</th><th>IR projetado</th><th>Pago</th><th>Situação estimada</th></tr></thead>
+                  <thead><tr><th>Competência</th><th>Resultado comum / day trade</th><th>Perdas compensadas / saldo</th><th>IRRF abatido</th><th>DARF estimada / acumulada</th><th>Pago / pendente</th><th>Situação</th></tr></thead>
                   <tbody id="tax-month-rows"></tbody>
                 </table>
               </div>
-              <p class="free-help">Esta memória não substitui a apuração oficial nem inclui compensação de prejuízos entre competências.</p>
+              <p class="free-help">Memória gerencial das opções: perdas comuns e de day trade são compensadas separadamente; IRRF é abatido e valores abaixo de R$ 10 ficam acumulados. Exercícios com base fiscal incompleta exigem revisão.</p>
             </section>
           </section>
           <section id="settings-screen" class="screen" hidden>
@@ -803,10 +815,14 @@
       </section>
     </div>
     <dialog id="quick-roi" class="quick-roi" aria-labelledby="quick-roi-title">
-      <header><div><small>CONTAS RÁPIDAS · OPÇÕES</small><h2 id="quick-roi-title">Calculadora de ROI</h2><p>Três valores. Seu retorno e a distância até o strike.</p></div><button type="button" data-close-quick-roi aria-label="Fechar calculadora">×</button></header>
+      <header><div><small>CONTAS RÁPIDAS · OPÇÕES</small><h2 id="quick-roi-title">Calculadora de ROI</h2><p>Seu retorno, a distância até o strike e o valor efetivo no exercício.</p></div><button type="button" data-close-quick-roi aria-label="Fechar calculadora">×</button></header>
       <form id="quick-roi-form" autocomplete="off"><label>Strike (R$)<input name="strike" inputmode="decimal" placeholder="41,42" autofocus></label><label>Prêmio por ação (R$)<input name="premium" inputmode="decimal" placeholder="0,55"></label><label>Preço atual da ação (R$)<input name="spot" inputmode="decimal" placeholder="42,70"></label></form>
       <div class="quick-roi-results" aria-live="polite"><section><small>ROI BRUTO SOBRE O STRIKE</small><strong id="quick-roi-value">—</strong><span>Prêmio ÷ strike × 100</span></section><section><small>DISTÂNCIA DO STRIKE</small><strong id="quick-roi-distance">—</strong><span id="quick-roi-direction">(Strike ÷ preço atual − 1) × 100</span></section></div>
-      <p class="quick-roi-note">Estimativa sem custos ou impostos, não anualizada.</p><footer><button type="button" id="quick-roi-reset">Limpar valores</button><button type="button" data-close-quick-roi>Concluir</button></footer>
+      <div class="quick-roi-results quick-roi-exercise" aria-live="polite">
+        <section><small>PUT · CUSTO EFETIVO POR AÇÃO</small><strong id="quick-roi-put-cost">—</strong><span>Se exercido na venda de PUT: strike − prêmio recebido.</span></section>
+        <section><small>CALL · VENDA EFETIVA POR AÇÃO</small><strong id="quick-roi-call-value">—</strong><span>Se exercido na venda de CALL: strike + prêmio recebido.</span></section>
+      </div>
+      <p class="quick-roi-note">O exercício ocorre pelo strike. Os valores efetivos consideram o prêmio recebido por ação, sem custos ou impostos. Não dependem de cotação ou vencimento. ROI não anualizado.</p><footer><button type="button" id="quick-roi-reset">Limpar valores</button><button type="button" data-close-quick-roi>Concluir</button></footer>
     </dialog>
     <dialog id="payoff-modal" class="quick-roi payoff-modal" aria-labelledby="payoff-modal-title">
       <header><div><small>SIMULAÇÃO · OPÇÕES</small><h2 id="payoff-modal-title">Simulador de payoff</h2><p>Projete o resultado da opção no vencimento antes de operar.</p></div><button type="button" data-close-payoff aria-label="Fechar simulador">×</button></header>
@@ -820,6 +836,9 @@
     <template id="ccxCallTemplate"><article class="ccx-call"><div class="ccx-call-title"><b>CALL <span></span></b><button type="button" data-ccx-remove aria-label="Remover CALL">×</button></div><div class="ccx-grid"><label>Código<input data-ccx="code" placeholder="Ex.: PETRA492"></label><label>Strike (R$)<input data-ccx="strike" inputmode="decimal" placeholder="48,92" required></label><label>Prêmio (R$)<input data-ccx="premium" inputmode="decimal" placeholder="1,02" required></label><label>Contratos<input data-ccx="contracts" type="number" min="1" value="1" required></label><label>Vencimento<input data-ccx="expiry" type="date"></label></div></article></template>
     <div class="ccx-modal" id="putComparatorModal" hidden aria-hidden="true"><button type="button" class="ccx-backdrop" data-close-pcx aria-label="Fechar comparador"></button><section class="ccx-dialog" role="dialog" aria-modal="true" aria-labelledby="pcxTitle"><header class="ccx-header"><span class="ccx-icon">↓</span><div><small>PUT VENDIDA</small><h2 id="pcxTitle">Comparador de PUT</h2><p>Compare prêmio, capital necessário e margem até o strike antes de vender uma PUT.</p></div><button type="button" class="ccx-close" data-close-pcx aria-label="Fechar">×</button></header><div class="ccx-tabs"><span class="active">Comparar PUTs vendidas</span><span>Até 5 alternativas</span></div><div class="ccx-body"><form id="pcxForm" class="ccx-form" novalidate><h3>Dados da estratégia</h3><div class="ccx-grid"><label>Ativo<input id="pcxAsset" maxlength="7" placeholder="Ex.: PETR4" required></label><label>Cotação atual (R$)<input id="pcxSpot" inputmode="decimal" placeholder="Ex.: 49,12" required></label></div><div class="ccx-calls-head"><h3>Alternativas de PUT</h3><button id="pcxAdd" type="button">＋ Adicionar</button></div><div id="pcxPuts"></div><p id="pcxError" class="ccx-error" hidden></p></form><aside class="ccx-results"><div class="ccx-hero" id="pcxHero"><small>MELHOR RELAÇÃO RISCO × RETORNO</small><strong>—</strong><span>Preencha pelo menos duas PUTs para comparar.</span></div><div class="ccx-kpis"><div><small>MAIOR PRÊMIO</small><strong id="pcxPremium">—</strong></div><div><small>MAIOR MARGEM</small><strong id="pcxMargin">—</strong></div><div><small>MENOR PM LÍQUIDO</small><strong id="pcxAverage">—</strong></div><div><small>CAPITAL NECESSÁRIO</small><strong id="pcxCapital">—</strong></div></div><div class="ccx-note"><b>Como decidimos</b><span>Prêmio, desconto no preço de compra, risco de exercício e distância até o strike são avaliados juntos.</span></div></aside></div><section id="pcxDetails" class="ccx-details" hidden><h3>Comparação detalhada</h3><div class="ccx-table-wrap"><table id="pcxTable"></table></div><div class="ccx-conclusion" id="pcxConclusion"></div></section><footer><button id="pcxClear" type="button">Limpar</button><button type="submit" form="pcxForm">Comparar estratégias →</button></footer></section></div>
     <template id="pcxPutTemplate"><article class="ccx-call"><div class="ccx-call-title"><b>PUT <span></span></b><button type="button" data-pcx-remove aria-label="Remover PUT">×</button></div><div class="ccx-grid"><label>Código<input data-pcx="code" placeholder="Ex.: PETRM492"></label><label>Strike (R$)<input data-pcx="strike" inputmode="decimal" required></label><label>Prêmio (R$)<input data-pcx="premium" inputmode="decimal" required></label><label>Contratos<input data-pcx="contracts" type="number" min="1" value="1" required></label><label>Vencimento<input data-pcx="expiry" type="date"></label></div></article></template>
-    <script src="free-pilot/app.js?v=64"></script>
+    <script src="free-pilot/domain.js?v=1"></script>
+    <script src="free-pilot/market-data.js?v=1"></script>
+    <script src="free-pilot/migration-ui.js?v=1"></script>
+    <script src="free-pilot/app.js?v=66"></script>
   </body>
 </html>

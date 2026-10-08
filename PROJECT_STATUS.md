@@ -71,3 +71,18 @@ da CVM e confirmação manual de preços intraday.
 - Validação de datas e estado vazio sem retorno indevido ao histórico completo.
 - Links existentes com `month` e `year` continuam compatíveis.
 - Validação: 14 testes e 14 subcasos aprovados; fluxo conferido no Chromium com PETR4, intervalo inclusivo, mês vazio e limpeza dos filtros.
+
+## Sprint — Valor efetivo no exercício (08/10/2026)
+
+- Calculadora rápida exibe custo efetivo por ação na venda de PUT (strike menos prêmio) e valor efetivo de venda na CALL (strike mais prêmio).
+- Cálculo automático apenas com strike e prêmio, sem cotação ou vencimento obrigatório; mantém ROI e distância existentes.
+- Valores gerenciais sem custos ou impostos, separados do preço contratual de exercício (strike).
+- Validação: sintaxe JavaScript, diff e execução da calculadora com valores da imagem, cotação ausente, prêmio zero, formatos numéricos, limpeza e entradas inválidas.
+
+## Sprint CF-02 — Conclusão funcional da migração (08/10/2026)
+
+- Piloto atualizado com Radar de novas oportunidades, scanner de CALL, Jade, rolagem e integrações reais SLDX/B3/CVM/CSV.
+- Cálculos e memória gerencial fiscal revisados; notas e operações atômicas; backup/restauração e reaberturas protegidas contra falhas parciais.
+- Reconciliação PostgreSQL/D1 concluída, preservando os lançamentos posteriores do Cloudflare. Nenhuma operação ou nota de teste inserida na base real.
+- Validação: 164 testes Python, 24 testes JavaScript, 28 casos de paridade e navegador desktop/mobile aprovados.
+- Publicado no piloto; ativação em www.radarpulse.com.br/faculdademaria/ e desligamento do legado aguardam aprovação final. Ver `docs/SPRINT_CLOUDFLARE_CONCLUSAO.md` e `docs/CLOUDFLARE_CORTE_E_REVERSAO.md`.

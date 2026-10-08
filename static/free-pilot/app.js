@@ -132,7 +132,7 @@ function renderOpenOperations(list, size, preferences, optionQuotes) {
     const quote = optionQuotes.get(String(item.ativo || "").toUpperCase());
     const type = String(item.tipo || "PUT").toUpperCase();
     const strategy = String(item.estrategia || "Venda");
-    const netPremium = num(item.premio_opcao) * num(item.contratos) * size - num(item.custos) - num(item.irrf);
+    const netPremium = num(item.premio_opcao) * num(item.contratos) * size - num(item.opening_costs ?? item.custos) - num(item.opening_irrf ?? item.irrf);
     const capitalAtRisk = type === "PUT" ? num(item.strike) * num(item.contratos) * size : 0;
     const roiBase = num(item.strike) * num(item.contratos) * size;
     const roi = roiBase ? (netPremium / roiBase) * 100 : null;
@@ -216,49 +216,13 @@ function renderExtra() {
     const side = String(x.trade?.side || (credit ? "Venda" : "Compra"));
     const option = x.trade?.option_code || "—";
     const date = x.trade_date ? String(x.trade_date).split("-").reverse().join("/") : "—";
-    return `<tr class="note-premium-row"><td><strong>Nota ${escape(x.note_number || "—")}</strong><small>${escape(date)}</small></td><td><span class="note-option">${escape(option)}</span><small>${escape(x.trade?.asset_type || "Opção")}</small></td><td><em class="note-side note-side--${credit ? "sale" : "buy"}">${escape(side)}</em></td><td class="${credit ? "positive" : "negative"}"><strong>${money((credit ? 1 : -1) * num(x.net_cash))}</strong><small>${credit ? "crédito da operação" : "débito da operação"}</small></td><td><strong>${money(x.operational_costs)}</strong><small>IRRF ${money(x.irrf)}</small></td><td class="note-actions"><button data-note-delete="${escape(x.key)}">Excluir registro</button></td></tr>`;
+    return `<tr class="note-premium-row"><td><strong>Nota ${escape(x.note_number || "—")}</strong><small>${escape(date)}</small></td><td><span class="note-option">${escape(option)}</span><small>${escape(x.trade?.asset_type || "Opção")}</small></td><td><em class="note-side note-side--${credit ? "sale" : "buy"}">${escape(side)}</em></td><td class="${credit ? "positive" : "negative"}"><strong>${money((credit ? 1 : -1) * Math.abs(num(x.net_cash)))}</strong><small>${credit ? "crédito da operação" : "débito da operação"}</small></td><td><strong>${money(x.operational_costs)}</strong><small>IRRF ${money(x.irrf)}</small></td><td class="note-actions"><button data-note-delete="${escape(x.key)}">Excluir registro</button></td></tr>`;
   }).join("") || "<tr><td colspan=6 class=\"premium-empty\">Nenhuma nota estruturada foi registrada.</td></tr>";
   const notes = state.notes || [];
   $("#notes-count").textContent = String(notes.length);
   $("#notes-credit").textContent = money(notes.reduce((sum, item) => sum + (String(item.cash_direction || "C").toUpperCase() === "C" ? num(item.net_cash) : 0), 0));
   $("#notes-costs").textContent = money(notes.reduce((sum, item) => sum + num(item.operational_costs) + num(item.irrf), 0));
-  const result = (state.closed || []).reduce(
-      (s, x) =>
-        s + num(x.Resultado_final || x.resultado_final || x.Lucro_tributavel),
-      0,
-    ),
-    tax = result * Math.max(0, cfg("Aliquota IR opcoes", 0.15));
-  $("#tax-result").textContent = money(result);
-  $("#tax-estimate").textContent = money(tax);
-  $("#tax-paid").textContent = money(
-    (state.darfs || []).reduce((s, x) => s + num(x.amount), 0),
-  );
   $("#darf-rows").innerHTML = (state.darfs || []).map((x) => `<tr class="tax-payment-row"><td><strong>${escape(x.competence)}</strong><small>competência informada</small></td><td><strong>${escape(x.payment_date ? String(x.payment_date).split("-").reverse().join("/") : "—")}</strong><small>data do pagamento</small></td><td class="positive"><strong>${money(x.amount)}</strong><small>valor pago</small></td><td>${escape(x.description || "Sem observação")}</td><td><button data-darf-delete="${escape(x.id)}">Excluir registro</button></td></tr>`).join("") || "<tr><td colspan=5 class=\"premium-empty\">Nenhuma DARF registrada.</td></tr>";
-  const taxMonths = new Map();
-  (state.closed || []).forEach((item) => {
-    const competence = String(item["Data fechamento"] || item.closed_at || "").slice(0, 7);
-    if (!/^\d{4}-\d{2}$/.test(competence)) return;
-    const row = taxMonths.get(competence) || { competence, result: 0, paid: 0 };
-    row.result += num(item.Resultado_final || item.resultado_final || item.Lucro_tributavel);
-    taxMonths.set(competence, row);
-  });
-  (state.darfs || []).forEach((item) => {
-    const competence = String(item.competence || "");
-    if (!/^\d{4}-\d{2}$/.test(competence)) return;
-    const row = taxMonths.get(competence) || { competence, result: 0, paid: 0 };
-    row.paid += num(item.amount);
-    taxMonths.set(competence, row);
-  });
-  const rate = Math.max(0, cfg("Aliquota IR opcoes", 0.15));
-  $("#tax-month-rows").innerHTML = [...taxMonths.values()]
-    .sort((a, b) => b.competence.localeCompare(a.competence))
-    .map((row) => {
-      const estimated = Math.max(0, row.result) * rate,
-        balance = estimated - row.paid;
-      const status = balance > 0 ? "Saldo a conferir" : balance < 0 ? "Pagamento acima da projeção" : "Em equilíbrio";
-      return `<tr class="tax-memory-row"><td><strong>${escape(row.competence)}</strong><small>memória mensal</small></td><td class="${row.result < 0 ? "negative" : "positive"}"><strong>${money(row.result)}</strong><small>operações fechadas</small></td><td><strong>${money(estimated)}</strong><small>alíquota configurada</small></td><td><strong>${money(row.paid)}</strong><small>DARFs registradas</small></td><td><span class="tax-status tax-status--${balance > 0 ? "pending" : "settled"}">${escape(status)}</span><small class="${balance > 0 ? "negative" : "positive"}">${money(Math.abs(balance))}</small></td></tr>`;
-    })
-    .join("") || "<tr><td colspan=5>Nenhuma competência registrada.</td></tr>";
   $("#settings-list").innerHTML = state.config
     .map(
       (x) =>
@@ -299,7 +263,7 @@ function renderExtra() {
   }).join("") || "<tr><td colspan=7 class=\"premium-empty\">Nenhuma ação registrada na carteira.</td></tr>";
   const monthly = new Map(),
     isPremiumSale = (item) => String(item.estrategia || item["Estratégia"] || "Venda").trim().toLowerCase() !== "compra" && ["PUT", "CALL"].includes(String(item.tipo || item.Tipo || "").toUpperCase()),
-    openingNetPremium = (item) => num(item.premio_opcao ?? item.Premio_opcao ?? item.Premio_liquido) * num(item.contratos ?? item.Contratos ?? 1) * cfg("Tamanho contrato opcoes", 100) - num(item.custos ?? item.Custos ?? item.Custos_total) - num(item.irrf ?? item.IRRF),
+    openingNetPremium = (item) => num(item.premio_opcao ?? item.Premio_opcao ?? item.Premio_liquido) * num(item.contratos ?? item.Contratos ?? 1) * cfg("Tamanho contrato opcoes", 100) - num(item.opening_costs ?? item.custos ?? item.Custos ?? item.Custos_total) - num(item.opening_irrf ?? item.irrf ?? item.IRRF),
     closedRetainedPremium = (item) => {
       const result = item.Resultado_final ?? item.resultado_final ?? item.Lucro_tributavel;
       return result === undefined || result === null || result === "" ? openingNetPremium(item) : num(result);
@@ -397,13 +361,13 @@ function render() {
   const coveredCapital = coveredCallCommitments.reduce((sum, item) => sum + item.total, 0);
   const capital = putCapital + coveredCapital;
   const isPremiumSale = (item) => String(item.estrategia || item["Estratégia"] || "Venda").trim().toLowerCase() !== "compra" && ["PUT", "CALL"].includes(String(item.tipo || item.Tipo || "").toUpperCase());
-  const openingNetPremium = (item) => num(item.premio_opcao ?? item.Premio_opcao ?? item.Premio_liquido) * num(item.contratos ?? item.Contratos ?? 1) * size - num(item.custos ?? item.Custos ?? item.Custos_total) - num(item.irrf ?? item.IRRF);
+  const openingNetPremium = (item) => num(item.premio_opcao ?? item.Premio_opcao ?? item.Premio_liquido) * num(item.contratos ?? item.Contratos ?? 1) * size - num(item.opening_costs ?? item.custos ?? item.Custos ?? item.Custos_total) - num(item.opening_irrf ?? item.irrf ?? item.IRRF);
   const retainedClosedPremium = (item) => { const result = item.Resultado_final ?? item.resultado_final ?? item.Lucro_tributavel; return result === undefined || result === null || result === "" ? openingNetPremium(item) : num(result); };
   const premium = open.filter(isPremiumSale).reduce((sum, item) => sum + openingNetPremium(item), 0);
   const premiumsReceived = [...(state.operations || []), ...(state.closed || [])].filter(isPremiumSale).reduce((sum, item) => sum + openingNetPremium(item), 0);
   const premiumsRetained = (state.operations || []).filter(isPremiumSale).reduce((sum, item) => sum + openingNetPremium(item), 0) + (state.closed || []).filter(isPremiumSale).reduce((sum, item) => sum + retainedClosedPremium(item), 0);
   const eventCash = (state.cash || []).reduce((sum, item) => sum + (["aporte", "ajuste_credito", "venda_acoes"].includes(item.kind) ? num(item.amount) : -num(item.amount)), 0);
-  const noteCash = (state.notes || []).reduce((sum, note) => sum + (String(note.cash_direction || "C").toUpperCase() === "C" ? 1 : -1) * num(note.net_cash), 0);
+  const noteCash = (state.notes || []).reduce((sum, note) => sum + (String(note.cash_direction || "C").toUpperCase() === "C" ? 1 : -1) * Math.abs(num(note.net_cash)), 0);
   const hasOpeningNote = (operation) => (state.notes || []).some((note) => {
     const trade = note.trade || {};
     const sameOperation = String(note.operation_id || "") === String(operation.id) || String(trade.option_code || "").toUpperCase() === String(operation.ativo || "").toUpperCase();
@@ -412,14 +376,14 @@ function render() {
   });
   const manualOperationCash = [...(state.operations || []), ...(state.closed || [])].reduce((sum, item) => {
     if (hasOpeningNote(item)) return sum;
-    const signed = num(item.premio_opcao) * num(item.contratos) * size - num(item.custos) - num(item.irrf);
+    const signed = num(item.premio_opcao) * num(item.contratos) * size - num(item.opening_costs ?? item.custos) - num(item.opening_irrf ?? item.irrf);
     return sum + (/^venda$/i.test(String(item.estrategia || "Venda")) ? signed : -signed);
   }, 0);
   const brokerCash = eventCash + noteCash + manualOperationCash;
   const equityCost = [...equityCostByAsset.values()].reduce((sum, cost) => sum + cost, 0);
   const patrimony = brokerCash + equityCost;
   const available = brokerCash - putCapital;
-  const monthKey = new Date().toISOString().slice(0, 7);
+  const monthKey = FMDomain.today().slice(0, 7);
   const premiumDate = (item) => item.data_abertura || item["Data abertura"] || item.data_fechamento || item["Data fechamento"] || item.closed_at || "";
   const monthlyPremium = [...(state.operations || []), ...(state.closed || [])]
     .filter(isPremiumSale)
@@ -542,7 +506,7 @@ function render() {
       const current = quote === undefined ? null : quote;
       const type = String(item.tipo).toUpperCase();
       const strategy = String(item.estrategia || "Venda");
-      const netPremium = num(item.premio_opcao) * num(item.contratos) * size - num(item.custos) - num(item.irrf);
+      const netPremium = num(item.premio_opcao) * num(item.contratos) * size - num(item.opening_costs ?? item.custos) - num(item.opening_irrf ?? item.irrf);
       const capitalAtRisk = type === "PUT" ? num(item.strike) * num(item.contratos) * size : 0;
       const roiBase = num(item.strike) * num(item.contratos) * size;
       const roi = roiBase ? (netPremium / roiBase) * 100 : null;
@@ -581,17 +545,14 @@ function render() {
       .map((row) => {
         const fiscalAverage = row.fiscalCost / row.quantity;
         const managerialAverage = row.managerialCost / row.quantity;
-        return `<a class="equity-composition__row" href="#equity" data-screen="equity"><span><img src="https://raw.githubusercontent.com/thefintz/icones-b3/main/icones/${encodeURIComponent(row.asset)}.png" alt="" onerror="this.remove();this.nextElementSibling.style.display='grid'"><i style="display:none">${escape(row.asset.slice(0, 2))}</i><strong>${escape(row.asset)}</strong></span><b>${row.quantity}</b><span>${money(fiscalAverage)}</span><span>${money(managerialAverage)}</span></a>`;
+        return `<a class="equity-composition__row" href="#equity" data-screen="equity"><span><img src="https://raw.githubusercontent.com/thefintz/icones-b3/main/icones/${encodeURIComponent(row.asset)}.png" alt="" onerror="this.nextElementSibling.style.display='grid';this.remove()"><i style="display:none">${escape(row.asset.slice(0, 2))}</i><strong>${escape(row.asset)}</strong></span><b>${row.quantity}</b><span>${money(fiscalAverage)}</span><span>${money(managerialAverage)}</span></a>`;
       })
       .join("") || '<div class="exec-empty"><strong>Carteira sem ações registradas</strong></div>');
-  const currentTaxMonth = [...new Set((state.closed || []).map((row) => String(row["Data fechamento"] || row.closed_at || "").slice(0, 7)).filter(Boolean))].sort().pop();
-  const monthlyResult = (state.closed || [])
-    .filter((row) => String(row["Data fechamento"] || row.closed_at || "").slice(0, 7) === currentTaxMonth)
-    .reduce((sum, row) => sum + num(row.Resultado_final || row.resultado_final || row.Lucro_tributavel), 0);
-  const estimatedTax = Math.max(0, monthlyResult) * Math.max(0, cfg("Aliquota IR opcoes", 0.15));
-  $("#dashboard-tax-title").textContent = estimatedTax > 0 ? "DARF aguardando conferência" : "Apuração gerencial disponível";
-  $("#dashboard-tax-copy").textContent = currentTaxMonth
-    ? `Competência ${currentTaxMonth}: resultado fechado de ${money(monthlyResult)} e IR gerencial estimado de ${money(estimatedTax)}.`
+  const taxRows = FMDomain.taxProjection(state.closed || [], state.darfs || []);
+  const latestTax = taxRows.at(-1);
+  $("#dashboard-tax-title").textContent = latestTax?.review_count ? "Exercícios aguardando revisão" : latestTax?.pending > 0 ? "DARF aguardando conferência" : "Apuração gerencial disponível";
+  $("#dashboard-tax-copy").textContent = latestTax
+    ? `Competência ${latestTax.competence}: DARF gerencial ${money(latestTax.estimated_darf)}, saldo pendente ${money(latestTax.pending)}.${latestTax.review_count ? " Confira o custo das ações nos exercícios históricos." : ""}`
     : "Confira os fechamentos e a memória mensal antes de registrar uma DARF.";
   const puts = open.filter((item) => String(item.tipo).toUpperCase() === "PUT");
   $("#dashboard-roll").innerHTML = puts.length
@@ -803,7 +764,9 @@ function render() {
 }
 async function load() {
   state = await (await request("/dashboard")).json();
+  window.FMMigration?.decorate(state);
   render();
+  window.FMMigration?.render(state);
   const now = new Date();
   $("#topbar-date").textContent = new Intl.DateTimeFormat("pt-BR", {
     day: "2-digit", month: "long", year: "numeric", timeZone: "America/Sao_Paulo",
@@ -827,6 +790,10 @@ function screen(name) {
       "Histórico de créditos e resultado por ciclo",
     ],
     simulators: ["SIMULADORES", "ROI e payoff de opções no vencimento"],
+    opportunities: ["RADAR DE OPORTUNIDADES", "Novas PUTs do mercado, com análise explicável"],
+    scanner: ["SCANNER DE CALL COBERTA", "Alternativas para as ações da sua carteira"],
+    jade: ["RADAR JADE LIZARD", "Combinações com opções reais do mercado"],
+    roll: ["ROLAGEM INTELIGENTE", "Recompra e nova venda em uma comparação"],
     radar: ["RADAR DE POSIÇÕES", "Acompanhamento manual e gratuito das suas opções abertas"],
     equity: [
       "CARTEIRA DE AÇÕES",
@@ -846,7 +813,7 @@ function screen(name) {
 }
 async function restore() {
   await load();
-  const today = new Date().toISOString().slice(0, 10),
+  const today = FMDomain.today(),
     month = today.slice(0, 7),
     now = new Date().toISOString().slice(0, 16);
   const defaults = [
@@ -885,6 +852,7 @@ $("#login-form").onsubmit = async (e) => {
   try {
     await signIn(new FormData(e.target).get("pin"));
   } catch (err) {
+    console.error("Falha ao carregar o sistema:", err);
     $("#login-error").textContent =
       err.message === "Sessão encerrada"
         ? "PIN inválido. Confira e tente novamente."
@@ -921,6 +889,9 @@ function updateQuickRoi() {
   const valid = (value) => Number.isFinite(value) && value > 0;
   const percent = (value) => `${value.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`;
   $("#quick-roi-value").textContent = valid(strike) && Number.isFinite(premium) && premium >= 0 ? percent((premium / strike) * 100) : "—";
+  const canCalculateExercise = valid(strike) && Number.isFinite(premium) && premium >= 0;
+  $("#quick-roi-put-cost").textContent = canCalculateExercise ? money(strike - premium) : "—";
+  $("#quick-roi-call-value").textContent = canCalculateExercise ? money(strike + premium) : "—";
   const distance = (strike / spot - 1) * 100;
   $("#quick-roi-distance").textContent = valid(strike) && valid(spot) ? percent(distance) : "—";
   $("#quick-roi-direction").textContent = $("#quick-roi-distance").textContent === "—" ? "(Strike ÷ preço atual − 1) × 100" : distance < 0 ? "Strike abaixo do preço atual" : distance > 0 ? "Strike acima do preço atual" : "Strike igual ao preço atual";
@@ -1273,42 +1244,34 @@ form.onsubmit = async (e) => {
       if (stagedNoteImport?.file === file && trade.side === "Compra" && matchedOpen && String(stagedClosureId || "") !== String(matchedOpen.id)) throw Error("Confirme o encerramento identificado antes de importar esta recompra.");
       if (stagedNoteImport?.file === file && trade.event_type === "exercise" && (!matchedOpen || String(stagedExerciseId || "") !== String(matchedOpen.id))) throw Error("Confirme o exercício identificado antes de importar esta operação.");
       const payload = { key: `${digest}:${index}`, broker: normalized.includes("NECTON") ? "Necton" : "BTG Pactual", note_number: noteNumber, trade_date: tradeDate, trade, net_cash: String(netCash), operational_costs: String(trade.allocated_costs), irrf: String(trade.allocated_irrf), cash_direction: trade.cash_direction, imported_at: new Date().toISOString() };
-      const response = await request("/notes", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ key: payload.key, payload }) });
-      const saved = await response.json();
-      if (saved.imported) imported += 1;
-      if (!saved.imported) continue;
-      const existing = (state.operations || []).find((item) => String(item.ativo).toUpperCase() === trade.option_code && String(item.status).toLowerCase() === "aberta") || operationsCreatedFromThisNote.get(trade.option_code);
-      if (trade.event_type === "exercise" && existing) {
-        await request(`/operations/${existing.id}/exercise`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ data_fechamento: tradeDate, asset: underlyingForOption(trade.option_code), quantity: trade.quantity, exercise_price: trade.unit_price, costs: trade.allocated_costs + trade.allocated_irrf }) });
-        exercises += 1;
-        continue;
-      }
-      if (trade.side === "Compra" && existing) {
-        const contractSize = cfg("Tamanho contrato opcoes", 100);
-        const openContracts = num(existing.contratos);
-        const openQuantity = openContracts * contractSize;
-        const closedContracts = trade.quantity / contractSize;
-        if (trade.quantity > openQuantity || !Number.isInteger(closedContracts))
-          throw Error(`A recompra de ${trade.option_code} não confere com a posição aberta. Nenhuma baixa automática foi feita.`);
+      const existing = (state.operations || []).find((item) => String(item.ativo).toUpperCase() === trade.option_code && String(item.status).toLowerCase() === "aberta");
+      let action = { kind: "record" };
+      if (trade.event_type === "exercise") {
+        if (!existing) throw Error(`Não há posição aberta para exercer ${trade.option_code}.`);
+        action = { kind: "exercise", operation_id: existing.id, values: { data_fechamento: tradeDate, asset: underlyingForOption(trade.option_code), quantity: trade.quantity, exercise_price: trade.unit_price, costs: trade.allocated_costs + trade.allocated_irrf } };
+      } else if (trade.side === "Compra" && existing && !/^compra$/i.test(existing.estrategia)) {
+        const contractSize = cfg("Tamanho contrato opcoes", 100), openContracts = num(existing.contratos), openQuantity = openContracts * contractSize, closedContracts = trade.quantity / contractSize;
+        if (trade.quantity > openQuantity || !(closedContracts > 0)) throw Error(`A recompra de ${trade.option_code} não confere com a posição aberta.`);
         const fraction = closedContracts / openContracts;
-        const result = (num(existing.premio_opcao) - num(trade.unit_price)) * trade.quantity - num(existing.custos) * fraction - num(existing.irrf) * fraction - num(trade.allocated_costs) - num(trade.allocated_irrf);
-        await request(`/operations/${existing.id}/close`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ data_fechamento: tradeDate, contratos_fechados: closedContracts, resultado_final: result, observacoes: `Recompra reconhecida na nota ${noteNumber}` }) });
-        if (closedContracts < openContracts) {
-          existing.contratos = openContracts - closedContracts;
-          existing.custos = num(existing.custos) * (1 - fraction);
-          existing.irrf = num(existing.irrf) * (1 - fraction);
-        } else {
-          state.operations = (state.operations || []).filter((item) => item.id !== existing.id);
-          operationsCreatedFromThisNote.delete(trade.option_code);
-        }
-        operationsClosed += 1;
-      } else if (trade.side === "Venda" && !existing) {
-        const metadata = optionMetadata(trade.option_code, trade.expiry_month);
-        if (!metadata.strike || !metadata.expiry) throw Error(`Não foi possível identificar strike ou vencimento de ${trade.option_code}.`);
-        const created = await (await request("/operations", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ data_abertura: tradeDate, ativo: trade.option_code, tipo: metadata.type, estrategia: "Venda", contratos: Math.max(1, trade.quantity / cfg("Tamanho contrato opcoes", 100)), strike: metadata.strike, premio_opcao: trade.unit_price, custos: trade.allocated_costs, irrf: trade.allocated_irrf, vencimento: metadata.expiry, cotacao_atual: 0, underlying_asset: underlyingForOption(trade.option_code) }) })).json();
-        operationsCreatedFromThisNote.set(trade.option_code, { id: created.id, ativo: trade.option_code, status: "Aberta", premio_opcao: trade.unit_price, contratos: Math.max(1, trade.quantity / cfg("Tamanho contrato opcoes", 100)), custos: trade.allocated_costs, irrf: trade.allocated_irrf });
-        operationsOpened += 1;
+        const outcome = (num(existing.premio_opcao) - num(trade.unit_price)) * trade.quantity - num(existing.custos) * fraction - num(existing.irrf) * fraction - num(trade.allocated_costs) - num(trade.allocated_irrf);
+        action = { kind: "close", operation_id: existing.id, values: { data_fechamento: tradeDate, contratos_fechados: closedContracts, resultado_final: outcome, observacoes: `Recompra reconhecida na nota ${noteNumber}` } };
+      } else if (trade.side === "Venda") {
+        const metadata = window.FMMigration?.optionFor(trade.option_code) || optionMetadata(trade.option_code, trade.expiry_month);
+        const reviewed = Number.isInteger(selectedIndex) && $("#newOptionCode").value.trim().toUpperCase() === trade.option_code;
+        const strike = existing?.strike || (reviewed ? num($("#newStrike").value) : metadata.strike);
+        const expiry = existing?.vencimento || (reviewed ? $("#newExpiry").value : metadata.expiry);
+        if (!strike || !expiry) throw Error(`Confirme o strike e vencimento de ${trade.option_code} na prévia antes de importar.`);
+        action = { kind: "opening", values: { data_abertura: tradeDate, ativo: trade.option_code, tipo: existing?.tipo || metadata.option_type || metadata.type, estrategia: "Venda", contratos: trade.quantity / cfg("Tamanho contrato opcoes", 100), strike, premio_opcao: trade.unit_price, custos: trade.allocated_costs, irrf: trade.allocated_irrf, vencimento: expiry, cotacao_atual: 0, underlying_asset: underlyingForOption(trade.option_code) } };
       }
+      const saved = await (await request("/notes/import", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ key: payload.key, payload, action }) })).json();
+      if (!saved.imported) continue;
+      imported += 1;
+      if (action.kind === "opening") operationsOpened += 1;
+      if (action.kind === "close") operationsClosed += 1;
+      if (action.kind === "exercise") exercises += 1;
+      // Use the committed position/coverage for the next trade from this PDF.
+      state = await (await request("/dashboard")).json();
+
     }
     await load();
     result.classList.add("is-success");
@@ -1364,8 +1327,11 @@ function updateNewOperationPreview() {
   $("#newSummaryPremium").textContent = money(premium * contracts * cfg("Tamanho contrato opcoes", 100));
   const roi = strike && contracts ? (premium / strike) * 100 : null;
   $("#newPreviewRoi").textContent = roi === null ? "--" : `${roi.toFixed(2).replace(".", ",")}%`;
-  const probability = strike && spot ? Math.max(0, Math.min(100, (spot / strike) * 50)).toFixed(1).replace(".", ",") : null;
-  $("#newPreviewExercise").textContent = probability === null ? "--" : `${probability}%`;
+  const history = window.FMMigration?.historyFor($("#newUnderlying").value.trim().toUpperCase());
+  const volatility = history && !history.stale && FMDomain.historicalVolatility(history.closes || []);
+  const probability = FMDomain.probability(newOperationForm.elements.tipo?.value || "PUT", spot, strike, FMDomain.days($("#newExpiry").value), volatility);
+  $("#newPreviewExercise").textContent = probability === null ? "--" : `${(probability * 100).toFixed(1).replace(".", ",")}%`;
+  $("#newPreviewExercise").nextElementSibling.textContent = probability === null ? "Consulte o histórico no Radar para obter volatilidade observada." : "Modelo lognormal com volatilidade histórica observada; não é garantia.";
 }
 newOperationFields.forEach((selector) => $(selector).oninput = updateNewOperationPreview);
 newOperationForm.onsubmit = async (event) => {
@@ -1529,3 +1495,5 @@ if (magic) {
       $("#login-error").textContent =
         "Não foi possível carregar os dados. Tente entrar novamente.";
   });
+
+window.FMApp = { request, load, render, screen, showMessage, money, escape, cfg, getState: () => state, updateNewOperationPreview };
