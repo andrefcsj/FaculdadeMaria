@@ -86,3 +86,10 @@ da CVM e confirmação manual de preços intraday.
 - Reconciliação PostgreSQL/D1 concluída, preservando os lançamentos posteriores do Cloudflare. Nenhuma operação ou nota de teste inserida na base real.
 - Validação: 164 testes Python, 24 testes JavaScript, 28 casos de paridade e navegador desktop/mobile aprovados.
 - Publicado e validado em www.radarpulse.com.br/faculdademaria/ após aprovação de Andre. Login desktop/mobile, dados financeiros e preservação da rota de contabilidade confirmados. Apenas o desligamento do Render/Neon permanece pendente. Ver `docs/SPRINT_CLOUDFLARE_CONCLUSAO.md` e `docs/CLOUDFLARE_CORTE_E_REVERSAO.md`.
+
+## Sprint CF-03 — Popups e acesso (09/10/2026)
+
+- Última negociação da nota fecha e limpa o popup automaticamente e mostra Operações Abertas; negociações pendentes e erros mantêm a janela.
+- Dez tipos de popup móveis pelo cabeçalho, incluindo confirmações e edição de valores; suporte a toque e duplo clique para centralizar, com fundo legível.
+- PIN atualizado no secret do Worker, sem gravação no código.
+- Publicado no www e no piloto; fluxo PDF real sintético em base isolada, arraste desktop/mobile, nova tentativa após falha e acesso com o novo PIN validados. Dados financeiros reais preservados.

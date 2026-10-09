@@ -330,3 +330,14 @@ input[type="text"],input[type="search"],input[type="email"],textarea{text-transf
 .exec-panel,.screen,.content { min-width:0; }
 .free-table:has(table) { max-width:100%; overflow-x:auto !important; }
 @media print { body.fm-tax-print .free-table:has(table) { overflow:visible; } }
+/* Movable popups keep the page behind them readable. */
+.fm-popup-handle { cursor:grab; touch-action:none; user-select:none; }
+.fm-popup-moving .fm-popup-handle { cursor:grabbing; }
+.fm-popup-moving { transition:none !important; }
+dialog::backdrop { background:rgba(7,30,54,.14) !important; backdrop-filter:none !important; -webkit-backdrop-filter:none !important; }
+.ccx-backdrop { background:rgba(7,30,54,.14) !important; backdrop-filter:none !important; -webkit-backdrop-filter:none !important; }
+.fm-system-question { width:min(520px,94vw); }
+.fm-system-question #system-question-message { white-space:pre-line; line-height:1.5; }
+.fm-system-question label { display:grid; gap:8px; }
+.fm-system-question input { width:100%; padding:12px; border:1px solid #cbd9e8; border-radius:10px; }
+dialog.quick-roi::backdrop, dialog.new-op-modal::backdrop, dialog.insight-modal::backdrop, dialog.free-dialog::backdrop { background:rgba(7,30,54,.14) !important; backdrop-filter:none !important; -webkit-backdrop-filter:none !important; }

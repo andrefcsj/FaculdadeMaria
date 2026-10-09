@@ -600,7 +600,7 @@ function render() {
   document.querySelectorAll("[data-remove]").forEach(
     (b) =>
       (b.onclick = async () => {
-        if (confirm("Excluir esta operação?")) {
+        if (await window.FMDialogs.confirm("Excluir esta operação?")) {
           await request(`/operations/${b.dataset.remove}`, {
             method: "DELETE",
           });
@@ -642,7 +642,7 @@ function render() {
   document.querySelectorAll("[data-reopen]").forEach(
     (b) =>
       (b.onclick = async () => {
-        if (confirm("Reabrir esta operação?")) {
+        if (await window.FMDialogs.confirm("Reabrir esta operação?")) {
           b.disabled = true;
           try {
             await request(`/closed/${b.dataset.reopen}/reopen`, {
@@ -661,7 +661,7 @@ function render() {
   document.querySelectorAll("[data-cash-delete]").forEach(
     (b) =>
       (b.onclick = async () => {
-        if (confirm("Excluir esta movimentação?")) {
+        if (await window.FMDialogs.confirm("Excluir esta movimentação?")) {
           await request(`/cash/${b.dataset.cashDelete}`, { method: "DELETE" });
           await load();
         }
@@ -670,7 +670,7 @@ function render() {
   document.querySelectorAll("[data-darf-delete]").forEach(
     (b) =>
       (b.onclick = async () => {
-        if (confirm("Excluir esta DARF?")) {
+        if (await window.FMDialogs.confirm("Excluir esta DARF?")) {
           await request(`/darfs/${b.dataset.darfDelete}`, { method: "DELETE" });
           await load();
         }
@@ -679,7 +679,7 @@ function render() {
   document.querySelectorAll("[data-note-delete]").forEach(
     (button) =>
       (button.onclick = async () => {
-        if (confirm("Excluir este lançamento de nota?")) {
+        if (await window.FMDialogs.confirm("Excluir este lançamento de nota?")) {
           await request(`/notes/${encodeURIComponent(button.dataset.noteDelete)}`, {
             method: "DELETE",
           });
@@ -690,7 +690,7 @@ function render() {
   document.querySelectorAll("[data-equity-delete]").forEach(
     (b) =>
       (b.onclick = async () => {
-        if (confirm(`Excluir ${b.dataset.equityDelete} da carteira?`)) {
+        if (await window.FMDialogs.confirm(`Excluir ${b.dataset.equityDelete} da carteira?`)) {
           await request(`/equities/${b.dataset.equityDelete}`, {
             method: "DELETE",
           });
@@ -704,7 +704,7 @@ function render() {
         const current = (state.equities || []).filter(
           (x) => x.asset === b.dataset.equityEdit,
         );
-        const quantity = prompt(
+        const quantity = await window.FMDialogs.prompt(
           "Quantidade da posição:",
           String(
             current.reduce(
@@ -718,7 +718,7 @@ function render() {
           (sum, x) => sum + availableLotCost(x, "cash_cost_total", "tax_cost_total"),
           0,
         );
-        const average = prompt(
+        const average = await window.FMDialogs.prompt(
           "Preço médio fiscal:",
           String(cost / Math.max(1, num(quantity))),
         );
@@ -738,11 +738,11 @@ function render() {
   document.querySelectorAll("[data-equity-sell]").forEach(
     (b) =>
       (b.onclick = async () => {
-        const quantity = prompt(
+        const quantity = await window.FMDialogs.prompt(
           `Quantidade de ${b.dataset.equitySell} a vender:`,
         );
         if (quantity === null) return;
-        const sale_price = prompt("Preço de venda por ação:");
+        const sale_price = await window.FMDialogs.prompt("Preço de venda por ação:");
         if (sale_price === null) return;
         await request(`/equities/${b.dataset.equitySell}/sell`, {
           method: "POST",
@@ -755,7 +755,7 @@ function render() {
   document.querySelectorAll("[data-quote-delete]").forEach(
     (button) =>
       (button.onclick = async () => {
-        if (confirm(`Excluir a cotação de ${button.dataset.quoteDelete}?`)) {
+        if (await window.FMDialogs.confirm(`Excluir a cotação de ${button.dataset.quoteDelete}?`)) {
           await request(`/quotes/${button.dataset.quoteDelete}`, { method: "DELETE" });
           await load();
         }
@@ -1155,6 +1155,7 @@ async function stageNoteImport(file, result) {
   const next = trades.findIndex((_, index) => !processed.has(index));
   if (next >= 0) select.value = String(next);
   const apply = () => {
+    stagedNoteImport.selectedIndex = Number(select.value);
     const trade = trades[Number(select.value)], metadata = optionMetadata(trade.option_code, trade.expiry_month);
     const candidate = (state.operations || []).find((item) => String(item.status).toLowerCase() === "aberta" && String(item.ativo).toUpperCase() === trade.option_code && (trade.event_type === "exercise" || (trade.side === "Compra" && String(item.estrategia).toLowerCase().includes("venda")) || (trade.side === "Venda" && String(item.estrategia).toLowerCase() === "compra")));
     const choice = result.querySelector("#staged-closure-choice");
@@ -1206,7 +1207,7 @@ form.elements.pdf.onchange = async (e) => {
 form.onsubmit = async (e) => {
   e.preventDefault();
   const file = e.target.elements.pdf.files[0], button = submitButton || e.target.querySelector("footer button:last-child, button[type=submit], button:last-child");
-  const stagedSelectedIndex = stagedNoteImport?.file === file ? Number(result.querySelector("#staged-note-trade")?.value) : null;
+  const stagedSelectedIndex = stagedNoteImport?.file === file ? Number(result.querySelector("#staged-note-trade")?.value ?? stagedNoteImport.selectedIndex) : null;
   const stagedClosureId = stagedNoteImport?.file === file ? stagedNoteImport.closureOperationId : null;
   const stagedExerciseId = stagedNoteImport?.file === file ? stagedNoteImport.exerciseOperationId : null;
   result.classList.remove("is-success", "is-error");
@@ -1280,17 +1281,19 @@ form.onsubmit = async (e) => {
       operationsClosed && `${operationsClosed} recompra(s) fechada(s)`,
       exercises && `${exercises} exercício(s) tratado(s)`,
     ].filter(Boolean);
+    let completed = true;
     if (stagedNoteImport?.file === file && Number.isInteger(selectedIndex)) {
       stagedNoteImport.processed.add(selectedIndex);
       const pending = trades.length - stagedNoteImport.processed.size;
       if (pending) {
+        completed = false;
         await stageNoteImport(file, result);
         const status = document.createElement("span");
         status.className = "staged-import-status";
         status.textContent = `${imported ? "Negociação registrada." : "Esta negociação já estava registrada."} Próxima negociação carregada (${pending} restante${pending === 1 ? "" : "s"}).`;
         result.prepend(status);
       } else {
-        result.innerHTML = `<strong>Nota ${escape(noteNumber)} concluída</strong><span>Todas as ${trades.length} negociações selecionadas foram registradas. O PDF continua selecionado para consulta.</span>`;
+        result.innerHTML = `<strong>Nota ${escape(noteNumber)} concluída</strong><span>Todas as ${trades.length} negociações selecionadas foram registradas.</span>`;
       }
     } else {
       e.target.reset(); fileName.textContent = "Nenhum arquivo selecionado";
@@ -1298,7 +1301,7 @@ form.onsubmit = async (e) => {
         ? `Leitura concluída: ${tradesToImport.length} negociação(ões) selecionada(s) e ${imported} lançamento(s) importado(s)${updates.length ? ` · ${updates.join(" · ")}` : ""}. O PDF não foi armazenado.`
         : `Leitura concluída: ${trades.length} negociação(ões) reconhecida(s). Esta nota já havia sido importada; nenhuma operação foi reaplicada.`;
     }
-    onComplete?.();
+    if (completed) onComplete?.({ noteNumber, count: trades.length });
   } catch (err) {
     result.classList.add("is-error");
     result.textContent = err.message || "Não foi possível ler esta nota.";
@@ -1316,7 +1319,23 @@ $("#open-note-import").onclick = () => {
 };
 noteImportDialog.querySelectorAll("[data-close-note-import]").forEach((button) => (button.onclick = () => noteImportDialog.close()));
 const popupImportButton = $("#trigger-note-import");
-bindNoteImport($("#open-note-pdf-form"), noteImportDialog.querySelector("[data-note-result]"), noteImportDialog.querySelector("[data-note-file-name]"), null, popupImportButton);
+bindNoteImport($("#open-note-pdf-form"), noteImportDialog.querySelector("[data-note-result]"), noteImportDialog.querySelector("[data-note-file-name]"), ({ noteNumber, count }) => {
+  noteImportDialog.close();
+  $("#open-note-pdf-form").reset();
+  newOperationForm.reset();
+  stagedNoteImport = undefined;
+  const result = noteImportDialog.querySelector("[data-note-result]");
+  result.textContent = "";
+  result.classList.remove("is-success", "is-error");
+  noteImportDialog.querySelector("[data-note-file-name]").textContent = "Nenhum arquivo selecionado · o PDF é lido localmente e não é armazenado.";
+  $("#newOpenDate").value = FMDomain.today();
+  $("#newSummaryPremiumLabel").textContent = "Prêmio bruto estimado";
+  $("#newOperationError").textContent = "";
+  $("#newOperationError").style.display = "none";
+  updateNewOperationPreview();
+  screen("open");
+  showMessage(`Nota ${noteNumber} concluída: ${count} negociação(ões) registrada(s).`);
+}, popupImportButton);
 popupImportButton.onclick = () => $("#open-note-pdf-form").requestSubmit();
 const newOperationForm = $("#new-operation-modal-form");
 const newOperationFields = ["#newOptionCode", "#newUnderlying", "#newStrike", "#newContracts", "#newPremium", "#newExpiry", "#newSpot", "#newCosts", "#newIrrf"];
@@ -1435,7 +1454,7 @@ $("#restore-form").onsubmit = async (e) => {
   e.preventDefault();
   const file = e.target.elements.backup_file.files[0];
   if (!file) return;
-  if (!confirm("Restaurar este backup substituirá os dados atuais desta instalação no Cloudflare. Deseja continuar?"))
+  if (!await window.FMDialogs.confirm("Restaurar este backup substituirá os dados atuais desta instalação no Cloudflare. Deseja continuar?"))
     return;
   try {
     const backup = JSON.parse(await file.text());
